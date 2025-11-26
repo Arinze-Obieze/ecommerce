@@ -10,7 +10,7 @@ import {
   FiChevronRight,
 } from 'react-icons/fi';
 import { FiCamera, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
-import createClient from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import ProfileStats from '@/components/Stats/ProfileStats';
 
 export default function ProfilePage() {
