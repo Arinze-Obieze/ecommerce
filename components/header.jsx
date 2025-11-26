@@ -8,6 +8,7 @@ import {
   FiUser,
 } from "react-icons/fi";
 import { useLocation } from "../contexts/LocationContext";
+import Link from "next/link";
 
 const nigerianStates = [
   "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River",
@@ -99,7 +100,7 @@ const Header = () => {
 
               {profileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <button className="w-full text-left px-4 py-2 hover:bg-gray-100">Profile</button>
+                 <Link href={'/profile'}> <button className="w-full text-left px-4 py-2 hover:bg-gray-100">Profile</button></Link>
                   <button className="w-full text-left px-4 py-2 hover:bg-gray-100">Orders</button>
                   <button className="w-full text-left px-4 py-2 hover:bg-gray-100">Logout</button>
                 </div>
