@@ -68,13 +68,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <Link href="/" className="text-xl md:text-2xl font-bold text-gray-900">
-            ShopHub
-          </Link>
-        </div>
-      </header>
 
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">

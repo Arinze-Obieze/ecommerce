@@ -1,18 +1,23 @@
 import { LocationProvider } from '@/contexts/LocationContext'
+import { FilterProvider } from '@/contexts/FilterContext'
 import './globals.css'
+import Header from '@/components/header'
 
 export const metadata = {
-  title: 'Shop Telemart - Electronics & Gadgets',
-  description: 'Shop quality electronics, cell phones, tablets, and gadgets at SWOO Telemart',
+  title: 'Shop Clothing',
+  description: 'Shop quality clothes',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="font-sans antialiased bg-white text-gray-900">
-      <LocationProvider>
-        {children}
-      </LocationProvider>
+        <LocationProvider>
+          <FilterProvider>
+            <Header/>
+            {children}
+          </FilterProvider>
+        </LocationProvider>
       </body>
     </html>
   )

@@ -56,7 +56,7 @@ export default function ProfilePage() {
               src={user.avatar || '/woman-profile-avatar.png'}
               className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow"
             />
-            <button className="absolute bottom-2 right-2 p-2 bg-blue-600 rounded-full text-white hover:bg-blue-700">
+            <button className="absolute bottom-2 right-2 p-2 bg-primary rounded-full text-white hover:bg-blue-700">
               <FiCamera className="w-4 h-4" />
             </button>
           </div>
@@ -76,7 +76,7 @@ export default function ProfilePage() {
             </div>
             <Link
               href="/profile/edit"
-              className="inline-block mt-6 px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium"
+              className="inline-block mt-6 px-6 py-2 rounded-lg bg-primary text-white hover:bg-blue-700 text-sm font-medium"
             >
               Edit Profile
             </Link>
@@ -91,7 +91,7 @@ export default function ProfilePage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-4 py-2 font-medium text-center ${
                 activeTab === tab.id
-                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  ? 'border-b-2 border-primary text-primary'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >

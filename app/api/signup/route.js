@@ -15,7 +15,7 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Create server-side Supabase client with service role key
+    //  Create server-side Supabase client with service role key
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY

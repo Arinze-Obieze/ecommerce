@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from './supabase/client';
 
 export function useAuth() {
@@ -9,40 +9,119 @@ export function useAuth() {
   const [error, setError] = useState(null);
   const supabase = createClient();
 
+  // Memoized logout function
+  const logout = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      return { success: true };
+    } catch (err) {
+      setError(err);
+      console.error('Logout error:', err);
+      return { success: false, error: err };
+    }
+  }, [supabase]);
+
   useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
+    let mounted = true;
+    let subscription;
+
+    const initializeAuth = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
+        // Get initial session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setError(null);
+        }
       } catch (err) {
-        setError(err);
+        if (mounted) {
+          setError(err);
+          console.error('Auth initialization error:', err);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    getSession();
+    // Set up auth state listener
+    const setupAuthListener = () => {
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (!mounted) return;
+          
+          console.log('Auth state changed:', event);
+          setUser(session?.user ?? null);
+          setLoading(false);
+          setError(null);
+        }
+      );
+      
+      return authSubscription;
+    };
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChanged((event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Initialize auth and set up listener
+    initializeAuth();
+    subscription = setupAuthListener();
 
+    // Cleanup
     return () => {
+      mounted = false;
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+  // Optional: Add login helper function
+  const login = useCallback(async (email, password) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      return { success: true, data };
+    } catch (err) {
+      setError(err);
+      return { success: false, error: err };
+    }
+  }, [supabase]);
+
+  // Optional: Add signup helper function
+  const signup = useCallback(async (email, password, metadata = {}) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      });
+      
+      if (error) throw error;
+      
+      return { success: true, data };
+    } catch (err) {
+      setError(err);
+      return { success: false, error: err };
+    }
+  }, [supabase]);
+
+  return { 
+    user, 
+    loading, 
+    error, 
+    logout,
+    login,
+    signup,
+    isAuthenticated: !!user 
   };
-
-  return { user, loading, error, logout };
 }
