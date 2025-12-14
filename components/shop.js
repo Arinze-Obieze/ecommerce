@@ -1,12 +1,58 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { FiFilter, FiChevronDown } from "react-icons/fi"
 import Link from "next/link"
 import FilterSidebar from "./FilterSidebar"
 import ActiveFilters from "./ActiveFilters"
 import { useFilters } from "@/contexts/FilterContext"
 
-export default function ShopHub() {
+// Loading fallback for ShopHub
+function ShopHubLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <main className="lg:px-16 max-lg:max-w-7xl mx-auto px-4 py-6">
+        <div className="flex flex-col gap-6">
+          {/* Mobile Filter Button Skeleton */}
+          <div className="lg:hidden h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+          
+          {/* Main content grid skeleton */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Desktop Filters skeleton */}
+            <div className="hidden lg:block w-64 shrink-0">
+              <div className="h-[600px] bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+
+            {/* Products Section skeleton */}
+            <div className="flex-1">
+              {/* Header skeleton */}
+              <div className="mb-6 space-y-4">
+                <div className="h-8 w-64 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+
+              {/* Products Grid skeleton */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="aspect-square bg-gray-200 animate-pulse"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+// Main content component
+function ShopHubContent() {
   const {
     filters,
     setSearch,
@@ -91,7 +137,7 @@ export default function ShopHub() {
           {/* Mobile Filter Button */}
           <button
             onClick={() => setMobileFiltersOpen(true)}
-            className="lg:hidden flex items-center justify-center gap-2 w-full py-3 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium"
+            className="lg:hidden flex items-center justify-center gap-2 w-full py-3 bg-white border border-gray-200 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
           >
             <FiFilter className="w-5 h-5" /> Filters
           </button>
@@ -100,7 +146,7 @@ export default function ShopHub() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Desktop Filters (left sidebar) */}
             <aside className="hidden lg:block w-64 shrink-0 sticky top-20 h-fit">
-              <FilterSidebar onMobileClose={() => setMobileFiltersOpen(false)} />
+              <FilterSidebar />
             </aside>
 
             {/* Products Section */}
@@ -120,7 +166,7 @@ export default function ShopHub() {
                     <select
                       value={filters.sortBy}
                       onChange={e => setSortBy(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none bg-white cursor-pointer text-sm font-medium"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none bg-white cursor-pointer text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="newest">Newest</option>
                       <option value="price_asc">Price: Low to High</option>
@@ -144,6 +190,22 @@ export default function ShopHub() {
               {/* Active Filters Display */}
               <ActiveFilters />
 
+              {/* Error State */}
+              {error && (
+                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Error loading products
+                  </h3>
+                  <p className="text-gray-600 mb-4">{error}</p>
+                  <button
+                    onClick={fetchProducts}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
               {/* Loading */}
               {loading && (
                 <div className="text-center py-12">
@@ -155,7 +217,7 @@ export default function ShopHub() {
               )}
 
               {/* Products Grid */}
-              {!loading && products.length > 0 && (
+              {!loading && !error && products.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
                   {products.map(product => (
                     <Link
@@ -245,7 +307,7 @@ export default function ShopHub() {
               )}
 
               {/* No results */}
-              {!loading && products.length === 0 && (
+              {!loading && !error && products.length === 0 && (
                 <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     No products found
@@ -315,5 +377,14 @@ export default function ShopHub() {
         </div>
       </main>
     </div>
+  )
+}
+
+// Main ShopHub component with Suspense
+export default function ShopHub() {
+  return (
+    <Suspense fallback={<ShopHubLoading />}>
+      <ShopHubContent />
+    </Suspense>
   )
 }

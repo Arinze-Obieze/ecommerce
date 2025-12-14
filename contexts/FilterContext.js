@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // Create the context
@@ -16,9 +16,77 @@ const initialFilters = {
   colors: [],
   sortBy: 'newest',
   page: 1,
+  inStock: false,
+  onSale: false,
 };
 
+// Main FilterProvider that wraps in Suspense
 export function FilterProvider({ children }) {
+  return (
+    <Suspense fallback={<FilterLoadingFallback />}>
+      <FilterProviderContent>{children}</FilterProviderContent>
+    </Suspense>
+  );
+}
+
+// Loading fallback component
+function FilterLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filters sidebar skeleton */}
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="h-5 w-24 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                  <div className="space-y-2">
+                    {[...Array(3)].map((_, j) => (
+                      <div key={j} className="flex items-center gap-2">
+                        <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Products grid skeleton */}
+          <div className="lg:col-span-3">
+            <div className="mb-6 flex justify-between items-center">
+              <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="aspect-square bg-gray-200 animate-pulse"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Pagination skeleton */}
+            <div className="mt-8 flex justify-center">
+              <div className="h-10 w-64 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Content component that uses useSearchParams
+function FilterProviderContent({ children }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -29,6 +97,7 @@ export function FilterProvider({ children }) {
     sizes: [],
     colors: [],
     brands: [],
+    priceRange: { min: 0, max: 1000 },
   });
 
   // Initialize filters from URL params on mount
@@ -41,6 +110,8 @@ export function FilterProvider({ children }) {
     const colors = searchParams.get('colors') ? searchParams.get('colors').split(',') : [];
     const sortBy = searchParams.get('sortBy') || 'newest';
     const page = parseInt(searchParams.get('page') || '1');
+    const inStock = searchParams.get('inStock') === 'true';
+    const onSale = searchParams.get('onSale') === 'true';
 
     setFilters({
       search,
@@ -51,6 +122,8 @@ export function FilterProvider({ children }) {
       colors,
       sortBy,
       page,
+      inStock,
+      onSale,
     });
   }, [searchParams]);
 
@@ -74,6 +147,28 @@ export function FilterProvider({ children }) {
     fetchCategories();
   }, []);
 
+  // Fetch available filters (sizes, colors, brands) based on current filters
+  useEffect(() => {
+    const fetchAvailableFilters = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (filters.category && filters.category !== 'all') {
+          params.set('category', filters.category);
+        }
+        
+        const res = await fetch(`/api/products/filters?${params.toString()}`);
+        const data = await res.json();
+        if (data.success) {
+          setAvailableFilters(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch available filters:', error);
+      }
+    };
+
+    fetchAvailableFilters();
+  }, [filters.category]);
+
   // Sync filters to URL params
   const updateFilters = useCallback((newFilters) => {
     setFilters((prevFilters) => {
@@ -83,16 +178,21 @@ export function FilterProvider({ children }) {
       const params = new URLSearchParams();
       if (updatedFilters.search) params.set('search', updatedFilters.search);
       if (updatedFilters.category && updatedFilters.category !== 'all') params.set('category', updatedFilters.category);
-      if (updatedFilters.minPrice) params.set('minPrice', updatedFilters.minPrice);
-      if (updatedFilters.maxPrice) params.set('maxPrice', updatedFilters.maxPrice);
+      if (updatedFilters.minPrice) params.set('minPrice', updatedFilters.minPrice.toString());
+      if (updatedFilters.maxPrice) params.set('maxPrice', updatedFilters.maxPrice.toString());
       if (updatedFilters.sizes.length) params.set('sizes', updatedFilters.sizes.join(','));
       if (updatedFilters.colors.length) params.set('colors', updatedFilters.colors.join(','));
       if (updatedFilters.sortBy !== 'newest') params.set('sortBy', updatedFilters.sortBy);
-      if (updatedFilters.page > 1) params.set('page', updatedFilters.page);
+      if (updatedFilters.page > 1) params.set('page', updatedFilters.page.toString());
+      if (updatedFilters.inStock) params.set('inStock', 'true');
+      if (updatedFilters.onSale) params.set('onSale', 'true');
 
       // Update URL without page reload
       const queryString = params.toString();
-      router.push(queryString ? `?${queryString}` : '/');
+      const newUrl = queryString ? `?${queryString}` : '/';
+      
+      // Used replace instead of push to avoid adding to history stack for filter changes
+      router.replace(newUrl, { scroll: false });
 
       return updatedFilters;
     });
@@ -125,6 +225,14 @@ export function FilterProvider({ children }) {
     updateFilters({ colors, page: 1 });
   }, [filters.colors, updateFilters]);
 
+  const toggleInStock = useCallback(() => {
+    updateFilters({ inStock: !filters.inStock, page: 1 });
+  }, [filters.inStock, updateFilters]);
+
+  const toggleOnSale = useCallback(() => {
+    updateFilters({ onSale: !filters.onSale, page: 1 });
+  }, [filters.onSale, updateFilters]);
+
   const setSortBy = useCallback((sortBy) => {
     updateFilters({ sortBy });
   }, [updateFilters]);
@@ -134,20 +242,71 @@ export function FilterProvider({ children }) {
   }, [updateFilters]);
 
   const clearAllFilters = useCallback(() => {
-    setFilters(initialFilters);
-    router.push('/');
-  }, [router]);
+    updateFilters({
+      search: '',
+      category: 'all',
+      minPrice: null,
+      maxPrice: null,
+      sizes: [],
+      colors: [],
+      sortBy: 'newest',
+      page: 1,
+      inStock: false,
+      onSale: false,
+    });
+  }, [updateFilters]);
 
-  const hasActiveFilters = () => {
+  const hasActiveFilters = useCallback(() => {
     return (
       filters.search ||
-      filters.category !== 'all' ||
+      (filters.category && filters.category !== 'all') ||
       filters.minPrice ||
       filters.maxPrice ||
       filters.sizes.length > 0 ||
-      filters.colors.length > 0
+      filters.colors.length > 0 ||
+      filters.inStock ||
+      filters.onSale
     );
-  };
+  }, [filters]);
+
+  // Get filter summary for display
+  const getFilterSummary = useCallback(() => {
+    const summary = [];
+    
+    if (filters.search) {
+      summary.push(`Search: "${filters.search}"`);
+    }
+    
+    if (filters.category && filters.category !== 'all') {
+      const categoryName = categories.find(c => c.slug === filters.category)?.name || filters.category;
+      summary.push(`Category: ${categoryName}`);
+    }
+    
+    if (filters.minPrice || filters.maxPrice) {
+      const priceRange = [];
+      if (filters.minPrice) priceRange.push(`From $${filters.minPrice}`);
+      if (filters.maxPrice) priceRange.push(`To $${filters.maxPrice}`);
+      summary.push(`Price: ${priceRange.join(' ')}`);
+    }
+    
+    if (filters.sizes.length > 0) {
+      summary.push(`Sizes: ${filters.sizes.join(', ')}`);
+    }
+    
+    if (filters.colors.length > 0) {
+      summary.push(`Colors: ${filters.colors.join(', ')}`);
+    }
+    
+    if (filters.inStock) {
+      summary.push('In Stock Only');
+    }
+    
+    if (filters.onSale) {
+      summary.push('On Sale');
+    }
+    
+    return summary;
+  }, [filters, categories]);
 
   const value = {
     // State
@@ -156,19 +315,35 @@ export function FilterProvider({ children }) {
     categoriesLoading,
     availableFilters,
     
-    // Mutations
+    // Filter mutations
     updateFilters,
     setSearch,
     setCategory,
     setPriceRange,
     toggleSize,
     toggleColor,
+    toggleInStock,
+    toggleOnSale,
     setSortBy,
     setPage,
     clearAllFilters,
     
     // Helpers
-    hasActiveFilters,
+    hasActiveFilters: hasActiveFilters(),
+    filterSummary: getFilterSummary(),
+    
+    // Computed values
+    isFiltered: hasActiveFilters(),
+    activeFilterCount: [
+      filters.search ? 1 : 0,
+      filters.category && filters.category !== 'all' ? 1 : 0,
+      filters.minPrice ? 1 : 0,
+      filters.maxPrice ? 1 : 0,
+      filters.sizes.length,
+      filters.colors.length,
+      filters.inStock ? 1 : 0,
+      filters.onSale ? 1 : 0,
+    ].reduce((a, b) => a + b, 0),
   };
 
   return (
@@ -185,4 +360,9 @@ export function useFilters() {
     throw new Error('useFilters must be used within FilterProvider');
   }
   return context;
+}
+
+// Hook for using search params directly (with Suspense)
+export function useFilterSearchParams() {
+  return useSearchParams();
 }

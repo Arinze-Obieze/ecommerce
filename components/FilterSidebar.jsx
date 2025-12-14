@@ -1,10 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { FiChevronDown, FiX } from 'react-icons/fi';
 import { useFilters } from '@/contexts/FilterContext';
 
-export default function FilterSidebar({ onMobileClose }) {
+// Loading fallback for FilterSidebar
+function FilterSidebarLoading() {
+  return (
+    <aside className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="space-y-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="h-5 w-24 bg-gray-200 rounded mb-3"></div>
+            <div className="space-y-2">
+              {[...Array(3)].map((_, j) => (
+                <div key={j} className="h-4 bg-gray-100 rounded"></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+// Actual content component
+function FilterSidebarContent({ onMobileClose }) {
   const {
     filters,
     categories,
@@ -13,7 +34,6 @@ export default function FilterSidebar({ onMobileClose }) {
     setPriceRange,
     toggleSize,
     toggleColor,
-    toggleBrand,
     clearAllFilters,
     hasActiveFilters,
   } = useFilters();
@@ -23,11 +43,15 @@ export default function FilterSidebar({ onMobileClose }) {
     price: true,
     sizes: true,
     colors: true,
-    brands: true,
   });
 
-  // Available options (you can fetch these from API if stored in DB)
-  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+  const [localPriceRange, setLocalPriceRange] = useState({
+    min: filters.minPrice || 0,
+    max: filters.maxPrice || 10000,
+  });
+
+  // Available options
+  const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   const colorOptions = [
     { name: 'Black', hex: '#000000' },
     { name: 'White', hex: '#FFFFFF' },
@@ -36,7 +60,7 @@ export default function FilterSidebar({ onMobileClose }) {
     { name: 'Green', hex: '#22C55E' },
     { name: 'Yellow', hex: '#FBBF24' },
     { name: 'Gray', hex: '#9CA3AF' },
-  ]
+  ];
 
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
@@ -45,45 +69,8 @@ export default function FilterSidebar({ onMobileClose }) {
     }));
   };
 
-  const PriceRangeSlider = () => {
-    const [localMin, setLocalMin] = useState(filters.minPrice || 0);
-    const [localMax, setLocalMax] = useState(filters.maxPrice || 10000);
-
-    const handleApply = () => {
-      setPriceRange(localMin, localMax);
-    };
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min="0"
-            max="10000"
-            value={localMin}
-            onChange={e => setLocalMin(Number(e.target.value))}
-            placeholder="Min"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          />
-          <span className="text-gray-500">-</span>
-          <input
-            type="number"
-            min="0"
-            max="10000"
-            value={localMax}
-            onChange={e => setLocalMax(Number(e.target.value))}
-            placeholder="Max"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          />
-        </div>
-        <button
-          onClick={handleApply}
-          className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-        >
-          Apply
-        </button>
-      </div>
-    );
+  const handlePriceApply = () => {
+    setPriceRange(localPriceRange.min, localPriceRange.max);
   };
 
   const FilterSection = ({ title, section, children }) => {
@@ -112,16 +99,18 @@ export default function FilterSidebar({ onMobileClose }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-        <button
-          onClick={onMobileClose}
-          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-        >
-          <FiX className="w-5 h-5" />
-        </button>
+        {onMobileClose && (
+          <button
+            onClick={onMobileClose}
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <FiX className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Clear All Filters */}
-      {hasActiveFilters() && (
+      {hasActiveFilters && (
         <button
           onClick={clearAllFilters}
           className="w-full mb-4 py-2 text-sm text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 font-medium"
@@ -158,7 +147,7 @@ export default function FilterSidebar({ onMobileClose }) {
               >
                 <div className="flex items-center justify-between">
                   <span>{cat.name}</span>
-                  <span className="text-xs text-gray-500">({cat.productCount})</span>
+                  <span className="text-xs text-gray-500">({cat.productCount || 0})</span>
                 </div>
               </button>
             ))}
@@ -168,7 +157,35 @@ export default function FilterSidebar({ onMobileClose }) {
 
       {/* Price Range Filter */}
       <FilterSection title="Price Range" section="price">
-        <PriceRangeSlider />
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              max="10000"
+              value={localPriceRange.min}
+              onChange={e => setLocalPriceRange(prev => ({ ...prev, min: Number(e.target.value) }))}
+              placeholder="Min"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <span className="text-gray-500">-</span>
+            <input
+              type="number"
+              min="0"
+              max="10000"
+              value={localPriceRange.max}
+              onChange={e => setLocalPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+              placeholder="Max"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button
+            onClick={handlePriceApply}
+            className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            Apply
+          </button>
+        </div>
       </FilterSection>
 
       {/* Size Filter */}
@@ -190,7 +207,37 @@ export default function FilterSidebar({ onMobileClose }) {
         </div>
       </FilterSection>
 
-
+      {/* Color Filter */}
+      <FilterSection title="Color" section="colors">
+        <div className="space-y-2">
+          {colorOptions.map(color => (
+            <button
+              key={color.name}
+              onClick={() => toggleColor(color.name)}
+              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
+                filters.colors.includes(color.name)
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'hover:bg-gray-100'
+              }`}
+            >
+              <div
+                className="w-6 h-6 rounded-full border border-gray-300"
+                style={{ backgroundColor: color.hex }}
+              />
+              <span>{color.name}</span>
+            </button>
+          ))}
+        </div>
+      </FilterSection>
     </aside>
+  );
+}
+
+// Main FilterSidebar component with Suspense
+export default function FilterSidebar({ onMobileClose }) {
+  return (
+    <Suspense fallback={<FilterSidebarLoading />}>
+      <FilterSidebarContent onMobileClose={onMobileClose} />
+    </Suspense>
   );
 }

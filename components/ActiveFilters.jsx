@@ -6,122 +6,100 @@ import { useFilters } from '@/contexts/FilterContext';
 export default function ActiveFilters() {
   const {
     filters,
-    categories,
+    setSearch,
     setCategory,
     setPriceRange,
     toggleSize,
     toggleColor,
-    setSearch,
     clearAllFilters,
     hasActiveFilters,
   } = useFilters();
 
-  if (!hasActiveFilters()) return null;
-
-  const getCategoryName = (slug) => {
-    const cat = categories.find(c => c.slug === slug);
-    return cat?.name || slug;
-  };
-
-  const removeFilter = (type, value) => {
-    switch (type) {
-      case 'search':
-        setSearch('');
-        break;
-      case 'category':
-        setCategory('all');
-        break;
-      case 'price':
-        setPriceRange(null, null);
-        break;
-      case 'size':
-        toggleSize(value);
-        break;
-      case 'color':
-        toggleColor(value);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const FilterChip = ({ label, type, value, onRemove }) => (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-      <span>{label}</span>
-      <button
-        onClick={() => onRemove(type, value)}
-        className="ml-1 p-1 hover:bg-blue-200 rounded-full transition-colors"
-        aria-label={`Remove ${label} filter`}
-      >
-        <FiX className="w-4 h-4" />
-      </button>
-    </div>
-  );
+  if (!hasActiveFilters) {
+    return null;
+  }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">Active Filters</h3>
-        <button
-          onClick={clearAllFilters}
-          className="text-xs text-blue-600 hover:text-blue-700 font-medium underline"
-        >
-          Clear All
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {/* Search Filter */}
+    <div className="mb-6">
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-sm text-gray-600 mr-2">Active filters:</span>
+        
+        {/* Search filter */}
         {filters.search && (
-          <FilterChip
-            label={`Search: "${filters.search}"`}
-            type="search"
-            value={filters.search}
-            onRemove={removeFilter}
-          />
+          <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span>Search: "{filters.search}"</span>
+            <button
+              onClick={() => setSearch('')}
+              className="ml-1 hover:text-blue-900"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
         )}
-
-        {/* Category Filter */}
+        
+        {/* Category filter */}
         {filters.category && filters.category !== 'all' && (
-          <FilterChip
-            label={`Category: ${getCategoryName(filters.category)}`}
-            type="category"
-            value={filters.category}
-            onRemove={removeFilter}
-          />
+          <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span>Category: {filters.category}</span>
+            <button
+              onClick={() => setCategory('all')}
+              className="ml-1 hover:text-blue-900"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
         )}
-
-        {/* Price Range Filter */}
+        
+        {/* Price range filter */}
         {(filters.minPrice || filters.maxPrice) && (
-          <FilterChip
-            label={`Price: $${filters.minPrice || '0'} - $${filters.maxPrice || 'Any'}`}
-            type="price"
-            value={null}
-            onRemove={removeFilter}
-          />
+          <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span>
+              Price: {filters.minPrice ? `$${filters.minPrice}` : 'Any'} - {filters.maxPrice ? `$${filters.maxPrice}` : 'Any'}
+            </span>
+            <button
+              onClick={() => setPriceRange(null, null)}
+              className="ml-1 hover:text-blue-900"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
         )}
-
-        {/* Size Filters */}
+        
+        {/* Size filters */}
         {filters.sizes.map(size => (
-          <FilterChip
-            key={`size-${size}`}
-            label={`Size: ${size}`}
-            type="size"
-            value={size}
-            onRemove={removeFilter}
-          />
+          <div key={size} className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span>Size: {size}</span>
+            <button
+              onClick={() => toggleSize(size)}
+              className="ml-1 hover:text-blue-900"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
         ))}
-
-        {/* Color Filters */}
+        
+        {/* Color filters */}
         {filters.colors.map(color => (
-          <FilterChip
-            key={`color-${color}`}
-            label={`Color: ${color}`}
-            type="color"
-            value={color}
-            onRemove={removeFilter}
-          />
+          <div key={color} className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span>Color: {color}</span>
+            <button
+              onClick={() => toggleColor(color)}
+              className="ml-1 hover:text-blue-900"
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
         ))}
+        
+        {/* Clear all button */}
+        {hasActiveFilters && (
+          <button
+            onClick={clearAllFilters}
+            className="ml-2 px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Clear all
+          </button>
+        )}
       </div>
     </div>
   );
