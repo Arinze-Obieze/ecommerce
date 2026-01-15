@@ -46,10 +46,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat bg-[url('/bg.jpeg')] md:bg-[url('/bg_big.jpeg')]"
-    >
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 z-10 w-full max-w-2xl mx-auto">
+    <div className="relative min-h-screen">
+      {/* Background with different images for mobile/desktop */}
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat 
+                      bg-[url('/bg.jpeg')] md:bg-[url('/bg_big.jpeg')]"></div>
+      
+      {/* Black overlay - only visible on md and above */}
+      <div className="absolute inset-0 hidden md:block bg-black/20"></div>
+      
+      <main className="relative flex-1 flex flex-col items-center justify-center px-4 py-8 z-10 w-full max-w-2xl mx-auto">
         {/* Logo Section */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
