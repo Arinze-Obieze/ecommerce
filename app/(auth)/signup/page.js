@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiTwitter, FiInstagram, FiFacebook, FiUser, FiPhone, FiMapPin } from 'react-icons/fi';
+import { FaCcVisa, FaCcMastercard } from 'react-icons/fa';
+import { BiLogoFlutter } from 'react-icons/bi';
+import { SiJamstack } from 'react-icons/si';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -67,125 +71,170 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
-              <p className="text-gray-500 text-sm mt-2">Sign up to start using ShopHub</p>
+    <div 
+      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat bg-[url('/bg.jpeg')] md:bg-[url('/bg_big.jpeg')]"
+    >
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 z-10 w-full max-w-2xl mx-auto">
+        {/* Logo Section */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-10 h-10 bg-green-700 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+              S
             </div>
+            <h1 className="text-3xl font-bold text-gray-800">ShopHub</h1>
+          </div>
+          <p className="text-xl text-gray-600 font-medium">Create your account</p>
+        </div>
 
-            <form onSubmit={handleSignup} className="space-y-5">
-              {error && <div className="rounded-md bg-red-50 p-4 text-red-700 text-sm">{error}</div>}
-              {success && <div className="rounded-md bg-green-50 p-4 text-green-700 text-sm">Account created! Redirecting to login...</div>}
+        {/* Form Container */}
+        <div className="w-full p-6 md:p-8">
+          <form onSubmit={handleSignup} className="space-y-4">
+            {error && <div className="rounded-md bg-red-50 p-3 text-red-700 text-sm text-center">{error}</div>}
+            {success && <div className="rounded-md bg-green-50 p-3 text-green-700 text-sm text-center">Account created! Redirecting to login...</div>}
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Your full name"
-                    className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="border-r border-gray-300 pr-2 mr-2 text-gray-500 font-medium flex items-center gap-1">
+                    <FiUser className="w-4 h-4" />
+                  </span>
                 </div>
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email address"
-                    className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                 <input
                   type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Phone number"
-                  className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              {/* State */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                <input
-                  type="text"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  placeholder="State or location"
-                  className="w-full pl-3 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password (min 6 characters)"
-                    className="w-full pl-3 pr-12 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm password"
-                  className="w-full pl-3 pr-12 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Full Name"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 transition-all text-gray-800 placeholder-gray-400"
                   required
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {loading ? 'Creating account...' : 'Sign up'}
-              </button>
-            </form>
+              {/* Email */}
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="border-r border-gray-300 pr-2 mr-2 text-gray-500 font-medium flex items-center gap-1">
+                    <FiMail className="w-4 h-4" />
+                  </span>
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email Address"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 transition-all text-gray-800 placeholder-gray-400"
+                  required
+                />
+              </div>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
-              Already have an account?{' '}
-              <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign in
-              </Link>
-            </p>
+              {/* Phone */}
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="border-r border-gray-300 pr-2 mr-2 text-gray-500 font-medium flex items-center gap-1">
+                     <FiPhone className="w-4 h-4" />
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Phone Number"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 transition-all text-gray-800 placeholder-gray-400"
+                />
+              </div>
+
+              {/* State */}
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="border-r border-gray-300 pr-2 mr-2 text-gray-500 font-medium flex items-center gap-1">
+                    <FiMapPin className="w-4 h-4" />
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  placeholder="State"
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 transition-all text-gray-800 placeholder-gray-400"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                   <FiLock className="w-4 h-4 text-gray-400" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 transition-all text-gray-800 placeholder-gray-400"
+                  required
+                />
+                 <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                >
+                  {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                   <FiLock className="w-4 h-4 text-gray-400" />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm Password"
+                  className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600/20 focus:border-green-600 transition-all text-gray-800 placeholder-gray-400"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[#2E5C45] hover:bg-[#254a38] text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-lg mt-6"
+            >
+              {loading ? 'Creating account...' : 'Sign Up'}
+            </button>
+          </form>
+
+          <div className="mt-8 text-center text-sm text-gray-600">
+            Already have an account? <Link href="/login" className="text-green-700 font-bold hover:underline">Sign In</Link>
           </div>
+        </div>
+
+        {/* Footer Section */}
+        <div className="mt-12 text-center space-y-4 w-full max-w-2xl">
+          <p className="text-gray-600 font-medium">Naija Friendly • Secure & Safe</p>
+          
+          <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+             <Link href="#" className="hover:text-gray-800">Privacy Policy</Link>
+             <span>|</span>
+             <Link href="#" className="hover:text-gray-800">Terms of Service</Link>
+          </div>
+
+          <div className="flex items-center justify-center gap-4 text-gray-700">
+             <a href="#" className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors"><FiInstagram className="w-6 h-6" /></a>
+             <a href="#" className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors"><FiTwitter className="w-6 h-6" /></a>
+             <a href="#" className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors"><FiFacebook className="w-6 h-6" /></a>
+          </div>
+
+          <div className="flex items-center justify-center gap-4 text-gray-500 opacity-70 grayscale hover:grayscale-0 transition-all">
+             <div className="flex items-center gap-1"><SiJamstack className="w-4 h-4" /><span className="text-xs font-bold">Paystack</span></div>
+             <div className="flex items-center gap-1"><BiLogoFlutter className="w-4 h-4" /><span className="text-xs font-bold">Flutterwave</span></div>
+             <FaCcVisa className="w-6 h-6" />
+             <FaCcMastercard className="w-6 h-6" />
+          </div>
+
+          <p className="text-xs text-gray-500 mt-6">© 2024 ShopHub. All Rights Reserved.</p>
         </div>
       </main>
     </div>

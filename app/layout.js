@@ -1,5 +1,6 @@
 import { LocationProvider } from '@/contexts/LocationContext'
 import { FilterProvider } from '@/contexts/FilterContext'
+import { AuthProvider } from '@/components/AuthProvider'
 import './globals.css'
 import Header from '@/components/header'
 
@@ -12,12 +13,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="font-sans antialiased bg-white text-gray-900">
-        <LocationProvider>
-          <FilterProvider>
-            <Header/>
-            {children}
-          </FilterProvider>
-        </LocationProvider>
+        <AuthProvider>
+          <LocationProvider>
+            <FilterProvider>
+              <Header/>
+              {children}
+            </FilterProvider>
+          </LocationProvider>
+        </AuthProvider>
       </body>
     </html>
   )

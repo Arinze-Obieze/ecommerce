@@ -11,35 +11,37 @@ import {
 } from 'react-icons/fi';
 import { FiCamera, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 import ProfileStats from '@/components/Stats/ProfileStats';
 
 export default function ProfilePage() {
   const supabase = createClient();
-  const [user, setUser] = useState(null);
+  const { user, loading } = useAuth();
+  const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState('stats'); // default tab
 
   useEffect(() => {
-    async function fetchUser() {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError) return console.error('Auth error:', authError);
-      const userId = authData?.user?.id;
-      if (!userId) return;
+    async function fetchProfile() {
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', user.id)
         .maybeSingle();
 
       if (error) console.error('Error fetching user:', error);
       else if (!data) console.log('No profile found for this user yet.');
-      else setUser(data);
+      else setProfile(data);
     }
 
-    fetchUser();
-  }, []);
+    if (!loading && user) {
+      fetchProfile();
+    }
+  }, [user, loading]);
 
-  if (!user) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (!user) return null; // Middleware will handle redirect
 
   const tabs = [
     { id: 'stats', label: 'Stats' },
@@ -53,7 +55,7 @@ export default function ProfilePage() {
         <section className="bg-white rounded-3xl shadow p-8 flex flex-col md:flex-row items-center md:items-start gap-8">
           <div className="relative w-32 h-32">
             <img
-              src={user.avatar || '/woman-profile-avatar.png'}
+              src={profile?.avatar || '/woman-profile-avatar.png'}
               className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow"
             />
             <button className="absolute bottom-2 right-2 p-2 bg-primary rounded-full text-white hover:bg-blue-700">
@@ -62,16 +64,16 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-gray-900">{user.full_name}</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{profile?.full_name || user.email}</h1>
             <div className="mt-4 space-y-2 text-gray-600">
               <div className="flex items-center gap-3">
                 <FiMail /> {user.email}
               </div>
               <div className="flex items-center gap-3">
-                <FiPhone /> {user.phone}
+                <FiPhone /> {profile?.phone || 'No phone added'}
               </div>
               <div className="flex items-center gap-3">
-                <FiMapPin /> {user.state}
+                <FiMapPin /> {profile?.state || 'No location added'}
               </div>
             </div>
             <Link
