@@ -1,9 +1,9 @@
 // app/api/debug/route.js
-import { createSupabaseServerClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 export async function GET() {
   try {
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createClient()
     
     // Test query to see if we can fetch anything
     const { data: testData, error: testError } = await supabase

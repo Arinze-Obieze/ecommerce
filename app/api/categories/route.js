@@ -1,9 +1,9 @@
 // app/api/categories/route.js
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request) {
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createClient();
     const { searchParams } = new URL(request.url);
     
     // Get all active categories with product counts

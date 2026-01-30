@@ -1,135 +1,195 @@
 "use client";
 import { useState } from "react";
 import {
-  FiChevronDown,
-  FiMapPin,
   FiSearch,
   FiShoppingCart,
   FiUser,
+  FiHeart,
+  FiChevronDown,
 } from "react-icons/fi";
-import { useLocation } from "../contexts/LocationContext";
 import { useAuth } from "./AuthProvider";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useCart } from "@/contexts/CartContext";
 
-const nigerianStates = [
-  "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River",
-  "Delta","Ebonyi","Edo","Ekiti","Enugu","FCT","Gombe","Imo","Jigawa","Kaduna","Kano",
-  "Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun",
-  "Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"
-];
+// --- Sub-Components ---
+
+const HeaderLogo = () => (
+  <Link href={'/'} className="flex-shrink-0">
+    <div className="flex items-center gap-2">
+      <div className="w-7 h-7 flex items-center justify-center border-2 border-white rounded-md">
+         <FiShoppingCart className="w-4 h-4 text-white" />
+      </div>
+      <h1 className="text-lg md:text-xl font-bold tracking-tight">ShopHub</h1>
+    </div>
+  </Link>
+);
+
+const SearchBar = ({ searchQuery, setSearchQuery, isMobile = false }) => (
+  <div className={`relative ${isMobile ? '' : 'flex-1 max-w-xl lg:max-w-2xl mx-4 hidden md:block'}`}>
+    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <FiSearch className="h-4 w-4 text-gray-400" />
+    </div>
+    <input
+      type="text"
+      className="block w-full pl-10 pr-3 py-2.5 bg-gray-100/10 border border-gray-400/30 rounded-full leading-5 text-white placeholder-gray-300 focus:outline-none focus:bg-white/20 focus:border-white/50 text-sm transition-colors"
+      placeholder="Search for products..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+    />
+  </div>
+);
+
+const CurrencySelector = () => (
+  <div className="hidden lg:flex items-center gap-1 text-sm font-medium opacity-90 hover:opacity-100 cursor-pointer px-2">
+    <span>₦ NGN</span>
+  </div>
+);
+
+const WishlistIcon = () => (
+  <button className="relative p-1 hover:bg-white/10 rounded-full transition-colors">
+     <FiHeart className="w-5 h-5 md:w-6 md:h-6" />
+     <span className="sr-only">Wishlist</span>
+  </button>
+);
+
+const CartIcon = () => {
+  const { cartCount } = useCart();
+  
+  return (
+    <button className="relative p-1 hover:bg-white/10 rounded-full transition-colors group">
+      <FiShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+      {cartCount > 0 && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#2E5C45]">
+          {cartCount}
+        </span>
+      )}
+    </button>
+  );
+};
+
+const VerticalDivider = ({ mobileHidden = false }) => (
+  <div className={`${mobileHidden ? 'hidden lg:block' : 'hidden md:block'} h-5 w-px bg-white/30 mx-1`}></div>
+);
+
+const UserMenu = ({ user, signOut }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Close dropdown when clicking outside (simple implementation via conditional rendering overlay or careful event bubbling, 
+  // but for now keeping it simple as per original logic)
+
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2 md:gap-3">
+          <Link href="/login" className="hidden sm:block text-sm font-medium hover:text-white/80 transition-colors">
+              Login
+          </Link>
+          <Link href="/signup" className="px-3 py-1.5 md:px-4 md:py-1.5 bg-white text-[#2E5C45] text-sm font-bold rounded-full hover:bg-gray-100 transition-colors shadow-sm whitespace-nowrap">
+              Sign Up
+          </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 hover:bg-white/10 px-2 py-1.5 rounded-lg transition-colors"
+      >
+        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+           <FiUser className="w-4 h-4" />
+        </div>
+        <div className="hidden lg:flex flex-col items-start -space-y-0.5">
+            <span className="text-xs md:text-sm font-medium leading-none">Account</span>  
+        </div>
+        <FiChevronDown className="hidden md:block w-3 h-3 text-white/70" />
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop to close dropdown */}
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          
+          <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 border border-gray-200 rounded-lg shadow-xl z-50 py-1 max-h-[80vh] overflow-y-auto">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user.user_metadata?.full_name || 'User'}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+            </div>
+            <Link href="/profile">
+              <span 
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Profile
+              </span>
+            </Link>
+            <Link href="/orders">
+              <span 
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                onClick={() => setIsOpen(false)}
+              >
+                Orders
+              </span>
+            </Link>
+            <button
+              onClick={async () => {
+                await signOut();
+                setIsOpen(false);
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            >
+              Sign out
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// --- Main Component ---
 
 const Header = () => {
-  const { selectedState, setSelectedState } = useLocation();
   const { user, signOut } = useAuth();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
 
-  // Hide header on login and signup pages
+  // Hide header on auth pages
   if (pathname === '/login' || pathname === '/signup') {
     return null;
   }
 
-  const categories = [
-    { name: "Women", active: true },
-    { name: "Men", active: false },
-    { name: "Kids", active: false },
-  ];
-
-  const handleLogout = async () => {
-    await signOut();
-    setProfileDropdownOpen(false);
-  };
-
   return (
-    <header className="bg-background border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <Link href={'/'}>
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">ShopHub</h1>
-          </Link>
-          <div className="flex items-center gap-4">
-            {/* Location Dropdown */}
-            <div className="relative hidden sm:flex items-center gap-1 text-gray-600">
-              <button
-                onClick={() => setLocationDropdownOpen(!locationDropdownOpen)}
-                className="flex items-center gap-1"
-              >
-                <FiMapPin className="w-4 h-4" />
-                <span className="text-sm">{selectedState || "Select Location"}</span>
-                <FiChevronDown className="w-4 h-4" />
-              </button>
+    <header className="bg-[#2E5C45] text-white sticky top-0 z-50 shadow-md">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex items-center justify-between gap-4 lg:gap-8">
+          
+          <HeaderLogo />
 
-              {locationDropdownOpen && (
-                <div className="absolute top-8 left-0 bg-background border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-48">
-                  {nigerianStates.map((state) => (
-                    <button
-                      key={state}
-                      onClick={() => {
-                        setSelectedState(state);
-                        setLocationDropdownOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-background-alt"
-                    >
-                      {state}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
-            {/* Cart */}
-            <button className="relative p-2 hover:bg-background-alt rounded-lg">
-              <FiShoppingCart className="w-6 h-6 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                3
-              </span>
-            </button>
-
-            {/* Profile */}
-            <div className="relative">
-              {user ? (
-                <>
-                  <button
-                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                    className="flex items-center gap-2 p-2 hover:bg-background-alt rounded-lg"
-                  >
-                    <FiUser className="w-6 h-6 text-gray-700" />
-                    <span className="hidden sm:block text-gray-700 font-medium">
-                      {user.user_metadata?.full_name?.split(' ')[0] || 'Account'}
-                    </span>
-                    <FiChevronDown className="w-4 h-4 text-gray-500" />
-                  </button>
-
-                  {profileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-40 bg-background border border-gray-200 rounded-lg shadow-lg z-50">
-                      <Link href={'/profile'}> <button className="w-full text-left px-4 py-2 hover:bg-background-alt">Profile</button></Link>
-                      <button className="w-full text-left px-4 py-2 hover:bg-background-alt">Orders</button>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 hover:bg-background-alt text-red-600"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Link href="/login" className="text-gray-700 hover:text-gray-900 font-medium">
-                    Login
-                  </Link>
-                  <Link href="/signup" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    Sign Up
-                  </Link>
-                </div>
-              )}
-            </div>
+          {/* Actions */}
+          <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
+            <CurrencySelector />
+            <VerticalDivider mobileHidden />
+            
+            <WishlistIcon />
+            <VerticalDivider />
+            
+            <CartIcon />
+            <VerticalDivider />
+            
+            <UserMenu user={user} signOut={signOut} />
           </div>
         </div>
-    
+        
+        {/* Mobile Search */}
+        <div className="mt-3 md:hidden">
+            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} isMobile />
+        </div>
       </div>
     </header>
   );

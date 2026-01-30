@@ -3,11 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiTwitter, FiInstagram, FiFacebook } from 'react-icons/fi';
-import { FaGoogle, FaFacebookF, FaCcVisa, FaCcMastercard } from 'react-icons/fa';
-import { BiLogoFlutter } from 'react-icons/bi'; 
-import { SiJamstack } from 'react-icons/si';
+import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
+import AuthFooter from '@/components/AuthFooter';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,15 +45,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      {/* Background with different images for mobile/desktop */}
-      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat 
-                      bg-[url('/bg.jpeg')] md:bg-[url('/bg_big.jpeg')]"></div>
-      
-      {/* Black overlay - only visible on md and above */}
-      <div className="absolute inset-0 hidden md:block bg-black/20"></div>
-      
-      <main className="relative flex-1 flex flex-col items-center justify-center px-4 py-8 z-10 w-full max-w-2xl mx-auto">
+    <div 
+      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat bg-[url('/bg.jpeg')] md:bg-[url('/bg_big.jpeg')] md:bg-black/20"
+    >
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 z-10 w-full max-w-2xl mx-auto">
         {/* Logo Section */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
@@ -160,32 +154,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Section */}
-        <div className="mt-12 text-center space-y-4 w-full max-w-2xl">
-          <p className="text-gray-600 font-medium">Naija Friendly • Secure & Safe</p>
-          
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
-             <Link href="#" className="hover:text-gray-800">Privacy Policy</Link>
-             <span>|</span>
-             <Link href="#" className="hover:text-gray-800">Terms of Service</Link>
-          </div>
-
-          {/* Social Icons */}
-          <div className="flex items-center justify-center gap-4 text-gray-700">
-             <a href="#" className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors"><FiInstagram className="w-6 h-6" /></a>
-             <a href="#" className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors"><FiTwitter className="w-6 h-6" /></a>
-             <a href="#" className="p-2 bg-white/50 rounded-full hover:bg-white transition-colors"><FiFacebook className="w-6 h-6" /></a>
-          </div>
-
-          {/* Payment Icons (Placeholders using React Icons) */}
-          <div className="flex items-center justify-center gap-4 text-gray-500 opacity-70 grayscale hover:grayscale-0 transition-all">
-             <div className="flex items-center gap-1"><SiJamstack className="w-4 h-4" /><span className="text-xs font-bold">Paystack</span></div>
-             <div className="flex items-center gap-1"><BiLogoFlutter className="w-4 h-4" /><span className="text-xs font-bold">Flutterwave</span></div>
-             <FaCcVisa className="w-6 h-6" />
-             <FaCcMastercard className="w-6 h-6" />
-          </div>
-
-          <p className="text-xs text-gray-500 mt-6">© 2024 ShopHub. All Rights Reserved.</p>
-        </div>
+        <AuthFooter />
       </main>
     </div>
   );

@@ -1,9 +1,9 @@
 // app/api/products/[id]/route.js
-import { createSupabaseServerClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request, { params }) {
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createClient();
     const { id } = params;
 
     // Fetch product with related categories

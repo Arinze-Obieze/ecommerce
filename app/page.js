@@ -1,6 +1,9 @@
 "use client";
 
-import ShopHub from "@/components/shop";
+import Hero from "@/components/Hero";
+import FeaturedCategories from "@/components/FeaturedCategories";
+import NewArrivals from "@/components/NewArrivals";
+import PromotionalBanners from "@/components/PromotionalBanners";
 
 
 
@@ -8,9 +11,11 @@ import ShopHub from "@/components/shop";
 export default function Home() {
  
   return (
-
     <>
-<ShopHub/>
+      <Hero />
+      <FeaturedCategories />
+      <NewArrivals />
+      <PromotionalBanners />
     </>
   );
 }

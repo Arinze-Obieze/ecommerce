@@ -1,5 +1,5 @@
 // app/api/products/route.js
-import { createSupabaseServerClient } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 
 // Constants
 const DEFAULT_LIMIT = 24  // Good for grids (6x4, 4x6, 8x3)
@@ -8,7 +8,7 @@ const MAX_PAGE_SIZE = 10  // Max page buttons to show
 
 export async function GET(request) {
   try {
-    const supabase = await createSupabaseServerClient()
+    const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const url = new URL(request.url)
     
@@ -30,6 +30,8 @@ export async function GET(request) {
     const search = searchParams.get('search')
     const sizesParam = searchParams.get('sizes')
     const colorsParam = searchParams.get('colors')
+    const featured = searchParams.get('featured')
+    const hasDiscount = searchParams.get('hasDiscount')
     
     const sizes = sizesParam ? sizesParam.split(',').filter(Boolean) : []
     const colors = colorsParam ? colorsParam.split(',').filter(Boolean) : []
@@ -95,6 +97,16 @@ export async function GET(request) {
       query = query.or(
         `name.ilike.%${search}%,description.ilike.%${search}%`
       )
+    }
+
+    // Apply featured filter
+    if (featured === 'true') {
+      query = query.eq('is_featured', true)
+    }
+
+    // Apply discount filter
+    if (hasDiscount === 'true') {
+      query = query.not('discount_price', 'is', null)
     }
     
     // Apply sorting
