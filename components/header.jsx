@@ -57,14 +57,16 @@ const CartIcon = () => {
   const { cartCount } = useCart();
   
   return (
-    <button className="relative p-1 hover:bg-white/10 rounded-full transition-colors group">
-      <FiShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-      {cartCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#2E5C45]">
-          {cartCount}
-        </span>
-      )}
-    </button>
+    <Link href="/cart">
+      <button className="relative p-1 hover:bg-white/10 rounded-full transition-colors group">
+        <FiShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+        {cartCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#2E5C45]">
+            {cartCount}
+          </span>
+        )}
+      </button>
+    </Link>
   );
 };
 
@@ -74,22 +76,6 @@ const VerticalDivider = ({ mobileHidden = false }) => (
 
 const UserMenu = ({ user, signOut }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Close dropdown when clicking outside (simple implementation via conditional rendering overlay or careful event bubbling, 
-  // but for now keeping it simple as per original logic)
-
-  if (!user) {
-    return (
-      <div className="flex items-center gap-2 md:gap-3">
-          <Link href="/login" className="hidden sm:block text-sm font-medium hover:text-white/80 transition-colors">
-              Login
-          </Link>
-          <Link href="/signup" className="px-3 py-1.5 md:px-4 md:py-1.5 bg-white text-[#2E5C45] text-sm font-bold rounded-full hover:bg-gray-100 transition-colors shadow-sm whitespace-nowrap">
-              Sign Up
-          </Link>
-      </div>
-    );
-  }
 
   return (
     <div className="relative">
@@ -112,37 +98,61 @@ const UserMenu = ({ user, signOut }) => {
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           
           <div className="absolute right-0 mt-2 w-48 bg-white text-gray-800 border border-gray-200 rounded-lg shadow-xl z-50 py-1 max-h-[80vh] overflow-y-auto">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user.user_metadata?.full_name || 'User'}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
-            </div>
-            <Link href="/profile">
-              <span 
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                onClick={() => setIsOpen(false)}
-              >
-                Profile
-              </span>
-            </Link>
-            <Link href="/orders">
-              <span 
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                onClick={() => setIsOpen(false)}
-              >
-                Orders
-              </span>
-            </Link>
-            <button
-              onClick={async () => {
-                await signOut();
-                setIsOpen(false);
-              }}
-              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-            >
-              Sign out
-            </button>
+            {user ? (
+              <>
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.user_metadata?.full_name || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                </div>
+                <Link href="/profile">
+                  <span 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Profile
+                  </span>
+                </Link>
+                <Link href="/orders">
+                  <span 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Orders
+                  </span>
+                </Link>
+                <div className="border-t border-gray-100 my-1"></div>
+                <button
+                  onClick={async () => {
+                    await signOut();
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <span 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Login
+                  </span>
+                </Link>
+                <Link href="/signup">
+                  <span 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Register
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
         </>
       )}

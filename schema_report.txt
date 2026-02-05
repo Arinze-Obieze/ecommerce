@@ -1,0 +1,34 @@
+--- Inspecting Database Schema ---
+Using Key: sb_secret_... (Service Role: true)
+Could not list tables dynamically: Could not find the table 'public.information_schema.tables' in the schema cache
+
+Table: [products]
+Columns (14): id, created_at, name, price, description, stock_quantity, gender_target, image_urls, video_urls, is_featured, is_active, rating, discount_price, slug
+Sample Row: {"id":1,"created_at":"2026-02-05T02:26:36.274801+00:00","name":"Classic Linen Shirt","price":45000,"description":"Breathable linen shirt perfect for summer.","stock_quantity":50,"gender_target":null,"image_urls":["https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=600&h=800"],"video_urls":null,"is_featured":true,"is_active":true,"rating":5,"discount_price":38000,"slug":"classic-linen-shirt"}
+
+Table: [categories]
+Columns (11): id, created_at, name, slug, description, parent_id, image_url, display_order, is_active, meta_title, meta_description
+Sample Row: {"id":1,"created_at":"2026-02-05T02:26:36.274801+00:00","name":"Clothing","slug":"clothing","description":null,"parent_id":null,"image_url":null,"display_order":1,"is_active":true,"meta_title":null,"meta_description":null}
+
+Table: [product_categories]
+Columns (5): id, product_id, category_id, created_at, is_primary
+Sample Row: {"id":12,"product_id":1,"category_id":1,"created_at":"2026-02-05T02:26:36.274801+00:00","is_primary":true}
+
+Table: [collections]
+Columns (8): id, created_at, name, slug, description, image_url, is_active, display_order
+Sample Row: {"id":1,"created_at":"2026-02-05T02:26:36.274801+00:00","name":"Best Sellers","slug":"best-sellers","description":"Our most popular items derived from sales data.","image_url":null,"is_active":true,"display_order":1}
+
+Table: [product_collections]
+Columns (5): id, created_at, product_id, collection_id, display_order
+Sample Row: {"id":12,"created_at":"2026-02-05T02:26:36.274801+00:00","product_id":1,"collection_id":1,"display_order":0}
+
+Table: [users]
+Columns (7): id, created_at, full_name, email, phone, state, avatar
+Sample Row: {"id":"bb791bd2-be3d-4b5c-9902-57dd4ce73303","created_at":"2025-12-04T22:38:44.174212+00:00","full_name":"Arinze king","email":"xboss000000@gmail.com","phone":"09161597308","state":"xboss000000@gmail.com","avatar":null}
+Error accessing 'profiles': Could not find the table 'public.profiles' in the schema cache (PGRST205)
+Error accessing 'orders': Could not find the table 'public.orders' in the schema cache (PGRST205)
+Error accessing 'order_items': Could not find the table 'public.order_items' in the schema cache (PGRST205)
+Error accessing 'cart': Could not find the table 'public.cart' in the schema cache (PGRST205)
+Error accessing 'reviews': Could not find the table 'public.reviews' in the schema cache (PGRST205)
+Error accessing 'wishlist': Could not find the table 'public.wishlist' in the schema cache (PGRST205)
+Error accessing 'addresses': Could not find the table 'public.addresses' in the schema cache (PGRST205)

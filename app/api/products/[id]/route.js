@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 export async function GET(request, { params }) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
     // Fetch product with related categories
     const { data: product, error } = await supabase

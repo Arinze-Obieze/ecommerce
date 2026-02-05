@@ -1,3 +1,4 @@
+"use client"
 import { useState } from 'react';
 import Link from 'next/link';
 import { FiShoppingBag, FiStar, FiChevronRight } from 'react-icons/fi';

@@ -53,6 +53,7 @@ export async function GET(request) {
         .single()
       
       if (categoryData) {
+        // ... (existing category logic)
         const { data: productIds } = await supabase
           .from('product_categories')
           .select('product_id')
@@ -62,7 +63,30 @@ export async function GET(request) {
         if (ids.length > 0) {
           query = query.in('id', ids)
         } else {
-          // Return empty if category has no products
+          query = query.eq('id', -1)
+        }
+      }
+    }
+
+    // Apply collection filter
+    const collection = searchParams.get('collection')
+    if (collection) {
+      const { data: collectionData } = await supabase
+        .from('collections')
+        .select('id')
+        .eq('slug', collection)
+        .single()
+      
+      if (collectionData) {
+        const { data: productIds } = await supabase
+          .from('product_collections')
+          .select('product_id')
+          .eq('collection_id', collectionData.id)
+        
+        const ids = productIds?.map(p => p.product_id) || []
+        if (ids.length > 0) {
+          query = query.in('id', ids)
+        } else {
           query = query.eq('id', -1)
         }
       }
@@ -183,6 +207,7 @@ export async function GET(request) {
         },
         filters: {
           category,
+          collection,
           minPrice,
           maxPrice,
           sortBy,

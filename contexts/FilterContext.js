@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 // Create the context
 const FilterContext = createContext();
@@ -89,6 +89,7 @@ function FilterLoadingFallback() {
 function FilterProviderContent({ children }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   
   const [filters, setFilters] = useState(initialFilters);
   const [categories, setCategories] = useState([]);
@@ -170,33 +171,31 @@ function FilterProviderContent({ children }) {
   }, [filters.category]);
 
   // Sync filters to URL params
-  const updateFilters = useCallback((newFilters) => {
-    setFilters((prevFilters) => {
-      const updatedFilters = { ...prevFilters, ...newFilters };
+  const updateFilters = useCallback((partialFilters) => {
+    // Merge with current state
+    const updatedFilters = { ...filters, ...partialFilters };
+    
+    // 1. Update State
+    setFilters(updatedFilters);
 
-      // Build query params
-      const params = new URLSearchParams();
-      if (updatedFilters.search) params.set('search', updatedFilters.search);
-      if (updatedFilters.category && updatedFilters.category !== 'all') params.set('category', updatedFilters.category);
-      if (updatedFilters.minPrice) params.set('minPrice', updatedFilters.minPrice.toString());
-      if (updatedFilters.maxPrice) params.set('maxPrice', updatedFilters.maxPrice.toString());
-      if (updatedFilters.sizes.length) params.set('sizes', updatedFilters.sizes.join(','));
-      if (updatedFilters.colors.length) params.set('colors', updatedFilters.colors.join(','));
-      if (updatedFilters.sortBy !== 'newest') params.set('sortBy', updatedFilters.sortBy);
-      if (updatedFilters.page > 1) params.set('page', updatedFilters.page.toString());
-      if (updatedFilters.inStock) params.set('inStock', 'true');
-      if (updatedFilters.onSale) params.set('onSale', 'true');
+    // 2. Update URL
+    const params = new URLSearchParams();
+    if (updatedFilters.search) params.set('search', updatedFilters.search);
+    if (updatedFilters.category && updatedFilters.category !== 'all') params.set('category', updatedFilters.category);
+    if (updatedFilters.minPrice) params.set('minPrice', updatedFilters.minPrice.toString());
+    if (updatedFilters.maxPrice) params.set('maxPrice', updatedFilters.maxPrice.toString());
+    if (updatedFilters.sizes.length) params.set('sizes', updatedFilters.sizes.join(','));
+    if (updatedFilters.colors.length) params.set('colors', updatedFilters.colors.join(','));
+    if (updatedFilters.sortBy !== 'newest') params.set('sortBy', updatedFilters.sortBy);
+    if (updatedFilters.page > 1) params.set('page', updatedFilters.page.toString());
+    if (updatedFilters.inStock) params.set('inStock', 'true');
+    if (updatedFilters.onSale) params.set('onSale', 'true');
 
-      // Update URL without page reload
-      const queryString = params.toString();
-      const newUrl = queryString ? `?${queryString}` : '/';
-      
-      // Used replace instead of push to avoid adding to history stack for filter changes
-      router.replace(newUrl, { scroll: false });
-
-      return updatedFilters;
-    });
-  }, [router]);
+    const queryString = params.toString();
+    const newUrl = `${pathname}${queryString ? `?${queryString}` : ''}`;
+    
+    router.replace(newUrl, { scroll: false });
+  }, [filters, router, pathname]);
 
   // Helper functions
   const setSearch = useCallback((search) => {

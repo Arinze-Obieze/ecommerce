@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { FiCheck } from 'react-icons/fi';
+import { useToast } from '@/contexts/ToastContext';
 
 const CartContext = createContext();
 
@@ -10,7 +10,7 @@ export function useCart() {
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
-  const [toast, setToast] = useState({ show: false, message: '' });
+  const { success, error } = useToast();
 
   // Load from local storage on mount
   useEffect(() => {
@@ -34,46 +34,47 @@ export function CartProvider({ children }) {
       const existing = prevCart.find((p) => p.id === product.id);
       if (existing) {
         return prevCart.map((p) =>
-          p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
+          p.id === product.id ? { ...p, quantity: p.quantity + (product.quantity || 1) } : p
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      return [...prevCart, { ...product, quantity: product.quantity || 1 }];
     });
 
-    showToast(`Added ${product.name} to cart`);
+    success(`Added ${product.name} to cart`);
   };
 
   const removeFromCart = (productId) => {
-    setCart((prevCart) => prevCart.filter((p) => p.id !== productId));
+    setCart((prevCart) => {
+        const newCart = prevCart.filter((p) => p.id !== productId);
+        localStorage.setItem('cart', JSON.stringify(newCart));
+        return newCart;
+    });
+    // Optional: info or error toast for removal? 
+    // success('Removed from cart'); 
   };
 
-  const showToast = (message) => {
-    setToast({ show: true, message });
-    setTimeout(() => {
-      setToast({ show: false, message: '' });
-    }, 3000);
+  const updateQuantity = (productId, amount) => {
+    setCart((prevCart) => {
+        return prevCart.map(item => {
+            if (item.id === productId) {
+                const newQuantity = Math.max(1, item.quantity + amount);
+                return { ...item, quantity: newQuantity };
+            }
+            return item;
+        });
+    });
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    localStorage.removeItem('cart');
   };
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, cartCount }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount }}>
       {children}
-      
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed bottom-8 right-8 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-[#2E5C45] text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3">
-            <div className="bg-white/20 p-1 rounded-full">
-              <FiCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Success</p>
-              <p className="text-xs text-white/90">{toast.message}</p>
-            </div>
-          </div>
-        </div>
-      )}
     </CartContext.Provider>
   );
 }
