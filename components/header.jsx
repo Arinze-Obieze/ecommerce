@@ -11,6 +11,9 @@ import { useAuth } from "./AuthProvider";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/contexts/ToastContext";
 
 // --- Sub-Components ---
 
@@ -46,12 +49,36 @@ const CurrencySelector = () => (
   </div>
 );
 
-const WishlistIcon = () => (
-  <button className="relative p-1 hover:bg-white/10 rounded-full transition-colors">
-     <FiHeart className="w-5 h-5 md:w-6 md:h-6" />
-     <span className="sr-only">Wishlist</span>
-  </button>
-);
+const WishlistIcon = () => {
+  const { wishlistItems } = useWishlist();
+  const { user } = useAuth();
+  const router = useRouter();
+  const { error } = useToast();
+
+  const handleClick = () => {
+    if (!user) {
+      // router.push("/login?redirect=/wishlist"); // Optional: handle redirect param
+      router.push("/login");
+    } else {
+      router.push("/wishlist");
+    }
+  };
+
+  return (
+    <button 
+      onClick={handleClick}
+      className="relative p-1 hover:bg-white/10 rounded-full transition-colors"
+    >
+       <FiHeart className="w-5 h-5 md:w-6 md:h-6" />
+       {wishlistItems.size > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#2E5C45]">
+            {wishlistItems.size}
+          </span>
+       )}
+       <span className="sr-only">Wishlist</span>
+    </button>
+  );
+};
 
 const CartIcon = () => {
   const { cartCount } = useCart();

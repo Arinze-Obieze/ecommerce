@@ -35,7 +35,7 @@ const AuthFooter = () => {
       </div>
 
       <div className="flex justify-center mt-6">
-         <p className="inline-block bg-[#2E5C45] text-white px-6 py-2 rounded-full shadow-md text-xs">© 2024 ShopHub. All Rights Reserved.</p>
+
       </div>
     </div>
   );

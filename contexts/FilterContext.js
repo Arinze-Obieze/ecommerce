@@ -10,6 +10,7 @@ const FilterContext = createContext();
 const initialFilters = {
   search: '',
   category: 'all',
+  collection: '', // Added collection
   minPrice: null,
   maxPrice: null,
   sizes: [],
@@ -93,6 +94,8 @@ function FilterProviderContent({ children }) {
   
   const [filters, setFilters] = useState(initialFilters);
   const [categories, setCategories] = useState([]);
+  const [hierarchicalCategories, setHierarchicalCategories] = useState([]); // Added hierarchical state
+  const [collections, setCollections] = useState([]); // Added collections state
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [availableFilters, setAvailableFilters] = useState({
     sizes: [],
@@ -113,10 +116,12 @@ function FilterProviderContent({ children }) {
     const page = parseInt(searchParams.get('page') || '1');
     const inStock = searchParams.get('inStock') === 'true';
     const onSale = searchParams.get('onSale') === 'true';
+    const collection = searchParams.get('collection') || '';
 
     setFilters({
       search,
       category,
+      collection,
       minPrice,
       maxPrice,
       sizes,
@@ -128,24 +133,38 @@ function FilterProviderContent({ children }) {
     });
   }, [searchParams]);
 
-  // Fetch categories on mount
+  // Fetch categories and collections on mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         setCategoriesLoading(true);
-        const res = await fetch('/api/categories');
-        const data = await res.json();
-        if (data.success) {
-          setCategories(data.data);
+        
+        // Fetch Categories
+        const catRes = await fetch('/api/categories');
+        const catData = await catRes.json();
+        if (catData.success) {
+          setCategories(catData.data);
+          // Assuming API returns 'hierarchical' key as well, or we build it here.
+          // The current API route actually returns 'hierarchical' in the response!
+          if (catData.hierarchical) {
+            setHierarchicalCategories(catData.hierarchical);
+          }
+        }
+
+        // Fetch Collections
+        const colRes = await fetch('/api/collections');
+        const colData = await colRes.json();
+        if (colData.success) {
+          setCollections(colData.data);
         }
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
+        console.error('Failed to fetch filter data:', error);
       } finally {
         setCategoriesLoading(false);
       }
     };
 
-    fetchCategories();
+    fetchData();
   }, []);
 
   // Fetch available filters (sizes, colors, brands) based on current filters
@@ -182,6 +201,7 @@ function FilterProviderContent({ children }) {
     const params = new URLSearchParams();
     if (updatedFilters.search) params.set('search', updatedFilters.search);
     if (updatedFilters.category && updatedFilters.category !== 'all') params.set('category', updatedFilters.category);
+    if (updatedFilters.collection) params.set('collection', updatedFilters.collection); // Add collection
     if (updatedFilters.minPrice) params.set('minPrice', updatedFilters.minPrice.toString());
     if (updatedFilters.maxPrice) params.set('maxPrice', updatedFilters.maxPrice.toString());
     if (updatedFilters.sizes.length) params.set('sizes', updatedFilters.sizes.join(','));
@@ -194,8 +214,14 @@ function FilterProviderContent({ children }) {
     const queryString = params.toString();
     const newUrl = `${pathname}${queryString ? `?${queryString}` : ''}`;
     
-    router.replace(newUrl, { scroll: false });
-  }, [filters, router, pathname]);
+    // Check if URL actually changed to prevent loops/redundant pushes
+    const currentQuery = searchParams.toString();
+    const currentUrl = `${pathname}${currentQuery ? `?${currentQuery}` : ''}`;
+
+    if (newUrl !== currentUrl) {
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [filters, router, pathname, searchParams]);
 
   // Helper functions
   const setSearch = useCallback((search) => {
@@ -205,6 +231,11 @@ function FilterProviderContent({ children }) {
   const setCategory = useCallback((category) => {
     updateFilters({ category, page: 1 });
   }, [updateFilters]);
+
+  const setCollection = useCallback((collection) => {
+    updateFilters({ collection, page: 1 });
+  }, [updateFilters]);
+
 
   const setPriceRange = useCallback((minPrice, maxPrice) => {
     updateFilters({ minPrice, maxPrice, page: 1 });
@@ -244,6 +275,7 @@ function FilterProviderContent({ children }) {
     updateFilters({
       search: '',
       category: 'all',
+      collection: '',
       minPrice: null,
       maxPrice: null,
       sizes: [],
@@ -259,6 +291,7 @@ function FilterProviderContent({ children }) {
     return (
       filters.search ||
       (filters.category && filters.category !== 'all') ||
+      filters.collection ||
       filters.minPrice ||
       filters.maxPrice ||
       filters.sizes.length > 0 ||
@@ -279,6 +312,11 @@ function FilterProviderContent({ children }) {
     if (filters.category && filters.category !== 'all') {
       const categoryName = categories.find(c => c.slug === filters.category)?.name || filters.category;
       summary.push(`Category: ${categoryName}`);
+    }
+
+    if (filters.collection) {
+      const collectionName = collections.find(c => c.slug === filters.collection)?.name || filters.collection;
+      summary.push(`Collection: ${collectionName}`);
     }
     
     if (filters.minPrice || filters.maxPrice) {
@@ -305,12 +343,14 @@ function FilterProviderContent({ children }) {
     }
     
     return summary;
-  }, [filters, categories]);
+  }, [filters, categories, collections]);
 
   const value = {
     // State
     filters,
     categories,
+    hierarchicalCategories, // Exposed
+    collections, // Added
     categoriesLoading,
     availableFilters,
     
@@ -318,6 +358,7 @@ function FilterProviderContent({ children }) {
     updateFilters,
     setSearch,
     setCategory,
+    setCollection, // Added
     setPriceRange,
     toggleSize,
     toggleColor,
@@ -336,6 +377,7 @@ function FilterProviderContent({ children }) {
     activeFilterCount: [
       filters.search ? 1 : 0,
       filters.category && filters.category !== 'all' ? 1 : 0,
+      filters.collection ? 1 : 0,
       filters.minPrice ? 1 : 0,
       filters.maxPrice ? 1 : 0,
       filters.sizes.length,

@@ -32,6 +32,7 @@ export async function GET(request) {
     const colorsParam = searchParams.get('colors')
     const featured = searchParams.get('featured')
     const hasDiscount = searchParams.get('hasDiscount')
+    const idsParam = searchParams.get('ids')
     
     const sizes = sizesParam ? sizesParam.split(',').filter(Boolean) : []
     const colors = colorsParam ? colorsParam.split(',').filter(Boolean) : []
@@ -53,11 +54,36 @@ export async function GET(request) {
         .single()
       
       if (categoryData) {
-        // ... (existing category logic)
+        // Recursive fetch for descendant categories to support branch filtering
+        // Supabase recursive queries (CTE) require rpc or raw sql, but we can do a simpler
+        // approach if depth is limited (3 levels) or just fetch all categories once.
+        
+        // Better yet: Get all categories flat, find descendants in JS, then filter products.
+        // OR: use the 'product_categories' junction.
+        
+        // Simple optimization: Get the category and all its children.
+        const { data: allCats } = await supabase
+            .from('categories')
+            .select('id, parent_id')
+            .eq('is_active', true);
+            
+        // Helper to find all descendants
+        const getDescendants = (parentId) => {
+            let children = allCats.filter(c => c.parent_id === parentId);
+            let descendants = [...children];
+            children.forEach(child => {
+                descendants = [...descendants, ...getDescendants(child.id)];
+            });
+            return descendants;
+        };
+
+        const descendants = getDescendants(categoryData.id);
+        const categoryIds = [categoryData.id, ...descendants.map(c => c.id)];
+
         const { data: productIds } = await supabase
           .from('product_categories')
           .select('product_id')
-          .eq('category_id', categoryData.id)
+          .in('category_id', categoryIds)
         
         const ids = productIds?.map(p => p.product_id) || []
         if (ids.length > 0) {
@@ -131,6 +157,14 @@ export async function GET(request) {
     // Apply discount filter
     if (hasDiscount === 'true') {
       query = query.not('discount_price', 'is', null)
+    }
+
+    // Apply IDs filter
+    if (idsParam) {
+      const ids = idsParam.split(',').filter(Boolean)
+      if (ids.length > 0) {
+        query = query.in('id', ids)
+      }
     }
     
     // Apply sorting
