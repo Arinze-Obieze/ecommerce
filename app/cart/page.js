@@ -3,9 +3,13 @@ import React from 'react';
 import Link from 'next/link';
 import { FiTrash2, FiMinus, FiPlus, FiArrowLeft, FiShoppingBag, FiArrowRight } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
+  const router = useRouter();
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const [isCheckingOut, setIsCheckingOut] = React.useState(false);
 
   // Calculate totals
   const subtotal = cart.reduce((total, item) => {
@@ -15,6 +19,45 @@ export default function CartPage() {
   
   const shipping = subtotal > 50000 ? 0 : 2500; // Free shipping over 50k logic example
   const total = subtotal + shipping;
+
+  const handleCheckout = async () => {
+    setIsCheckingOut(true);
+    try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const res = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: cart.map(item => ({
+                    product_id: item.id,
+                    quantity: item.quantity,
+                    price: item.discount_price || item.price,
+                    slug: item.slug
+                })),
+                userId: user?.id,
+                total: total
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || 'Checkout failed');
+        }
+
+        clearCart();
+        alert('Order placed successfully! Order ID: ' + data.orderId);
+        router.push('/'); // Or to an order confirmation page
+
+    } catch (error) {
+        console.error('Checkout error:', error);
+        alert(error.message);
+    } finally {
+        setIsCheckingOut(false);
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -131,8 +174,16 @@ export default function CartPage() {
                     </div>
                 </div>
 
-                <button className="w-full py-4 bg-[#2E5C45] text-white font-bold rounded-xl hover:bg-[#254a38] transition-all shadow-lg shadow-[#2E5C45]/20 flex items-center justify-center gap-2">
-                    Checkout Now <FiArrowRight />
+                <button 
+                    onClick={handleCheckout}
+                    disabled={isCheckingOut}
+                    className={`w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
+                        isCheckingOut 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-[#2E5C45] hover:bg-[#254a38] shadow-[#2E5C45]/20'
+                    }`}
+                >
+                    {isCheckingOut ? 'Processing...' : 'Checkout Now'} <FiArrowRight />
                 </button>
                 
                 <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">

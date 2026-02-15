@@ -200,7 +200,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-[#2E5C45] text-white sticky top-0 z-50 shadow-md">
+    <header className="bg-[#2E5C45] text-white sticky top-0 z-[100] shadow-md">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4 lg:gap-8">
           

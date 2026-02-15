@@ -22,23 +22,14 @@ export default function ProductPage({ params }) {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const supabase = createClient();
       try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('*, product_categories(categories(*))')
-          .eq('slug', slug)
-          .single();
+        // Fetch from our new API route (which uses Redis)
+        const res = await fetch(`/api/products/${slug}`, { cache: 'no-store' });
+        const data = await res.json();
         
-        if (error) throw error;
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch product');
         
-        // Flatten category for easier access
-        const productData = {
-            ...data,
-            category: data.product_categories?.[0]?.categories
-        };
-
-        setProduct(productData);
+        setProduct(data);
         if (data.sizes?.length) setSelectedSize(data.sizes[0]);
         if (data.colors?.length) setSelectedColor(data.colors[0]);
       } catch (error) {
@@ -48,7 +39,7 @@ export default function ProductPage({ params }) {
       }
     };
 
-    fetchProduct();
+    if (slug) fetchProduct();
   }, [slug]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -204,10 +195,15 @@ export default function ProductPage({ params }) {
                     onClick={() => {
                         addToCart({ ...product, selectedSize, quantity });
                     }}
-                    className="flex-1 bg-[#2E5C45] text-white font-bold py-3 md:py-4 px-8 rounded-full shadow-lg shadow-[#2E5C45]/20 hover:bg-[#254a38] transition-all flex items-center justify-center gap-2"
+                    disabled={product.stock_quantity <= 0}
+                    className={`flex-1 font-bold py-3 md:py-4 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 ${
+                        product.stock_quantity > 0 
+                        ? 'bg-[#2E5C45] text-white hover:bg-[#254a38] shadow-[#2E5C45]/20' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                 >
                     <FiShoppingCart className="w-5 h-5" />
-                    <span>Add to Cart</span>
+                    <span>{product.stock_quantity > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
                 </button>
 
                 {/* Wishlist */}
@@ -217,8 +213,16 @@ export default function ProductPage({ params }) {
             {/* Trust/Info Badges */}
             <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-gray-100 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    In Stock & Ready to Ship
+                    <div className={`w-2 h-2 rounded-full ${product.stock_quantity > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    {product.stock_quantity > 0 
+                        ? (
+                           <span className="font-medium text-green-700">
+                             {product.stock_quantity} units available
+                             {product.stock_quantity < 10 && <span className="text-red-600 ml-1">(Running Low!)</span>}
+                           </span>
+                        )
+                        : <span className="font-medium text-red-600">Currently Out of Stock</span>
+                    }
                 </div>
                 <div className="flex items-center gap-2">
                      <span className="text-lg">🚚</span>

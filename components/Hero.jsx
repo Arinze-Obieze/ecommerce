@@ -84,7 +84,7 @@ const Hero = () => {
   return (
     <div className="w-full bg-[#f8f5f2]">
       {/* Secondary Navigation Strip */}
-      <div className="border-b border-gray-200 bg-white/50 backdrop-blur-sm relative z-50">
+      <div className="border-b border-gray-200 bg-white/50 backdrop-blur-sm relative z-40">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-center gap-8 md:gap-12 overflow-x-auto py-3 no-scrollbar">
             {categories.map((item) => (

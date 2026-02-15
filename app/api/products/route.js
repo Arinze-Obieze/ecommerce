@@ -44,6 +44,7 @@ export async function GET(request) {
         count: 'exact' 
       })
       .eq('is_active', true)
+      .gt('stock_quantity', 0) // Hide out of stock items per user request
     
     // Apply category filter via junction table
     if (category && category !== 'all') {
