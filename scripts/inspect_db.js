@@ -32,7 +32,7 @@ async function inspectSchema() {
     // Note: This often requires permissions adjustments or Service Role key to work via PostgREST
     // if 'information_schema' is not exposed. However, standard Supabase query often works if table is accessible?
     // Actually, usually info schema is not exposed to anon.
-    // Let's try it.
+   
     const { data: tables, error } = await supabase
       .from('information_schema.tables')
       .select('table_name')

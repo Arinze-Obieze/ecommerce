@@ -2,8 +2,14 @@
 import { FiChevronDown } from "react-icons/fi"
 import { useFilters } from "@/contexts/FilterContext"
 
-export default function ShopHeader({ productsLength, totalItems, onMobileFiltersOpen }) {
-  const { filters, setSortBy, searchInput, setSearchInput } = useFilters()
+export default function ShopHeader({
+  productsLength,
+  totalItems,
+  onMobileFiltersOpen,
+  searchInput,
+  setSearchInput,
+}) {
+  const { filters, setSortBy } = useFilters()
 
   return (
     <div className="mb-8">

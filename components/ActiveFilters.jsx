@@ -38,11 +38,11 @@ export default function ActiveFilters() {
         )}
         
         {/* Category filter */}
-        {filters.category && filters.category !== 'all' && (
+        {filters.category && (
           <div className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm">
             <span>Category: {filters.category}</span>
             <button
-              onClick={() => setCategory('all')}
+              onClick={() => setCategory('')}
               className="ml-1 hover:text-blue-900"
             >
               <FiX className="w-4 h-4" />

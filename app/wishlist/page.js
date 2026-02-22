@@ -22,7 +22,7 @@ export default function WishlistPage() {
       setIsLoading(true);
       try {
         const ids = Array.from(wishlistItems).join(',');
-        const res = await fetch(`/api/products?ids=${ids}&limit=100`); // Fetch all wishlist items
+        const res = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`); // Fetch all wishlist items
         const json = await res.json();
         
         if (json.success) {
@@ -72,10 +72,11 @@ export default function WishlistPage() {
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
             <p className="text-gray-500 mb-6">Looks like you haven't saved any items yet.</p>
-            <Link href="/shop">
-              <button className="px-8 py-3 bg-[#2E5C45] text-white rounded-full font-medium hover:bg-[#254a38] transition-colors shadow-lg shadow-[#2E5C45]/20">
-                Start Shopping
-              </button>
+            <Link
+              href="/shop"
+              className="inline-block px-8 py-3 bg-[#2E5C45] text-white rounded-full font-medium hover:bg-[#254a38] transition-colors shadow-lg shadow-[#2E5C45]/20"
+            >
+              Start Shopping
             </Link>
           </div>
         )}

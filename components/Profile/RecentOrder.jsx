@@ -14,7 +14,7 @@ const RecentOrder = () => {
       <section className="bg-white rounded-3xl shadow p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-            <Link href="/orders" className="text-blue-600 font-medium text-sm">
+            <Link href="/profile?tab=orders" className="text-blue-600 font-medium text-sm">
               View all
             </Link>
           </div>
@@ -23,7 +23,7 @@ const RecentOrder = () => {
             {recentOrders.map(order => (
               <Link
                 key={order.id}
-                href={`/orders/${order.id}`}
+                href="/profile?tab=orders"
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50"
               >
                 <div>

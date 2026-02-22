@@ -42,15 +42,16 @@ const PromotionalBanners = () => {
              <div className="absolute inset-0 p-8 flex flex-col justify-center items-start">
                <h3 className="text-3xl md:text-4xl font-bold text-white mb-2">HOT DEALS</h3>
                <p className="text-xl text-white/90 mb-6">UP TO 50% OFF</p>
-               <Link href="/shop?hasDiscount=true">
-                 <button className="px-6 py-2.5 bg-[#2E5C45] text-white font-medium rounded-lg hover:bg-[#254a38] transition-colors shadow-lg">
-                   Shop Deals &gt;
-                 </button>
+               <Link
+                 href="/shop?hasDiscount=true"
+                 className="inline-block px-6 py-2.5 bg-[#2E5C45] text-white font-medium rounded-lg hover:bg-[#254a38] transition-colors shadow-lg"
+               >
+                 Shop Deals &gt;
                </Link>
              </div>
           </div>
 
-          {/* Best Sellers Banner */}
+          {/* Best Stores Banner */}
           <div className="relative rounded-2xl overflow-hidden h-64 md:h-80 group">
              <div className="absolute inset-0 bg-[#f0f4f1]"></div>
              <div className="absolute right-0 bottom-0 top-0 w-1/2 bg-[url('https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center md:mask-gradient-left"></div>
@@ -63,10 +64,11 @@ const PromotionalBanners = () => {
                <Link href="/shop?sortBy=rating" className="flex items-center gap-1 text-gray-700 font-medium mb-6 hover:text-[#2E5C45]">
                   Shop Now <FiChevronRight />
                </Link>
-               <Link href="/shop?sortBy=rating">
-                <button className="px-6 py-2.5 bg-[#2E5C45] text-white font-medium rounded-lg hover:bg-[#254a38] transition-colors shadow-lg">
-                    View All &gt;
-                </button>
+               <Link
+                 href="/shop?sortBy=rating"
+                 className="inline-block px-6 py-2.5 bg-[#2E5C45] text-white font-medium rounded-lg hover:bg-[#254a38] transition-colors shadow-lg"
+               >
+                 View All &gt;
                </Link>
              </div>
           </div>
@@ -101,7 +103,7 @@ const PromotionalBanners = () => {
                     
                     <div className="flex items-end justify-between mt-2">
                         <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                            <FiCheckCircle className="text-[#2E5C45]" /> Verified Seller
+                            <FiCheckCircle className="text-[#2E5C45]" /> Verified Store
                         </div>
                         <button 
                             onClick={(e) => {

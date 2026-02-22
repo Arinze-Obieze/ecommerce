@@ -14,9 +14,9 @@ const ProductCard = ({ product, layout = 'grid' }) => {
 
   return (
     <div className="group h-full flex flex-col bg-white rounded-xl overflow-hidden border border-transparent hover:border-gray-100 hover:shadow-lg transition-all duration-300">
-      <Link href={`/products/${product.slug}`} className="relative block flex-shrink-0">
+      <Link href={`/products/${product.slug}`} className="relative block shrink-0">
         {/* Aspect Ratio Container (3:4) */}
-        <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative">
+        <div className="aspect-3/4 overflow-hidden bg-gray-100 relative">
           <img 
             src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'} 
             alt={product.name}
@@ -64,18 +64,30 @@ const ProductCard = ({ product, layout = 'grid' }) => {
           </div>
         </div>
 
-        {/* Action Button - Pill Shaped */}
-        <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              addToCart(product);
-            }}
-            className="self-end ml-auto px-4 py-2 bg-[#2E5C45] text-white text-xs md:text-sm font-bold rounded-full hover:bg-[#254a38] transition-colors shadow-sm flex items-center justify-center gap-2 group/btn"
-        >
-            <FiShoppingCart className="w-3.5 h-3.5" />
-            <span className="inline">Add to Cart</span>
-        </button>
+        {/* Footer: Store Badge + Add to Cart Button */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Store Badge */}
+          {product.stores && (
+            <Link href={`/store/${product.stores.slug || product.stores.id}`} onClick={(e) => e.stopPropagation()}>
+              <span className="inline-block px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-full line-clamp-1 transition-colors shrink-0">
+                {product.stores.name}
+              </span>
+            </Link>
+          )}
+
+          {/* Action Button - Pill Shaped */}
+          <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addToCart(product);
+              }}
+              className="px-3 py-2 bg-[#2E5C45] text-white text-xs md:text-sm font-bold rounded-full hover:bg-[#254a38] transition-colors shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+          >
+              <FiShoppingCart className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Add</span>
+          </button>
+        </div>
       </div>
     </div>
   );

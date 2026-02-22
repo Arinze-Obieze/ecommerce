@@ -9,7 +9,7 @@ const FilterContext = createContext();
 // Initial filter state
 const initialFilters = {
   search: '',
-  category: 'all',
+  category: '',
   collection: '', // Added collection
   minPrice: null,
   maxPrice: null,
@@ -93,6 +93,7 @@ function FilterProviderContent({ children }) {
   const pathname = usePathname();
   
   const [filters, setFilters] = useState(initialFilters);
+  const [filtersReady, setFiltersReady] = useState(false);
   const [categories, setCategories] = useState([]);
   const [hierarchicalCategories, setHierarchicalCategories] = useState([]); // Added hierarchical state
   const [collections, setCollections] = useState([]); // Added collections state
@@ -107,7 +108,8 @@ function FilterProviderContent({ children }) {
   // Initialize filters from URL params on mount
   useEffect(() => {
     const search = searchParams.get('search') || '';
-    const category = searchParams.get('category') || 'all';
+    const categoryParam = searchParams.get('category') || '';
+    const category = categoryParam === 'all' ? '' : categoryParam;
     const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')) : null;
     const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')) : null;
     const sizes = searchParams.get('sizes') ? searchParams.get('sizes').split(',') : [];
@@ -131,6 +133,7 @@ function FilterProviderContent({ children }) {
       inStock,
       onSale,
     });
+    setFiltersReady(true);
   }, [searchParams]);
 
   // Fetch categories and collections on mount
@@ -172,7 +175,7 @@ function FilterProviderContent({ children }) {
     const fetchAvailableFilters = async () => {
       try {
         const params = new URLSearchParams();
-        if (filters.category && filters.category !== 'all') {
+        if (filters.category) {
           params.set('category', filters.category);
         }
         
@@ -200,7 +203,7 @@ function FilterProviderContent({ children }) {
     // 2. Update URL
     const params = new URLSearchParams();
     if (updatedFilters.search) params.set('search', updatedFilters.search);
-    if (updatedFilters.category && updatedFilters.category !== 'all') params.set('category', updatedFilters.category);
+    if (updatedFilters.category) params.set('category', updatedFilters.category);
     if (updatedFilters.collection) params.set('collection', updatedFilters.collection); // Add collection
     if (updatedFilters.minPrice) params.set('minPrice', updatedFilters.minPrice.toString());
     if (updatedFilters.maxPrice) params.set('maxPrice', updatedFilters.maxPrice.toString());
@@ -274,7 +277,7 @@ function FilterProviderContent({ children }) {
   const clearAllFilters = useCallback(() => {
     updateFilters({
       search: '',
-      category: 'all',
+      category: '',
       collection: '',
       minPrice: null,
       maxPrice: null,
@@ -290,7 +293,7 @@ function FilterProviderContent({ children }) {
   const hasActiveFilters = useCallback(() => {
     return (
       filters.search ||
-      (filters.category && filters.category !== 'all') ||
+      filters.category ||
       filters.collection ||
       filters.minPrice ||
       filters.maxPrice ||
@@ -309,7 +312,7 @@ function FilterProviderContent({ children }) {
       summary.push(`Search: "${filters.search}"`);
     }
     
-    if (filters.category && filters.category !== 'all') {
+    if (filters.category) {
       const categoryName = categories.find(c => c.slug === filters.category)?.name || filters.category;
       summary.push(`Category: ${categoryName}`);
     }
@@ -348,6 +351,7 @@ function FilterProviderContent({ children }) {
   const value = {
     // State
     filters,
+    filtersReady,
     categories,
     hierarchicalCategories, // Exposed
     collections, // Added
@@ -376,7 +380,7 @@ function FilterProviderContent({ children }) {
     isFiltered: hasActiveFilters(),
     activeFilterCount: [
       filters.search ? 1 : 0,
-      filters.category && filters.category !== 'all' ? 1 : 0,
+      filters.category ? 1 : 0,
       filters.collection ? 1 : 0,
       filters.minPrice ? 1 : 0,
       filters.maxPrice ? 1 : 0,

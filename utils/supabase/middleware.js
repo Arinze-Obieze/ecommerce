@@ -57,8 +57,15 @@ export async function updateSession(request) {
     (request.nextUrl.pathname.startsWith("/login") ||
       request.nextUrl.pathname.startsWith("/signup"))
   ) {
+    const { data: adminMembership } = await supabase
+      .from("admin_users")
+      .select("id, role, is_active")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = adminMembership ? "/admin" : "/";
     return NextResponse.redirect(url);
   }
 

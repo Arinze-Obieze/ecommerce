@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS banners (
 INSERT INTO banners (title, subtitle, cta_text, cta_link, background_image, foreground_image, is_active)
 VALUES (
   'Discover Your Style',
-  'Shop the latest fashion, and essentials from trusted African sellers',
+  'Shop the latest fashion, and essentials from trusted African stores',
   'Shop Now',
   '/shop',
   NULL, -- Or provide a default URL if available

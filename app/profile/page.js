@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
 import { useWishlist } from '@/contexts/WishlistContext';
 import ProfileSidebar from '@/components/Profile/ProfileSidebar';
@@ -13,22 +14,24 @@ import ProfileWishlist from '@/components/Profile/ProfileWishlist';
 export default function ProfilePage() {
   const { user, loading } = useAuth();
   const { wishlistItems } = useWishlist();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Check if tab is passed via URL query parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-[#2E5C45]">Loading...</div>;
   if (!user) return null; // Handled by auth protection/middleware usually
 
-  // Mock stats for overview - replace with real data fetching
-  const stats = {
-    totalOrders: 5, // Replace with real count
-    wishlistCount: wishlistItems.size,
-    addressCount: 1, // Replace with real count
-  };
-
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <ProfileOverview stats={stats} />;
+        return <ProfileOverview />;
       case 'orders':
         return <OrderHistory />;
       case 'wishlist':
@@ -38,7 +41,7 @@ export default function ProfilePage() {
       case 'settings':
         return <AccountSettings />;
       default:
-        return <ProfileOverview stats={stats} />;
+        return <ProfileOverview />;
     }
   };
 
@@ -47,7 +50,7 @@ export default function ProfilePage() {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
-          <aside className="w-full lg:w-72 flex-shrink-0">
+          <aside className="w-full lg:w-72 shrink-0">
             <div className="sticky top-24">
               <ProfileSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
             </div>

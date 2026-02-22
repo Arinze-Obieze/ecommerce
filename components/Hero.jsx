@@ -14,7 +14,7 @@ const Hero = () => {
   // Default banner fallback
   const defaultBanner = {
     title: 'Discover Your Style',
-    subtitle: 'Shop the latest fashion, and essentials from trusted African sellers',
+    subtitle: 'Shop the latest fashion, and essentials from trusted African stores',
     cta_text: 'Shop Now',
     cta_link: '/shop',
     background_image: null,
@@ -25,7 +25,7 @@ const Hero = () => {
     { name: 'Categories', href: '#' },
     { name: 'New Arrivals', href: '#' },
     { name: 'Deals', href: '#' },
-    { name: 'Top Sellers', href: '#' },
+    { name: 'Top Stores', href: '#' },
   ];
 
   /* Fetch Banner Data */
@@ -34,12 +34,9 @@ const Hero = () => {
       try {
         const res = await fetch('/api/hero-banner');
         const data = await res.json();
-        console.log('Banner API response:', data); // Debugging
         if (data.banner && Array.isArray(data.banner) && data.banner.length > 0) {
           setBanners(data.banner);
         } else {
-            console.log('No banners found, using default'); // Debugging
-            // If API returns single object or empty, wrap in array or use default
             setBanners([defaultBanner]);
         }
       } catch (error) {
@@ -72,7 +69,6 @@ const Hero = () => {
     setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length);
   };
 
-  // Safe access to current banner data
   // Safe access to current banner data
   const rawActiveBanner = banners[currentSlide] || defaultBanner;
   const activeBanner = {
@@ -201,7 +197,7 @@ const Hero = () => {
                   ))}
                 </div>
                 <span className={`text-sm font-medium ${activeBanner.background_image ? 'text-gray-200' : 'text-gray-600'}`}>
-                  Over 10,000+ Trusted Sellers
+                  Over 10,000+ Trusted Stores
                 </span>
               </div>
             </div>

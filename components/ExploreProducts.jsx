@@ -68,10 +68,11 @@ const ExploreProducts = () => {
         
         {/* Bottom CTA */}
         <div className="mt-12 text-center">
-            <Link href="/shop">
-                <button className="px-10 py-3.5 bg-transparent border-2 border-gray-900 text-gray-900 font-bold rounded-full hover:bg-gray-900 hover:text-white transition-all duration-300">
-                    Load More Products
-                </button>
+            <Link
+              href="/shop"
+              className="inline-block px-10 py-3.5 bg-transparent border-2 border-gray-900 text-gray-900 font-bold rounded-full hover:bg-gray-900 hover:text-white transition-all duration-300"
+            >
+              Load More Products
             </Link>
         </div>
 

@@ -7,6 +7,7 @@ import { ToastProvider } from '@/contexts/ToastContext'
 import './globals.css'
 import Footer from '@/components/Footer'
 import Header from '@/components/header'
+import AnalyticsPageTracker from '@/components/AnalyticsPageTracker'
 
 export const metadata = {
   title: 'Shop Clothing',
@@ -23,6 +24,7 @@ export default function RootLayout({ children }) {
                <WishlistProvider>
                  <LocationProvider>
                    <FilterProvider>
+                     <AnalyticsPageTracker />
                      <Header/>
                      {children}
                      <Footer/>
@@ -36,4 +38,3 @@ export default function RootLayout({ children }) {
     </html>
   )
 }
-

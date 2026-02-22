@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiChevronLeft, FiShoppingCart, FiHeart, FiShare2, FiCheck } from 'react-icons/fi';
 import Link from 'next/link';
+import { useCart } from '@/contexts/CartContext';
 
 export function ProductDetailClient({ id }) {
   const [product, setProduct] = useState(null);
@@ -14,22 +15,38 @@ export function ProductDetailClient({ id }) {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const { addToCart } = useCart();
 
-  // Fetch product details
+  const [variants, setVariants] = useState([]);
+  
+  // Fetch product details and variants
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductAndVariants = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`/api/products/${id}`);
-        const data = await res.json();
+        
+        // Parallel fetch
+        const [prodRes, varRes] = await Promise.all([
+             fetch(`/api/products/${id}`),
+             fetch(`/api/products/${id}/variants`)
+        ]);
 
-        if (!data.success) {
-          setError(data.error || 'Failed to load product');
+        const prodData = await prodRes.json();
+        
+        if (!prodRes.ok) {
+          setError(prodData.error || 'Failed to load product');
           return;
         }
+        setProduct(prodData);
 
-        setProduct(data.data);
+        // Handle variants
+        if (varRes.ok) {
+            const varData = await varRes.json();
+            if (varData.variants) setVariants(varData.variants);
+        }
+
       } catch (err) {
         setError('Failed to load product');
         console.error(err);
@@ -39,17 +56,55 @@ export function ProductDetailClient({ id }) {
     };
 
     if (id) {
-      fetchProduct();
+      fetchProductAndVariants();
     }
   }, [id]);
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
-      alert('Please select a size');
-      return;
+    setActionError('');
+    // 1. Check if product has variants (either via fetched variants OR if product has sizes/colors defined in arrays)
+    const hasVariants = variants.length > 0 || (product.sizes?.length > 0) || (product.colors?.length > 0);
+    
+    let selectedVariantId = null;
+
+    if (hasVariants) {
+        if (!selectedSize && product.sizes?.length > 0) {
+            setActionError('Please select a size.');
+            return;
+        }
+        if (!selectedColor && product.colors?.length > 0) {
+            setActionError('Please select a color.');
+            return;
+        }
+
+        // Find matching variant if we have structured variants
+        if (variants.length > 0) {
+            const match = variants.find(v => 
+                (!v.size || v.size === selectedSize) && 
+                (!v.color || v.color === selectedColor)
+            );
+            
+            if (!match) {
+                setActionError('Selected combination is not available.');
+                return;
+            }
+            if (match.stock_quantity <= 0) {
+                 setActionError('Selected combination is out of stock.');
+                 return;
+            }
+            selectedVariantId = match.id;
+        }
     }
 
-    // Simulate adding to cart
+
+    addToCart({
+        ...product,
+        quantity,
+        selectedSize,
+        selectedColor,
+        variant_id: selectedVariantId
+    });
+
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
@@ -192,24 +247,16 @@ export function ProductDetailClient({ id }) {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
 
-              {/* Rating */}
-              {product.rating && (
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <span
-                        key={i}
-                        className={`text-lg ${
-                          i < Math.round(product.rating)
-                            ? 'text-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600">({product.rating}/5)</span>
+              {/* Store Info */}
+              {product.stores && (
+                <div className="mb-3">
+                  <span className="text-sm text-gray-500 mr-2">Sold by:</span>
+                  <Link 
+                    href={`/store/${product.stores.slug || product.stores.id}`}
+                    className="text-sm font-bold text-gray-900 hover:underline hover:text-blue-600"
+                  >
+                    {product.stores.name}
+                  </Link>
                 </div>
               )}
 
@@ -219,7 +266,7 @@ export function ProductDetailClient({ id }) {
                   {product.categories.map(cat => (
                     <Link
                       key={cat.id}
-                      href={`/?category=${cat.slug}`}
+                      href={`/shop?category=${cat.slug}`}
                       className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200"
                     >
                       {cat.name}
@@ -244,20 +291,42 @@ export function ProductDetailClient({ id }) {
 
               {/* Stock Status */}
               <div className="flex items-center gap-2">
-                <div
-                  className={`w-3 h-3 rounded-full ${
-                    product.stock_quantity > 0 ? 'bg-green-500' : 'bg-red-500'
-                  }`}
-                />
-                <span
-                  className={`text-sm font-medium ${
-                    product.stock_quantity > 0 ? 'text-green-700' : 'text-red-700'
-                  }`}
-                >
-                  {product.stock_quantity > 0
-                    ? `${product.stock_quantity} in stock`
-                    : 'Out of stock'}
-                </span>
+                {/* Calculate dynamic stock based on selection */}
+                {(() => {
+                    let currentStock = product.stock_quantity;
+                    if (variants.length > 0) {
+                        if (selectedSize || selectedColor) {
+                             const match = variants.find(v => 
+                                (!v.size || v.size === selectedSize) && 
+                                (!v.color || v.color === selectedColor)
+                            );
+                            if (match) currentStock = match.stock_quantity;
+                        } else {
+                            // If variants exist but nothing selected, maybe show total or range? 
+                            // For simplicity, keep product.stock_quantity as fallback or sum of variants
+                             currentStock = variants.reduce((acc, v) => acc + v.stock_quantity, 0);
+                        }
+                    }
+
+                    return (
+                        <>
+                            <div
+                            className={`w-3 h-3 rounded-full ${
+                                currentStock > 0 ? 'bg-green-500' : 'bg-red-500'
+                            }`}
+                            />
+                            <span
+                            className={`text-sm font-medium ${
+                                currentStock > 0 ? 'text-green-700' : 'text-red-700'
+                            }`}
+                            >
+                            {currentStock > 0
+                                ? `${currentStock} in stock`
+                                : 'Out of stock'}
+                            </span>
+                        </>
+                    );
+                })()}
               </div>
             </div>
 
@@ -337,12 +406,29 @@ export function ProductDetailClient({ id }) {
                 />
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100"
+                  disabled={(() => {
+                    if (variants.length > 0) {
+                      const match = variants.find(v =>
+                        (!v.size || v.size === selectedSize) &&
+                        (!v.color || v.color === selectedColor)
+                      );
+                      if (!match) return true;
+                      return quantity >= Math.max(0, Number(match.stock_quantity) || 0);
+                    }
+                    return quantity >= Math.max(0, Number(product.stock_quantity) || 0);
+                  })()}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
               </div>
             </div>
+
+            {actionError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {actionError}
+              </div>
+            )}
 
             {/* Add to Cart Button */}
             <button
@@ -403,7 +489,7 @@ export function ProductDetailClient({ id }) {
               More from {product.categories[0].name}
             </h2>
             <Link
-              href={`/?category=${product.categories[0].slug}`}
+              href={`/shop?category=${product.categories[0].slug}`}
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
             >
               View Category

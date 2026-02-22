@@ -25,7 +25,7 @@ function ShopHubLoading() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="aspect-[3/4] bg-gray-200 rounded-xl animate-pulse"></div>
+                  <div key={i} className="aspect-3/4 bg-gray-200 rounded-xl animate-pulse"></div>
                 ))}
               </div>
             </div>
@@ -40,6 +40,7 @@ function ShopHubLoading() {
 function ShopHubContent({ initialCategory }) {
   const {
     filters,
+    filtersReady,
     setSearch,
     setPage,
     setCategory
@@ -50,14 +51,23 @@ function ShopHubContent({ initialCategory }) {
   const [error, setError] = useState(null)
   const [meta, setMeta] = useState(null)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  // Search input state moved to ShopHeader or handled via context in full refactor
-  // For now, keeping the debounced logic sync requires passing props or lifting state
-  // To keep ShopClient clean, let's keep the fetch logic here but pass handlers
   const [searchInput, setSearchInput] = useState(filters.search)
+  const [shouldCollapseFilters, setShouldCollapseFilters] = useState(false)
+  const initialCategoryPending = Boolean(initialCategory) && filters.category !== initialCategory;
 
   // Ensure we only set the initial category once per mount/navigation
   const initializedRef = useRef(false);
   const lastInitialCategory = useRef(initialCategory);
+  const lastSearchInputRef = useRef(filters.search);
+  const prevFiltersRef = useRef({
+    category: filters.category,
+    search: filters.search,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    sizes: filters.sizes,
+    colors: filters.colors,
+    sortBy: filters.sortBy,
+  });
 
   useEffect(() => {
     // If the initialCategory prop actually changes (navigation), reset initialization
@@ -71,6 +81,11 @@ function ShopHubContent({ initialCategory }) {
         initializedRef.current = true;
     }
   }, [initialCategory, setCategory]);
+
+  useEffect(() => {
+    if (!filtersReady || initialCategoryPending) return;
+    setSearchInput(filters.search || "");
+  }, [filtersReady, filters.search]);
 
   // Fetch products
   const fetchProducts = async (isLoadMore = false) => {
@@ -104,7 +119,7 @@ function ShopHubContent({ initialCategory }) {
       } else {
         setProducts(json.data)
       }
-      
+
       setMeta(json.meta.pagination)
     } catch (err) {
         // Only set error if we don't have products to show (e.g. initial load failed)
@@ -119,20 +134,68 @@ function ShopHubContent({ initialCategory }) {
 
   // Refetch when filters change (reset to page 1)
   useEffect(() => {
+    if (!filtersReady || initialCategoryPending) return;
+
+    const prevFilters = prevFiltersRef.current;
+    
+    // Check if any critical filter changed (not including pagination)
+    const filtersChanged = 
+      filters.category !== prevFilters.category ||
+      filters.search !== prevFilters.search ||
+      filters.minPrice !== prevFilters.minPrice ||
+      filters.maxPrice !== prevFilters.maxPrice ||
+      JSON.stringify(filters.sizes) !== JSON.stringify(prevFilters.sizes) ||
+      JSON.stringify(filters.colors) !== JSON.stringify(prevFilters.colors) ||
+      filters.sortBy !== prevFilters.sortBy;
+
+    // If critical filters changed, clear products immediately for instant visual feedback
+    if (filtersChanged) {
+      setProducts([]);
+    }
+
+    // Update ref with current filters
+    prevFiltersRef.current = {
+      category: filters.category,
+      search: filters.search,
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+      sizes: filters.sizes,
+      colors: filters.colors,
+      sortBy: filters.sortBy,
+    };
+
+    // Now fetch with cleared products
     const isLoadMore = filters.page > 1;
     fetchProducts(isLoadMore);
-  }, [filters.page, filters.category, filters.search, filters.minPrice, filters.maxPrice, filters.sizes, filters.colors, filters.sortBy])
+  }, [filtersReady, initialCategoryPending, filters.page, filters.category, filters.search, filters.minPrice, filters.maxPrice, filters.sizes, filters.colors, filters.sortBy])
 
-  // Debounced search sync
+  // Debounced search input sync - also detects when user completes search to collapse filters
   useEffect(() => {
     const delay = setTimeout(() => {
       if (searchInput !== filters.search) {
         setSearch(searchInput)
+        // Flag that filters should collapse after search completes
+        if (searchInput.trim() !== lastSearchInputRef.current?.trim()) {
+          setShouldCollapseFilters(true)
+        }
       }
     }, 400)
 
     return () => clearTimeout(delay)
   }, [searchInput, setSearch, filters.search])
+
+  // Auto-collapse filters when search completes
+  useEffect(() => {
+    if (shouldCollapseFilters && !loading) {
+      // After slight delay to let loading state settle, collapse filters
+      const collapseDelay = setTimeout(() => {
+        setMobileFiltersOpen(false)
+        setShouldCollapseFilters(false)
+        lastSearchInputRef.current = searchInput
+      }, 300)
+      return () => clearTimeout(collapseDelay)
+    }
+  }, [shouldCollapseFilters, loading, searchInput])
 
   const handleLoadMore = () => {
       if (meta?.hasNextPage) {
@@ -172,7 +235,7 @@ function ShopHubContent({ initialCategory }) {
 
               <ProductGrid 
                 products={products}
-                loading={loading}
+                loading={loading || !filtersReady || initialCategoryPending}
                 error={error}
                 meta={meta}
                 onLoadMore={handleLoadMore}

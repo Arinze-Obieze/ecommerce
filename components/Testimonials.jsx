@@ -16,7 +16,7 @@ const Testimonials = () => {
       id: 2,
       name: "Michael O.",
       role: "Frequent Shopper",
-      content: "Finally a platform where I can trust the sellers. The verification process really makes a difference.",
+      content: "Finally a platform where I can trust the stores. The verification process really makes a difference.",
       rating: 5,
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop"
     },

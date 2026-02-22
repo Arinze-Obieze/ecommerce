@@ -1,17 +1,69 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { useWishlist } from '@/contexts/WishlistContext';
 import Link from 'next/link';
 import { FiPackage, FiHeart, FiMapPin, FiClock } from 'react-icons/fi';
+import { createClient } from '@/utils/supabase/client';
 
-export default function ProfileOverview({ stats }) {
+export default function ProfileOverview() {
   const { user } = useAuth();
+  const { wishlistItems } = useWishlist();
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    wishlistCount: wishlistItems.size,
+    addressCount: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchStats = async () => {
+      try {
+        const supabase = createClient();
+
+        // Fetch total orders count
+        const { count: ordersCount, error: ordersError } = await supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        if (ordersError) throw ordersError;
+
+        // Fetch addresses count (if you have a table for it)
+        const { count: addressCount, error: addressError } = await supabase
+          .from('user_addresses')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        // addressError might occur if table doesn't exist, that's okay
+        setStats({
+          totalOrders: ordersCount || 0,
+          wishlistCount: wishlistItems.size,
+          addressCount: addressCount || 0,
+        });
+      } catch (err) {
+        console.error('Error fetching stats:', err);
+        setStats({
+          totalOrders: 0,
+          wishlistCount: wishlistItems.size,
+          addressCount: 0,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [user?.id, wishlistItems.size]);
+
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
 
   const statCards = [
-    { label: 'Total Orders', value: stats?.totalOrders || 0, icon: FiPackage, color: 'bg-blue-50 text-blue-600' },
-    { label: 'Wishlist', value: stats?.wishlistCount || 0, icon: FiHeart, color: 'bg-red-50 text-red-600' },
-    { label: 'Saved Addresses', value: stats?.addressCount || 0, icon: FiMapPin, color: 'bg-green-50 text-green-600' },
+    { label: 'Total Orders', value: stats.totalOrders, icon: FiPackage, color: 'bg-blue-50 text-blue-600' },
+    { label: 'Wishlist', value: stats.wishlistCount, icon: FiHeart, color: 'bg-red-50 text-red-600' },
+    { label: 'Saved Addresses', value: stats.addressCount, icon: FiMapPin, color: 'bg-green-50 text-green-600' },
   ];
 
   return (
@@ -44,7 +96,7 @@ export default function ProfileOverview({ stats }) {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
-          <Link href="/orders" className="text-sm font-medium text-[#2E5C45] hover:text-[#254a38]">
+          <Link href="/profile?tab=orders" className="text-sm font-medium text-[#2E5C45] hover:text-[#254a38]">
             View All History
           </Link>
         </div>

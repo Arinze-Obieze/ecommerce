@@ -210,9 +210,9 @@ function FilterSidebarContent({ onMobileClose }) {
           ) : (
             <div className="space-y-1">
               <button
-                onClick={() => setCategory('all')}
+                onClick={() => setCategory('')}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                  filters.category === 'all'
+                  filters.category === ''
                     ? 'bg-[#2E5C45] text-white font-medium shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
                 }`}

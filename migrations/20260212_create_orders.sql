@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS public.orders (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    total DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
     product_id BIGINT REFERENCES public.products(id) ON DELETE SET NULL,
     quantity INTEGER NOT NULL DEFAULT 1,
-    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00
+    price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    variant_id UUID REFERENCES public.product_variants(id) ON DELETE SET NULL
 );
 
 -- Enable Row Level Security
@@ -57,7 +58,7 @@ DECLARE
     v_product_stock INTEGER;
 BEGIN
     -- 1. Create Order
-    INSERT INTO public.orders (user_id, total, status)
+    INSERT INTO public.orders (user_id, total_amount, status)
     VALUES (p_user_id, p_total, 'pending')
     RETURNING id INTO v_order_id;
 

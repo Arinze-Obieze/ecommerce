@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiSearch,
   FiShoppingCart,
@@ -13,7 +13,8 @@ import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/contexts/ToastContext";
+import { trackAnalyticsEvent } from "@/utils/analytics";
+import { createClient } from "@/utils/supabase/client";
 
 // --- Sub-Components ---
 
@@ -28,7 +29,7 @@ const HeaderLogo = () => (
   </Link>
 );
 
-const SearchBar = ({ searchQuery, setSearchQuery, isMobile = false }) => (
+const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) => (
   <div className={`relative ${isMobile ? '' : 'flex-1 max-w-xl lg:max-w-2xl mx-4 hidden md:block'}`}>
     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
       <FiSearch className="h-4 w-4 text-gray-400" />
@@ -39,6 +40,12 @@ const SearchBar = ({ searchQuery, setSearchQuery, isMobile = false }) => (
       placeholder="Search for products..."
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onSubmit?.();
+        }
+      }}
     />
   </div>
 );
@@ -53,7 +60,6 @@ const WishlistIcon = () => {
   const { wishlistItems } = useWishlist();
   const { user } = useAuth();
   const router = useRouter();
-  const { error } = useToast();
 
   const handleClick = () => {
     if (!user) {
@@ -84,15 +90,17 @@ const CartIcon = () => {
   const { cartCount } = useCart();
   
   return (
-    <Link href="/cart">
-      <button className="relative p-1 hover:bg-white/10 rounded-full transition-colors group">
-        <FiShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-        {cartCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#2E5C45]">
-            {cartCount}
-          </span>
-        )}
-      </button>
+    <Link
+      href="/cart"
+      className="relative p-1 hover:bg-white/10 rounded-full transition-colors group block"
+      aria-label="Open cart"
+    >
+      <FiShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
+      {cartCount > 0 && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-[#2E5C45]">
+          {cartCount}
+        </span>
+      )}
     </Link>
   );
 };
@@ -101,8 +109,13 @@ const VerticalDivider = ({ mobileHidden = false }) => (
   <div className={`${mobileHidden ? 'hidden lg:block' : 'hidden md:block'} h-5 w-px bg-white/30 mx-1`}></div>
 );
 
-const UserMenu = ({ user, signOut }) => {
+const UserMenu = ({ user, signOut, adminRole }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isAdmin = Boolean(adminRole);
+  const displayName =
+    adminRole === "super_admin"
+      ? "Super Admin"
+      : (user?.user_metadata?.full_name || "User");
 
   return (
     <div className="relative">
@@ -129,26 +142,49 @@ const UserMenu = ({ user, signOut }) => {
               <>
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900 truncate">
-                    {user.user_metadata?.full_name || 'User'}
+                    {displayName}
                   </p>
                   <p className="text-xs text-gray-500 truncate">{user.email}</p>
                 </div>
-                <Link href="/profile">
-                  <span 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Profile
-                  </span>
-                </Link>
-                <Link href="/orders">
-                  <span 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Orders
-                  </span>
-                </Link>
+                {isAdmin ? (
+                  <>
+                    <Link href="/admin">
+                      <span
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Dashboard
+                      </span>
+                    </Link>
+                    <Link href="/admin/profile">
+                      <span
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Profile
+                      </span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/profile">
+                      <span
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Profile
+                      </span>
+                    </Link>
+                    <Link href="/profile?tab=orders">
+                      <span
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Orders
+                      </span>
+                    </Link>
+                  </>
+                )}
                 <div className="border-t border-gray-100 my-1"></div>
                 <button
                   onClick={async () => {
@@ -190,9 +226,53 @@ const UserMenu = ({ user, signOut }) => {
 // --- Main Component ---
 
 const Header = () => {
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState("");
+  const [adminRole, setAdminRole] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const resolveAdminRole = async () => {
+      if (!user?.id) {
+        if (active) setAdminRole(null);
+        return;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (!active) return;
+      if (error || !data) {
+        setAdminRole(null);
+        return;
+      }
+
+      setAdminRole(data.role || null);
+    };
+
+    resolveAdminRole();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  const handleSearchSubmit = () => {
+    const query = searchQuery.trim();
+    if (!query) {
+      router.push('/shop');
+      return;
+    }
+    trackAnalyticsEvent('search_submitted', { query });
+    router.push(`/shop?search=${encodeURIComponent(query)}`);
+  };
 
   // Hide header on auth pages
   if (pathname === '/login' || pathname === '/signup') {
@@ -206,7 +286,7 @@ const Header = () => {
           
           <HeaderLogo />
 
-          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSubmit={handleSearchSubmit} />
 
           {/* Actions */}
           <div className="flex items-center gap-3 md:gap-6 flex-shrink-0">
@@ -219,13 +299,13 @@ const Header = () => {
             <CartIcon />
             <VerticalDivider />
             
-            <UserMenu user={user} signOut={signOut} />
+            <UserMenu user={user} signOut={signOut} adminRole={adminRole} />
           </div>
         </div>
         
         {/* Mobile Search */}
         <div className="mt-3 md:hidden">
-            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} isMobile />
+            <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} onSubmit={handleSearchSubmit} isMobile />
         </div>
       </div>
     </header>

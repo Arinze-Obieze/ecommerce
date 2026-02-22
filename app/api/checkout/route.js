@@ -1,58 +1,257 @@
-import { createClient } from '@/utils/supabase/server';
-import redis from '@/utils/redis';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createClient as createServerClient } from '@/utils/supabase/server';
+import { enforceRateLimit } from '@/utils/rateLimit';
+import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
 
-export async function POST(request) {
-  try {
-    const { items, userId, total } = await request.json();
+function createServiceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SECRET_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    }
+  );
+}
 
-    if (!items || !items.length) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+function toPositiveInt(value) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function toNumber(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function calculateShipping(subtotal) {
+  return subtotal > 50000 ? 0 : 2500;
+}
+
+async function buildAuthoritativeOrder(serviceClient, rawItems) {
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    throw new Error('Cart is empty');
+  }
+
+  const normalizedItems = rawItems.map((item) => ({
+    product_id: toPositiveInt(item?.product_id),
+    variant_id: item?.variant_id ?? null,
+    quantity: toPositiveInt(item?.quantity),
+  }));
+
+  if (normalizedItems.some((item) => !item.product_id || !item.quantity)) {
+    throw new Error('Invalid cart item payload');
+  }
+
+  const productIds = [...new Set(normalizedItems.map((item) => item.product_id))];
+  const variantIds = [...new Set(
+    normalizedItems.map((item) => item.variant_id).filter((id) => id !== null)
+  )];
+
+  const { data: products, error: productsError } = await serviceClient
+    .from('products')
+    .select('id, price, discount_price, is_active')
+    .in('id', productIds);
+
+  if (productsError) {
+    throw new Error(`Could not validate products: ${productsError.message}`);
+  }
+
+  const productMap = new Map((products || []).map((product) => [product.id, product]));
+
+  let variantMap = new Map();
+  if (variantIds.length > 0) {
+    const { data: variants, error: variantsError } = await serviceClient
+      .from('product_variants')
+      .select('id, product_id')
+      .in('id', variantIds);
+
+    if (variantsError) {
+      throw new Error(`Could not validate product variants: ${variantsError.message}`);
     }
 
-    // Use Service Role to bypass RLS for inventory updates if needed, 
-    // BUT we are using an RPC that is SECURITY DEFINER, so Anon key might work if RPC is public.
-    // However, it's safer to use the user's auth context or Service Role regarding payments.
-    // For this demo, let's assume we use the Service Role for the transaction to ensure we can lock rows.
-    const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SECRET_SERVICE_ROLE_KEY
-    );
+    variantMap = new Map((variants || []).map((variant) => [variant.id, variant]));
+  }
 
-    // Call the RPC function
-    const { data: orderId, error } = await supabase.rpc('checkout_transaction', {
-      p_user_id: userId || null, // Allow guest checkout if DB allows null (DB schema says user_id REFERENCES auth.users)
-      p_items: items,
-      p_total: total
+  let computedSubtotal = 0;
+  const items = normalizedItems.map((item) => {
+    const product = productMap.get(item.product_id);
+    if (!product || !product.is_active) {
+      throw new Error(`Product is unavailable: ${item.product_id}`);
+    }
+
+    if (item.variant_id !== null) {
+      const variant = variantMap.get(item.variant_id);
+      if (!variant) {
+        throw new Error(`Variant not found: ${item.variant_id}`);
+      }
+      if (variant.product_id !== item.product_id) {
+        throw new Error(`Variant ${item.variant_id} does not belong to product ${item.product_id}`);
+      }
+    }
+
+    const unitPrice = toNumber(product.discount_price ?? product.price);
+    if (unitPrice === null || unitPrice < 0) {
+      throw new Error(`Invalid product price for product ${item.product_id}`);
+    }
+
+    computedSubtotal += unitPrice * item.quantity;
+
+    return {
+      product_id: item.product_id,
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+      price: unitPrice,
+    };
+  });
+
+  return {
+    items,
+    subtotal: computedSubtotal,
+    shipping: calculateShipping(computedSubtotal),
+    total: computedSubtotal + calculateShipping(computedSubtotal),
+  };
+}
+
+export async function POST(request) {
+  const startedAt = Date.now();
+  let currentUser = null;
+  try {
+    const { items } = await request.json();
+
+    const authClient = await createServerClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await authClient.auth.getUser();
+    currentUser = user;
+
+    if (authError || !user) {
+      await writeActivityLog({
+        request,
+        level: 'WARN',
+        service: 'checkout-service',
+        action: 'CHECKOUT_UNAUTHENTICATED',
+        status: 'failure',
+        statusCode: 401,
+        message: 'Authentication required for checkout',
+        durationMs: Date.now() - startedAt,
+      });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const rateLimit = await enforceRateLimit({
+      request,
+      scope: 'checkout',
+      identifier: user.id,
+      limit: 20,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimit.allowed) {
+      await writeActivityLog({
+        request,
+        level: 'WARN',
+        service: 'checkout-service',
+        action: 'CHECKOUT_RATE_LIMITED',
+        status: 'failure',
+        statusCode: 429,
+        message: 'Checkout rate limit exceeded',
+        userId: user.id,
+        durationMs: Date.now() - startedAt,
+      });
+      return NextResponse.json(
+        { error: 'Too many checkout attempts. Please try again shortly.' },
+        { status: 429 }
+      );
+    }
+
+    const serviceClient = createServiceClient();
+    const authoritativeOrder = await buildAuthoritativeOrder(serviceClient, items);
+
+    const { data: orderId, error } = await serviceClient.rpc('checkout_transaction', {
+      p_user_id: user.id,
+      p_items: authoritativeOrder.items,
+      p_total: authoritativeOrder.total,
     });
 
     if (error) {
-      console.error('Checkout Error:', error);
+      console.error('Checkout Transaction Error:', error);
+      await writeActivityLog({
+        request,
+        level: 'ERROR',
+        service: 'checkout-service',
+        action: 'CHECKOUT_TRANSACTION_FAILED',
+        status: 'failure',
+        statusCode: error.message?.includes('Insufficient stock') ? 409 : 400,
+        message: error.message,
+        userId: user.id,
+        errorCode: error.code || null,
+        durationMs: Date.now() - startedAt,
+      });
+      if (error.message.includes('Insufficient stock')) {
+        return NextResponse.json({ error: error.message }, { status: 409 });
+      }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // Invalidate Cache for bought products
-    if (redis) {
-      const pipeline = redis.pipeline();
-      for (const item of items) {
-        // We need the slug to invalidate the specific product cache `product:${slug}`
-        // But we only have ID here.
-        // We might need to invalidate by ID if we cached by ID, or broadcast an event.
-        // For now, since we cache by SLUG, we can't easily invalidate unless we pass slug from frontend 
-        // OR fetch slug from DB.
-        
-        // Let's quick-fetch the slugs or assume we pass them.
-        if (item.slug) {
-             pipeline.del(`product:${item.slug}`);
-        }
-      }
-      await pipeline.exec();
-    }
+    await writeAnalyticsEvent({
+      eventName: 'begin_checkout',
+      userId: user.id,
+      path: '/cart',
+      properties: {
+        order_id: orderId,
+        items_count: authoritativeOrder.items.length,
+        subtotal: authoritativeOrder.subtotal,
+        shipping: authoritativeOrder.shipping,
+        total: authoritativeOrder.total,
+      },
+    });
 
-    return NextResponse.json({ success: true, orderId });
+    await writeActivityLog({
+      request,
+      level: 'INFO',
+      service: 'checkout-service',
+      action: 'CHECKOUT_INITIATED',
+      status: 'success',
+      statusCode: 200,
+      message: 'Checkout reservation created',
+      userId: user.id,
+      metadata: {
+        orderId,
+        itemsCount: authoritativeOrder.items.length,
+        total: authoritativeOrder.total,
+      },
+      durationMs: Date.now() - startedAt,
+    });
 
+    return NextResponse.json({
+      success: true,
+      orderId,
+      subtotal: authoritativeOrder.subtotal,
+      shipping: authoritativeOrder.shipping,
+      total: authoritativeOrder.total,
+      message: 'Stock reserved. Proceed to payment.',
+    });
   } catch (err) {
     console.error('Server Error:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    await writeActivityLog({
+      request,
+      level: 'ERROR',
+      service: 'checkout-service',
+      action: 'CHECKOUT_INTERNAL_ERROR',
+      status: 'failure',
+      statusCode: 500,
+      message: err.message || 'Internal Server Error',
+      userId: currentUser?.id || null,
+      errorCode: err.code || null,
+      errorStack: err.stack || null,
+      durationMs: Date.now() - startedAt,
+    });
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

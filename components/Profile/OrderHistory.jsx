@@ -1,21 +1,86 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiPackage, FiChevronRight } from 'react-icons/fi';
+import { FiPackage } from 'react-icons/fi';
+import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function OrderHistory() {
-  // Placeholder data - connect to real API later
-  const orders = [
-    { id: 'ORD-245-889', date: 'Oct 24, 2024', total: '₦45,000', status: 'Delivered', items: 3 },
-    { id: 'ORD-245-890', date: 'Oct 15, 2024', total: '₦12,500', status: 'Processing', items: 1 },
-  ];
+  const { user } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchOrders = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            id,
+            total_amount,
+            status,
+            created_at,
+            order_items(id, product_id, quantity, price)
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setOrders(data || []);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [user?.id]);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'processing':
+        return 'bg-blue-100 text-blue-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatPrice = (amount) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+    }).format(amount);
+  };
+
+  if (loading) {
+    return <div className="text-center py-8 text-gray-500">Loading orders...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Order History</h2>
         <div className="text-sm text-gray-500">
-          Showing recent orders
+          {orders.length} {orders.length === 1 ? 'order' : 'orders'}
         </div>
       </div>
 
@@ -30,25 +95,23 @@ export default function OrderHistory() {
                       <FiPackage className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">{order.id}</h3>
-                      <p className="text-sm text-gray-500">{order.date} • {order.items} items</p>
+                      <h3 className="font-bold text-gray-900">{order.id.slice(0, 8).toUpperCase()}</h3>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(order.created_at)} • {order.order_items?.length || 0} {order.order_items?.length === 1 ? 'item' : 'items'}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between md:justify-end gap-6 md:gap-8 w-full md:w-auto">
                     <div>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                        order.status === 'Processing' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
                     </div>
-                    <div className="font-bold text-gray-900">{order.total}</div>
-                    <Link href={`/orders/${order.id}`} className="p-2 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
-                       <FiChevronRight className="w-5 h-5" />
-                    </Link>
+                    <div className="font-bold text-gray-900">{formatPrice(order.total_amount)}</div>
+                    <div className="text-xs text-gray-400 font-mono">
+                      {order.id.slice(0, 8)}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -61,10 +124,11 @@ export default function OrderHistory() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
             <p className="text-gray-500 mb-6">When you place an order, it will appear here.</p>
-            <Link href="/shop">
-              <button className="px-6 py-2 bg-[#2E5C45] text-white rounded-lg font-medium hover:bg-[#254a38] transition-colors">
-                Start Shopping
-              </button>
+            <Link
+              href="/shop"
+              className="inline-block px-6 py-2 bg-[#2E5C45] text-white rounded-lg font-medium hover:bg-[#254a38] transition-colors"
+            >
+              Start Shopping
             </Link>
           </div>
         )}

@@ -1,12 +1,55 @@
 // app/api/products/route.js
 import { createClient } from '@/utils/supabase/server'
+import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry'
 
 // Constants
 const DEFAULT_LIMIT = 24  // Good for grids (6x4, 4x6, 8x3)
 const MAX_LIMIT = 100     // Prevent abuse
 const MAX_PAGE_SIZE = 10  // Max page buttons to show
 
+async function resolveCategoryBranchIds(supabase, categorySlug) {
+  // Preferred: DB recursive CTE via RPC (faster and less payload over network).
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_category_branch_ids', {
+    p_slug: categorySlug,
+  });
+
+  if (!rpcError && Array.isArray(rpcData)) {
+    return rpcData
+      .map((row) => Number(row.id))
+      .filter((id) => Number.isInteger(id));
+  }
+
+  // Fallback keeps endpoint functional until migration is applied.
+  const { data: categoryData } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', categorySlug)
+    .single();
+
+  if (!categoryData) {
+    return [];
+  }
+
+  const { data: allCats } = await supabase
+    .from('categories')
+    .select('id, parent_id')
+    .eq('is_active', true);
+
+  const getDescendants = (parentId) => {
+    const children = (allCats || []).filter((c) => c.parent_id === parentId);
+    let descendants = [...children];
+    children.forEach((child) => {
+      descendants = [...descendants, ...getDescendants(child.id)];
+    });
+    return descendants;
+  };
+
+  const descendants = getDescendants(categoryData.id);
+  return [categoryData.id, ...descendants.map((c) => c.id)];
+}
+
 export async function GET(request) {
+  const startedAt = Date.now()
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
@@ -33,6 +76,8 @@ export async function GET(request) {
     const featured = searchParams.get('featured')
     const hasDiscount = searchParams.get('hasDiscount')
     const idsParam = searchParams.get('ids')
+    const storeId = searchParams.get('storeId') || searchParams.get('sellerId')
+    const includeOutOfStock = searchParams.get('includeOutOfStock') === 'true'
     
     const sizes = sizesParam ? sizesParam.split(',').filter(Boolean) : []
     const colors = colorsParam ? colorsParam.split(',').filter(Boolean) : []
@@ -40,58 +85,34 @@ export async function GET(request) {
     // Build query
     let query = supabase
       .from('products')
-      .select(`*`, { 
+      .select(`*, stores(id, name, slug, logo_url), product_categories(categories(id, name, slug))`, { 
         count: 'exact' 
       })
       .eq('is_active', true)
-      .gt('stock_quantity', 0) // Hide out of stock items per user request
+
+    // By default we hide out-of-stock items for browse pages, but wishlist needs them.
+    if (!includeOutOfStock) {
+      query = query.gt('stock_quantity', 0)
+    }
     
     // Apply category filter via junction table
     if (category && category !== 'all') {
-      const { data: categoryData } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', category)
-        .single()
-      
-      if (categoryData) {
-        // Recursive fetch for descendant categories to support branch filtering
-        // Supabase recursive queries (CTE) require rpc or raw sql, but we can do a simpler
-        // approach if depth is limited (3 levels) or just fetch all categories once.
-        
-        // Better yet: Get all categories flat, find descendants in JS, then filter products.
-        // OR: use the 'product_categories' junction.
-        
-        // Simple optimization: Get the category and all its children.
-        const { data: allCats } = await supabase
-            .from('categories')
-            .select('id, parent_id')
-            .eq('is_active', true);
-            
-        // Helper to find all descendants
-        const getDescendants = (parentId) => {
-            let children = allCats.filter(c => c.parent_id === parentId);
-            let descendants = [...children];
-            children.forEach(child => {
-                descendants = [...descendants, ...getDescendants(child.id)];
-            });
-            return descendants;
-        };
+      const categoryIds = await resolveCategoryBranchIds(supabase, category)
 
-        const descendants = getDescendants(categoryData.id);
-        const categoryIds = [categoryData.id, ...descendants.map(c => c.id)];
-
+      if (categoryIds.length > 0) {
         const { data: productIds } = await supabase
           .from('product_categories')
           .select('product_id')
           .in('category_id', categoryIds)
-        
-        const ids = productIds?.map(p => p.product_id) || []
+
+        const ids = productIds?.map((p) => p.product_id) || []
         if (ids.length > 0) {
           query = query.in('id', ids)
         } else {
           query = query.eq('id', -1)
         }
+      } else {
+        query = query.eq('id', -1)
       }
     }
 
@@ -116,6 +137,8 @@ export async function GET(request) {
         } else {
           query = query.eq('id', -1)
         }
+      } else {
+        query = query.eq('id', -1)
       }
     }
     
@@ -128,19 +151,14 @@ export async function GET(request) {
       query = query.lte('price', parseFloat(maxPrice))
     }
     
-    // Apply size filter
+    // Apply size filter (OR semantics within selected sizes)
     if (sizes.length > 0) {
-      // For array contains, we need to check if any of the filter sizes exist in product sizes
-      for (const size of sizes) {
-        query = query.contains('sizes', [size])
-      }
+      query = query.overlaps('sizes', sizes)
     }
     
-    // Apply color filter
+    // Apply color filter (OR semantics within selected colors)
     if (colors.length > 0) {
-      for (const color of colors) {
-        query = query.contains('colors', [color])
-      }
+      query = query.overlaps('colors', colors)
     }
     
     // Apply text search
@@ -166,6 +184,11 @@ export async function GET(request) {
       if (ids.length > 0) {
         query = query.in('id', ids)
       }
+    }
+
+    // Apply store filter
+    if (storeId) {
+      query = query.eq('store_id', storeId)
     }
     
     // Apply sorting
@@ -225,6 +248,43 @@ export async function GET(request) {
     const baseUrl = `${url.origin}${url.pathname}`
     const links = generatePageLinks(baseUrl, searchParams, page, totalPages, limit)
     
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (search && search.trim()) {
+      await writeAnalyticsEvent({
+        eventName: 'search',
+        userId: user?.id || null,
+        path: '/shop',
+        properties: {
+          query: search.trim(),
+          category: category || null,
+          results_count: (data || []).length,
+          total_matches: count || 0,
+        },
+      })
+    }
+
+    await writeActivityLog({
+      request,
+      level: 'INFO',
+      service: 'catalog-service',
+      action: 'PRODUCTS_LIST_FETCHED',
+      status: 'success',
+      statusCode: 200,
+      message: 'Product listing fetched',
+      userId: user?.id || null,
+      metadata: {
+        page,
+        limit,
+        hasSearch: Boolean(search && search.trim()),
+        hasCategory: Boolean(category),
+        totalItems,
+      },
+      durationMs: Date.now() - startedAt,
+    })
+
     return Response.json({
       success: true,
       data: transformedData,
@@ -256,6 +316,18 @@ export async function GET(request) {
     
   } catch (error) {
     console.error('Products API Error:', error)
+    await writeActivityLog({
+      request,
+      level: 'ERROR',
+      service: 'catalog-service',
+      action: 'PRODUCTS_LIST_FAILED',
+      status: 'failure',
+      statusCode: 500,
+      message: error.message || 'Products API failed',
+      errorCode: error.code || null,
+      errorStack: error.stack || null,
+      durationMs: Date.now() - startedAt,
+    })
     return Response.json({
       success: false,
       error: error.message,

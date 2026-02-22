@@ -2,6 +2,45 @@ import { createClient } from '@/utils/supabase/server'
 
 export const dynamic = 'force-dynamic';
 
+async function resolveCategoryBranchIds(supabase, categorySlug) {
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_category_branch_ids', {
+    p_slug: categorySlug,
+  });
+
+  if (!rpcError && Array.isArray(rpcData)) {
+    return rpcData
+      .map((row) => Number(row.id))
+      .filter((id) => Number.isInteger(id));
+  }
+
+  const { data: catData } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', categorySlug)
+    .single();
+
+  if (!catData) {
+    return [];
+  }
+
+  const { data: allCats } = await supabase
+    .from('categories')
+    .select('id, parent_id')
+    .eq('is_active', true);
+
+  const getDescendants = (parentId) => {
+    const children = (allCats || []).filter((c) => c.parent_id === parentId);
+    let descendants = [...children];
+    children.forEach((child) => {
+      descendants = [...descendants, ...getDescendants(child.id)];
+    });
+    return descendants;
+  };
+
+  const descendants = getDescendants(catData.id);
+  return [catData.id, ...descendants.map((c) => c.id)];
+}
+
 export async function GET(request) {
   try {
     const supabase = await createClient()
@@ -9,66 +48,21 @@ export async function GET(request) {
     const category = searchParams.get('category')
     const collection = searchParams.get('collection')
 
-    // Base query
-    let query = supabase.from('products').select(`
-      price,
-      sizes,
-      colors,
-      is_active,
-      product_categories!inner (
-        category_id,
-        categories!inner ( slug )
-      )
-    `)
-
-    // We need to build the query carefully. 
-    // If filtering by category, we need to join product_categories.
-    // If filtering by collection, we join product_collections.
-    // Supabase JS complex joins can be tricky. 
-    
-    // Simpler approach: 
-    // 1. Get Product IDs for Category/Collection first (if needed)
-    // 2. Query products with those IDs.
-    
     let productIds = null;
 
     // Filter by Category
     if (category && category !== 'all') {
-      const { data: catData } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('slug', category)
-        .single();
-      
-      if (catData) {
-        // Fetch descendants to include sub-categories
-        const { data: allCats } = await supabase
-            .from('categories')
-            .select('id, parent_id')
-            .eq('is_active', true);
-            
-        const getDescendants = (parentId) => {
-            let children = allCats.filter(c => c.parent_id === parentId);
-            let descendants = [...children];
-            children.forEach(child => {
-                descendants = [...descendants, ...getDescendants(child.id)];
-            });
-            return descendants;
-        };
-
-        const descendants = getDescendants(catData.id);
-        const categoryIds = [catData.id, ...descendants.map(c => c.id)];
-
+      const categoryIds = await resolveCategoryBranchIds(supabase, category);
+      if (categoryIds.length === 0) {
+        // Invalid category -> no products
+        productIds = [];
+      } else {
         const { data: pCats } = await supabase
           .from('product_categories')
           .select('product_id')
           .in('category_id', categoryIds);
-        
-        const ids = pCats?.map(x => x.product_id) || [];
-        productIds = ids;
-      } else {
-        // Invalid category -> no products
-        productIds = [];
+
+        productIds = pCats?.map((x) => x.product_id) || [];
       }
     }
 
@@ -104,7 +98,8 @@ export async function GET(request) {
     let productsQuery = supabase
       .from('products')
       .select('sizes, colors, price, discount_price')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .gt('stock_quantity', 0);
 
     if (productIds !== null) {
       if (productIds.length === 0) {

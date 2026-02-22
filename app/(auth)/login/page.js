@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -36,7 +36,19 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect to home page on successful login
+      const { data: adminMembership, error: adminCheckError } = await supabase
+        .from('admin_users')
+        .select('id, role, is_active')
+        .eq('user_id', signInData?.user?.id || '')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!adminCheckError && adminMembership) {
+        router.push('/admin');
+        return;
+      }
+
+      // Redirect buyers to home page on successful login
       router.push('/');
     } catch {
       setError('An unexpected error occurred');

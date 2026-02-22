@@ -54,10 +54,11 @@ const FeaturedCategories = () => {
                 </div>
                 
                 <div>
-                  <Link href={card.link}>
-                    <button className="flex items-center gap-2 px-6 py-2.5 bg-[#2E5C45] text-white font-medium rounded-lg hover:bg-[#254a38] transition-colors shadow-lg backdrop-blur-sm bg-opacity-90">
-                      Shop Now <FiChevronRight />
-                    </button>
+                  <Link
+                    href={card.link}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2E5C45] text-white font-medium rounded-lg hover:bg-[#254a38] transition-colors shadow-lg backdrop-blur-sm bg-opacity-90"
+                  >
+                    Shop Now <FiChevronRight />
                   </Link>
                 </div>
               </div>

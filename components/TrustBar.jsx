@@ -6,7 +6,7 @@ const TrustBar = () => {
   const features = [
     {
       icon: <FiCheckCircle className="w-6 h-6 text-[#2E5C45]" />,
-      title: "Verified Sellers",
+      title: "Verified Stores",
       description: "Trusted & Vetted"
     },
     {

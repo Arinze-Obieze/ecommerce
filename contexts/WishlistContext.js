@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/contexts/ToastContext";
+import { trackAnalyticsEvent } from '@/utils/analytics';
 
 const WishlistContext = createContext();
 
@@ -63,6 +64,7 @@ export const WishlistProvider = ({ children }) => {
         .insert({ user_id: user.id, product_id: productId });
 
       if (error) throw error;
+      trackAnalyticsEvent('add_to_wishlist', { product_id: productId });
       success("Added to wishlist");
     } catch (err) {
       console.error("Error adding to wishlist:", err);
@@ -93,6 +95,7 @@ export const WishlistProvider = ({ children }) => {
         .match({ user_id: user.id, product_id: productId });
 
       if (error) throw error;
+      trackAnalyticsEvent('remove_from_wishlist', { product_id: productId });
       success("Removed from wishlist");
     } catch (err) {
         console.error("Error removing from wishlist:", err);

@@ -1,52 +1,113 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import redis from '@/utils/redis';
+import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request, { params }) {
-  // Await params for Next.js 15+
+  const startedAt = Date.now();
   const { id } = await params;
-  const slug = id; // param is named 'id' but we use it as a slug logic
-  
-  if (!slug) {
+
+  if (!id) {
+    await writeActivityLog({
+      request,
+      level: 'WARN',
+      service: 'catalog-service',
+      action: 'PRODUCT_DETAIL_INVALID_REQUEST',
+      status: 'failure',
+      statusCode: 400,
+      message: 'Product slug/id missing',
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json({ error: 'Slug/ID required' }, { status: 400 });
   }
 
-  const cacheKey = `product:${slug}`;
+  const cacheKey = `product:${id}`;
 
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     // 1. Try Cache
     if (redis) {
       const cachedData = await redis.get(cacheKey);
       if (cachedData) {
+        const parsed = typeof cachedData === 'object' ? cachedData : JSON.parse(cachedData);
+        await writeAnalyticsEvent({
+          eventName: 'view_item',
+          userId: user?.id || null,
+          path: `/products/${parsed.slug || id}`,
+          properties: {
+            product_id: parsed.id,
+            product_name: parsed.name,
+            store_id: parsed.store_id || null,
+            price: Number(parsed.discount_price || parsed.price || 0),
+            cache_hit: true,
+          },
+        });
+        await writeActivityLog({
+          request,
+          level: 'INFO',
+          service: 'catalog-service',
+          action: 'PRODUCT_DETAIL_FETCHED',
+          status: 'success',
+          statusCode: 200,
+          message: 'Product detail fetched from cache',
+          userId: user?.id || null,
+          metadata: { id: parsed.id, slug: parsed.slug, cacheHit: true },
+          durationMs: Date.now() - startedAt,
+        });
         // @upstash/redis may automatically parse JSON
         if (typeof cachedData === 'object') {
              return NextResponse.json(cachedData);
         }
-        return NextResponse.json(JSON.parse(cachedData));
+        return NextResponse.json(parsed);
       }
     }
 
     // 2. Fetch from DB
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    let product = null;
+    let error = null;
 
-    // Try fetching by slug first
-    let { data: product, error } = await supabase
+    // First try slug lookup
+    const slugResult = await supabase
       .from('products')
-      .select('*, product_categories(categories(*))')
-      .eq('slug', slug)
+      .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
+      .eq('slug', id)
+      .eq('is_active', true)
       .single();
 
-    // If not found by slug, maybe try ID? 
-    // But since the frontend sends slug, we prioritize slug.
+    product = slugResult.data;
+    error = slugResult.error;
+
+    // If slug lookup fails, allow numeric ID fallback for old links.
+    if ((!product || error) && Number.isInteger(Number(id))) {
+      const idResult = await supabase
+        .from('products')
+        .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
+        .eq('id', Number(id))
+        .eq('is_active', true)
+        .single();
+      product = idResult.data;
+      error = idResult.error;
+    }
+
     if (error || !product) {
-        // Optional: Could try to fetch by ID if slug fails, e.g. if slug looks like a UUID or ID
-        // But for now let's stick to slug as primarily requested.
         console.error('Supabase Error (slug lookup):', error);
+        await writeActivityLog({
+          request,
+          level: 'WARN',
+          service: 'catalog-service',
+          action: 'PRODUCT_DETAIL_NOT_FOUND',
+          status: 'failure',
+          statusCode: 404,
+          message: 'Product not found',
+          metadata: { id },
+          durationMs: Date.now() - startedAt,
+        });
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
@@ -61,10 +122,48 @@ export async function GET(request, { params }) {
       await redis.set(cacheKey, JSON.stringify(flattenedProduct), { ex: 300 });
     }
 
+    await writeAnalyticsEvent({
+      eventName: 'view_item',
+      userId: user?.id || null,
+      path: `/products/${flattenedProduct.slug || id}`,
+      properties: {
+        product_id: flattenedProduct.id,
+        product_name: flattenedProduct.name,
+        store_id: flattenedProduct.store_id || null,
+        price: Number(flattenedProduct.discount_price || flattenedProduct.price || 0),
+      },
+    });
+
+    await writeActivityLog({
+      request,
+      level: 'INFO',
+      service: 'catalog-service',
+      action: 'PRODUCT_DETAIL_FETCHED',
+      status: 'success',
+      statusCode: 200,
+      message: 'Product detail fetched',
+      userId: user?.id || null,
+      metadata: { id: flattenedProduct.id, slug: flattenedProduct.slug },
+      durationMs: Date.now() - startedAt,
+    });
+
     return NextResponse.json(flattenedProduct);
 
   } catch (err) {
     console.error('API Error:', err);
-    return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+    await writeActivityLog({
+      request,
+      level: 'ERROR',
+      service: 'catalog-service',
+      action: 'PRODUCT_DETAIL_FAILED',
+      status: 'failure',
+      statusCode: 500,
+      message: err.message || 'Product detail API failed',
+      errorCode: err.code || null,
+      errorStack: err.stack || null,
+      metadata: { id },
+      durationMs: Date.now() - startedAt,
+    });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

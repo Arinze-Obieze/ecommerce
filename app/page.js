@@ -18,7 +18,7 @@ export default function Home() {
       <PromotionalBanners />
       <BestSellers />
       <ExploreProducts />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <NewsletterSection />
     </main>
   );
