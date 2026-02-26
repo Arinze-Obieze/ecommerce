@@ -24,16 +24,21 @@ export async function sendZeptoMail({ to, subject, html, text }) {
     return { ok: false, status: 400, error: 'Provide at least one of html or text body' };
   }
 
-  const zeptoApiUrl = process.env.ZEPTOMAIL_API_URL || 'https://api.zeptomail.com/v1.1/email';
-  const zeptoApiKey = process.env.ZEPTOMAIL_API_KEY;
+  const zeptoHost = String(process.env.ZEPTOMAIL_HOST || '').trim() || 'api.zeptomail.com';
+  const zeptoApiUrl = process.env.ZEPTOMAIL_API_URL || `https://${zeptoHost}/v1.1/email`;
+  const zeptoApiKey = String(process.env.ZEPTOMAIL_API_KEY || process.env.ZEPTOMAIL_TOKEN || '').trim();
   const fromEmail = process.env.ZEPTOMAIL_FROM_EMAIL;
   const fromName = process.env.ZEPTOMAIL_FROM_NAME || 'Platform';
+  const authHeader = /^zoho-enczapikey\s+/i.test(zeptoApiKey)
+    ? zeptoApiKey
+    : `Zoho-enczapikey ${zeptoApiKey}`;
 
   if (!zeptoApiKey || !fromEmail) {
     return {
       ok: false,
       status: 500,
-      error: 'Missing ZeptoMail configuration. Set ZEPTOMAIL_API_KEY and ZEPTOMAIL_FROM_EMAIL.',
+      error:
+        'Missing ZeptoMail configuration. Set ZEPTOMAIL_TOKEN (or ZEPTOMAIL_API_KEY) and ZEPTOMAIL_FROM_EMAIL.',
     };
   }
 
@@ -59,7 +64,7 @@ export async function sendZeptoMail({ to, subject, html, text }) {
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: `Zoho-enczapikey ${zeptoApiKey}`,
+      Authorization: authHeader,
     },
     body: JSON.stringify(payload),
   });
@@ -85,4 +90,3 @@ export async function sendZeptoMail({ to, subject, html, text }) {
     },
   };
 }
-

@@ -8,7 +8,11 @@ import { footerData } from '@/data/footerData';
 const Footer = () => {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) {
+  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].some(
+    (path) => pathname?.startsWith(path)
+  );
+
+  if (pathname?.startsWith('/admin') || isAuthPage) {
     return null;
   }
 
