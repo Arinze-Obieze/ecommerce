@@ -23,9 +23,9 @@ const Hero = () => {
   
   const categories = [
     { name: 'Categories', href: '#' },
-    { name: 'New Arrivals', href: '#' },
-    { name: 'Deals', href: '#' },
-    { name: 'Top Stores', href: '#' },
+    { name: 'New Arrivals', href: '/shop?sortBy=newest' },
+    { name: 'Deals', href: '/shop?onSale=true' },
+    { name: 'Top Stores', href: '/stores' },
   ];
 
   /* Fetch Banner Data */
@@ -83,26 +83,40 @@ const Hero = () => {
       <div className="border-b border-gray-200 bg-white/50 backdrop-blur-sm relative z-40">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex items-center justify-center gap-8 md:gap-12 overflow-x-auto py-3 no-scrollbar">
-            {categories.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => {
-                  setActiveTab(item.name);
-                  if (item.name === 'Categories') {
-                    setIsModalOpen(!isModalOpen);
-                  } else {
-                    setIsModalOpen(false);
-                  }
-                }}
-                className={`text-sm font-medium whitespace-nowrap transition-all pb-1 ${
-                  activeTab === item.name
-                    ? 'text-[#2E5C45] border-b-2 border-[#2E5C45]'
-                    : 'text-gray-600 hover:text-[#2E5C45] border-b-2 border-transparent'
-                }`}
-              >
-                {item.name}
-              </button>
-            ))}
+            {categories.map((item) => {
+              if (item.name === 'Categories') {
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      setActiveTab(item.name);
+                      setIsModalOpen(!isModalOpen);
+                    }}
+                    className={`text-sm font-medium whitespace-nowrap transition-all pb-1 ${
+                      activeTab === item.name
+                        ? 'text-[#2E5C45] border-b-2 border-[#2E5C45]'
+                        : 'text-gray-600 hover:text-[#2E5C45] border-b-2 border-transparent'
+                    }`}
+                  >
+                    {item.name}
+                  </button>
+                );
+              }
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setActiveTab(item.name)}
+                  className={`text-sm font-medium whitespace-nowrap transition-all pb-1 ${
+                    activeTab === item.name
+                      ? 'text-[#2E5C45] border-b-2 border-[#2E5C45]'
+                      : 'text-gray-600 hover:text-[#2E5C45] border-b-2 border-transparent'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
           </div>
         </div>
         
@@ -181,13 +195,13 @@ const Hero = () => {
                 <Link href={activeBanner.cta_link || '/shop'} className="px-8 py-3 bg-[#2E5C45] text-white font-semibold rounded-lg shadow-lg hover:bg-[#254a38] transition-all transform hover:-translate-y-0.5">
                   {activeBanner.cta_text}
                 </Link>
-                <button className={`px-8 py-3 bg-transparent border font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+                <Link href="/shop?onSale=true" className={`px-8 py-3 bg-transparent border font-semibold rounded-lg transition-colors flex items-center gap-2 ${
                     activeBanner.background_image 
                     ? 'border-white text-white hover:bg-white/10' 
                     : 'border-gray-400 text-[#2E5C45] hover:bg-[#2E5C45]/5'
                 }`}>
                   Top Deals <FiChevronRight />
-                </button>
+                </Link>
               </div>
 
               <div className="flex items-center justify-center md:justify-start gap-2">

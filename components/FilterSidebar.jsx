@@ -71,9 +71,9 @@ function FilterSidebarContent({ onMobileClose }) {
   const [expandedSections, setExpandedSections] = useState({
     collection: true,
     category: true,
-    price: true,
-    sizes: true,
-    colors: true,
+    price: false,
+    sizes: false,
+    colors: false,
   });
 
   const [localPriceRange, setLocalPriceRange] = useState({

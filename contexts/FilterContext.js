@@ -105,8 +105,13 @@ function FilterProviderContent({ children }) {
     priceRange: { min: 0, max: 1000 },
   });
 
-  // Initialize filters from URL params on mount
-  useEffect(() => {
+  const [lastQueryString, setLastQueryString] = useState(null);
+
+  const currentQueryString = searchParams.toString();
+  
+  // Initialize/sync filters from URL params synchronously during render
+  if (currentQueryString !== lastQueryString) {
+    setLastQueryString(currentQueryString);
     const search = searchParams.get('search') || '';
     const categoryParam = searchParams.get('category') || '';
     const category = categoryParam === 'all' ? '' : categoryParam;
@@ -133,8 +138,11 @@ function FilterProviderContent({ children }) {
       inStock,
       onSale,
     });
-    setFiltersReady(true);
-  }, [searchParams]);
+    
+    if (!filtersReady) {
+      setFiltersReady(true);
+    }
+  }
 
   // Fetch categories and collections on mount
   useEffect(() => {

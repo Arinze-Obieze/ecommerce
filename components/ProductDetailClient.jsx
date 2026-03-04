@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createClient } from '@/utils/supabase/client';
 import { FiChevronLeft, FiShoppingCart, FiHeart, FiShare2, FiCheck } from 'react-icons/fi';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
@@ -16,7 +17,18 @@ export function ProductDetailClient({ id }) {
   const [addedToCart, setAddedToCart] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [activeTab, setActiveTab] = useState('description');
+  const [user, setUser] = useState(null);
+  
+  // Review form state
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
   const { addToCart } = useCart();
+  const supabase = createClient();
 
   const [variants, setVariants] = useState([]);
   
@@ -57,8 +69,18 @@ export function ProductDetailClient({ id }) {
 
     if (id) {
       fetchProductAndVariants();
+      // Check auth state for reviews
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user || null);
+      });
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user || null);
+      });
+      
+      return () => subscription.unsubscribe();
     }
-  }, [id]);
+  }, [id, supabase.auth]);
 
   const handleAddToCart = () => {
     setActionError('');
@@ -107,6 +129,61 @@ export function ProductDetailClient({ id }) {
 
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      setReviewError('You must be logged in to review.');
+      return;
+    }
+    if (!reviewComment.trim()) {
+      setReviewError('Please enter a comment.');
+      return;
+    }
+    
+    setIsSubmittingReview(true);
+    setReviewError('');
+    setSubmitSuccess(false);
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          rating: reviewRating,
+          comment: reviewComment,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit review');
+      }
+
+      // Update local product reviews list to show it immediately
+      setProduct(prev => ({
+        ...prev,
+        reviews: [{
+          id: data.id || Date.now().toString(),
+          product_id: product.id,
+          user_id: user.id,
+          rating: reviewRating,
+          comment: reviewComment,
+          created_at: new Date().toISOString()
+        }, ...(prev.reviews || [])]
+      }));
+
+      setReviewComment('');
+      setReviewRating(5);
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 3000);
+    } catch (err) {
+      setReviewError(err.message);
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   const handleShare = async () => {
@@ -194,15 +271,28 @@ export function ProductDetailClient({ id }) {
                 </div>
               )}
 
-              {/* Favorite Button */}
-              <button
-                onClick={() => setIsFavorite(!isFavorite)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <FiHeart
-                  className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
-                />
-              </button>
+              {/* Video Badge or Placeholder if needed */}
+              
+              <div className="absolute top-4 right-4 flex flex-col gap-2">
+                {/* Favorite Button */}
+                <button
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  <FiHeart
+                    className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+                  />
+                </button>
+
+                {/* Share Button */}
+                <button
+                  onClick={handleShare}
+                  className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+                  title="Share Product"
+                >
+                  <FiShare2 className="w-6 h-6 text-gray-600" />
+                </button>
+              </div>
             </div>
 
             {/* Thumbnail Gallery */}
@@ -246,6 +336,11 @@ export function ProductDetailClient({ id }) {
             {/* Title and Rating */}
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              {product.sku && (
+                <div className="text-sm text-gray-500 mb-2 font-medium">
+                  SKU: {product.sku}
+                </div>
+              )}
 
               {/* Store Info */}
               {product.stores && (
@@ -330,13 +425,7 @@ export function ProductDetailClient({ id }) {
               </div>
             </div>
 
-            {/* Description */}
-            {product.description && (
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">Description</h2>
-                <p className="text-gray-700 leading-relaxed">{product.description}</p>
-              </div>
-            )}
+            {/* Product Tabs have been moved to below the main grid */}
 
             {/* Size Selection */}
             {product.sizes && product.sizes.length > 0 && (
@@ -366,22 +455,60 @@ export function ProductDetailClient({ id }) {
             {product.colors && product.colors.length > 0 && (
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Select Color
+                  Select Color: <span className="font-normal text-gray-600">{selectedColor || 'None'}</span>
                 </label>
-                <div className="grid grid-cols-6 gap-3">
-                  {product.colors.map(color => (
-                    <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`py-2 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                        selectedColor === color
-                          ? 'border-gray-900 bg-gray-100'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                      }`}
-                    >
-                      {color}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-3">
+                  {product.colors.map(color => {
+                    const getColorHex = (name) => {
+                      const lowerName = name.toLowerCase();
+                      const colors = {
+                        'navy blue': '#1e3a8a',
+                        'green': '#166534',
+                        'red': '#991b1b',
+                        'dark grey': '#374151',
+                        'black': '#000000',
+                        'white': '#ffffff',
+                        'gray': '#6b7280',
+                        'grey': '#6b7280',
+                        'blue': '#2563eb',
+                        'yellow': '#eab308',
+                        'orange': '#f97316',
+                        'purple': '#9333ea',
+                        'pink': '#ec4899',
+                        'brown': '#78350f',
+                        'beige': '#f5f5dc',
+                        'light blue': '#bfdbfe',
+                        'light green': '#bbf7d0',
+                        'dark blue': '#1e3a8a',
+                        'dark green': '#14532d',
+                        'dark red': '#7f1d1d',
+                      };
+                      return colors[lowerName] || lowerName.replace(/\s+/g, '');
+                    };
+                    
+                    const hexCode = getColorHex(color);
+                    const isSelected = selectedColor === color;
+                    // Determine if the checkmark should be black based on background lightness
+                    const isLightColor = ['white', '#ffffff', '#fff', 'yellow', 'beige', '#eab308', '#f5f5dc'].includes(hexCode.toLowerCase());
+                    
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        title={color}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
+                          isSelected
+                            ? 'ring-2 ring-offset-2 ring-blue-600'
+                            : 'ring-1 ring-gray-200 hover:ring-gray-300 ring-offset-1'
+                        }`}
+                        style={{ backgroundColor: hexCode }}
+                      >
+                        {isSelected && (
+                          <FiCheck className={`w-5 h-5 ${isLightColor ? 'text-gray-900' : 'text-white'}`} />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -455,14 +582,7 @@ export function ProductDetailClient({ id }) {
               )}
             </button>
 
-            {/* Share Button */}
-            <button
-              onClick={handleShare}
-              className="w-full py-3 rounded-lg border-2 border-gray-300 font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2"
-            >
-              <FiShare2 className="w-5 h-5" />
-              Share Product
-            </button>
+            {/* Note: Share button was moved to the image gallery */}
 
             {/* Additional Info */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
@@ -479,6 +599,187 @@ export function ProductDetailClient({ id }) {
                 <span className="font-medium text-gray-900">1-year warranty</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Product Tabs (Full width below the product grid) */}
+        <div className="mt-16 border rounded-lg overflow-hidden bg-white shadow-sm">
+          {/* Tab Headers */}
+          <div className="flex border-b overflow-x-auto scbar-hide">
+            <button
+              onClick={() => setActiveTab('description')}
+              className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors whitespace-nowrap min-w-max ${
+                activeTab === 'description'
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/30'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Description
+            </button>
+            <button
+              onClick={() => setActiveTab('specifications')}
+              className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors whitespace-nowrap min-w-max ${
+                activeTab === 'specifications'
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/30'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Specifications
+            </button>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors whitespace-nowrap min-w-max ${
+                activeTab === 'reviews'
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/30'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Reviews ({product.reviews?.length || 0})
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-8">
+            {activeTab === 'description' && (
+              <div className="prose max-w-none text-gray-700">
+                {product.description ? (
+                  <p className="whitespace-pre-wrap leading-relaxed">{product.description}</p>
+                ) : (
+                  <p className="text-gray-500 italic">No description available for this product.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'specifications' && (
+              <div className="text-gray-700">
+                {product.specifications ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Assuming specifications could be an array of objects or strings, or a plain text field. Assuming text with newlines or an array for now. */}
+                    {typeof product.specifications === 'string' 
+                      ? product.specifications.split('\n').map((spec, i) => (
+                          <div key={i} className="py-2 border-b border-gray-100 last:border-0">{spec}</div>
+                        ))
+                      : Array.isArray(product.specifications) 
+                        ? product.specifications.map((spec, i) => (
+                            <div key={i} className="py-2 border-b border-gray-100 last:border-0">
+                                {typeof spec === 'object' ? (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <span className="font-medium text-gray-900">{spec.key}</span>
+                                        <span className="text-gray-600">{spec.value}</span>
+                                    </div>
+                                ) : spec}
+                            </div>
+                          ))
+                        : Object.entries(product.specifications).map(([key, val], i) => (
+                            <div key={i} className="py-2 border-b border-gray-100 last:border-0 grid grid-cols-2 gap-2">
+                                <span className="font-medium text-gray-900">{key}</span>
+                                <span className="text-gray-600">{val}</span>
+                            </div>
+                          ))
+                    }
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">No specifications available for this product.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'reviews' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                <div className="md:col-span-2 space-y-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Customer Reviews</h3>
+                  {product.reviews && product.reviews.length > 0 ? (
+                    product.reviews.map(review => (
+                      <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
+                             {/* Initials placeholder if we don't have user profiles */}
+                             👤
+                          </div>
+                          <div>
+                            <div className="flex text-yellow-400 mb-1">
+                              {[...Array(5)].map((_, i) => (
+                                <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-200 fill-current'}`} viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-8 text-center">
+                        <p className="text-gray-500 italic mb-2">No reviews yet.</p>
+                        <p className="text-gray-700 font-medium">Be the first to review this product!</p>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Write Review Form */}
+                <div className="md:col-span-1">
+                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 sticky top-24">
+                    <h4 className="text-lg font-bold text-gray-900 mb-4">Write a Review</h4>
+                    {!user ? (
+                      <div className="text-center p-4">
+                        <p className="text-sm text-gray-600 mb-4">Please log in to share your thoughts about this product.</p>
+                        <Link href="/signin" className="inline-block px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm">
+                            Sign In
+                        </Link>
+                      </div>
+                    ) : (
+                      <form onSubmit={submitReview} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 mb-2">Rating</label>
+                          <div className="flex gap-1 bg-white p-3 rounded-lg border border-gray-200 w-fit">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                type="button"
+                                key={star}
+                                onClick={() => setReviewRating(star)}
+                                className="focus:outline-none transition-transform hover:scale-110"
+                              >
+                                <svg 
+                                  className={`w-7 h-7 ${star <= reviewRating ? 'text-yellow-400 fill-current' : 'text-gray-200 fill-current hover:text-yellow-200'}`} 
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label htmlFor="comment" className="block text-sm font-medium text-gray-900 mb-2">Your Review</label>
+                          <textarea
+                            id="comment"
+                            rows="5"
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            placeholder="What did you like or dislike? What should other shoppers know before buying?"
+                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm resize-y"
+                            required
+                          />
+                        </div>
+                        {reviewError && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">{reviewError}</p>}
+                        {submitSuccess && <p className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200 font-medium">Thank you! Your review was submitted successfully.</p>}
+                        <button
+                          type="submit"
+                          disabled={isSubmittingReview}
+                          className={`w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm transition-colors shadow-sm ${
+                            isSubmittingReview ? 'opacity-70 cursor-wait' : ''
+                          }`}
+                        >
+                          {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

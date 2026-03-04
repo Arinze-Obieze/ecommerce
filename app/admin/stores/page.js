@@ -34,6 +34,7 @@ export default function AdminStoresPage() {
   const [assignValue, setAssignValue] = useState('');
   const [assigning, setAssigning] = useState(false);
   const [assignError, setAssignError] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
 
   const loadStores = async (nextPage = page, nextLimit = limit) => {
     try {
@@ -105,6 +106,30 @@ export default function AdminStoresPage() {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Failed to update store');
     return json.data;
+  };
+
+  const deleteStore = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete the store "${name}"? This will also delete all associated products and CANNOT be undone.`)) {
+      return;
+    }
+    try {
+      setDeletingId(id);
+      setError('');
+      setNotice('');
+      const res = await fetch(`/api/admin/stores/${id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to delete store');
+      
+      setNotice(`Store "${name}" and its products were successfully deleted.`);
+      setNoticeType('success');
+      await loadStores(page, limit);
+    } catch (err) {
+      setError(err.message || 'Failed to delete store');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const openAssignOwnerModal = (store) => {
@@ -386,6 +411,13 @@ export default function AdminStoresPage() {
                         <Link href={`/admin/stores/${store.id}`} className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700">
                           View
                         </Link>
+                        <button 
+                          disabled={deletingId === store.id}
+                          onClick={() => deleteStore(store.id, store.name)}
+                          className="rounded-lg border border-red-500 text-red-500 px-2 py-1 text-xs font-semibold hover:bg-red-50 disabled:opacity-50"
+                        >
+                          {deletingId === store.id ? 'Deleting...' : 'Delete'}
+                        </button>
                       </div>
                     </td>
                   </tr>

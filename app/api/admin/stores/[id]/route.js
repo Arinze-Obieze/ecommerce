@@ -190,3 +190,66 @@ export async function PATCH(request, { params }) {
 
   return NextResponse.json({ success: true, data: store });
 }
+
+export async function DELETE(request, { params }) {
+  const admin = await requireAdminApi([ADMIN_ROLES.SUPER_ADMIN]);
+  if (!admin.ok) return admin.response;
+
+  const rateLimit = await enforceRateLimit({
+    request,
+    scope: 'admin_store_delete',
+    identifier: admin.user.id,
+    limit: 20,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  const { id } = await params;
+  const storeResult = await resolveStore(admin.adminClient, id);
+
+  if (storeResult.error) {
+    return NextResponse.json({ error: storeResult.error.message }, { status: 500 });
+  }
+
+  if (!storeResult.data) {
+    return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+  }
+
+  const store = storeResult.data;
+
+  // Since we want to automatically delete all products under the store
+  const { error: productsError } = await admin.adminClient
+    .from('products')
+    .delete()
+    .eq('store_id', store.id);
+
+  if (productsError) {
+    return NextResponse.json({ error: 'Failed to delete store products: ' + productsError.message }, { status: 500 });
+  }
+
+  // Delete the store itself
+  const { error: storeError } = await admin.adminClient
+    .from('stores')
+    .delete()
+    .eq('id', store.id);
+
+  if (storeError) {
+    return NextResponse.json({ error: 'Failed to delete store: ' + storeError.message }, { status: 500 });
+  }
+
+  await writeAdminAuditLog(admin.adminClient, {
+    actorUserId: admin.user.id,
+    actorAdminUserId: admin.membership.id,
+    action: 'STORE_DELETED',
+    targetType: 'store',
+    targetId: store.id,
+    beforeData: store,
+    afterData: null,
+    metadata: { deletedWithProducts: true },
+  });
+
+  return NextResponse.json({ success: true, message: 'Store and its products deleted successfully' });
+}

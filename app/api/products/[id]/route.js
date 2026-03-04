@@ -75,7 +75,7 @@ export async function GET(request, { params }) {
     // First try slug lookup
     const slugResult = await supabase
       .from('products')
-      .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
+      .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url), reviews(*)')
       .eq('slug', id)
       .eq('is_active', true)
       .single();
@@ -87,7 +87,7 @@ export async function GET(request, { params }) {
     if ((!product || error) && Number.isInteger(Number(id))) {
       const idResult = await supabase
         .from('products')
-        .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
+        .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url), reviews(*)')
         .eq('id', Number(id))
         .eq('is_active', true)
         .single();

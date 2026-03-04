@@ -129,7 +129,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         <div className="hidden lg:flex flex-col items-start -space-y-0.5">
             <span className="text-xs md:text-sm font-medium leading-none">Account</span>  
         </div>
-        <FiChevronDown className="hidden md:block w-3 h-3 text-white/70" />
+        <FiChevronDown className="w-3 h-3 text-white/70" />
       </button>
 
       {isOpen && (
@@ -275,7 +275,7 @@ const Header = () => {
   };
 
   // Hide header on auth pages
-  if (pathname === '/login' || pathname === '/signup') {
+  if (['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname)) {
     return null;
   }
 
