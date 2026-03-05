@@ -7,6 +7,8 @@ import BestSellers from "@/components/BestSellers";
 import ExploreProducts from "@/components/ExploreProducts";
 import Testimonials from "@/components/Testimonials";
 import NewsletterSection from "@/components/NewsletterSection";
+import TopStoresCarousel from "@/components/TopStoresCarousel";
+import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
 
 export default function Home() {
   return (
@@ -17,6 +19,8 @@ export default function Home() {
       <NewArrivals />
       <PromotionalBanners />
       <BestSellers />
+      <TopStoresCarousel />
+      <RecentlyViewedProducts />
       <ExploreProducts />
       {/* <Testimonials /> */}
       <NewsletterSection />

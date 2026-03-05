@@ -1,36 +1,53 @@
 @import "tailwindcss";
 
-
-button{
-    cursor: pointer;
+button {
+  cursor: pointer;
 }
 
+/* Hide scrollbar for elements with scbar-hide class */
+.scbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 
-@theme{
+/* Hide number input spinners */
+.hide-number-spinners::-webkit-outer-spin-button,
+.hide-number-spinners::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hide-number-spinners[type=number] {
+  -moz-appearance: textfield;
+}
+
+@theme {
   /* Primary Colors */
-  --color-primary: #2563eb;    /* Blue - trust, security, professional */
+  --color-primary: #2563eb; /* Blue - trust, security, professional */
   --color-primary-hover: #1d4ed8; /* Darker blue for hover states */
-  
+
   /* Action/CTA Colors */
-  --color-accent: #dc2626;     /* Red - urgency, sales, attention */
-  --color-success: #059669;    /* Green - success, positive actions */
-  
+  --color-accent: #dc2626; /* Red - urgency, sales, attention */
+  --color-success: #059669; /* Green - success, positive actions */
+
   /* Neutral/Background Colors */
-  --color-background: #ffffff;  /* Clean white background */
+  --color-background: #ffffff; /* Clean white background */
   --color-background-alt: #f8fafc; /* Light gray for sections */
-  
+
   /* Text Colors */
-  --color-text: #1e293b;       /* Dark slate - primary text */
-  --color-text-light: #64748b;  /* Gray - secondary text */
+  --color-text: #1e293b; /* Dark slate - primary text */
+  --color-text-light: #64748b; /* Gray - secondary text */
   --color-text-inverted: #ffffff; /* White text on dark backgrounds */
-  
+
   /* UI/Component Colors */
-  --color-border: #e2e8f0;     /* Light borders */
-  --color-card: #ffffff;       /* Card backgrounds */
+  --color-border: #e2e8f0; /* Light borders */
+  --color-card: #ffffff; /* Card backgrounds */
   --color-card-hover: #f1f5f9; /* Card hover states */
-  
+
   /* Status Colors */
-  --color-error: #ef4444;      /* Error states */
-  --color-warning: #f59e0b;    /* Warnings */
-  --color-info: #3b82f6;       /* Information */
+  --color-error: #ef4444; /* Error states */
+  --color-warning: #f59e0b; /* Warnings */
+  --color-info: #3b82f6; /* Information */
 }

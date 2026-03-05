@@ -32,11 +32,11 @@ const FeaturedCategories = () => {
   ];
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-12 bg-white overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-4 md:gap-6 pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory scbar-hide">
           {cards.map((card) => (
-            <div key={card.id} className="relative group overflow-hidden rounded-2xl h-[400px]">
+            <div key={card.id} className="relative group overflow-hidden rounded-2xl h-[300px] md:h-[400px] min-w-[280px] md:min-w-0 flex-shrink-0 snap-center md:snap-none w-[85%] md:w-auto">
               {/* Background Image */}
               <div 
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"

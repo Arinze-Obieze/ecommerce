@@ -10,7 +10,7 @@ import { trackAnalyticsEvent } from '@/utils/analytics';
 
 export default function CartPage() {
   const router = useRouter();
-  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, setItemQuantity, clearCart } = useCart();
   const [isCheckingOut, setIsCheckingOut] = React.useState(false);
   const [checkoutError, setCheckoutError] = React.useState('');
   const [successModal, setSuccessModal] = React.useState({
@@ -187,13 +187,15 @@ export default function CartPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-4 bg-[#f8f5f2]">
-        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-            <FiShoppingBag className="w-10 h-10 text-gray-400" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 bg-[#f8f5f2]">
+        <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100">
+            <FiShoppingBag className="w-10 h-10 md:w-12 md:h-12 text-gray-300" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
-        <p className="text-gray-500 mb-8 text-center max-w-md">Looks like you haven't added anything to your cart yet. Go ahead and explore our products.</p>
-        <Link href="/shop" className="px-8 py-3 bg-[#2E5C45] text-white font-medium rounded-full hover:bg-[#254a38] transition-colors shadow-lg shadow-[#2E5C45]/20">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 text-center">Your cart is empty</h1>
+        <p className="text-gray-500 mb-8 text-center max-w-sm md:max-w-md text-sm md:text-base leading-relaxed">
+          Looks like you haven't added anything to your cart yet. Discover your next favorite item in our shop!
+        </p>
+        <Link href="/shop" className="px-8 py-3.5 bg-[#2E5C45] text-white font-bold rounded-full hover:bg-[#254a38] hover:-translate-y-0.5 transition-all shadow-[0_4px_12px_rgba(46,92,69,0.3)]">
           Start Shopping
         </Link>
       </div>
@@ -230,9 +232,9 @@ export default function CartPage() {
           {/* Cart Items List */}
           <div className="flex-1 space-y-4">
             {cart.map((item) => (
-              <div key={`${item.id}-${item.variant_id ?? 'base'}`} className="bg-white p-4 rounded-xl border border-gray-100 flex gap-4 transition-all hover:shadow-md">
+              <div key={`${item.id}-${item.variant_id ?? 'base'}`} className="bg-white p-3 md:p-5 rounded-2xl border border-gray-100 flex gap-4 transition-all hover:shadow-md">
                 {/* Image */}
-                <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shrink-0">
                   <img 
                     src={item.image_urls?.[0] || 'https://placehold.co/200x200?text=No+Image'} 
                     alt={item.name} 
@@ -258,10 +260,10 @@ export default function CartPage() {
                     </button>
                   </div>
 
-                  <div className="flex-1 flex items-end justify-between mt-2">
+                  <div className="flex-1 flex flex-col justify-end mt-2 md:mt-auto">
                      {/* Price */}
-                    <div className="flex flex-col">
-                        <span className="font-bold text-gray-900">
+                    <div className="flex flex-col mb-3 md:mb-0">
+                        <span className="font-bold text-gray-900 md:text-lg text-base leading-none mb-1">
                            ₦{(item.discount_price || item.price).toLocaleString()}
                         </span>
                         {item.discount_price && (
@@ -272,7 +274,8 @@ export default function CartPage() {
                     </div>
 
                     {/* Quantity Control */}
-                    <div className="flex items-center bg-gray-50 rounded-lg p-1 border border-gray-200">
+                    <div className="flex items-center justify-between w-full md:w-auto mt-1 md:mt-0">
+                      <div className="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-200">
                         {(() => {
                           const maxStock = Number.isFinite(Number(item.stock_quantity))
                             ? Math.max(0, Number(item.stock_quantity))
@@ -282,15 +285,34 @@ export default function CartPage() {
                             <>
                         <button 
                              onClick={() => updateQuantity(item.id, -1, item.variant_id)}
-                             className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm rounded transition-all"
+                             className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded-lg transition-all"
                              disabled={item.quantity <= 1}
                         >
                             <FiMinus className="w-3 h-3" />
                         </button>
-                        <span className="w-8 text-center font-medium text-sm text-gray-900">{item.quantity}</span>
+                        <input 
+                             type="number"
+                             value={item.quantity}
+                             onChange={(e) => {
+                               const val = parseInt(e.target.value, 10);
+                               if (!isNaN(val)) {
+                                 setItemQuantity(item.id, val, item.variant_id);
+                               }
+                             }}
+                             onBlur={(e) => {
+                               const val = parseInt(e.target.value, 10);
+                               // If input is left empty or invalid, reset to at least 1
+                               if (isNaN(val) || val < 1) {
+                                 setItemQuantity(item.id, 1, item.variant_id);
+                               }
+                             }}
+                             className="w-12 md:w-10 text-center font-bold text-sm text-gray-900 bg-transparent border-none focus:ring-0 focus:outline-none p-0 hide-number-spinners scbar-hide"
+                             min="1"
+                             max={Number.isFinite(maxStock) ? maxStock : undefined}
+                        />
                         <button 
                              onClick={() => updateQuantity(item.id, 1, item.variant_id)}
-                             className="w-8 h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm rounded transition-all"
+                             className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-sm rounded-lg transition-all disabled:opacity-50"
                              disabled={disableIncrease}
                         >
                             <FiPlus className="w-3 h-3" />
@@ -298,6 +320,7 @@ export default function CartPage() {
                             </>
                           );
                         })()}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -306,15 +329,15 @@ export default function CartPage() {
             
             <button 
                 onClick={clearCart}
-                className="text-sm text-red-500 hover:underline mt-4 flex items-center gap-2"
+                className="text-sm font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg transition-all mt-4 flex items-center gap-2 w-fit mx-auto md:mx-0"
             >
                 <FiTrash2 /> Clear Cart
             </button>
           </div>
 
           {/* Order Summary */}
-          <div className="lg:w-96 shrink-0">
-             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sticky top-8">
+          <div className="lg:w-[400px] shrink-0">
+             <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm sticky top-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
                 
                 <div className="space-y-4 mb-6">

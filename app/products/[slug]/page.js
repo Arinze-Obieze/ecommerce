@@ -6,6 +6,8 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
+import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
+import RelatedProducts from '@/components/RelatedProducts';
 
 function getUniqueOptions(variants, key) {
   return [...new Set((variants || []).map((variant) => variant?.[key]).filter(Boolean))];
@@ -75,6 +77,17 @@ export default function ProductPage({ params }) {
 
         setProduct(productData);
         setVariants(fetchedVariants);
+
+        // Track recently viewed
+        if (productData && productData.id) {
+          try {
+            const currentViews = JSON.parse(localStorage.getItem('recently_viewed_products')) || [];
+            const newViews = [productData.id, ...currentViews.filter((id) => id !== productData.id)].slice(0, 15);
+            localStorage.setItem('recently_viewed_products', JSON.stringify(newViews));
+          } catch (e) {
+            console.error('Failed to set recently viewed', e);
+          }
+        }
 
         const defaultVariant = pickDefaultVariant(fetchedVariants);
         if (defaultVariant) {
@@ -541,6 +554,10 @@ export default function ProductPage({ params }) {
                 <span className="text-lg">🚚</span>
                 Free Delivery over ₦50k
               </div>
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 text-sm">
+                <span className="text-lg">📦</span>
+                Delivery in 3-5 Business Days
+              </div>
             </div>
           </div>
         </div>
@@ -585,6 +602,19 @@ export default function ProductPage({ params }) {
             >
               Reviews ({product.reviews?.length || 0})
               {activeTab === 'reviews' && (
+                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2E5C45]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('policies')}
+              className={`flex-1 py-5 px-6 text-center font-bold text-sm transition-all whitespace-nowrap min-w-max relative ${
+                activeTab === 'policies'
+                  ? 'text-[#2E5C45]'
+                  : 'text-gray-500 hover:text-gray-900 bg-gray-50/50'
+              }`}
+            >
+              Returns & Policies
+              {activeTab === 'policies' && (
                 <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2E5C45]" />
               )}
             </button>
@@ -732,8 +762,41 @@ export default function ProductPage({ params }) {
                 </div>
               </div>
             )}
+            
+            {activeTab === 'policies' && (
+              <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Store Policies & Returns</h3>
+                <div className="space-y-6 text-sm text-gray-700">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Return Window</h4>
+                    <p>Eligible items can be returned within 30 days of delivery. Must be in original condition with tags attached.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Refund Timelines</h4>
+                    <p>Refunds are processed within 5-7 business days after the returned item is received and inspected.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Warranty Information</h4>
+                    <p>Standard manufacturer warranties apply unless otherwise stated by the seller. Please review the specific item condition notes.</p>
+                  </div>
+                  <div className="pt-4 border-t border-gray-200">
+                    <p className="font-medium">Need help with an order? <Link href="/support" className="text-[#2E5C45] hover:underline">Contact Support</Link></p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
+      
+      {/* Related & Recently Viewed Sections */}
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-12 block">
+        <RelatedProducts 
+           currentProductId={product.id} 
+           categorySlug={product.categories && product.categories.length > 0 ? product.categories[0].slug : null} 
+           storeId={product.stores?.id}
+        />
+        <RecentlyViewedProducts currentProductId={product.id} />
       </div>
     </div>
   );

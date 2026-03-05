@@ -21,10 +21,10 @@ import { createClient } from "@/utils/supabase/client";
 const HeaderLogo = () => (
   <Link href={'/'} className="flex-shrink-0">
     <div className="flex items-center gap-2">
-      <div className="w-7 h-7 flex items-center justify-center border-2 border-white rounded-md">
-         <FiShoppingCart className="w-4 h-4 text-white" />
+      <div className="w-7 h-7 flex items-center justify-center border-2 border-[#2E5C45] rounded-md">
+         <FiShoppingCart className="w-4 h-4 text-[#2E5C45]" />
       </div>
-      <h1 className="text-lg md:text-xl font-bold tracking-tight">ShopHub</h1>
+      <h1 className="text-lg md:text-xl font-bold tracking-tight text-[#2E5C45]">ShopHub</h1>
     </div>
   </Link>
 );
@@ -36,7 +36,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
     </div>
     <input
       type="text"
-      className="block w-full pl-10 pr-3 py-2.5 bg-gray-100/10 border border-gray-400/30 rounded-full leading-5 text-white placeholder-gray-300 focus:outline-none focus:bg-white/20 focus:border-white/50 text-sm transition-colors"
+      className="block w-full pl-10 pr-3 py-2.5 bg-gray-100 border border-gray-200 rounded-full leading-5 text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#2E5C45] focus:border-transparent text-sm transition-colors"
       placeholder="Search for products..."
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
@@ -51,7 +51,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
 );
 
 const CurrencySelector = () => (
-  <div className="hidden lg:flex items-center gap-1 text-sm font-medium opacity-90 hover:opacity-100 cursor-pointer px-2">
+  <div className="hidden lg:flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-[#2E5C45] cursor-pointer px-2">
     <span>₦ NGN</span>
   </div>
 );
@@ -73,7 +73,7 @@ const WishlistIcon = () => {
   return (
     <button 
       onClick={handleClick}
-      className="relative p-1 hover:bg-white/10 rounded-full transition-colors"
+      className="relative p-1 hover:bg-gray-100 text-gray-700 hover:text-[#2E5C45] rounded-full transition-colors"
     >
        <FiHeart className="w-5 h-5 md:w-6 md:h-6" />
        {wishlistItems.size > 0 && (
@@ -92,7 +92,7 @@ const CartIcon = () => {
   return (
     <Link
       href="/cart"
-      className="relative p-1 hover:bg-white/10 rounded-full transition-colors group block"
+      className="relative p-1 hover:bg-gray-100 text-gray-700 hover:text-[#2E5C45] rounded-full transition-colors group block"
       aria-label="Open cart"
     >
       <FiShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
@@ -106,7 +106,7 @@ const CartIcon = () => {
 };
 
 const VerticalDivider = ({ mobileHidden = false }) => (
-  <div className={`${mobileHidden ? 'hidden lg:block' : 'hidden md:block'} h-5 w-px bg-white/30 mx-1`}></div>
+  <div className={`${mobileHidden ? 'hidden lg:block' : 'hidden md:block'} h-5 w-px bg-gray-200 mx-1`}></div>
 );
 
 const UserMenu = ({ user, signOut, adminRole }) => {
@@ -121,15 +121,15 @@ const UserMenu = ({ user, signOut, adminRole }) => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 hover:bg-white/10 px-2 py-1.5 rounded-lg transition-colors"
+        className="flex items-center gap-1.5 hover:bg-gray-100 text-gray-700 hover:text-[#2E5C45] px-2 py-1.5 rounded-lg transition-colors"
       >
-        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
            <FiUser className="w-4 h-4" />
         </div>
         <div className="hidden lg:flex flex-col items-start -space-y-0.5">
             <span className="text-xs md:text-sm font-medium leading-none">Account</span>  
         </div>
-        <FiChevronDown className="w-3 h-3 text-white/70" />
+        <FiChevronDown className="w-3 h-3 text-gray-400" />
       </button>
 
       {isOpen && (
@@ -280,7 +280,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-[#2E5C45] text-white sticky top-0 z-[100] shadow-md">
+    <header className="bg-white text-gray-900 sticky top-0 z-[100] shadow-sm border-b border-gray-100">
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4 lg:gap-8">
           

@@ -114,6 +114,21 @@ export function CartProvider({ children }) {
     });
   };
 
+  const setItemQuantity = (productId, newQuantity, variantId = null) => {
+    setCart((prevCart) => {
+        const targetVariantId = variantId === undefined ? null : variantId;
+        return prevCart.map(item => {
+            const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
+            if (item.id === productId && itemVariantId === targetVariantId) {
+                const maxStock = normalizeMaxStock(item);
+                const boundedQuantity = Math.min(maxStock, Math.max(1, newQuantity));
+                return { ...item, quantity: boundedQuantity };
+            }
+            return item;
+        });
+    });
+  };
+
   const clearCart = () => {
     setCart([]);
     localStorage.removeItem('shophub_cart');
@@ -122,7 +137,7 @@ export function CartProvider({ children }) {
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, setItemQuantity, clearCart, cartCount }}>
       {children}
     </CartContext.Provider>
   );
