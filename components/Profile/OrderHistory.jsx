@@ -1,33 +1,158 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiPackage } from 'react-icons/fi';
+import { FiPackage, FiArrowRight, FiShoppingBag } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 
+// ─── THEME ────────────────────────────────────────────────────────────────────
+const THEME = {
+  green:       '#00B86B',
+  greenDark:   '#0F7A4F',
+  greenTint:   '#EDFAF3',
+  greenBorder: '#A8DFC4',
+  white:       '#FFFFFF',
+  pageBg:      '#F9FAFB',
+  charcoal:    '#111111',
+  medGray:     '#666666',
+  mutedText:   '#999999',
+  border:      '#E8E8E8',
+  softGray:    '#F5F5F5',
+};
+
+const STATUS = {
+  completed:  { label: 'Completed',  color: '#00B86B', bg: '#EDFAF3', border: '#A8DFC4' },
+  processing: { label: 'Processing', color: '#EA580C', bg: '#FFF7ED', border: '#FED7AA' },
+  pending:    { label: 'Pending',    color: '#888888', bg: '#F5F5F5', border: '#E8E8E8' },
+  cancelled:  { label: 'Cancelled',  color: '#E53935', bg: '#FEF2F2', border: '#FECACA' },
+};
+
+const formatDate = (d) =>
+  new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+const formatPrice = (amount) =>
+  new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount);
+
+// ─── SKELETON ROW ─────────────────────────────────────────────────────────────
+const SkeletonRow = ({ delay = 0 }) => (
+  <div
+    className="animate-pulse"
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '18px 24px',
+      borderBottom: `1px solid ${THEME.border}`,
+      animationDelay: `${delay}ms`,
+      gap: 16,
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: THEME.softGray, flexShrink: 0 }} />
+      <div>
+        <div style={{ width: 100, height: 11, background: THEME.softGray, borderRadius: 4, marginBottom: 8 }} />
+        <div style={{ width: 140, height: 9, background: THEME.softGray, borderRadius: 4 }} />
+      </div>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+      <div style={{ width: 70, height: 22, background: THEME.softGray, borderRadius: 100 }} />
+      <div style={{ width: 80, height: 13, background: THEME.softGray, borderRadius: 4 }} />
+    </div>
+  </div>
+);
+
+// ─── ORDER ROW ────────────────────────────────────────────────────────────────
+const OrderRow = ({ order }) => {
+  const [hov, setHov] = useState(false);
+  const st = STATUS[order.status] || STATUS.pending;
+  const itemCount = order.order_items?.length || 0;
+
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '18px 24px',
+        borderBottom: `1px solid ${THEME.border}`,
+        background: hov ? THEME.pageBg : THEME.white,
+        transition: 'background 0.18s',
+        gap: 16,
+        flexWrap: 'wrap',
+      }}
+    >
+      {/* Left */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 10,
+            background: hov ? THEME.greenTint : THEME.softGray,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'background 0.18s',
+          }}
+        >
+          <FiPackage size={17} style={{ color: hov ? THEME.green : THEME.mutedText }} />
+        </div>
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 800, color: THEME.charcoal, margin: 0, marginBottom: 3, letterSpacing: '0.02em' }}>
+            #{order.id.slice(0, 8).toUpperCase()}
+          </p>
+          <p style={{ fontSize: 12, color: THEME.mutedText, margin: 0 }}>
+            {formatDate(order.created_at)} &middot; {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          </p>
+        </div>
+      </div>
+
+      {/* Right */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0 }}>
+        <span
+          style={{
+            display: 'inline-block',
+            padding: '3px 11px',
+            borderRadius: 100,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            textTransform: 'capitalize',
+            color: st.color,
+            background: st.bg,
+            border: `1px solid ${st.border}`,
+          }}
+        >
+          {st.label}
+        </span>
+        <p style={{ fontSize: 14, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.02em' }}>
+          {formatPrice(order.total_amount)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function OrderHistory() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [ctaHov, setCtaHov]   = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
-
     const fetchOrders = async () => {
       try {
         const supabase = createClient();
         const { data, error } = await supabase
           .from('orders')
-          .select(`
-            id,
-            total_amount,
-            status,
-            created_at,
-            order_items(id, product_id, quantity, price)
-          `)
+          .select('id, total_amount, status, created_at, order_items(id, product_id, quantity, price)')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-
         if (error) throw error;
         setOrders(data || []);
       } catch (err) {
@@ -37,98 +162,107 @@ export default function OrderHistory() {
         setLoading(false);
       }
     };
-
     fetchOrders();
   }, [user?.id]);
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatPrice = (amount) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-    }).format(amount);
-  };
-
-  if (loading) {
-    return <div className="text-center py-8 text-gray-500">Loading orders...</div>;
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Order History</h2>
-        <div className="text-sm text-gray-500">
-          {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText, margin: 0, marginBottom: 4 }}>
+            My Account
+          </p>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em' }}>
+            Order History
+          </h2>
         </div>
+        {!loading && orders.length > 0 && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 100,
+              fontSize: 12,
+              fontWeight: 700,
+              background: THEME.softGray,
+              color: THEME.medGray,
+              border: `1px solid ${THEME.border}`,
+            }}
+          >
+            <FiPackage size={11} />
+            {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+          </span>
+        )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {orders.length > 0 ? (
-          <div className="divide-y divide-gray-100">
-            {orders.map((order) => (
-              <div key={order.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                      <FiPackage className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900">{order.id.slice(0, 8).toUpperCase()}</h3>
-                      <p className="text-sm text-gray-500">
-                        {formatDate(order.created_at)} • {order.order_items?.length || 0} {order.order_items?.length === 1 ? 'item' : 'items'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between md:justify-end gap-6 md:gap-8 w-full md:w-auto">
-                    <div>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <div className="font-bold text-gray-900">{formatPrice(order.total_amount)}</div>
-                    <div className="text-xs text-gray-400 font-mono">
-                      {order.id.slice(0, 8)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ── Table card ── */}
+      <div
+        style={{
+          background: THEME.white,
+          border: `1px solid ${THEME.border}`,
+          borderRadius: 18,
+          overflow: 'hidden',
+        }}
+      >
+        {loading ? (
+          [...Array(4)].map((_, i) => <SkeletonRow key={i} delay={i * 60} />)
+        ) : orders.length > 0 ? (
+          orders.map((order) => <OrderRow key={order.id} order={order} />)
         ) : (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FiPackage className="w-8 h-8 text-gray-300" />
+          /* ── Empty state ── */
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '64px 24px',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 58,
+                height: 58,
+                borderRadius: '50%',
+                background: THEME.greenTint,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <FiShoppingBag size={24} style={{ color: THEME.green }} />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No orders yet</h3>
-            <p className="text-gray-500 mb-6">When you place an order, it will appear here.</p>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: THEME.charcoal, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+              No orders yet
+            </h3>
+            <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 24px', maxWidth: 280, lineHeight: 1.6 }}>
+              When you place an order it will appear here.
+            </p>
             <Link
               href="/shop"
-              className="inline-block px-6 py-2 bg-[#2E5C45] text-white rounded-lg font-medium hover:bg-[#254a38] transition-colors"
+              onMouseEnter={() => setCtaHov(true)}
+              onMouseLeave={() => setCtaHov(false)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '11px 24px',
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 700,
+                color: THEME.white,
+                background: ctaHov ? THEME.greenDark : THEME.green,
+                textDecoration: 'none',
+                transition: 'background 0.2s',
+              }}
             >
-              Start Shopping
+              Start Shopping <FiArrowRight size={13} />
             </Link>
           </div>
         )}

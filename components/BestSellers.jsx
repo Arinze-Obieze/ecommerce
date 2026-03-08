@@ -3,6 +3,32 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import SectionCarousel from './SectionCarousel';
 
+const THEME = {
+  colors: {
+    primary: '#00B86B',
+    primaryHover: '#0F7A4F',
+    deepEmerald: '#0A3D2E',
+    white: '#FFFFFF',
+    pageBg: '#F9FAFB',
+    softGray: '#F5F5F5',
+    darkCharcoal: '#111111',
+    mediumGray: '#666666',
+    mutedText: '#888888',
+    border: '#F0F0F0',
+    cardBorder: '#EFEFEF',
+    saleRed: '#E53935',
+    trendingOrange: '#EA580C',
+    starYellow: '#F59E0B',
+    whatsappGreen: '#25D366',
+  },
+  shadows: {
+    cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',
+  },
+  transitions: {
+    default: 'all 0.2s ease',
+  }
+};
+
 const BestSellers = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,21 +61,56 @@ const BestSellers = () => {
   }, []);
 
   if (loading) {
-     return (
-        <SectionCarousel title="Best Sellers">
-             {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-gray-50 rounded-xl h-64 md:h-96 animate-pulse w-full"></div>
-             ))}
-        </SectionCarousel>
-     )
+    return (
+      <SectionCarousel title="Best Sellers">
+        {[...Array(4)].map((_, i) => (
+          <div 
+            key={i}
+            className="bg-[#F5F5F5] rounded-xl overflow-hidden w-full"
+            style={{ 
+              animation: `pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite`,
+              animationDelay: `${i * 150}ms`
+            }}
+          >
+            {/* Image skeleton */}
+            <div className="aspect-square bg-[#E8E8E8] w-full" />
+            
+            {/* Content skeleton */}
+            <div className="p-4 space-y-3">
+              {/* Store name line */}
+              <div className="h-3 bg-[#E0E0E0] rounded w-1/3" />
+              
+              {/* Product title lines */}
+              <div className="space-y-2">
+                <div className="h-4 bg-[#E0E0E0] rounded w-3/4" />
+                <div className="h-4 bg-[#E0E0E0] rounded w-1/2" />
+              </div>
+              
+              {/* Price and button row */}
+              <div className="flex items-center justify-between pt-2">
+                <div className="space-y-2">
+                  <div className="h-4 bg-[#E0E0E0] rounded w-16" />
+                  <div className="h-3 bg-[#E8E8E8] rounded w-12" />
+                </div>
+                <div className="h-8 bg-[#E0E0E0] rounded w-20" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </SectionCarousel>
+    );
   }
 
   if (products.length === 0) return null;
 
   return (
-    <SectionCarousel title="Best Sellers" linkText="View All" linkHref="/shop?collection=best-sellers">
+    <SectionCarousel 
+      title="Best Sellers" 
+      linkText="View All" 
+      linkHref="/shop?collection=best-sellers"
+    >
       {products.map((product) => (
-         <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} />
       ))}
     </SectionCarousel>
   );

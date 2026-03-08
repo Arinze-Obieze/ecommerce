@@ -1,7 +1,11 @@
 "use client";
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiShoppingCart, FiHeart, FiStar, FiChevronLeft, FiMinus, FiPlus, FiShare2 } from 'react-icons/fi';
+import {
+  FiShoppingCart, FiHeart, FiStar, FiChevronLeft,
+  FiMinus, FiPlus, FiShare2, FiCheck, FiTruck,
+  FiRefreshCw, FiShield, FiPackage, FiZoomIn,
+} from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { createClient } from '@/utils/supabase/client';
@@ -9,794 +13,880 @@ import Link from 'next/link';
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from '@/components/RelatedProducts';
 
+// ─────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────
+const T = {
+  green:        '#00B86B',
+  greenDark:    '#0F7A4F',
+  greenDeep:    '#0A3D2E',
+  greenTint:    '#EDFAF3',
+  greenBorder:  '#A8DFC4',
+  white:        '#FFFFFF',
+  pageBg:       '#F9FAFB',
+  charcoal:     '#111111',
+  medGray:      '#666666',
+  mutedText:    '#999999',
+  border:       '#E8E8E8',
+  softGray:     '#F5F5F5',
+  saleRed:      '#E53935',
+  saleBg:       '#FEF2F2',
+  starYellow:   '#F59E0B',
+};
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
 function getUniqueOptions(variants, key) {
-  return [...new Set((variants || []).map((variant) => variant?.[key]).filter(Boolean))];
+  return [...new Set((variants || []).map(v => v?.[key]).filter(Boolean))];
 }
-
 function pickDefaultVariant(variants) {
-  if (!Array.isArray(variants) || variants.length === 0) return null;
-  return variants.find((variant) => Number(variant.stock_quantity) > 0) || variants[0];
+  if (!Array.isArray(variants) || !variants.length) return null;
+  return variants.find(v => Number(v.stock_quantity) > 0) || variants[0];
 }
 
+// ─────────────────────────────────────────────────────────────
+// SUB-COMPONENTS
+// ─────────────────────────────────────────────────────────────
+const StarRow = ({ rating, count }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ display: 'flex', gap: 2 }}>
+      {[1,2,3,4,5].map(s => (
+        <FiStar key={s} size={13}
+          style={{ color: s <= Math.round(rating) ? T.starYellow : T.border,
+                   fill:  s <= Math.round(rating) ? T.starYellow : 'none' }} />
+      ))}
+    </div>
+    <span style={{ fontSize: 13, fontWeight: 600, color: T.charcoal }}>{Number(rating || 5).toFixed(1)}</span>
+    {count !== undefined && (
+      <span style={{ fontSize: 13, color: T.mutedText }}>({count} reviews)</span>
+    )}
+  </div>
+);
+
+const IconTile = ({ icon: Icon, size = 16, bg = T.softGray, color = T.charcoal }) => (
+  <div style={{ width: 34, height: 34, borderRadius: 9, background: bg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <Icon size={size} style={{ color }} />
+  </div>
+);
+
+const TrustPill = ({ icon: Icon, label }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px',
+                border: `1px solid ${T.border}`, borderRadius: 12, background: T.white, flex: 1 }}>
+    <Icon size={14} style={{ color: T.green, flexShrink: 0 }} />
+    <span style={{ fontSize: 12, fontWeight: 600, color: T.charcoal, lineHeight: 1.4 }}>{label}</span>
+  </div>
+);
+
+// Image gallery
+function ImageGallery({ images, productName }) {
+  const [selected, setSelected] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const imgRef = useRef(null);
+
+  const all = images?.length ? images : ['https://placehold.co/600x800'];
+
+  const handleMouseMove = (e) => {
+    if (!imgRef.current) return;
+    const rect = imgRef.current.getBoundingClientRect();
+    setMousePos({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: 12 }}>
+      {/* Thumbnails — desktop only */}
+      {all.length > 1 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}
+             className="hidden lg:flex">
+          {all.map((url, i) => (
+            <button key={i} type="button" onClick={() => setSelected(i)}
+              style={{
+                width: 72, height: 86, borderRadius: 10, overflow: 'hidden', cursor: 'pointer',
+                border: `2px solid ${i === selected ? T.green : 'transparent'}`,
+                opacity: i === selected ? 1 : 0.6,
+                transition: 'all 0.18s', padding: 0, background: T.softGray,
+              }}
+              onMouseEnter={e => { if (i !== selected) e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={e => { if (i !== selected) e.currentTarget.style.opacity = '0.6'; }}
+            >
+              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Main image */}
+      <div style={{ flex: 1 }}>
+        <div
+          ref={imgRef}
+          onMouseEnter={() => setZoomed(true)}
+          onMouseLeave={() => setZoomed(false)}
+          onMouseMove={handleMouseMove}
+          style={{
+            position: 'relative', borderRadius: 20, overflow: 'hidden',
+            aspectRatio: '3/4', background: T.softGray, cursor: 'zoom-in',
+          }}
+        >
+          <img
+            src={all[selected]}
+            alt={productName}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
+              transform: zoomed ? 'scale(1.6)' : 'scale(1)',
+              transition: zoomed ? 'transform 0.15s ease-out' : 'transform 0.3s ease-out',
+            }}
+          />
+          <div style={{ position: 'absolute', bottom: 12, right: 12,
+                        background: 'rgba(255,255,255,0.85)', borderRadius: 8, padding: '5px 8px',
+                        display: 'flex', alignItems: 'center', gap: 5, backdropFilter: 'blur(4px)' }}>
+            <FiZoomIn size={12} style={{ color: T.charcoal }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: T.charcoal }}>HOVER TO ZOOM</span>
+          </div>
+        </div>
+
+        {/* Mobile thumbnails */}
+        {all.length > 1 && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}
+               className="lg:hidden">
+            {all.map((url, i) => (
+              <button key={i} type="button" onClick={() => setSelected(i)}
+                style={{
+                  width: 60, height: 72, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                  border: `2px solid ${i === selected ? T.green : 'transparent'}`,
+                  opacity: i === selected ? 1 : 0.6, padding: 0, cursor: 'pointer',
+                }}
+              >
+                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Option selector (sizes / colors)
+function OptionPills({ label, options, selected, onSelect, getAvailable }) {
+  const [hov, setHov] = useState(null);
+  if (!options.length) return null;
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: T.charcoal }}>{label}</span>
+        {selected && <span style={{ fontSize: 12, color: T.medGray }}>{selected}</span>}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {options.map(opt => {
+          const isSelected = opt === selected;
+          const isAvailable = getAvailable ? getAvailable(opt) : true;
+          return (
+            <button key={opt} type="button"
+              onClick={() => isAvailable && onSelect(opt)}
+              onMouseEnter={() => setHov(opt)}
+              onMouseLeave={() => setHov(null)}
+              style={{
+                padding: '9px 16px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                border: `2px solid ${isSelected ? T.green : hov === opt && isAvailable ? T.greenBorder : T.border}`,
+                background: isSelected ? T.green : hov === opt && isAvailable ? T.greenTint : T.white,
+                color: isSelected ? T.white : isAvailable ? T.charcoal : T.mutedText,
+                cursor: isAvailable ? 'pointer' : 'not-allowed',
+                opacity: isAvailable ? 1 : 0.45,
+                textDecoration: isAvailable ? 'none' : 'line-through',
+                transition: 'all 0.15s',
+                position: 'relative',
+              }}
+            >
+              {opt}
+              {isSelected && (
+                <FiCheck size={10} style={{ marginLeft: 5, verticalAlign: 'middle' }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Quantity stepper
+function QuantityStepper({ quantity, setQuantity, max }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0,
+                  border: `1.5px solid ${T.border}`, borderRadius: 12,
+                  background: T.white, overflow: 'hidden', height: 48 }}>
+      <button type="button"
+        onClick={() => setQuantity(q => Math.max(1, q - 1))}
+        style={{ width: 46, height: '100%', border: 'none', background: 'none',
+                 cursor: quantity <= 1 ? 'not-allowed' : 'pointer',
+                 color: quantity <= 1 ? T.mutedText : T.charcoal,
+                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                 borderRight: `1px solid ${T.border}` }}
+      >
+        <FiMinus size={14} />
+      </button>
+      <span style={{ width: 48, textAlign: 'center', fontSize: 15, fontWeight: 800, color: T.charcoal }}>
+        {quantity}
+      </span>
+      <button type="button"
+        onClick={() => setQuantity(q => q < max ? q + 1 : q)}
+        disabled={quantity >= max}
+        style={{ width: 46, height: '100%', border: 'none', background: 'none',
+                 cursor: quantity >= max ? 'not-allowed' : 'pointer',
+                 color: quantity >= max ? T.mutedText : T.charcoal,
+                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                 borderLeft: `1px solid ${T.border}` }}
+      >
+        <FiPlus size={14} />
+      </button>
+    </div>
+  );
+}
+
+// Tab bar
+const TABS = [
+  { id: 'description',    label: 'Description' },
+  { id: 'specifications', label: 'Specifications' },
+  { id: 'reviews',        label: 'Reviews' },
+  { id: 'policies',       label: 'Returns & Policies' },
+];
+
+function TabBar({ active, setActive, reviewCount }) {
+  return (
+    <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}`, overflowX: 'auto' }}>
+      {TABS.map(t => {
+        const label = t.id === 'reviews' ? `Reviews (${reviewCount})` : t.label;
+        const isActive = active === t.id;
+        return (
+          <button key={t.id} type="button" onClick={() => setActive(t.id)}
+            style={{
+              padding: '15px 20px', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap',
+              border: 'none', background: 'none', cursor: 'pointer',
+              color: isActive ? T.green : T.medGray,
+              borderBottom: `2.5px solid ${isActive ? T.green : 'transparent'}`,
+              marginBottom: -1, transition: 'color 0.15s',
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Reviews tab content
+function ReviewsTab({ product, user, supabase, onReviewAdded }) {
+  const [rating, setRating]       = useState(5);
+  const [comment, setComment]     = useState('');
+  const [hovStar, setHovStar]     = useState(0);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState('');
+  const [success, setSuccess]     = useState(false);
+  const [submitHov, setSubmitHov] = useState(false);
+  const [focused, setFocused]     = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!comment.trim()) { setError('Please enter a comment.'); return; }
+    setLoading(true); setError(''); setSuccess(false);
+    try {
+      const res  = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, rating, comment }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to submit review');
+      onReviewAdded({ id: data.id || Date.now(), rating, comment, created_at: new Date().toISOString() });
+      setComment(''); setRating(5); setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reviews = product.reviews || [];
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 40 }} className="lg:grid-cols-3-custom">
+      <div style={{ display: 'grid', gap: 40 }} className="lg:grid-cols-[1fr_340px]">
+        {/* Review list */}
+        <div>
+          {reviews.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: T.pageBg,
+                          borderRadius: 16, border: `1.5px dashed ${T.border}` }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
+              <p style={{ fontWeight: 800, fontSize: 16, color: T.charcoal, margin: '0 0 6px' }}>No reviews yet</p>
+              <p style={{ fontSize: 13, color: T.mutedText, margin: 0 }}>Be the first to share your thoughts</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {reviews.map((rev, i) => (
+                <div key={rev.id}
+                  style={{ paddingTop: i === 0 ? 0 : 20, paddingBottom: 20,
+                            borderBottom: i < reviews.length - 1 ? `1px solid ${T.border}` : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: T.greenTint,
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontSize: 16, flexShrink: 0 }}>
+                      👤
+                    </div>
+                    <div>
+                      <StarRow rating={rev.rating} />
+                      <span style={{ fontSize: 11, color: T.mutedText, marginTop: 2, display: 'block' }}>
+                        {new Date(rev.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 14, color: T.medGray, lineHeight: 1.7, margin: 0 }}>{rev.comment}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Write review form */}
+        <div style={{ background: T.pageBg, borderRadius: 16, padding: 24, border: `1px solid ${T.border}`, alignSelf: 'start' }}>
+          <p style={{ fontSize: 14, fontWeight: 800, color: T.charcoal, margin: '0 0 18px' }}>Write a Review</p>
+          {!user ? (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <p style={{ fontSize: 13, color: T.mutedText, marginBottom: 16 }}>Sign in to leave a review</p>
+              <Link href="/login" style={{ display: 'inline-block', padding: '10px 24px', borderRadius: 10,
+                                          background: T.green, color: T.white, textDecoration: 'none',
+                                          fontSize: 13, fontWeight: 700 }}>
+                Sign In
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: T.charcoal, margin: '0 0 8px' }}>Your Rating</p>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} type="button"
+                      onMouseEnter={() => setHovStar(s)} onMouseLeave={() => setHovStar(0)}
+                      onClick={() => setRating(s)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+                      <FiStar size={26}
+                        style={{ color: s <= (hovStar || rating) ? T.starYellow : T.border,
+                                 fill:  s <= (hovStar || rating) ? T.starYellow : 'none',
+                                 transition: 'all 0.1s' }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: T.charcoal, margin: '0 0 8px' }}>Your Review</p>
+                <textarea rows={4} value={comment} onChange={e => setComment(e.target.value)}
+                  onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+                  placeholder="What did you think of this product?"
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 10, resize: 'vertical',
+                           border: `1.5px solid ${focused ? T.green : T.border}`,
+                           background: T.white, fontSize: 13, color: T.charcoal, outline: 'none',
+                           boxSizing: 'border-box', fontFamily: 'inherit', transition: 'border-color 0.15s' }} />
+              </div>
+              {error   && <p style={{ fontSize: 12, color: '#DC2626', background: T.saleBg, padding: '8px 12px', borderRadius: 8, margin: 0 }}>{error}</p>}
+              {success && <p style={{ fontSize: 12, color: T.green, background: T.greenTint, padding: '8px 12px', borderRadius: 8, margin: 0, fontWeight: 600 }}>Review submitted — thank you!</p>}
+              <button type="submit" disabled={loading}
+                onMouseEnter={() => setSubmitHov(true)} onMouseLeave={() => setSubmitHov(false)}
+                style={{ padding: '11px 0', borderRadius: 10, border: 'none',
+                         background: submitHov ? T.greenDark : T.green,
+                         color: T.white, fontSize: 13, fontWeight: 700, cursor: loading ? 'wait' : 'pointer',
+                         opacity: loading ? 0.7 : 1, transition: 'background 0.18s' }}>
+                {loading ? 'Submitting…' : 'Submit Review'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MAIN PAGE
+// ─────────────────────────────────────────────────────────────
 export default function ProductPage({ params }) {
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { addToCart }                   = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const [product, setProduct] = useState(null);
-  const [variants, setVariants] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [product, setProduct]       = useState(null);
+  const [variants, setVariants]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [selectedSize, setSelectedSize]   = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
+  const [quantity, setQuantity]     = useState(1);
+  const [activeTab, setActiveTab]   = useState('description');
+  const [user, setUser]             = useState(null);
+  const [toast, setToast]           = useState('');
+  const [addedAnim, setAddedAnim]   = useState(false);
+  const [wishHov, setWishHov]       = useState(false);
+  const [shareHov, setShareHov]     = useState(false);
+  const [cartHov, setCartHov]       = useState(false);
+  const [visitHov, setVisitHov]     = useState(false);
+  const [backHov, setBackHov]       = useState(false);
 
   const { slug } = React.use(params);
-
-  const [activeTab, setActiveTab] = useState('description');
-  const [user, setUser] = useState(null);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [reviewError, setReviewError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  
   const supabase = createClient();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-    });
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-    
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user || null));
     return () => subscription?.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    if (!slug) return;
+    (async () => {
       try {
-        const [productRes, variantsRes] = await Promise.all([
+        const [pRes, vRes] = await Promise.all([
           fetch(`/api/products/${slug}`, { cache: 'no-store' }),
           fetch(`/api/products/${slug}/variants`, { cache: 'no-store' }),
         ]);
+        const pData = await pRes.json();
+        const vData = await vRes.json();
+        if (!pRes.ok) throw new Error(pData.error);
 
-        const productData = await productRes.json();
-        const variantsData = await variantsRes.json();
-
-        if (!productRes.ok) {
-          throw new Error(productData.error || 'Failed to fetch product');
-        }
-
-        const fetchedVariants = Array.isArray(variantsData?.variants)
-          ? variantsData.variants
-          : [];
-
-        setProduct(productData);
+        const fetchedVariants = Array.isArray(vData?.variants) ? vData.variants : [];
+        setProduct(pData);
         setVariants(fetchedVariants);
 
-        // Track recently viewed
-        if (productData && productData.id) {
-          try {
-            const currentViews = JSON.parse(localStorage.getItem('recently_viewed_products')) || [];
-            const newViews = [productData.id, ...currentViews.filter((id) => id !== productData.id)].slice(0, 15);
-            localStorage.setItem('recently_viewed_products', JSON.stringify(newViews));
-          } catch (e) {
-            console.error('Failed to set recently viewed', e);
-          }
-        }
+        try {
+          const views = JSON.parse(localStorage.getItem('recently_viewed_products')) || [];
+          const next  = [pData.id, ...views.filter(id => id !== pData.id)].slice(0, 15);
+          localStorage.setItem('recently_viewed_products', JSON.stringify(next));
+        } catch {}
 
-        const defaultVariant = pickDefaultVariant(fetchedVariants);
-        if (defaultVariant) {
-          setSelectedSize(defaultVariant.size || null);
-          setSelectedColor(defaultVariant.color || null);
+        const def = pickDefaultVariant(fetchedVariants);
+        if (def) {
+          setSelectedSize(def.size || null);
+          setSelectedColor(def.color || null);
         } else {
-          setSelectedSize(productData.sizes?.[0] || null);
-          setSelectedColor(productData.colors?.[0] || null);
+          setSelectedSize(pData.sizes?.[0] || null);
+          setSelectedColor(pData.colors?.[0] || null);
         }
-      } catch (error) {
-        console.error('Error fetching product:', error);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
-    };
-
-    if (slug) fetchProduct();
+    })();
   }, [slug]);
 
-  const sizeOptions = useMemo(() => {
-    const fromVariants = getUniqueOptions(variants, 'size');
-    if (fromVariants.length > 0) return fromVariants;
-    return Array.isArray(product?.sizes) ? product.sizes : [];
+  const sizeOptions  = useMemo(() => {
+    const f = getUniqueOptions(variants, 'size');
+    return f.length ? f : (Array.isArray(product?.sizes) ? product.sizes : []);
   }, [variants, product]);
 
   const colorOptions = useMemo(() => {
-    const fromVariants = getUniqueOptions(variants, 'color');
-    if (fromVariants.length > 0) return fromVariants;
-    return Array.isArray(product?.colors) ? product.colors : [];
+    const f = getUniqueOptions(variants, 'color');
+    return f.length ? f : (Array.isArray(product?.colors) ? product.colors : []);
   }, [variants, product]);
 
   const selectedVariant = useMemo(() => {
     if (!variants.length) return null;
-
-    const matches = variants.filter((variant) => {
-      const sizeMatch = sizeOptions.length > 0 ? variant.size === selectedSize : true;
-      const colorMatch = colorOptions.length > 0 ? variant.color === selectedColor : true;
-      return sizeMatch && colorMatch;
-    });
-
-    return matches[0] || null;
+    return variants.find(v => {
+      const sm = sizeOptions.length  ? v.size  === selectedSize  : true;
+      const cm = colorOptions.length ? v.color === selectedColor : true;
+      return sm && cm;
+    }) || null;
   }, [variants, sizeOptions.length, colorOptions.length, selectedSize, selectedColor]);
 
-  const effectiveStock = selectedVariant
+  const effectiveStock    = selectedVariant
     ? Number(selectedVariant.stock_quantity) || 0
     : Number(product?.stock_quantity) || 0;
+  const requiresVariant   = variants.length > 0;
+  const canAddToCart      = requiresVariant ? Boolean(selectedVariant) && effectiveStock > 0 : effectiveStock > 0;
+  const discountPercent   = product?.discount_price
+    ? Math.round(((product.price - product.discount_price) / product.price) * 100) : null;
+  const currentPrice      = product?.discount_price || product?.price;
+  const inWishlist        = product ? isInWishlist(product.id) : false;
 
-  const requiresVariantSelection = variants.length > 0;
-  const canAddToCart = requiresVariantSelection
-    ? Boolean(selectedVariant) && effectiveStock > 0
-    : effectiveStock > 0;
-
-  const shortDescription = useMemo(() => {
-      if (!product?.description) return '';
-      // Simple truncation at last word boundary before 180 chars
-      if (product.description.length <= 180) return product.description;
-      const truncated = product.description.substring(0, 180);
-      return truncated.substring(0, Math.min(truncated.length, truncated.lastIndexOf(' '))) + '...';
-  }, [product?.description]);
-
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
-
-  const discountPercent = product.discount_price
-    ? Math.round(((product.price - product.discount_price) / product.price) * 100)
-    : null;
-
-  const currentPrice = product.discount_price || product.price;
-
-  const submitReview = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      setReviewError('You must be logged in to review.');
-      return;
-    }
-    if (!reviewComment.trim()) {
-      setReviewError('Please enter a comment.');
-      return;
-    }
-    
-    setIsSubmittingReview(true);
-    setReviewError('');
-    setSubmitSuccess(false);
-
-    try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product.id,
-          rating: reviewRating,
-          comment: reviewComment,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit review');
-      }
-
-      setProduct(prev => ({
-        ...prev,
-        reviews: [{
-          id: data.id || Date.now().toString(),
-          product_id: product.id,
-          user_id: user.id,
-          rating: reviewRating,
-          comment: reviewComment,
-          created_at: new Date().toISOString()
-        }, ...(prev.reviews || [])]
-      }));
-
-      setReviewComment('');
-      setReviewRating(5);
-      setSubmitSuccess(true);
-      setTimeout(() => setSubmitSuccess(false), 3000);
-    } catch (err) {
-      setReviewError(err.message);
-    } finally {
-      setIsSubmittingReview(false);
-    }
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2800);
   };
 
   const handleShare = async () => {
-    // If we have a global site info somewhere we'd use it here, but typically we want to share the product url
-    const shareData = {
-      title: `${product?.name} | E-commerce Store`,
-      text: `Check out ${product?.name}: ${product?.description ? product.description.substring(0, 100) + '...' : 'A great product!'}`,
-      url: window.location.href,
-    };
-
+    const data = { title: product?.name, text: product?.description?.slice(0, 100), url: window.location.href };
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.error('Share failed:', err);
-      }
+      try { await navigator.share(data); } catch {}
     } else {
-      // Fallback: Copy to clipboard if Web Share API is not supported (e.g. on Desktop)
-      try {
-        await navigator.clipboard.writeText(shareData.url);
-        showToast('Link copied to clipboard!');
-      } catch (err) {
-        console.error('Failed to copy link:', err);
-        showToast('Failed to copy link');
-      }
+      try { await navigator.clipboard.writeText(data.url); showToast('Link copied!'); } catch {}
     }
   };
 
-  const showToast = (message) => {
-    setToastMessage(message);
-    setTimeout(() => {
-      setToastMessage('');
-    }, 3000);
+  const handleAddToCart = () => {
+    if (!canAddToCart) return;
+    addToCart({
+      ...product,
+      variant_id:    selectedVariant?.id || null,
+      stock_quantity: effectiveStock,
+      selectedSize:  selectedVariant?.size  || selectedSize,
+      selectedColor: selectedVariant?.color || selectedColor,
+      quantity,
+    });
+    setAddedAnim(true);
+    showToast('Added to cart!');
+    setTimeout(() => setAddedAnim(false), 1800);
   };
 
+  const handleReviewAdded = (rev) => {
+    setProduct(prev => ({ ...prev, reviews: [rev, ...(prev.reviews || [])] }));
+  };
+
+  // ── Loading skeleton ──
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: T.white, padding: '40px 24px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gap: 48 }}
+             className="lg:grid-cols-2">
+          {[['100%', '100%', '66.66%'], ['100%']].map((widths, gi) => (
+            <div key={gi} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {widths.map((w, i) => (
+                <div key={i} className="animate-pulse"
+                  style={{ width: w, aspectRatio: i === 0 && gi === 0 ? '3/4' : undefined,
+                            height: i === 0 && gi === 0 ? undefined : 24,
+                            borderRadius: 16, background: T.softGray }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+        <p style={{ fontSize: 18, fontWeight: 800, color: T.charcoal }}>Product not found</p>
+        <Link href="/shop" style={{ color: T.green, fontWeight: 600, fontSize: 14 }}>← Back to Shop</Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-gray-50 min-h-screen pb-20 relative">
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-5">
-           <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-           </svg>
-           <span className="font-medium text-sm">{toastMessage}</span>
+    <div style={{ minHeight: '100vh', background: T.white }}>
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, background: T.charcoal, color: T.white,
+          padding: '12px 24px', borderRadius: 100, fontSize: 13, fontWeight: 700,
+          display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          whiteSpace: 'nowrap',
+        }}>
+          <FiCheck size={14} style={{ color: T.green }} /> {toast}
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
-        {/* Mobile Top Navigation */}
-        <div className="flex justify-between items-center mb-6 md:mb-8">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center text-gray-600 hover:text-gray-900 font-medium transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100"
-            >
-              <FiChevronLeft className="mr-1 w-5 h-5" /> Back
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 20px 80px' }} className="lg:px-8">
+
+        {/* ── Back nav ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <button type="button"
+            onClick={() => router.back()}
+            onMouseEnter={() => setBackHov(true)} onMouseLeave={() => setBackHov(false)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px',
+              borderRadius: 100, border: `1.5px solid ${backHov ? T.greenBorder : T.border}`,
+              background: backHov ? T.greenTint : T.white,
+              color: backHov ? T.green : T.charcoal, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', transition: 'all 0.18s',
+            }}
+          >
+            <FiChevronLeft size={15} /> Back
+          </button>
+
+          {/* Mobile action buttons */}
+          <div style={{ display: 'flex', gap: 8 }} className="lg:hidden">
+            <button type="button" onClick={() => toggleWishlist(product.id)}
+              style={{ width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${inWishlist ? '#FECACA' : T.border}`,
+                       background: inWishlist ? '#FEF2F2' : T.white, cursor: 'pointer',
+                       display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiHeart size={16} style={{ color: inWishlist ? T.saleRed : T.charcoal, fill: inWishlist ? T.saleRed : 'none' }} />
             </button>
-            
-            <div className="flex items-center gap-2 md:hidden">
-              <button
-                onClick={() => toggleWishlist(product.id)}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all shadow-sm border ${
-                  isInWishlist(product.id)
-                    ? 'bg-red-50 border-red-100 text-red-500'
-                    : 'bg-white border-gray-100 text-gray-500 hover:bg-gray-50'
-                }`}
-                title="Add to Wishlist"
-              >
-                <FiHeart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
-              </button>
-              <button
-                onClick={handleShare}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-gray-500 hover:bg-gray-50 shadow-sm transition-all"
-                title="Share Product"
-              >
-                <FiShare2 className="w-5 h-5" />
-              </button>
-            </div>
+            <button type="button" onClick={handleShare}
+              style={{ width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${T.border}`,
+                       background: T.white, cursor: 'pointer',
+                       display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FiShare2 size={16} style={{ color: T.charcoal }} />
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-          <div className="space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {product.image_urls?.length > 1 && (
-                <div className="hidden lg:flex flex-col gap-3 order-first scbar-hide no-scrollbar max-h-[600px] overflow-y-auto pr-1">
-                  {product.image_urls.map((url, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImage(idx)}
-                      className={`relative w-20 h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
-                        selectedImage === idx ? 'border-[#2E5C45] shadow-md' : 'border-transparent hover:border-gray-200 opacity-70 hover:opacity-100 bg-white'
-                      }`}
-                    >
-                      <img src={url} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
+        {/* ── Main product grid ── */}
+        <div style={{ display: 'grid', gap: 48, alignItems: 'start' }} className="lg:grid-cols-2">
 
-              <div className="flex-1 flex justify-center w-full">
-                <div className="aspect-3/4 bg-white rounded-3xl overflow-hidden relative w-full lg:max-w-xl shadow-xs border border-gray-100 group">
-                  <img
-                    src={product.image_urls?.[selectedImage] || 'https://placehold.co/600x800'}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-105"
-                  />
-                  {discountPercent && (
-                    <div className="absolute top-4 left-4 bg-red-500 text-white font-black px-4 py-2 rounded-full text-sm shadow-lg tracking-wide">
-                      -{discountPercent}%
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          {/* Left: image gallery */}
+          <ImageGallery images={product.image_urls} productName={product.name} />
 
-            {product.image_urls?.length > 1 && (
-              <div className="lg:hidden flex gap-3 overflow-x-auto pb-4 scbar-hide no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-                {product.image_urls.map((url, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`relative w-20 h-24 shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
-                      selectedImage === idx ? 'border-[#2E5C45] shadow-sm' : 'border-transparent hover:border-gray-200 bg-white opacity-80'
-                    }`}
-                  >
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Right: product info panel */}
+          <div style={{ position: 'sticky', top: 24 }}>
 
-          <div className="lg:sticky lg:top-24 h-fit bg-white p-6 sm:p-8 rounded-3xl shadow-xs border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="bg-[#2E5C45]/10 text-[#2E5C45] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+            {/* Category + rating */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em',
+                              textTransform: 'uppercase', color: T.green, background: T.greenTint,
+                              border: `1px solid ${T.greenBorder}`, padding: '4px 10px', borderRadius: 100 }}>
                 {product.category?.name || 'Collection'}
               </span>
-              <div className="flex items-center gap-1.5 text-sm font-medium">
-                <FiStar className="w-4 h-4 text-yellow-400 fill-current" />
-                <span className="text-gray-900">{Number(product.rating || 5).toFixed(1)}</span>
-                <span className="text-gray-400 font-normal">({product.reviews_count || 0} reviews)</span>
-              </div>
+              <StarRow rating={product.rating} count={product.reviews_count || 0} />
             </div>
 
-            <div className="flex justify-between items-start gap-4 mb-2">
-              <div className="flex-1">
-                <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight tracking-tight mb-2">
-                  {product.name}
-                </h1>
-                {product.sku && (
-                  <div className="text-sm text-gray-500 font-medium">
-                    SKU: {product.sku}
-                  </div>
-                )}
-              </div>
-              <div className="hidden md:flex items-center gap-2">
-                <button
+            {/* Name + action buttons */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 900, color: T.charcoal, margin: 0,
+                            letterSpacing: '-0.03em', lineHeight: 1.15, flex: 1 }}>
+                {product.name}
+              </h1>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} className="hidden lg:flex">
+                <button type="button"
+                  onMouseEnter={() => setWishHov(true)} onMouseLeave={() => setWishHov(false)}
                   onClick={() => toggleWishlist(product.id)}
-                  className={`shrink-0 w-12 h-12 flex items-center justify-center rounded-full transition-all border ${
-                    isInWishlist(product.id)
-                      ? 'bg-red-50 border-red-100 text-red-500'
-                      : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-900 shadow-sm'
-                  }`}
-                  title="Add to Wishlist"
-                >
-                  <FiHeart className={`w-6 h-6 ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                  style={{ width: 42, height: 42, borderRadius: '50%', cursor: 'pointer',
+                           border: `1.5px solid ${inWishlist ? '#FECACA' : wishHov ? T.border : T.border}`,
+                           background: inWishlist ? '#FEF2F2' : wishHov ? T.softGray : T.white,
+                           display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                  <FiHeart size={16} style={{ color: inWishlist ? T.saleRed : T.charcoal, fill: inWishlist ? T.saleRed : 'none' }} />
                 </button>
-                <button
+                <button type="button"
+                  onMouseEnter={() => setShareHov(true)} onMouseLeave={() => setShareHov(false)}
                   onClick={handleShare}
-                  className="shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-gray-900 shadow-sm transition-all"
-                  title="Share Product"
-                >
-                  <FiShare2 className="w-6 h-6" />
+                  style={{ width: 42, height: 42, borderRadius: '50%', cursor: 'pointer',
+                           border: `1.5px solid ${T.border}`, background: shareHov ? T.softGray : T.white,
+                           display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}>
+                  <FiShare2 size={16} style={{ color: T.charcoal }} />
                 </button>
               </div>
             </div>
 
-            <div className="flex items-end gap-3 mb-6">
-              <span className="text-3xl sm:text-4xl font-black text-gray-900">
-                ₦{currentPrice.toLocaleString()}
+            {/* Price */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+              <span style={{ fontSize: 30, fontWeight: 900, color: T.charcoal, letterSpacing: '-0.03em' }}>
+                ₦{currentPrice?.toLocaleString()}
               </span>
               {product.discount_price && (
-                <span className="text-xl text-gray-400 line-through font-medium mb-1">
-                  ₦{product.price.toLocaleString()}
-                </span>
+                <>
+                  <span style={{ fontSize: 18, color: T.mutedText, textDecoration: 'line-through', fontWeight: 500 }}>
+                    ₦{product.price?.toLocaleString()}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: T.saleRed,
+                                  background: T.saleBg, padding: '3px 8px', borderRadius: 6 }}>
+                    -{discountPercent}%
+                  </span>
+                </>
               )}
             </div>
-            
-            {shortDescription && (
-              <p className="text-gray-600 text-[15px] leading-relaxed mb-8">
-                {shortDescription}
+
+            {product.sku && (
+              <p style={{ fontSize: 11, color: T.mutedText, margin: '0 0 16px', fontWeight: 500 }}>
+                SKU: {product.sku}
               </p>
             )}
 
-            {product.stores && (
-              <div className="bg-gray-50 rounded-2xl p-5 mb-8 border border-gray-100">
-                <div className="flex items-center gap-4">
-                  <div className="shrink-0">
-                    {product.stores.logo_url ? (
-                      <img
-                        src={product.stores.logo_url}
-                        alt={product.stores.name}
-                        className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 rounded-full bg-[#2E5C45] flex items-center justify-center text-white font-bold text-xl shadow-sm">
-                        {product.stores.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-0.5">Seller</p>
-                    <h3 className="text-base font-bold text-gray-900 truncate">
-                      {product.stores.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-xs font-medium mt-1">
-                      <FiStar className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                      <span className="text-gray-700">{(product.stores.rating || 4.5).toFixed(1)} Rating</span>
-                    </div>
-                  </div>
-
-                  <a
-                    href={`/store/${product.stores.slug || product.stores.id}`}
-                    className="shrink-0 px-5 py-2.5 bg-white border border-gray-300 text-gray-900 font-bold text-xs uppercase tracking-wide rounded-full hover:bg-gray-50 transition-all shadow-sm"
-                  >
-                    Visit Store
-                  </a>
-                </div>
-              </div>
+            {/* Short description */}
+            {product.description && (
+              <p style={{ fontSize: 14, color: T.medGray, lineHeight: 1.75, margin: '0 0 22px' }}>
+                {product.description.length > 200
+                  ? product.description.slice(0, product.description.lastIndexOf(' ', 200)) + '…'
+                  : product.description}
+              </p>
             )}
 
-            <div className="space-y-6 mb-8 pt-6 border-t border-gray-100">
-              {sizeOptions.length > 0 && (
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-bold text-gray-900">Select Size</h3>
-                    {selectedSize && <span className="text-sm text-gray-500">{selectedSize}</span>}
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    {sizeOptions.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`min-w-14 h-12 px-4 rounded-xl flex items-center justify-center text-sm font-bold border-2 transition-all ${
-                          selectedSize === size
-                            ? 'border-[#2E5C45] bg-[#2E5C45] text-white shadow-md shadow-[#2E5C45]/20'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-400 bg-white'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Divider */}
+            <div style={{ height: 1, background: T.border, marginBottom: 20 }} />
 
-              {colorOptions.length > 0 && (
-                <div>
-                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-sm font-bold text-gray-900">Select Color</h3>
-                    {selectedColor && <span className="text-sm text-gray-500">{selectedColor}</span>}
-                  </div>
-                  <div className="flex flex-wrap gap-2.5">
-                    {colorOptions.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`h-12 px-5 rounded-xl text-sm font-bold border-2 transition-all ${
-                          selectedColor === color
-                            ? 'border-[#2E5C45] bg-[#2E5C45] text-white shadow-md shadow-[#2E5C45]/20'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-400 bg-white'
-                        }`}
-                      >
-                        {color}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Size + Color */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 22 }}>
+              <OptionPills
+                label="Size" options={sizeOptions} selected={selectedSize} onSelect={setSelectedSize}
+                getAvailable={sz => !variants.length || variants.some(v => v.size === sz && Number(v.stock_quantity) > 0)}
+              />
+              <OptionPills
+                label="Color" options={colorOptions} selected={selectedColor} onSelect={setSelectedColor}
+                getAvailable={cl => !variants.length || variants.some(v => v.color === cl && Number(v.stock_quantity) > 0)}
+              />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <div className="flex items-center bg-gray-50 rounded-2xl p-1 border border-gray-200 w-fit h-14">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-white rounded-full transition-all"
-                >
-                  <FiMinus className="w-4 h-4" />
-                </button>
-                <span className="w-12 text-center font-bold text-gray-900">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  disabled={effectiveStock > 0 ? quantity >= effectiveStock : true}
-                  className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-white rounded-full transition-all"
-                >
-                  <FiPlus className="w-4 h-4" />
-                </button>
-              </div>
+            {/* Stock indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%',
+                             background: effectiveStock > 10 ? T.green : effectiveStock > 0 ? '#F59E0B' : T.saleRed }} />
+              <span style={{ fontSize: 12, fontWeight: 600,
+                              color: effectiveStock > 10 ? T.green : effectiveStock > 0 ? '#D97706' : T.saleRed }}>
+                {effectiveStock > 10 ? 'In Stock' : effectiveStock > 0 ? `Only ${effectiveStock} left` : 'Out of Stock'}
+              </span>
+            </div>
 
-              <button
-                onClick={() => {
-                  if (!canAddToCart) return;
-
-                  addToCart({
-                    ...product,
-                    variant_id: selectedVariant?.id || null,
-                    stock_quantity: effectiveStock,
-                    selectedSize: selectedVariant?.size || selectedSize,
-                    selectedColor: selectedVariant?.color || selectedColor,
-                    quantity,
-                  });
-                }}
+            {/* Qty + Add to cart */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 22 }} className="flex-col sm:flex-row">
+              <QuantityStepper quantity={quantity} setQuantity={setQuantity} max={effectiveStock || 1} />
+              <button type="button"
+                onClick={handleAddToCart}
                 disabled={!canAddToCart}
-                className={`flex-1 font-bold py-3 md:py-4 px-8 rounded-full shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  canAddToCart
-                    ? 'bg-[#2E5C45] text-white hover:bg-[#254a38] shadow-[#2E5C45]/20'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                onMouseEnter={() => setCartHov(true)} onMouseLeave={() => setCartHov(false)}
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '0 24px', height: 48, borderRadius: 12, border: 'none', cursor: canAddToCart ? 'pointer' : 'not-allowed',
+                  background: !canAddToCart ? T.softGray : addedAnim ? T.greenDeep : cartHov ? T.greenDark : T.green,
+                  color: !canAddToCart ? T.mutedText : T.white, fontSize: 14, fontWeight: 800,
+                  transition: 'background 0.18s', letterSpacing: '-0.01em',
+                }}
               >
-                <FiShoppingCart className="w-5 h-5" />
-                <span>
-                  {!canAddToCart
-                    ? (requiresVariantSelection && !selectedVariant ? 'Unavailable Variant' : 'Out of Stock')
-                    : 'Add to Cart'}
-                </span>
+                {addedAnim ? <FiCheck size={16} /> : <FiShoppingCart size={16} />}
+                {!canAddToCart
+                  ? (requiresVariant && !selectedVariant ? 'Select Options' : 'Out of Stock')
+                  : addedAnim ? 'Added!' : 'Add to Cart'}
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-gray-100 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${effectiveStock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                {effectiveStock > 0
-                  ? (
-                    <span className="font-medium text-green-700">
-                      {effectiveStock} units available
-                      {effectiveStock < 10 && <span className="text-red-600 ml-1">(Running Low!)</span>}
-                    </span>
-                  )
-                  : <span className="font-medium text-red-600">Currently Out of Stock</span>
-                }
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🚚</span>
-                Free Delivery over ₦50k
-              </div>
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 text-sm">
-                <span className="text-lg">📦</span>
-                Delivery in 3-5 Business Days
-              </div>
+            {/* Trust pills */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+              <TrustPill icon={FiTruck}    label="Free delivery over ₦50k" />
+              <TrustPill icon={FiRefreshCw} label="30-day returns" />
+              <TrustPill icon={FiShield}   label="Buyer protection" />
             </div>
+
+            {/* Seller card */}
+            {product.stores && (
+              <div style={{ border: `1px solid ${T.border}`, borderRadius: 16, padding: 16,
+                             display: 'flex', alignItems: 'center', gap: 14 }}>
+                {product.stores.logo_url ? (
+                  <img src={product.stores.logo_url} alt={product.stores.name}
+                    style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover',
+                              border: `2px solid ${T.border}`, flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: T.greenTint,
+                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                 fontSize: 18, fontWeight: 800, color: T.green, flexShrink: 0 }}>
+                    {product.stores.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                               letterSpacing: '0.1em', color: T.mutedText, margin: '0 0 2px' }}>Seller</p>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: T.charcoal, margin: '0 0 3px',
+                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {product.stores.name}
+                  </p>
+                  <StarRow rating={product.stores.rating || 4.5} />
+                </div>
+                <a href={`/store/${product.stores.slug || product.stores.id}`}
+                  onMouseEnter={() => setVisitHov(true)} onMouseLeave={() => setVisitHov(false)}
+                  style={{ flexShrink: 0, padding: '8px 14px', borderRadius: 10, textDecoration: 'none',
+                            fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
+                            border: `1.5px solid ${visitHov ? T.greenBorder : T.border}`,
+                            background: visitHov ? T.greenTint : T.white,
+                            color: visitHov ? T.green : T.charcoal, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  Visit Store
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Product Tabs (Full width below the product grid) */}
-        <div className="mt-12 md:mt-20 border border-gray-100 rounded-3xl overflow-hidden bg-white shadow-xs">
-          {/* Tab Headers */}
-          <div className="flex border-b border-gray-100 overflow-x-auto scbar-hide">
-            <button
-              onClick={() => setActiveTab('description')}
-              className={`flex-1 py-5 px-6 text-center font-bold text-sm transition-all whitespace-nowrap min-w-max relative ${
-                activeTab === 'description'
-                  ? 'text-[#2E5C45]'
-                  : 'text-gray-500 hover:text-gray-900 bg-gray-50/50'
-              }`}
-            >
-              Full Description
-              {activeTab === 'description' && (
-                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2E5C45]" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('specifications')}
-              className={`flex-1 py-5 px-6 text-center font-bold text-sm transition-all whitespace-nowrap min-w-max relative ${
-                activeTab === 'specifications'
-                  ? 'text-[#2E5C45]'
-                  : 'text-gray-500 hover:text-gray-900 bg-gray-50/50'
-              }`}
-            >
-              Specifications
-              {activeTab === 'specifications' && (
-                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2E5C45]" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`flex-1 py-5 px-6 text-center font-bold text-sm transition-all whitespace-nowrap min-w-max relative ${
-                activeTab === 'reviews'
-                  ? 'text-[#2E5C45]'
-                  : 'text-gray-500 hover:text-gray-900 bg-gray-50/50'
-              }`}
-            >
-              Reviews ({product.reviews?.length || 0})
-              {activeTab === 'reviews' && (
-                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2E5C45]" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('policies')}
-              className={`flex-1 py-5 px-6 text-center font-bold text-sm transition-all whitespace-nowrap min-w-max relative ${
-                activeTab === 'policies'
-                  ? 'text-[#2E5C45]'
-                  : 'text-gray-500 hover:text-gray-900 bg-gray-50/50'
-              }`}
-            >
-              Returns & Policies
-              {activeTab === 'policies' && (
-                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#2E5C45]" />
-              )}
-            </button>
-          </div>
+        {/* ── Tabs section ── */}
+        <div style={{ marginTop: 64, border: `1px solid ${T.border}`, borderRadius: 20, overflow: 'hidden', background: T.white }}>
+          <TabBar active={activeTab} setActive={setActiveTab} reviewCount={product.reviews?.length || 0} />
 
-          {/* Tab Content */}
-          <div className="p-8 md:p-12">
+          <div style={{ padding: '32px 28px' }}>
+
+            {/* Description */}
             {activeTab === 'description' && (
-              <div className="prose max-w-none text-gray-700 leading-relaxed">
-                {product.description ? (
-                  <p className="whitespace-pre-wrap">{product.description}</p>
-                ) : (
-                  <p className="italic text-gray-500">No description available for this product.</p>
-                )}
+              <div style={{ fontSize: 15, color: T.medGray, lineHeight: 1.8, maxWidth: 720 }}>
+                {product.description
+                  ? <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{product.description}</p>
+                  : <p style={{ margin: 0, color: T.mutedText, fontStyle: 'italic' }}>No description available.</p>}
               </div>
             )}
 
+            {/* Specifications */}
             {activeTab === 'specifications' && (
-              <div className="text-gray-700">
-                {product.specifications ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {typeof product.specifications === 'string' 
-                      ? product.specifications.split('\n').map((spec, i) => (
-                          <div key={i} className="py-3 border-b border-gray-100 last:border-0">{spec}</div>
-                        ))
-                      : Array.isArray(product.specifications) 
-                        ? product.specifications.map((spec, i) => (
-                            <div key={i} className="py-3 border-b border-gray-100 last:border-0">
-                                {typeof spec === 'object' ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <span className="font-semibold text-gray-900">{spec.key}</span>
-                                        <span className="text-gray-600">{spec.value}</span>
-                                    </div>
-                                ) : spec}
-                            </div>
-                          ))
-                        : Object.entries(product.specifications).map(([key, val], i) => (
-                            <div key={i} className="py-3 border-b border-gray-100 last:border-0 grid grid-cols-2 gap-2">
-                                <span className="font-semibold text-gray-900">{key}</span>
-                                <span className="text-gray-600">{val}</span>
-                            </div>
-                          ))
-                    }
-                  </div>
-                ) : (
-                  <p className="italic text-gray-500">No specifications available for this product.</p>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'reviews' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                <div className="lg:col-span-2 space-y-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h3>
-                  {product.reviews && product.reviews.length > 0 ? (
-                    <div className="space-y-6">
-                      {product.reviews.map(review => (
-                        <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                          <div className="flex items-center gap-4 mb-3">
-                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold text-xl border border-gray-200">
-                               👤
-                            </div>
-                            <div>
-                              <div className="flex text-yellow-400 mb-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-200 fill-current'}`} viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                  </svg>
-                                ))}
-                              </div>
-                              <span className="text-xs text-gray-500 font-medium">{new Date(review.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                            </div>
-                          </div>
-                          <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+              <div>
+                {product.specifications ? (() => {
+                  const entries = typeof product.specifications === 'string'
+                    ? product.specifications.split('\n').map((s, i) => [i, s])
+                    : Array.isArray(product.specifications)
+                      ? product.specifications.map((s, i) => [i, typeof s === 'object' ? s : { key: i, value: s }])
+                      : Object.entries(product.specifications);
+                  return (
+                    <div style={{ display: 'grid', gap: 0, maxWidth: 600 }}>
+                      {entries.map(([k, v], i) => (
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '140px 1fr',
+                                              padding: '13px 0', borderBottom: i < entries.length - 1 ? `1px solid ${T.border}` : 'none', gap: 16 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: T.charcoal }}>
+                            {typeof v === 'object' ? v.key : k}
+                          </span>
+                          <span style={{ fontSize: 13, color: T.medGray }}>
+                            {typeof v === 'object' ? v.value : v}
+                          </span>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="bg-gray-50 rounded-2xl p-10 text-center border border-gray-100">
-                        <p className="text-gray-500 mb-2">No reviews yet.</p>
-                        <p className="text-gray-900 font-bold text-lg">Be the first to review this product!</p>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Write Review Form */}
-                <div className="lg:col-span-1">
-                  <div className="bg-gray-50 p-6 md:p-8 rounded-2xl border border-gray-200 sticky top-28">
-                    <h4 className="text-xl font-bold text-gray-900 mb-6">Write a Review</h4>
-                    {!user ? (
-                      <div className="text-center p-4">
-                        <p className="text-sm text-gray-600 mb-6">Please log in to share your thoughts about this product.</p>
-                        <Link href="/login" className="inline-block px-8 py-3 bg-[#2E5C45] text-white rounded-full hover:bg-[#254a38] transition-colors font-bold text-sm shadow-md">
-                            Sign In to Review
-                        </Link>
-                      </div>
-                    ) : (
-                      <form onSubmit={submitReview} className="space-y-5">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-900 mb-3">Rating</label>
-                          <div className="flex gap-2 bg-white p-3 rounded-xl border border-gray-200 w-fit">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button
-                                type="button"
-                                key={star}
-                                onClick={() => setReviewRating(star)}
-                                className="focus:outline-none transition-transform hover:scale-110"
-                              >
-                                <svg 
-                                  className={`w-8 h-8 ${star <= reviewRating ? 'text-yellow-400 fill-current' : 'text-gray-200 fill-current hover:text-yellow-200'}`} 
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <label htmlFor="comment" className="block text-sm font-bold text-gray-900 mb-3">Your Review</label>
-                          <textarea
-                            id="comment"
-                            rows="5"
-                            value={reviewComment}
-                            onChange={(e) => setReviewComment(e.target.value)}
-                            placeholder="What did you like or dislike? What should other shoppers know before buying?"
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2E5C45] focus:border-transparent text-sm resize-y shadow-sm"
-                            required
-                          />
-                        </div>
-                        {reviewError && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">{reviewError}</p>}
-                        {submitSuccess && <p className="text-sm text-[#2E5C45] bg-[#2E5C45]/10 p-3 rounded-lg border border-[#2E5C45]/20 font-bold">Thank you! Your review was submitted successfully.</p>}
-                        <button
-                          type="submit"
-                          disabled={isSubmittingReview}
-                          className={`w-full py-4 bg-[#2E5C45] text-white rounded-full hover:bg-[#254a38] font-bold text-sm transition-all shadow-md ${
-                            isSubmittingReview ? 'opacity-70 cursor-wait' : ''
-                          }`}
-                        >
-                          {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </div>
+                  );
+                })() : (
+                  <p style={{ color: T.mutedText, fontStyle: 'italic', fontSize: 14 }}>No specifications available.</p>
+                )}
               </div>
             )}
-            
+
+            {/* Reviews */}
+            {activeTab === 'reviews' && (
+              <ReviewsTab product={product} user={user} supabase={supabase} onReviewAdded={handleReviewAdded} />
+            )}
+
+            {/* Policies */}
             {activeTab === 'policies' && (
-              <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Store Policies & Returns</h3>
-                <div className="space-y-6 text-sm text-gray-700">
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Return Window</h4>
-                    <p>Eligible items can be returned within 30 days of delivery. Must be in original condition with tags attached.</p>
+              <div style={{ display: 'grid', gap: 20, maxWidth: 640 }}>
+                {[
+                  { icon: FiRefreshCw, title: 'Return Window',      body: 'Eligible items can be returned within 30 days of delivery in original condition with tags attached.' },
+                  { icon: FiPackage,   title: 'Refund Timelines',   body: 'Refunds are processed within 5–7 business days after the returned item is received and inspected.' },
+                  { icon: FiShield,    title: 'Buyer Protection',   body: 'All purchases are covered by ZOVA buyer protection. We mediate disputes between buyers and sellers.' },
+                  { icon: FiTruck,     title: 'Delivery',           body: 'Standard delivery takes 3–5 business days. Express options may be available at checkout.' },
+                ].map(({ icon: Icon, title, body }) => (
+                  <div key={title} style={{ display: 'flex', gap: 14, padding: 18,
+                                             border: `1px solid ${T.border}`, borderRadius: 14 }}>
+                    <IconTile icon={Icon} bg={T.greenTint} color={T.green} />
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 800, color: T.charcoal, margin: '0 0 4px' }}>{title}</p>
+                      <p style={{ fontSize: 13, color: T.medGray, margin: 0, lineHeight: 1.65 }}>{body}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Refund Timelines</h4>
-                    <p>Refunds are processed within 5-7 business days after the returned item is received and inspected.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Warranty Information</h4>
-                    <p>Standard manufacturer warranties apply unless otherwise stated by the seller. Please review the specific item condition notes.</p>
-                  </div>
-                  <div className="pt-4 border-t border-gray-200">
-                    <p className="font-medium">Need help with an order? <Link href="/support" className="text-[#2E5C45] hover:underline">Contact Support</Link></p>
-                  </div>
-                </div>
+                ))}
+                <p style={{ fontSize: 13, color: T.medGray, marginTop: 4 }}>
+                  Need help?{' '}
+                  <Link href="/support" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
+                    Contact Support →
+                  </Link>
+                </p>
               </div>
             )}
           </div>
         </div>
       </div>
-      
-      {/* Related & Recently Viewed Sections */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pb-16 space-y-12 block">
-        <RelatedProducts 
-           currentProductId={product.id} 
-           categorySlug={product.categories && product.categories.length > 0 ? product.categories[0].slug : null} 
-           storeId={product.stores?.id}
-        />
-        <RecentlyViewedProducts currentProductId={product.id} />
+
+      {/* ── Related + Recently Viewed ── */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px 80px' }} className="lg:px-8">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
+          <RelatedProducts
+            currentProductId={product.id}
+            categorySlug={product.categories?.[0]?.slug || null}
+            storeId={product.stores?.id}
+          />
+          <RecentlyViewedProducts currentProductId={product.id} />
+        </div>
       </div>
     </div>
   );

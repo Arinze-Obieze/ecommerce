@@ -1,66 +1,165 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { FiChevronDown, FiX } from 'react-icons/fi';
+import { useState, useEffect, Suspense } from 'react';
+import { FiChevronDown, FiX, FiSliders, FiTrash2 } from 'react-icons/fi';
 import { useFilters } from '@/contexts/FilterContext';
 
-// Loading fallback for FilterSidebar
+// ============================================================
+// 🎨 THEME — ZOVA brand colors
+// ============================================================
+const THEME = {
+  colors: {
+    primary: '#00B86B',
+    primaryHover: '#0F7A4F',
+    deepEmerald: '#0A3D2E',
+    white: '#FFFFFF',
+    pageBg: '#F9FAFB',
+    softGray: '#F5F5F5',
+    darkCharcoal: '#111111',
+    mediumGray: '#666666',
+    mutedText: '#888888',
+    border: '#F0F0F0',
+    cardBorder: '#EFEFEF',
+    greenTint: '#EDFAF3',
+    greenBorder: '#A8DFC4',
+    saleRed: '#E53935',
+    trendingOrange: '#EA580C',
+    starYellow: '#F59E0B',
+    whatsappGreen: '#25D366',
+  },
+  shadows: {
+    cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',
+    sidebar: '0 2px 12px rgba(10, 61, 46, 0.07)',
+  },
+  transitions: {
+    default: 'all 0.2s ease',
+  }
+};
+
+const ALWAYS_OPEN = new Set(['collection', 'category', 'price']);
+
+// ── Loading skeleton ──────────────────────────────────────────
 function FilterSidebarLoading() {
   return (
-    <aside className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="space-y-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="h-5 w-24 bg-gray-200 rounded mb-3"></div>
-            <div className="space-y-2">
-              {[...Array(3)].map((_, j) => (
-                <div key={j} className="h-4 bg-gray-100 rounded"></div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+    <aside
+      className="rounded-2xl border p-5 space-y-4"
+      style={{ backgroundColor: THEME.colors.white, borderColor: THEME.colors.border }}
+    >
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="animate-pulse space-y-2">
+          <div className="h-4 w-24 rounded" style={{ backgroundColor: THEME.colors.softGray }} />
+          <div className="h-8 rounded-lg" style={{ backgroundColor: THEME.colors.softGray }} />
+        </div>
+      ))}
     </aside>
   );
 }
 
-// Helper component for filter sections
+// ── Section wrapper ───────────────────────────────────────────
 function FilterSection({ title, section, isExpanded, onToggle, children }) {
+  const pinned = ALWAYS_OPEN.has(section);
+  const open = pinned || isExpanded;
+
   return (
-    <div className="border-b border-gray-100 pb-4 last:border-b-0">
+    <div
+      className="rounded-xl overflow-hidden border transition-all duration-200"
+      style={{
+        borderColor: open ? `${THEME.colors.primary}30` : THEME.colors.border,
+        backgroundColor: THEME.colors.white,
+      }}
+    >
+      {/* Header */}
       <button
-        onClick={() => onToggle(section)}
-        className="flex items-center justify-between w-full py-3 group"
+        type="button"
+        onClick={() => !pinned && onToggle(section)}
+        className="flex items-center justify-between w-full px-4 py-3 group"
+        style={{ cursor: pinned ? 'default' : 'pointer' }}
       >
-        <span className="text-sm font-bold text-gray-900 group-hover:text-[#2E5C45] transition-colors">{title}</span>
-        <FiChevronDown
-          className={`w-4 h-4 text-gray-400 group-hover:text-[#2E5C45] transition-transform duration-300 ${
-            isExpanded ? 'rotate-180' : ''
-          }`}
-        />
+        <div className="flex items-center gap-2">
+          {open && (
+            <span
+              className="w-[3px] h-4 rounded-full flex-shrink-0"
+              style={{ backgroundColor: THEME.colors.primary }}
+            />
+          )}
+          <span
+            className="text-xs font-black uppercase tracking-[0.14em] transition-colors"
+            style={{ color: open ? THEME.colors.primary : THEME.colors.darkCharcoal }}
+          >
+            {title}
+          </span>
+        </div>
+        {!pinned && (
+          <FiChevronDown
+            className="w-4 h-4 transition-transform duration-300 flex-shrink-0"
+            style={{
+              color: open ? THEME.colors.primary : THEME.colors.mediumGray,
+              transform: open ? 'rotate(180deg)' : 'none',
+            }}
+          />
+        )}
       </button>
-      <div 
+
+      {/* Body */}
+      <div
         className={`grid transition-all duration-300 ease-in-out overflow-hidden ${
-           isExpanded ? 'grid-rows-[1fr] opacity-100 mt-1' : 'grid-rows-[0fr] opacity-0'
+          open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         }`}
       >
-          <div className="min-h-0">
-             {children}
+        <div className="min-h-0">
+          <div className="w-full h-px" style={{ backgroundColor: THEME.colors.border }} />
+          <div className="px-4 py-3">
+            {children}
           </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// Actual content component
+// ── Radio-style list item — used for collections & categories ─
+function RadioItem({ label, isActive, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-sm transition-all text-left"
+      style={{
+        backgroundColor: isActive ? THEME.colors.greenTint : 'transparent',
+        color: isActive ? THEME.colors.primary : THEME.colors.mediumGray,
+        fontWeight: isActive ? 600 : 400,
+      }}
+      onMouseEnter={(e) => { 
+        if (!isActive) e.currentTarget.style.backgroundColor = THEME.colors.softGray; 
+      }}
+      onMouseLeave={(e) => { 
+        if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; 
+      }}
+    >
+      {/* Radio dot */}
+      <span
+        className="w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all"
+        style={{
+          borderColor: isActive ? THEME.colors.primary : THEME.colors.border,
+          backgroundColor: isActive ? THEME.colors.primary : 'transparent',
+        }}
+      >
+        {isActive && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+      </span>
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
+
+// ── Main content ──────────────────────────────────────────────
 function FilterSidebarContent({ onMobileClose }) {
   const {
     filters,
     categories,
-    collections, // Access collections from context
+    collections,
     categoriesLoading,
     setCategory,
-    setCollection, // Access setCollection
+    setCollection,
     setPriceRange,
     toggleSize,
     toggleColor,
@@ -68,12 +167,13 @@ function FilterSidebarContent({ onMobileClose }) {
     hasActiveFilters,
   } = useFilters();
 
+  // ── State ──────────────────────────────────────────────────
   const [expandedSections, setExpandedSections] = useState({
     collection: true,
-    category: true,
-    price: false,
-    sizes: false,
-    colors: false,
+    category:   true,
+    price:      true,
+    sizes:      false,
+    colors:     false,
   });
 
   const [localPriceRange, setLocalPriceRange] = useState({
@@ -81,263 +181,343 @@ function FilterSidebarContent({ onMobileClose }) {
     max: filters.maxPrice ? filters.maxPrice.toLocaleString() : '',
   });
 
-  // Available options
+  // Sync price inputs when clearAllFilters resets context
+  useEffect(() => {
+    setLocalPriceRange({
+      min: filters.minPrice ? filters.minPrice.toLocaleString() : '',
+      max: filters.maxPrice ? filters.maxPrice.toLocaleString() : '',
+    });
+  }, [filters.minPrice, filters.maxPrice]);
+
+  useEffect(() => {
+    if (filters.sizes?.length > 0) setExpandedSections(p => ({ ...p, sizes: true }));
+  }, [filters.sizes?.length]);
+
+  useEffect(() => {
+    if (filters.colors?.length > 0) setExpandedSections(p => ({ ...p, colors: true }));
+  }, [filters.colors?.length]);
+
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   const colorOptions = [
-    { name: 'Black', hex: '#000000' },
-    { name: 'White', hex: '#FFFFFF' },
-    { name: 'Red', hex: '#EF4444' },
-    { name: 'Blue', hex: '#3B82F6' },
-    { name: 'Green', hex: '#22C55E' },
+    { name: 'Black',  hex: '#000000' },
+    { name: 'White',  hex: '#FFFFFF' },
+    { name: 'Red',    hex: '#EF4444' },
+    { name: 'Blue',   hex: '#3B82F6' },
+    { name: 'Green',  hex: '#22C55E' },
     { name: 'Yellow', hex: '#FBBF24' },
-    { name: 'Gray', hex: '#9CA3AF' },
+    { name: 'Gray',   hex: '#9CA3AF' },
+    { name: 'Brown',  hex: '#8B4513' },
+    { name: 'Pink',   hex: '#FF69B4' },
   ];
 
+  // ── Handlers ───────────────────────────────────────────────
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
+    if (ALWAYS_OPEN.has(section)) return;
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handlePriceChange = (field, value) => {
-    // Allow digits and commas
-    const smoothValue = value.replace(/[^0-9,]/g, '');
-    setLocalPriceRange(prev => ({ ...prev, [field]: smoothValue }));
+    setLocalPriceRange(prev => ({ ...prev, [field]: value.replace(/[^0-9,]/g, '') }));
   };
 
   const handlePriceBlur = (field) => {
-    // Format on blur
     const val = localPriceRange[field].replace(/,/g, '');
     if (val && !isNaN(val)) {
-      setLocalPriceRange(prev => ({
-        ...prev,
-        [field]: Number(val).toLocaleString()
-      }));
+      setLocalPriceRange(prev => ({ ...prev, [field]: Number(val).toLocaleString() }));
     }
   };
 
   const handlePriceApply = () => {
     const min = localPriceRange.min ? parseFloat(localPriceRange.min.replace(/,/g, '')) : 0;
-    const max = localPriceRange.max ? parseFloat(localPriceRange.max.replace(/,/g, '')) : 10000; // Default max?
+    const max = localPriceRange.max ? parseFloat(localPriceRange.max.replace(/,/g, '')) : 10000;
     setPriceRange(min, max);
   };
 
   return (
-    <aside className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-        {onMobileClose && (
-          <button
-            onClick={onMobileClose}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-lg text-gray-500"
-          >
-            <FiX className="w-5 h-5" />
-          </button>
-        )}
+    <aside
+      className="rounded-2xl border overflow-hidden"
+      style={{ 
+        backgroundColor: THEME.colors.white, 
+        borderColor: THEME.colors.border, 
+        boxShadow: THEME.shadows.sidebar 
+      }}
+    >
+      {/* ── Header ── */}
+      <div
+        className="flex items-center justify-between px-5 py-4 border-b"
+        style={{ borderColor: THEME.colors.border }}
+      >
+        <div className="flex items-center gap-2">
+          <FiSliders className="w-3.5 h-3.5" style={{ color: THEME.colors.primary }} />
+          <h2 className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: THEME.colors.darkCharcoal }}>
+            Filters
+          </h2>
+          {hasActiveFilters && (
+            <span
+              className="text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: THEME.colors.primary, color: THEME.colors.white }}
+            >
+              ✓
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors"
+              style={{ 
+                backgroundColor: THEME.colors.softGray, 
+                color: THEME.colors.mediumGray, 
+                border: `1px solid ${THEME.colors.border}` 
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#FFE4E6';
+                e.currentTarget.style.color = THEME.colors.saleRed;
+                e.currentTarget.style.borderColor = '#FECDD3';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = THEME.colors.softGray;
+                e.currentTarget.style.color = THEME.colors.mediumGray;
+                e.currentTarget.style.borderColor = THEME.colors.border;
+              }}
+            >
+              <FiTrash2 className="w-3 h-3" /> Clear all
+            </button>
+          )}
+          {onMobileClose && (
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="lg:hidden p-1.5 rounded-lg"
+              style={{ backgroundColor: THEME.colors.softGray, color: THEME.colors.mediumGray }}
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Clear All Filters */}
-      {hasActiveFilters && (
-        <button
-          onClick={clearAllFilters}
-          className="w-full mb-6 py-2.5 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 font-medium transition-colors"
+      {/* ── Sections ── */}
+      <div className="p-3 space-y-2">
+
+        {/* Collections — pinned, scrollable */}
+        <FilterSection
+          title="Collections"
+          section="collection"
+          isExpanded={expandedSections.collection}
+          onToggle={toggleSection}
         >
-          Clear All Filters
-        </button>
-      )}
-
-      <div className="space-y-2">
-      
-         {/* Collections Filter */}
-         <FilterSection 
-           title="Collections" 
-           section="collection"
-           isExpanded={expandedSections.collection}
-           onToggle={toggleSection}
-         >
           {categoriesLoading ? (
-            <div className="text-sm text-gray-400">Loading...</div>
+            <div className="text-xs py-1" style={{ color: THEME.colors.mutedText }}>Loading...</div>
           ) : (
-             <div className="space-y-1">
-                 <button
-                    onClick={() => setCollection(filters.collection === '' ? '' : '')} // Always allow setting to all
-                    className={`flex items-center gap-3 w-full px-2 py-1.5 rounded-md transition-colors ${
-                       filters.collection === '' 
-                       ? 'bg-[#2E5C45] text-white font-medium' 
-                       : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                 >
-                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                        filters.collection === '' ? 'border-white' : 'border-gray-300'
-                    }`}>
-                        {filters.collection === '' && <div className="w-2 h-2 rounded-full bg-white" />}
-                    </div>
-                    <span className="text-sm">All Collections</span>
-                 </button>
-                 {collections.map(col => (
-                     <button
-                        key={col.id}
-                        onClick={() => setCollection(filters.collection === col.slug ? '' : col.slug)}
-                        className={`flex items-center gap-3 w-full px-2 py-1.5 rounded-md transition-colors ${
-                           filters.collection === col.slug 
-                           ? 'bg-[#2E5C45] text-white font-medium' 
-                           : 'text-gray-600 hover:bg-gray-50'
-                        }`}
-                     >
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            filters.collection === col.slug ? 'border-white' : 'border-gray-300'
-                        }`}>
-                            {filters.collection === col.slug && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <span className="text-sm">{col.name}</span>
-                     </button>
-                 ))}
-             </div>
-          )}
-        </FilterSection>
-
-        {/* Category Filter */}
-        <FilterSection 
-           title="Category" 
-           section="category"
-           isExpanded={expandedSections.category}
-           onToggle={toggleSection}
-         >
-          {categoriesLoading ? (
-            <div className="text-sm text-gray-400">Loading...</div>
-          ) : (
-            <div className="space-y-1">
-              <button
-                onClick={() => setCategory('')}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                  filters.category === ''
-                    ? 'bg-[#2E5C45] text-white font-medium shadow-md'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                All Categories
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setCategory(cat.slug)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex justify-between items-center ${
-                    filters.category === cat.slug
-                      ? 'bg-[#2E5C45] text-white font-medium shadow-md'
-                      : 'text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <span>{cat.name}</span>
-                  {/* Optional: Add count if available */}
-                </button>
+            <div
+              className="space-y-0.5 overflow-y-auto pr-0.5"
+              style={{ 
+                maxHeight: '180px', 
+                scrollbarWidth: 'thin', 
+                scrollbarColor: `${THEME.colors.primary}55 transparent` 
+              }}
+            >
+              <RadioItem
+                label="All Collections"
+                isActive={filters.collection === ''}
+                onClick={() => setCollection('')}
+              />
+              {collections.map(col => (
+                <RadioItem
+                  key={col.id}
+                  label={col.name}
+                  isActive={filters.collection === col.slug}
+                  onClick={() => setCollection(filters.collection === col.slug ? '' : col.slug)}
+                />
               ))}
             </div>
           )}
         </FilterSection>
 
-        {/* Price Range Filter */}
-        <FilterSection 
-           title="Price Range" 
-           section="price"
-           isExpanded={expandedSections.price}
-           onToggle={toggleSection}
-         >
-          <div className="space-y-4 pt-2">
+        {/* Category — pinned, scrollable */}
+        <FilterSection
+          title="Category"
+          section="category"
+          isExpanded={expandedSections.category}
+          onToggle={toggleSection}
+        >
+          {categoriesLoading ? (
+            <div className="text-xs py-1" style={{ color: THEME.colors.mutedText }}>Loading...</div>
+          ) : (
+            <div
+              className="space-y-0.5 overflow-y-auto pr-0.5"
+              style={{ 
+                maxHeight: '200px', 
+                scrollbarWidth: 'thin', 
+                scrollbarColor: `${THEME.colors.primary}55 transparent` 
+              }}
+            >
+              <RadioItem
+                label="All Categories"
+                isActive={filters.category === ''}
+                onClick={() => setCategory('')}
+              />
+              {categories.map(cat => (
+                <RadioItem
+                  key={cat.id}
+                  label={cat.name}
+                  isActive={filters.category === cat.slug}
+                  onClick={() => setCategory(cat.slug)}
+                />
+              ))}
+            </div>
+          )}
+        </FilterSection>
+
+        {/* Price Range — pinned */}
+        <FilterSection
+          title="Price Range (₦)"
+          section="price"
+          isExpanded={expandedSections.price}
+          onToggle={toggleSection}
+        >
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
-                 <input
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: THEME.colors.mediumGray }}>₦</span>
+                <input
                   type="text"
                   inputMode="numeric"
                   value={localPriceRange.min}
                   onChange={e => handlePriceChange('min', e.target.value)}
                   onBlur={() => handlePriceBlur('min')}
-                  placeholder="0"
-                  className="w-full pl-6 pr-2 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#2E5C45] focus:border-[#2E5C45] outline-none transition-all"
+                  placeholder="Min"
+                  className="w-full pl-6 pr-2 py-2 rounded-lg text-xs border outline-none transition-all"
+                  style={{ borderColor: THEME.colors.border, color: THEME.colors.darkCharcoal }}
+                  onFocus={(e) => (e.target.style.borderColor = THEME.colors.primary)}
+                  onBlur={(e) => (e.target.style.borderColor = THEME.colors.border)}
                 />
               </div>
-              <span className="text-gray-400">-</span>
+              <span className="text-xs flex-shrink-0" style={{ color: THEME.colors.mediumGray }}>–</span>
               <div className="relative flex-1">
-                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
-                 <input
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: THEME.colors.mediumGray }}>₦</span>
+                <input
                   type="text"
                   inputMode="numeric"
                   value={localPriceRange.max}
                   onChange={e => handlePriceChange('max', e.target.value)}
                   onBlur={() => handlePriceBlur('max')}
                   placeholder="Max"
-                  className="w-full pl-6 pr-2 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#2E5C45] focus:border-[#2E5C45] outline-none transition-all"
+                  className="w-full pl-6 pr-2 py-2 rounded-lg text-xs border outline-none transition-all"
+                  style={{ borderColor: THEME.colors.border, color: THEME.colors.darkCharcoal }}
+                  onFocus={(e) => (e.target.style.borderColor = THEME.colors.primary)}
+                  onBlur={(e) => (e.target.style.borderColor = THEME.colors.border)}
                 />
               </div>
             </div>
             <button
+              type="button"
               onClick={handlePriceApply}
-              className="w-full py-2.5 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-black transition-all shadow-sm hover:shadow-md"
+              className="w-full py-2.5 rounded-xl text-xs font-black transition-colors"
+              style={{ backgroundColor: THEME.colors.deepEmerald, color: THEME.colors.white }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.colors.primary)}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.colors.deepEmerald)}
             >
               Apply Range
             </button>
           </div>
         </FilterSection>
 
-        {/* Size Filter */}
-        <FilterSection 
-           title="Size" 
-           section="sizes"
-           isExpanded={expandedSections.sizes}
-           onToggle={toggleSection}
-         >
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            {sizeOptions.map(size => (
-              <button
-                key={size}
-                onClick={() => toggleSize(size)}
-                className={`py-2 px-1 rounded-md text-sm font-medium border transition-all ${
-                  filters.sizes.includes(size)
-                    ? 'bg-[#2E5C45] text-white border-[#2E5C45] shadow-sm'
-                    : 'border-gray-200 text-gray-600 hover:border-[#2E5C45] hover:text-[#2E5C45]'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+        {/* Size — collapsible */}
+        <FilterSection
+          title="Size"
+          section="sizes"
+          isExpanded={expandedSections.sizes}
+          onToggle={toggleSection}
+        >
+          <div className="grid grid-cols-3 gap-1.5">
+            {sizeOptions.map(size => {
+              const isActive = filters.sizes.includes(size);
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggleSize(size)}
+                  className="py-2 rounded-lg text-xs font-bold border transition-all"
+                  style={{
+                    borderColor: isActive ? THEME.colors.primary : THEME.colors.border,
+                    backgroundColor: isActive ? THEME.colors.primary : 'transparent',
+                    color: isActive ? THEME.colors.white : THEME.colors.mediumGray,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = THEME.colors.primary;
+                      e.currentTarget.style.color = THEME.colors.primary;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.borderColor = THEME.colors.border;
+                      e.currentTarget.style.color = THEME.colors.mediumGray;
+                    }
+                  }}
+                >
+                  {size}
+                </button>
+              );
+            })}
           </div>
         </FilterSection>
 
-        {/* Color Filter */}
-        <FilterSection 
-           title="Color" 
-           section="colors"
-           isExpanded={expandedSections.colors}
-           onToggle={toggleSection}
-         >
-          <div className="space-y-1 pt-1">
-            {colorOptions.map(color => (
-              <button
-                key={color.name}
-                onClick={() => toggleColor(color.name)}
-                className={`flex items-center gap-3 w-full px-2 py-1.5 rounded-lg text-sm transition-all group ${
-                  filters.colors.includes(color.name)
-                    ? 'bg-gray-100 text-gray-900 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border shadow-sm ${filters.colors.includes(color.name) ? 'ring-2 ring-[#2E5C45] ring-offset-1' : 'border-gray-200'}`}
-                  style={{ backgroundColor: color.hex }}
-                />
-                <span className="group-hover:text-gray-900">{color.name}</span>
-              </button>
-            ))}
+        {/* Color — collapsible with 3 per row */}
+        <FilterSection
+          title="Color"
+          section="colors"
+          isExpanded={expandedSections.colors}
+          onToggle={toggleSection}
+        >
+          <div className="grid grid-cols-3 gap-2">
+            {colorOptions.map(color => {
+              const isActive = filters.colors.includes(color.name);
+              return (
+                <button
+                  key={color.name}
+                  type="button"
+                  onClick={() => toggleColor(color.name)}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg transition-all"
+                  style={{
+                    backgroundColor: isActive ? THEME.colors.greenTint : 'transparent',
+                    outline: isActive ? `1px solid ${THEME.colors.primary}` : 'none',
+                  }}
+                  onMouseEnter={(e) => { 
+                    if (!isActive) e.currentTarget.style.backgroundColor = THEME.colors.softGray; 
+                  }}
+                  onMouseLeave={(e) => { 
+                    if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; 
+                  }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full border shadow-sm"
+                    style={{
+                      backgroundColor: color.hex,
+                      borderColor: color.hex === '#FFFFFF' ? THEME.colors.border : 'transparent',
+                    }}
+                  />
+                  <span 
+                    className="text-[10px] font-medium truncate w-full text-center"
+                    style={{ color: isActive ? THEME.colors.primary : THEME.colors.mediumGray }}
+                  >
+                    {color.name}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </FilterSection>
+
       </div>
     </aside>
   );
 }
 
-// Main FilterSidebar component with Suspense
 export default function FilterSidebar({ onMobileClose }) {
   return (
     <Suspense fallback={<FilterSidebarLoading />}>

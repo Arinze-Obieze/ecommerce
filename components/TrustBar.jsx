@@ -2,45 +2,79 @@
 import React from 'react';
 import { FiCheckCircle, FiShield, FiTruck, FiHeadphones } from 'react-icons/fi';
 
-const TrustBar = () => {
-  const features = [
-    {
-      icon: <FiCheckCircle className="w-6 h-6 text-[#2E5C45]" />,
-      title: "Verified Stores",
-      description: "Trusted & Vetted"
-    },
-    {
-      icon: <FiTruck className="w-6 h-6 text-[#2E5C45]" />,
-      title: "Fast Delivery",
-      description: "Nationwide Shipping"
-    },
-    {
-      icon: <FiShield className="w-6 h-6 text-[#2E5C45]" />,
-      title: "Secure Payment",
-      description: "100% Protected"
-    },
-    {
-      icon: <FiHeadphones className="w-6 h-6 text-[#2E5C45]" />,
-      title: "24/7 Support",
-      description: "Dedicated Care"
-    }
-  ];
+const THEME = {
+  bg:           "#FFFFFF",
+  border:       "#F0F0F0",
+  iconBg:       "#EDFAF3",
+  iconColor:    "#00B86B",
+  titleColor:   "#111111",
+  descColor:    "#888888",
+  hoverBg:      "#F9FAFB",
+  divider:      "#F0F0F0",
+  accentBar:    "#00B86B",
+};
 
+const features = [
+  {
+    icon: FiCheckCircle,
+    title: "Verified Stores",
+    description: "Every seller is vetted and trusted",
+  },
+  {
+    icon: FiTruck,
+    title: "Fast Delivery",
+    description: "Nationwide shipping, every order",
+  },
+  {
+    icon: FiShield,
+    title: "Secure Payment",
+    description: "Your transactions are 100% protected",
+  },
+  {
+    icon: FiHeadphones,
+    title: "24/7 Support",
+    description: "Dedicated help whenever you need it",
+  },
+];
+
+const TrustBar = () => {
   return (
-    <section className="py-8 bg-white border-b border-gray-100">
+    <section style={{ backgroundColor: THEME.bg, borderBottom: `1px solid ${THEME.border}` }}>
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-center justify-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors cursor-default">
-              <div className="flex-shrink-0 w-12 h-12 bg-[#2E5C45]/10 rounded-full flex items-center justify-center">
-                {feature.icon}
+        <div className="grid grid-cols-2 lg:grid-cols-4">
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            const isLast = index === features.length - 1;
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-4 py-5 px-5 transition-colors duration-150 cursor-default"
+                style={{
+                  borderRight: !isLast ? `1px solid ${THEME.divider}` : 'none',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.hoverBg)}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                {/* Icon */}
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: THEME.iconBg }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: THEME.iconColor }} />
+                </div>
+
+                {/* Text */}
+                <div>
+                  <h3 className="text-sm font-bold leading-tight" style={{ color: THEME.titleColor }}>
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs mt-0.5 leading-snug" style={{ color: THEME.descColor }}>
+                    {feature.description}
+                  </p>
+                </div>
               </div>
-              <div className="text-left">
-                <h3 className="font-bold text-gray-900 text-sm md:text-base">{feature.title}</h3>
-                <p className="text-xs text-gray-500">{feature.description}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

@@ -1,6 +1,21 @@
-"use client"
-import { FiChevronDown } from "react-icons/fi"
-import { useFilters } from "@/contexts/FilterContext"
+"use client";
+import { useState } from "react";
+import { FiChevronDown, FiSearch, FiSliders } from "react-icons/fi";
+import { useFilters } from "@/contexts/FilterContext";
+
+const THEME = {
+  green:       '#00B86B',
+  greenDark:   '#0F7A4F',
+  greenTint:   '#EDFAF3',
+  greenBorder: '#A8DFC4',
+  white:       '#FFFFFF',
+  pageBg:      '#F9FAFB',
+  charcoal:    '#111111',
+  medGray:     '#666666',
+  mutedText:   '#999999',
+  border:      '#E8E8E8',
+  softGray:    '#F5F5F5',
+};
 
 export default function ShopHeader({
   productsLength,
@@ -9,34 +24,103 @@ export default function ShopHeader({
   searchInput,
   setSearchInput,
 }) {
-  const { filters, setSortBy } = useFilters()
+  const { filters, setSortBy, activeFilterCount } = useFilters();
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [selectHov, setSelectHov]         = useState(false);
+  const [btnHov, setBtnHov]               = useState(false);
 
   return (
-    <div className="mb-8">
-      {/* Mobile-only header controls */}
-      <div className="lg:hidden mb-6">
+    <div>
+
+      {/* ── Mobile filter button ── */}
+      <div className="lg:hidden mb-4">
         <button
+          type="button"
           onClick={onMobileFiltersOpen}
-          className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 border border-gray-200 rounded-full text-gray-900 font-medium hover:bg-gray-100 transition-colors"
+          onMouseEnter={() => setBtnHov(true)}
+          onMouseLeave={() => setBtnHov(false)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            width: '100%',
+            padding: '11px 20px',
+            borderRadius: 12,
+            border: `1.5px solid ${btnHov ? THEME.greenBorder : THEME.border}`,
+            background: btnHov ? THEME.greenTint : THEME.white,
+            color: btnHov ? THEME.green : THEME.charcoal,
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.18s',
+          }}
         >
+          <FiSliders size={15} />
           Filters & Sort
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: 20,
+                height: 20,
+                borderRadius: 100,
+                fontSize: 10,
+                fontWeight: 800,
+                background: THEME.green,
+                color: THEME.white,
+                padding: '0 5px',
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      {/* ── Title row + sort ── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 16,
+          marginBottom: 20,
+        }}
+      >
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">All Products</h2>
-          <p className="text-gray-500 text-sm mt-1">
-            Showing {productsLength} of {totalItems} items
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
+            All Products
+          </h2>
+          <p style={{ fontSize: 13, color: THEME.mutedText, margin: '4px 0 0' }}>
+            Showing <span style={{ fontWeight: 600, color: THEME.charcoal }}>{productsLength}</span> of <span style={{ fontWeight: 600, color: THEME.charcoal }}>{totalItems}</span> items
           </p>
         </div>
 
-        {/* Sort Dropdown */}
-        <div className="w-full sm:w-48 relative">
+        {/* Sort dropdown */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
           <select
             value={filters.sortBy}
             onChange={e => setSortBy(e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg appearance-none bg-white cursor-pointer text-sm font-medium focus:ring-1 focus:ring-gray-900 outline-none"
+            onMouseEnter={() => setSelectHov(true)}
+            onMouseLeave={() => setSelectHov(false)}
+            style={{
+              padding: '9px 36px 9px 14px',
+              borderRadius: 10,
+              border: `1.5px solid ${selectHov ? THEME.greenBorder : THEME.border}`,
+              background: THEME.white,
+              color: THEME.charcoal,
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              appearance: 'none',
+              outline: 'none',
+              transition: 'border-color 0.18s',
+              minWidth: 180,
+            }}
           >
             <option value="newest">Newest Arrivals</option>
             <option value="price_asc">Price: Low to High</option>
@@ -44,23 +128,89 @@ export default function ShopHeader({
             <option value="rating">Top Rated</option>
             <option value="name">Name: A to Z</option>
           </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-500" />
+          <FiChevronDown
+            size={14}
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              color: THEME.medGray,
+            }}
+          />
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-          <input
-            value={searchInput} // Note: This needs to be passed down or accessed via context if context handles local state
-            onChange={e => setSearchInput && setSearchInput(e.target.value)}
-            // If setSearchInput implies the context debounced setter, we might need a local state in the header or context to handle the input value
-            // checking ShopClient, it uses a local state `searchInput` and debounces it to `setSearch`
-            // refactoring note: The context should probably handle this or we pass props.
-            // For now, let's assume we update the context to handle searchInput or pass it as props
-             placeholder="Search for products..."
-            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-1 focus:ring-gray-900 outline-none transition-all placeholder:text-gray-400"
-          />
+      {/* ── Search bar ── */}
+      <div
+        style={{
+          position: 'relative',
+          borderRadius: 12,
+          border: `1.5px solid ${searchFocused ? THEME.green : THEME.border}`,
+          background: searchFocused ? THEME.white : THEME.softGray,
+          transition: 'border-color 0.18s, background 0.18s',
+          overflow: 'hidden',
+        }}
+      >
+        <FiSearch
+          size={15}
+          style={{
+            position: 'absolute',
+            left: 14,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: searchFocused ? THEME.green : THEME.mutedText,
+            transition: 'color 0.18s',
+            pointerEvents: 'none',
+          }}
+        />
+        <input
+          type="text"
+          value={searchInput}
+          onChange={e => setSearchInput?.(e.target.value)}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+          placeholder="Search for products..."
+          style={{
+            width: '100%',
+            padding: '12px 14px 12px 40px',
+            fontSize: 14,
+            color: THEME.charcoal,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+        {searchInput && (
+          <button
+            type="button"
+            onClick={() => setSearchInput?.('')}
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              border: 'none',
+              background: THEME.border,
+              color: THEME.medGray,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              lineHeight: 1,
+            }}
+          >
+            ✕
+          </button>
+        )}
       </div>
     </div>
-  )
+  );
 }

@@ -2,63 +2,263 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { FiChevronLeft, FiShoppingCart, FiHeart, FiShare2, FiCheck } from 'react-icons/fi';
+import {
+  FiChevronLeft, FiShoppingCart, FiHeart, FiShare2, FiCheck,
+  FiStar, FiPackage, FiShield, FiRefreshCw, FiTruck, FiChevronRight
+} from 'react-icons/fi';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 
+// ============================================================
+// 🎨 THEME
+// ============================================================
+const THEME = {
+  pageBg:           "#F9FAFB",
+  white:            "#FFFFFF",
+
+  // Nav bar
+  navBg:            "#FFFFFF",
+  navBorder:        "#F0F0F0",
+  navBack:          "#111111",
+  navBackHover:     "#00B86B",
+
+  // Text
+  headingText:      "#111111",
+  bodyText:         "#555555",
+  mutedText:        "#999999",
+  labelText:        "#444444",
+
+  // Price
+  priceBg:          "#F9FAFB",
+  priceBorder:      "#F0F0F0",
+  priceText:        "#111111",
+  originalPrice:    "#CCCCCC",
+  discountBg:       "#E53935",
+  discountText:     "#FFFFFF",
+
+  // Stock
+  inStockDot:       "#00B86B",
+  inStockText:      "#0A3D2E",
+  outStockDot:      "#E53935",
+  outStockText:     "#7F1D1D",
+
+  // Categories
+  catBg:            "#EDFAF3",
+  catText:          "#0A3D2E",
+  catBorder:        "#A8DFC4",
+  catHover:         "#D5F5E8",
+
+  // Store link
+  storeText:        "#888888",
+  storeName:        "#111111",
+  storeHover:       "#00B86B",
+
+  // Size chips
+  sizeDefault:      "#FFFFFF",
+  sizeBorder:       "#E0E0E0",
+  sizeText:         "#333333",
+  sizeSelected:     "#111111",
+  sizeSelectedText: "#FFFFFF",
+  sizeHover:        "#F5F5F5",
+
+  // Color chip ring
+  colorSelected:    "#00B86B",
+  colorUnselected:  "#E0E0E0",
+
+  // Qty stepper
+  qtyBorder:        "#E0E0E0",
+  qtyBg:            "#FFFFFF",
+  qtyText:          "#111111",
+  qtyBtnHover:      "#F5F5F5",
+
+  // Add to cart button
+  cartBg:           "#00B86B",
+  cartHover:        "#0F7A4F",
+  cartText:         "#FFFFFF",
+  cartSuccessBg:    "#0A3D2E",
+  cartDisabled:     "#E0E0E0",
+  cartDisabledText: "#AAAAAA",
+
+  // Wishlist button
+  wishBorder:       "#E0E0E0",
+  wishBg:           "#FFFFFF",
+  wishHover:        "#FFF5F5",
+  wishActive:       "#FF3B3B",
+
+  // Error / success banners
+  errorBg:          "#FFF5F5",
+  errorBorder:      "#FFC5C5",
+  errorText:        "#CC0000",
+  successBg:        "#EDFAF3",
+  successBorder:    "#A8DFC4",
+  successText:      "#0A3D2E",
+
+  // Info strip
+  infoBg:           "#F9FAFB",
+  infoBorder:       "#F0F0F0",
+  infoIcon:         "#00B86B",
+  infoLabel:        "#888888",
+  infoValue:        "#333333",
+
+  // Thumbnails
+  thumbBorder:      "#E0E0E0",
+  thumbSelected:    "#111111",
+
+  // Tabs
+  tabText:          "#888888",
+  tabActive:        "#111111",
+  tabActiveBar:     "#00B86B",
+  tabBorder:        "#F0F0F0",
+  tabHover:         "#F5F5F5",
+
+  // Reviews
+  reviewDivider:    "#F5F5F5",
+  avatarBg:         "#F0F0F0",
+  avatarText:       "#999999",
+  starFill:         "#F59E0B",
+  starEmpty:        "#E5E7EB",
+
+  // Review form
+  formBg:           "#F9FAFB",
+  formBorder:       "#F0F0F0",
+  inputBorder:      "#E0E0E0",
+  inputFocus:       "#00B86B",
+  submitBg:         "#111111",
+  submitHover:      "#333333",
+  submitText:       "#FFFFFF",
+
+  // Related section
+  relatedBorder:    "#F0F0F0",
+  relatedBtn:       "#111111",
+  relatedBtnText:   "#FFFFFF",
+  relatedBtnHover:  "#333333",
+};
+// ============================================================
+
+// ── Helpers ──────────────────────────────────────────────────
+
+const COLOR_MAP = {
+  'navy blue': '#1e3a8a', 'green': '#166534', 'red': '#991b1b',
+  'dark grey': '#374151', 'black': '#000000', 'white': '#ffffff',
+  'gray': '#6b7280', 'grey': '#6b7280', 'blue': '#2563eb',
+  'yellow': '#eab308', 'orange': '#f97316', 'purple': '#9333ea',
+  'pink': '#ec4899', 'brown': '#78350f', 'beige': '#f5f5dc',
+  'light blue': '#bfdbfe', 'light green': '#bbf7d0',
+  'dark blue': '#1e3a8a', 'dark green': '#14532d', 'dark red': '#7f1d1d',
+};
+const LIGHT_COLORS = new Set(['white', '#ffffff', '#fff', 'beige', '#f5f5dc', '#bfdbfe', '#bbf7d0', '#eab308']);
+
+function getColorHex(name) {
+  return COLOR_MAP[name.toLowerCase()] || name.toLowerCase().replace(/\s+/g, '');
+}
+function isLight(hex) {
+  return LIGHT_COLORS.has(hex.toLowerCase());
+}
+
+function StarRow({ rating, size = 'sm' }) {
+  const px = size === 'sm' ? 'w-3.5 h-3.5' : 'w-5 h-5';
+  return (
+    <div className="flex items-center gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <FiStar
+          key={i}
+          className={px}
+          style={{ color: i < rating ? THEME.starFill : THEME.starEmpty, fill: i < rating ? THEME.starFill : 'none' }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Loading state ─────────────────────────────────────────────
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: THEME.pageBg }}>
+      <div className="h-14" style={{ backgroundColor: THEME.navBg, borderBottom: `1px solid ${THEME.navBorder}` }} />
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="space-y-3">
+            <div className="aspect-square rounded-2xl animate-pulse" style={{ backgroundColor: '#F0F0F0' }} />
+            <div className="grid grid-cols-4 gap-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="aspect-square rounded-xl animate-pulse" style={{ backgroundColor: '#F0F0F0', animationDelay: `${i * 80}ms` }} />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            {[180, 60, 90, 80, 60, 56].map((h, i) => (
+              <div key={i} className="rounded-xl animate-pulse" style={{ height: h, backgroundColor: '#F0F0F0', animationDelay: `${i * 60}ms` }} />
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ── Error state ───────────────────────────────────────────────
+function ErrorState({ message }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: THEME.pageBg }}>
+      <div className="text-center px-4">
+        <p className="text-5xl mb-4">🛍️</p>
+        <h2 className="text-xl font-bold mb-2" style={{ color: THEME.headingText }}>Product not found</h2>
+        <p className="text-sm mb-6" style={{ color: THEME.mutedText }}>{message}</p>
+        <Link
+          href="/shop"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-colors"
+          style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}
+        >
+          <FiChevronLeft className="w-4 h-4" /> Back to Shop
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────
 export function ProductDetailClient({ id }) {
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [product, setProduct]             = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [error, setError]                 = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedSize, setSelectedSize]   = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [actionError, setActionError] = useState('');
-  const [activeTab, setActiveTab] = useState('description');
-  const [user, setUser] = useState(null);
-  
-  // Review form state
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
+  const [quantity, setQuantity]           = useState(1);
+  const [addedToCart, setAddedToCart]     = useState(false);
+  const [isFavorite, setIsFavorite]       = useState(false);
+  const [actionError, setActionError]     = useState('');
+  const [activeTab, setActiveTab]         = useState('description');
+  const [user, setUser]                   = useState(null);
+  const [variants, setVariants]           = useState([]);
+
+  const [reviewRating, setReviewRating]         = useState(5);
+  const [reviewComment, setReviewComment]       = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [reviewError, setReviewError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [reviewError, setReviewError]           = useState('');
+  const [submitSuccess, setSubmitSuccess]       = useState(false);
 
   const { addToCart } = useCart();
   const supabase = createClient();
 
-  const [variants, setVariants] = useState([]);
-  
-  // Fetch product details and variants
   useEffect(() => {
-    const fetchProductAndVariants = async () => {
+    if (!id) return;
+
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Parallel fetch
         const [prodRes, varRes] = await Promise.all([
-             fetch(`/api/products/${id}`),
-             fetch(`/api/products/${id}/variants`)
+          fetch(`/api/products/${id}`),
+          fetch(`/api/products/${id}/variants`),
         ]);
-
         const prodData = await prodRes.json();
-        
-        if (!prodRes.ok) {
-          setError(prodData.error || 'Failed to load product');
-          return;
-        }
+        if (!prodRes.ok) { setError(prodData.error || 'Failed to load product'); return; }
         setProduct(prodData);
-
-        // Handle variants
         if (varRes.ok) {
-            const varData = await varRes.json();
-            if (varData.variants) setVariants(varData.variants);
+          const varData = await varRes.json();
+          if (varData.variants) setVariants(varData.variants);
         }
-
       } catch (err) {
         setError('Failed to load product');
         console.error(err);
@@ -67,102 +267,67 @@ export function ProductDetailClient({ id }) {
       }
     };
 
-    if (id) {
-      fetchProductAndVariants();
-      // Check auth state for reviews
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        setUser(session?.user || null);
-      });
-      
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user || null);
-      });
-      
-      return () => subscription.unsubscribe();
-    }
+    fetchData();
+
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user || null);
+    });
+    return () => subscription.unsubscribe();
   }, [id, supabase.auth]);
+
+  const currentStock = (() => {
+    if (!product) return 0;
+    if (variants.length > 0) {
+      if (selectedSize || selectedColor) {
+        const match = variants.find(v =>
+          (!v.size || v.size === selectedSize) && (!v.color || v.color === selectedColor)
+        );
+        return match ? match.stock_quantity : 0;
+      }
+      return variants.reduce((acc, v) => acc + v.stock_quantity, 0);
+    }
+    return product.stock_quantity || 0;
+  })();
 
   const handleAddToCart = () => {
     setActionError('');
-    // 1. Check if product has variants (either via fetched variants OR if product has sizes/colors defined in arrays)
-    const hasVariants = variants.length > 0 || (product.sizes?.length > 0) || (product.colors?.length > 0);
-    
+    const hasVariants = variants.length > 0 || product.sizes?.length > 0 || product.colors?.length > 0;
     let selectedVariantId = null;
 
     if (hasVariants) {
-        if (!selectedSize && product.sizes?.length > 0) {
-            setActionError('Please select a size.');
-            return;
-        }
-        if (!selectedColor && product.colors?.length > 0) {
-            setActionError('Please select a color.');
-            return;
-        }
-
-        // Find matching variant if we have structured variants
-        if (variants.length > 0) {
-            const match = variants.find(v => 
-                (!v.size || v.size === selectedSize) && 
-                (!v.color || v.color === selectedColor)
-            );
-            
-            if (!match) {
-                setActionError('Selected combination is not available.');
-                return;
-            }
-            if (match.stock_quantity <= 0) {
-                 setActionError('Selected combination is out of stock.');
-                 return;
-            }
-            selectedVariantId = match.id;
-        }
+      if (!selectedSize && product.sizes?.length > 0) { setActionError('Please select a size.'); return; }
+      if (!selectedColor && product.colors?.length > 0) { setActionError('Please select a colour.'); return; }
+      if (variants.length > 0) {
+        const match = variants.find(v =>
+          (!v.size || v.size === selectedSize) && (!v.color || v.color === selectedColor)
+        );
+        if (!match) { setActionError('This combination is not available.'); return; }
+        if (match.stock_quantity <= 0) { setActionError('Selected combination is out of stock.'); return; }
+        selectedVariantId = match.id;
+      }
     }
 
-
-    addToCart({
-        ...product,
-        quantity,
-        selectedSize,
-        selectedColor,
-        variant_id: selectedVariantId
-    });
-
+    addToCart({ ...product, quantity, selectedSize, selectedColor, variant_id: selectedVariantId });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
   const submitReview = async (e) => {
     e.preventDefault();
-    if (!user) {
-      setReviewError('You must be logged in to review.');
-      return;
-    }
-    if (!reviewComment.trim()) {
-      setReviewError('Please enter a comment.');
-      return;
-    }
-    
+    if (!user) { setReviewError('You must be logged in to review.'); return; }
+    if (!reviewComment.trim()) { setReviewError('Please enter a comment.'); return; }
     setIsSubmittingReview(true);
     setReviewError('');
     setSubmitSuccess(false);
-
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product.id,
-          rating: reviewRating,
-          comment: reviewComment,
-        }),
+        body: JSON.stringify({ productId: product.id, rating: reviewRating, comment: reviewComment }),
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit review');
-      }
-
-      // Update local product reviews list to show it immediately
+      if (!res.ok) throw new Error(data.error || 'Failed to submit review');
       setProduct(prev => ({
         ...prev,
         reviews: [{
@@ -171,10 +336,9 @@ export function ProductDetailClient({ id }) {
           user_id: user.id,
           rating: reviewRating,
           comment: reviewComment,
-          created_at: new Date().toISOString()
-        }, ...(prev.reviews || [])]
+          created_at: new Date().toISOString(),
+        }, ...(prev.reviews || [])],
       }));
-
       setReviewComment('');
       setReviewRating(5);
       setSubmitSuccess(true);
@@ -188,323 +352,294 @@ export function ProductDetailClient({ id }) {
 
   const handleShare = async () => {
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product?.name,
-          text: product?.description,
-          url: window.location.href,
-        });
-      } catch (err) {
-        console.error('Share failed:', err);
-      }
+      try { await navigator.share({ title: product?.name, text: product?.description, url: window.location.href }); }
+      catch (err) { console.error('Share failed:', err); }
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading product...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton />;
+  if (error || !product) return <ErrorState message={error} />;
 
-  if (error || !product) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Product not found</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-          >
-            <FiChevronLeft className="w-5 h-5" />
-            Back to Shop
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const displayPrice = product.discount_price
-    ? product.discount_price / 100
-    : product.price / 100;
+  const displayPrice  = (product.discount_price || product.price) / 100;
   const originalPrice = product.price / 100;
-  const discount = product.discount_price
+  const discount      = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : 0;
 
+  const TABS = [
+    { key: 'description',    label: 'Description' },
+    { key: 'specifications', label: 'Specifications' },
+    { key: 'reviews',        label: `Reviews (${product.reviews?.length || 0})` },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with back button */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+    <div className="min-h-screen" style={{ backgroundColor: THEME.pageBg }}>
+
+      {/* ── Sticky nav bar ── */}
+      <div
+        className="sticky top-0 z-20"
+        style={{ backgroundColor: THEME.navBg, borderBottom: `1px solid ${THEME.navBorder}` }}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+            href="/shop"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors group"
+            style={{ color: THEME.navBack }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = THEME.navBackHover)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = THEME.navBack)}
           >
-            <FiChevronLeft className="w-5 h-5" />
-            Back to Products
+            <FiChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            Back to Shop
           </Link>
+
+          {/* Breadcrumb on desktop */}
+          {product.categories?.[0] && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs" style={{ color: THEME.mutedText }}>
+              <Link href="/shop" className="hover:underline">Shop</Link>
+              <FiChevronRight className="w-3 h-3" />
+              <Link href={`/shop?category=${product.categories[0].slug}`} className="hover:underline">
+                {product.categories[0].name}
+              </Link>
+              <FiChevronRight className="w-3 h-3" />
+              <span style={{ color: THEME.labelText }} className="font-medium truncate max-w-[180px]">{product.name}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image Gallery */}
-          <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative bg-white rounded-lg overflow-hidden border border-gray-200 aspect-square">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
+
+          {/* ── Left: image gallery ── */}
+          <div className="space-y-3">
+
+            {/* Main image */}
+            <div
+              className="relative overflow-hidden rounded-2xl"
+              style={{ backgroundColor: '#F5F5F5', aspectRatio: '1/1' }}
+            >
               <img
-                src={product.image_urls?.[selectedImage] || '/placeholder.svg'}
+                src={product.image_urls?.[selectedImage] || 'https://placehold.co/800x800?text=No+Image'}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-opacity duration-200"
               />
 
-              {/* Sale Badge */}
+              {/* Discount badge */}
               {discount > 0 && (
-                <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-sm">
+                <span
+                  className="absolute top-4 left-4 text-xs font-black px-2.5 py-1 rounded-md"
+                  style={{ backgroundColor: THEME.discountBg, color: THEME.discountText }}
+                >
                   -{discount}%
-                </div>
+                </span>
               )}
 
-              {/* Video Badge or Placeholder if needed */}
-              
+              {/* Action buttons — top right */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
-                {/* Favorite Button */}
                 <button
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+                  type="button"
+                  onClick={() => setIsFavorite(f => !f)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-colors"
+                  style={{
+                    backgroundColor: THEME.wishBg,
+                    border: `1px solid ${THEME.wishBorder}`,
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.wishHover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.wishBg)}
                 >
                   <FiHeart
-                    className={`w-6 h-6 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+                    className="w-4 h-4"
+                    style={{ color: isFavorite ? THEME.wishActive : '#888', fill: isFavorite ? THEME.wishActive : 'none' }}
                   />
                 </button>
-
-                {/* Share Button */}
                 <button
+                  type="button"
                   onClick={handleShare}
-                  className="p-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
-                  title="Share Product"
+                  className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-colors"
+                  style={{ backgroundColor: THEME.wishBg, border: `1px solid ${THEME.wishBorder}` }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F5F5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.wishBg)}
                 >
-                  <FiShare2 className="w-6 h-6 text-gray-600" />
+                  <FiShare2 className="w-4 h-4" style={{ color: '#888' }} />
                 </button>
               </div>
+
+              {/* Image counter dot nav */}
+              {product.image_urls?.length > 1 && (
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
+                  {product.image_urls.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSelectedImage(i)}
+                      className="rounded-full transition-all"
+                      style={{
+                        width: selectedImage === i ? 20 : 6,
+                        height: 6,
+                        backgroundColor: selectedImage === i ? THEME.cartBg : 'rgba(255,255,255,0.7)',
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Thumbnail Gallery */}
-            {product.image_urls && product.image_urls.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
+            {/* Thumbnails */}
+            {product.image_urls?.length > 1 && (
+              <div className="grid grid-cols-5 gap-2">
                 {product.image_urls.map((url, idx) => (
                   <button
                     key={idx}
+                    type="button"
                     onClick={() => setSelectedImage(idx)}
-                    className={`aspect-square rounded-lg border-2 overflow-hidden transition-all ${
-                      selectedImage === idx
-                        ? 'border-blue-600'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className="aspect-square rounded-xl overflow-hidden transition-all"
+                    style={{
+                      border: `2px solid ${selectedImage === idx ? THEME.thumbSelected : THEME.thumbBorder}`,
+                    }}
                   >
-                    <img
-                      src={url}
-                      alt={`${product.name} ${idx + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={url} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Video Section */}
-            {product.video_urls && product.video_urls.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Product Video</h3>
-                <video
-                  src={product.video_urls[0]}
-                  controls
-                  className="w-full rounded-lg bg-gray-100"
-                />
+            {/* Video */}
+            {product.video_urls?.[0] && (
+              <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${THEME.navBorder}` }}>
+                <video src={product.video_urls[0]} controls className="w-full bg-black" />
               </div>
             )}
           </div>
 
-          {/* Product Info */}
-          <div className="space-y-6">
-            {/* Title and Rating */}
+          {/* ── Right: product info ── */}
+          <div className="flex flex-col gap-5">
+
+            {/* Category chips + store */}
+            <div className="flex flex-wrap items-center gap-2">
+              {product.categories?.map(cat => (
+                <Link
+                  key={cat.id}
+                  href={`/shop?category=${cat.slug}`}
+                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full transition-colors"
+                  style={{ backgroundColor: THEME.catBg, color: THEME.catText, border: `1px solid ${THEME.catBorder}` }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.catHover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.catBg)}
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+
+            {/* Name */}
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              <h1 className="text-2xl font-black leading-snug" style={{ color: THEME.headingText }}>
+                {product.name}
+              </h1>
               {product.sku && (
-                <div className="text-sm text-gray-500 mb-2 font-medium">
-                  SKU: {product.sku}
-                </div>
-              )}
-
-              {/* Store Info */}
-              {product.stores && (
-                <div className="mb-3">
-                  <span className="text-sm text-gray-500 mr-2">Sold by:</span>
-                  <Link 
-                    href={`/store/${product.stores.slug || product.stores.id}`}
-                    className="text-sm font-bold text-gray-900 hover:underline hover:text-blue-600"
-                  >
-                    {product.stores.name}
-                  </Link>
-                </div>
-              )}
-
-              {/* Categories */}
-              {product.categories && product.categories.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {product.categories.map(cat => (
-                    <Link
-                      key={cat.id}
-                      href={`/shop?category=${cat.slug}`}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
-                </div>
+                <p className="text-xs mt-1" style={{ color: THEME.mutedText }}>SKU: {product.sku}</p>
               )}
             </div>
 
-            {/* Price Section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-4xl font-bold text-blue-600">
-                  ${displayPrice.toFixed(2)}
+            {/* Store */}
+            {product.stores && (
+              <p className="text-sm" style={{ color: THEME.storeText }}>
+                Sold by{' '}
+                <Link
+                  href={`/store/${product.stores.slug || product.stores.id}`}
+                  className="font-bold transition-colors"
+                  style={{ color: THEME.storeName }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = THEME.storeHover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = THEME.storeName)}
+                >
+                  {product.stores.name}
+                </Link>
+              </p>
+            )}
+
+            {/* Price + stock */}
+            <div
+              className="rounded-2xl p-4"
+              style={{ backgroundColor: THEME.priceBg, border: `1px solid ${THEME.priceBorder}` }}
+            >
+              <div className="flex items-baseline gap-3 mb-2.5">
+                <span className="text-3xl font-black" style={{ color: THEME.priceText }}>
+                  ₦{displayPrice.toLocaleString()}
                 </span>
                 {product.discount_price && (
-                  <span className="text-xl text-gray-500 line-through">
-                    ${originalPrice.toFixed(2)}
+                  <span className="text-base line-through" style={{ color: THEME.originalPrice }}>
+                    ₦{originalPrice.toLocaleString()}
                   </span>
                 )}
               </div>
-
-              {/* Stock Status */}
               <div className="flex items-center gap-2">
-                {/* Calculate dynamic stock based on selection */}
-                {(() => {
-                    let currentStock = product.stock_quantity;
-                    if (variants.length > 0) {
-                        if (selectedSize || selectedColor) {
-                             const match = variants.find(v => 
-                                (!v.size || v.size === selectedSize) && 
-                                (!v.color || v.color === selectedColor)
-                            );
-                            if (match) currentStock = match.stock_quantity;
-                        } else {
-                            // If variants exist but nothing selected, maybe show total or range? 
-                            // For simplicity, keep product.stock_quantity as fallback or sum of variants
-                             currentStock = variants.reduce((acc, v) => acc + v.stock_quantity, 0);
-                        }
-                    }
-
-                    return (
-                        <>
-                            <div
-                            className={`w-3 h-3 rounded-full ${
-                                currentStock > 0 ? 'bg-green-500' : 'bg-red-500'
-                            }`}
-                            />
-                            <span
-                            className={`text-sm font-medium ${
-                                currentStock > 0 ? 'text-green-700' : 'text-red-700'
-                            }`}
-                            >
-                            {currentStock > 0
-                                ? `${currentStock} in stock`
-                                : 'Out of stock'}
-                            </span>
-                        </>
-                    );
-                })()}
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: currentStock > 0 ? THEME.inStockDot : THEME.outStockDot }}
+                />
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: currentStock > 0 ? THEME.inStockText : THEME.outStockText }}
+                >
+                  {currentStock > 0 ? `${currentStock} in stock` : 'Out of stock'}
+                </span>
               </div>
             </div>
 
-            {/* Product Tabs have been moved to below the main grid */}
-
-            {/* Size Selection */}
-            {product.sizes && product.sizes.length > 0 && (
+            {/* Size selection */}
+            {product.sizes?.length > 0 && (
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Select Size
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {product.sizes.map(size => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-3 px-4 rounded-lg border-2 font-medium transition-all ${
-                        selectedSize === size
-                          ? 'border-blue-600 bg-blue-50 text-blue-600'
-                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{ color: THEME.labelText }}>
+                  Size {selectedSize && <span className="font-normal normal-case tracking-normal" style={{ color: THEME.mutedText }}>— {selectedSize}</span>}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map(size => {
+                    const selected = selectedSize === size;
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        className="min-w-[44px] px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          backgroundColor: selected ? THEME.sizeSelected : THEME.sizeDefault,
+                          color: selected ? THEME.sizeSelectedText : THEME.sizeText,
+                          border: `1.5px solid ${selected ? THEME.sizeSelected : THEME.sizeBorder}`,
+                        }}
+                        onMouseEnter={(e) => { if (!selected) e.currentTarget.style.backgroundColor = THEME.sizeHover; }}
+                        onMouseLeave={(e) => { if (!selected) e.currentTarget.style.backgroundColor = THEME.sizeDefault; }}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Color Selection */}
-            {product.colors && product.colors.length > 0 && (
+            {/* Color selection */}
+            {product.colors?.length > 0 && (
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Select Color: <span className="font-normal text-gray-600">{selectedColor || 'None'}</span>
-                </label>
-                <div className="flex flex-wrap gap-3">
+                <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{ color: THEME.labelText }}>
+                  Colour {selectedColor && <span className="font-normal normal-case tracking-normal" style={{ color: THEME.mutedText }}>— {selectedColor}</span>}
+                </p>
+                <div className="flex flex-wrap gap-2.5">
                   {product.colors.map(color => {
-                    const getColorHex = (name) => {
-                      const lowerName = name.toLowerCase();
-                      const colors = {
-                        'navy blue': '#1e3a8a',
-                        'green': '#166534',
-                        'red': '#991b1b',
-                        'dark grey': '#374151',
-                        'black': '#000000',
-                        'white': '#ffffff',
-                        'gray': '#6b7280',
-                        'grey': '#6b7280',
-                        'blue': '#2563eb',
-                        'yellow': '#eab308',
-                        'orange': '#f97316',
-                        'purple': '#9333ea',
-                        'pink': '#ec4899',
-                        'brown': '#78350f',
-                        'beige': '#f5f5dc',
-                        'light blue': '#bfdbfe',
-                        'light green': '#bbf7d0',
-                        'dark blue': '#1e3a8a',
-                        'dark green': '#14532d',
-                        'dark red': '#7f1d1d',
-                      };
-                      return colors[lowerName] || lowerName.replace(/\s+/g, '');
-                    };
-                    
-                    const hexCode = getColorHex(color);
-                    const isSelected = selectedColor === color;
-                    // Determine if the checkmark should be black based on background lightness
-                    const isLightColor = ['white', '#ffffff', '#fff', 'yellow', 'beige', '#eab308', '#f5f5dc'].includes(hexCode.toLowerCase());
-                    
+                    const hex = getColorHex(color);
+                    const selected = selectedColor === color;
                     return (
                       <button
                         key={color}
-                        onClick={() => setSelectedColor(color)}
+                        type="button"
                         title={color}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-                          isSelected
-                            ? 'ring-2 ring-offset-2 ring-blue-600'
-                            : 'ring-1 ring-gray-200 hover:ring-gray-300 ring-offset-1'
-                        }`}
-                        style={{ backgroundColor: hexCode }}
+                        onClick={() => setSelectedColor(color)}
+                        className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                        style={{
+                          backgroundColor: hex,
+                          boxShadow: selected ? `0 0 0 2px white, 0 0 0 3.5px ${THEME.colorSelected}` : `0 0 0 1px ${THEME.colorUnselected}`,
+                        }}
                       >
-                        {isSelected && (
-                          <FiCheck className={`w-5 h-5 ${isLightColor ? 'text-gray-900' : 'text-white'}`} />
+                        {selected && (
+                          <FiCheck className="w-4 h-4" style={{ color: isLight(hex) ? '#111' : '#fff' }} />
                         )}
                       </button>
                     );
@@ -513,266 +648,293 @@ export function ProductDetailClient({ id }) {
               </div>
             )}
 
-            {/* Quantity Selection */}
+            {/* Quantity stepper */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Quantity
-              </label>
-              <div className="flex items-center border border-gray-300 rounded-lg w-fit">
+              <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{ color: THEME.labelText }}>Quantity</p>
+              <div
+                className="flex items-center rounded-xl overflow-hidden w-fit"
+                style={{ border: `1.5px solid ${THEME.qtyBorder}`, backgroundColor: THEME.qtyBg }}
+              >
                 <button
+                  type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100"
+                  className="w-10 h-10 flex items-center justify-center text-lg font-bold transition-colors"
+                  style={{ color: THEME.qtyText }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.qtyBtnHover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   −
                 </button>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-16 text-center py-2 border-l border-r border-gray-300 focus:outline-none"
-                />
+                <span
+                  className="w-10 text-center text-sm font-bold"
+                  style={{ color: THEME.qtyText, borderLeft: `1px solid ${THEME.qtyBorder}`, borderRight: `1px solid ${THEME.qtyBorder}` }}
+                >
+                  {quantity}
+                </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  disabled={(() => {
-                    if (variants.length > 0) {
-                      const match = variants.find(v =>
-                        (!v.size || v.size === selectedSize) &&
-                        (!v.color || v.color === selectedColor)
-                      );
-                      if (!match) return true;
-                      return quantity >= Math.max(0, Number(match.stock_quantity) || 0);
-                    }
-                    return quantity >= Math.max(0, Number(product.stock_quantity) || 0);
-                  })()}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  type="button"
+                  onClick={() => setQuantity(q => q + 1)}
+                  disabled={quantity >= currentStock}
+                  className="w-10 h-10 flex items-center justify-center text-lg font-bold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ color: THEME.qtyText }}
+                  onMouseEnter={(e) => { if (quantity < currentStock) e.currentTarget.style.backgroundColor = THEME.qtyBtnHover; }}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   +
                 </button>
               </div>
             </div>
 
+            {/* Error message */}
             {actionError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div
+                className="text-sm px-4 py-2.5 rounded-xl"
+                style={{ backgroundColor: THEME.errorBg, border: `1px solid ${THEME.errorBorder}`, color: THEME.errorText }}
+              >
                 {actionError}
               </div>
             )}
 
-            {/* Add to Cart Button */}
+            {/* Add to cart */}
             <button
+              type="button"
               onClick={handleAddToCart}
-              disabled={product.stock_quantity === 0}
-              className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${
-                addedToCart
-                  ? 'bg-green-600 text-white'
-                  : product.stock_quantity === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              disabled={currentStock === 0}
+              className="w-full py-4 rounded-2xl font-black text-base flex items-center justify-center gap-2.5 transition-all duration-150"
+              style={{
+                backgroundColor: addedToCart ? THEME.cartSuccessBg : currentStock === 0 ? THEME.cartDisabled : THEME.cartBg,
+                color: currentStock === 0 ? THEME.cartDisabledText : THEME.cartText,
+                cursor: currentStock === 0 ? 'not-allowed' : 'pointer',
+              }}
+              onMouseEnter={(e) => { if (currentStock > 0 && !addedToCart) e.currentTarget.style.backgroundColor = THEME.cartHover; }}
+              onMouseLeave={(e) => { if (currentStock > 0 && !addedToCart) e.currentTarget.style.backgroundColor = THEME.cartBg; }}
             >
               {addedToCart ? (
-                <>
-                  <FiCheck className="w-6 h-6" />
-                  Added to Cart
-                </>
+                <><FiCheck className="w-5 h-5" /> Added to Cart</>
               ) : (
-                <>
-                  <FiShoppingCart className="w-6 h-6" />
-                  Add to Cart
-                </>
+                <><FiShoppingCart className="w-5 h-5" /> Add to Cart</>
               )}
             </button>
 
-            {/* Note: Share button was moved to the image gallery */}
-
-            {/* Additional Info */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Shipping:</span>
-                <span className="font-medium text-gray-900">Free on orders over $50</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Returns:</span>
-                <span className="font-medium text-gray-900">30-day return policy</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Warranty:</span>
-                <span className="font-medium text-gray-900">1-year warranty</span>
-              </div>
+            {/* Info strip */}
+            <div
+              className="grid grid-cols-3 divide-x rounded-2xl overflow-hidden text-center text-xs"
+              style={{ backgroundColor: THEME.infoBg, border: `1px solid ${THEME.infoBorder}`, borderColor: THEME.infoBorder }}
+            >
+              {[
+                { icon: FiTruck,     label: 'Shipping',  value: 'Free over ₦50k' },
+                { icon: FiRefreshCw, label: 'Returns',   value: '30 days' },
+                { icon: FiShield,    label: 'Secure',    value: '100% Safe' },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="py-3 px-2 flex flex-col items-center gap-1">
+                  <Icon className="w-4 h-4" style={{ color: THEME.infoIcon }} />
+                  <span className="font-bold" style={{ color: THEME.infoValue }}>{value}</span>
+                  <span style={{ color: THEME.infoLabel }}>{label}</span>
+                </div>
+              ))}
             </div>
+
           </div>
         </div>
 
-        {/* Product Tabs (Full width below the product grid) */}
-        <div className="mt-16 border rounded-lg overflow-hidden bg-white shadow-sm">
-          {/* Tab Headers */}
-          <div className="flex border-b overflow-x-auto scbar-hide">
-            <button
-              onClick={() => setActiveTab('description')}
-              className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors whitespace-nowrap min-w-max ${
-                activeTab === 'description'
-                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/30'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Description
-            </button>
-            <button
-              onClick={() => setActiveTab('specifications')}
-              className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors whitespace-nowrap min-w-max ${
-                activeTab === 'specifications'
-                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/30'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Specifications
-            </button>
-            <button
-              onClick={() => setActiveTab('reviews')}
-              className={`flex-1 py-4 px-6 text-center font-medium text-sm transition-colors whitespace-nowrap min-w-max ${
-                activeTab === 'reviews'
-                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/30'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Reviews ({product.reviews?.length || 0})
-            </button>
+        {/* ── Tabs (full width) ── */}
+        <div
+          className="mt-14 rounded-2xl overflow-hidden"
+          style={{ backgroundColor: THEME.white, border: `1px solid ${THEME.tabBorder}` }}
+        >
+          {/* Tab headers */}
+          <div className="flex overflow-x-auto" style={{ borderBottom: `1px solid ${THEME.tabBorder}` }}>
+            {TABS.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className="flex-1 py-4 px-6 text-sm font-semibold whitespace-nowrap transition-colors relative"
+                style={{ color: activeTab === tab.key ? THEME.tabActive : THEME.tabText }}
+                onMouseEnter={(e) => { if (activeTab !== tab.key) e.currentTarget.style.backgroundColor = THEME.tabHover; }}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              >
+                {tab.label}
+                {activeTab === tab.key && (
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
+                    style={{ backgroundColor: THEME.tabActiveBar }}
+                  />
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* Tab Content */}
-          <div className="p-8">
+          {/* Tab content */}
+          <div className="p-6 sm:p-8">
+
+            {/* Description */}
             {activeTab === 'description' && (
-              <div className="prose max-w-none text-gray-700">
+              <div className="max-w-2xl">
                 {product.description ? (
-                  <p className="whitespace-pre-wrap leading-relaxed">{product.description}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: THEME.bodyText }}>
+                    {product.description}
+                  </p>
                 ) : (
-                  <p className="text-gray-500 italic">No description available for this product.</p>
+                  <p className="text-sm italic" style={{ color: THEME.mutedText }}>No description available.</p>
                 )}
               </div>
             )}
 
+            {/* Specifications */}
             {activeTab === 'specifications' && (
-              <div className="text-gray-700">
+              <div>
                 {product.specifications ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Assuming specifications could be an array of objects or strings, or a plain text field. Assuming text with newlines or an array for now. */}
-                    {typeof product.specifications === 'string' 
-                      ? product.specifications.split('\n').map((spec, i) => (
-                          <div key={i} className="py-2 border-b border-gray-100 last:border-0">{spec}</div>
-                        ))
-                      : Array.isArray(product.specifications) 
-                        ? product.specifications.map((spec, i) => (
-                            <div key={i} className="py-2 border-b border-gray-100 last:border-0">
-                                {typeof spec === 'object' ? (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <span className="font-medium text-gray-900">{spec.key}</span>
-                                        <span className="text-gray-600">{spec.value}</span>
-                                    </div>
-                                ) : spec}
-                            </div>
-                          ))
-                        : Object.entries(product.specifications).map(([key, val], i) => (
-                            <div key={i} className="py-2 border-b border-gray-100 last:border-0 grid grid-cols-2 gap-2">
-                                <span className="font-medium text-gray-900">{key}</span>
-                                <span className="text-gray-600">{val}</span>
-                            </div>
-                          ))
-                    }
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 max-w-2xl divide-y" style={{ borderColor: THEME.reviewDivider }}>
+                    {(typeof product.specifications === 'string'
+                      ? product.specifications.split('\n').map((s, i) => ({ key: `Spec ${i + 1}`, value: s }))
+                      : Array.isArray(product.specifications)
+                        ? product.specifications.map(s => typeof s === 'object' ? s : { key: s, value: '' })
+                        : Object.entries(product.specifications).map(([key, value]) => ({ key, value }))
+                    ).map(({ key, value }, i) => (
+                      <div key={i} className="flex gap-4 py-3">
+                        <span className="text-xs font-bold w-32 flex-shrink-0" style={{ color: THEME.labelText }}>{key}</span>
+                        <span className="text-xs flex-1" style={{ color: THEME.bodyText }}>{value}</span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 italic">No specifications available for this product.</p>
+                  <p className="text-sm italic" style={{ color: THEME.mutedText }}>No specifications available.</p>
                 )}
               </div>
             )}
 
+            {/* Reviews */}
             {activeTab === 'reviews' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div className="md:col-span-2 space-y-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6">Customer Reviews</h3>
-                  {product.reviews && product.reviews.length > 0 ? (
-                    product.reviews.map(review => (
-                      <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
-                             {/* Initials placeholder if we don't have user profiles */}
-                             👤
-                          </div>
-                          <div>
-                            <div className="flex text-yellow-400 mb-1">
-                              {[...Array(5)].map((_, i) => (
-                                <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-200 fill-current'}`} viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+
+                {/* Review list */}
+                <div className="md:col-span-2">
+                  <h3 className="text-base font-black mb-5" style={{ color: THEME.headingText }}>
+                    Customer Reviews
+                    {product.reviews?.length > 0 && (
+                      <span className="ml-2 text-sm font-normal" style={{ color: THEME.mutedText }}>
+                        ({product.reviews.length})
+                      </span>
+                    )}
+                  </h3>
+
+                  {product.reviews?.length > 0 ? (
+                    <div className="space-y-6">
+                      {product.reviews.map(review => (
+                        <div key={review.id} className="pb-6" style={{ borderBottom: `1px solid ${THEME.reviewDivider}` }}>
+                          <div className="flex items-center gap-3 mb-2.5">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
+                              style={{ backgroundColor: THEME.avatarBg, color: THEME.avatarText }}
+                            >
+                              👤
                             </div>
-                            <span className="text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString()}</span>
+                            <div>
+                              <StarRow rating={review.rating} />
+                              <span className="text-[11px]" style={{ color: THEME.mutedText }}>
+                                {new Date(review.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
                           </div>
+                          <p className="text-sm leading-relaxed" style={{ color: THEME.bodyText }}>{review.comment}</p>
                         </div>
-                        <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   ) : (
-                    <div className="bg-gray-50 rounded-lg p-8 text-center">
-                        <p className="text-gray-500 italic mb-2">No reviews yet.</p>
-                        <p className="text-gray-700 font-medium">Be the first to review this product!</p>
+                    <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: THEME.priceBg }}>
+                      <p className="text-3xl mb-2">⭐</p>
+                      <p className="text-sm font-bold mb-1" style={{ color: THEME.headingText }}>No reviews yet</p>
+                      <p className="text-xs" style={{ color: THEME.mutedText }}>Be the first to review this product</p>
                     </div>
                   )}
                 </div>
-                
-                {/* Write Review Form */}
+
+                {/* Write a review */}
                 <div className="md:col-span-1">
-                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 sticky top-24">
-                    <h4 className="text-lg font-bold text-gray-900 mb-4">Write a Review</h4>
+                  <div
+                    className="rounded-2xl p-5 sticky top-20"
+                    style={{ backgroundColor: THEME.formBg, border: `1px solid ${THEME.formBorder}` }}
+                  >
+                    <h4 className="text-sm font-black mb-4" style={{ color: THEME.headingText }}>Write a Review</h4>
+
                     {!user ? (
-                      <div className="text-center p-4">
-                        <p className="text-sm text-gray-600 mb-4">Please log in to share your thoughts about this product.</p>
-                        <Link href="/signin" className="inline-block px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm">
-                            Sign In
+                      <div className="text-center py-6">
+                        <p className="text-xs mb-4" style={{ color: THEME.mutedText }}>Sign in to share your experience</p>
+                        <Link
+                          href="/signin"
+                          className="inline-block px-5 py-2.5 rounded-full text-sm font-bold"
+                          style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}
+                        >
+                          Sign In
                         </Link>
                       </div>
                     ) : (
                       <form onSubmit={submitReview} className="space-y-4">
+
+                        {/* Star picker */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-900 mb-2">Rating</label>
-                          <div className="flex gap-1 bg-white p-3 rounded-lg border border-gray-200 w-fit">
-                            {[1, 2, 3, 4, 5].map((star) => (
+                          <p className="text-xs font-bold mb-2" style={{ color: THEME.labelText }}>Rating</p>
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map(star => (
                               <button
-                                type="button"
                                 key={star}
+                                type="button"
                                 onClick={() => setReviewRating(star)}
-                                className="focus:outline-none transition-transform hover:scale-110"
+                                className="transition-transform hover:scale-110"
                               >
-                                <svg 
-                                  className={`w-7 h-7 ${star <= reviewRating ? 'text-yellow-400 fill-current' : 'text-gray-200 fill-current hover:text-yellow-200'}`} 
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
+                                <FiStar
+                                  className="w-6 h-6"
+                                  style={{
+                                    color: star <= reviewRating ? THEME.starFill : THEME.starEmpty,
+                                    fill: star <= reviewRating ? THEME.starFill : 'none',
+                                  }}
+                                />
                               </button>
                             ))}
                           </div>
                         </div>
+
+                        {/* Comment */}
                         <div>
-                          <label htmlFor="comment" className="block text-sm font-medium text-gray-900 mb-2">Your Review</label>
+                          <p className="text-xs font-bold mb-2" style={{ color: THEME.labelText }}>Your Review</p>
                           <textarea
-                            id="comment"
-                            rows="5"
+                            rows={5}
                             value={reviewComment}
                             onChange={(e) => setReviewComment(e.target.value)}
-                            placeholder="What did you like or dislike? What should other shoppers know before buying?"
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm resize-y"
+                            placeholder="What did you think? Help other shoppers decide…"
+                            className="w-full px-3 py-2.5 rounded-xl text-xs resize-y outline-none transition-all"
+                            style={{
+                              border: `1.5px solid ${THEME.inputBorder}`,
+                              color: THEME.bodyText,
+                              backgroundColor: THEME.white,
+                            }}
+                            onFocus={(e) => (e.target.style.borderColor = THEME.inputFocus)}
+                            onBlur={(e) => (e.target.style.borderColor = THEME.inputBorder)}
                             required
                           />
                         </div>
-                        {reviewError && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">{reviewError}</p>}
-                        {submitSuccess && <p className="text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200 font-medium">Thank you! Your review was submitted successfully.</p>}
+
+                        {reviewError && (
+                          <p className="text-xs px-3 py-2 rounded-lg" style={{ backgroundColor: THEME.errorBg, color: THEME.errorText, border: `1px solid ${THEME.errorBorder}` }}>
+                            {reviewError}
+                          </p>
+                        )}
+                        {submitSuccess && (
+                          <p className="text-xs px-3 py-2 rounded-lg font-semibold" style={{ backgroundColor: THEME.successBg, color: THEME.successText, border: `1px solid ${THEME.successBorder}` }}>
+                            ✓ Review submitted — thank you!
+                          </p>
+                        )}
+
                         <button
                           type="submit"
                           disabled={isSubmittingReview}
-                          className={`w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold text-sm transition-colors shadow-sm ${
-                            isSubmittingReview ? 'opacity-70 cursor-wait' : ''
-                          }`}
+                          className="w-full py-3 rounded-xl text-sm font-black transition-colors disabled:opacity-60 disabled:cursor-wait"
+                          style={{ backgroundColor: THEME.submitBg, color: THEME.submitText }}
+                          onMouseEnter={(e) => { if (!isSubmittingReview) e.currentTarget.style.backgroundColor = THEME.submitHover; }}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.submitBg)}
                         >
-                          {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                          {isSubmittingReview ? 'Submitting…' : 'Submit Review'}
                         </button>
                       </form>
                     )}
@@ -783,21 +945,26 @@ export function ProductDetailClient({ id }) {
           </div>
         </div>
 
-        {/* Related Products Section (Optional) */}
-        {product.categories && product.categories.length > 0 && (
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              More from {product.categories[0].name}
-            </h2>
-            <Link
-              href={`/shop?category=${product.categories[0].slug}`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-            >
-              View Category
-              <FiChevronLeft className="w-5 h-5 rotate-180" />
-            </Link>
+        {/* ── Related category ── */}
+        {product.categories?.[0] && (
+          <div className="mt-10 pt-8" style={{ borderTop: `1px solid ${THEME.relatedBorder}` }}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black" style={{ color: THEME.headingText }}>
+                More from {product.categories[0].name}
+              </h2>
+              <Link
+                href={`/shop?category=${product.categories[0].slug}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-colors"
+                style={{ backgroundColor: THEME.relatedBtn, color: THEME.relatedBtnText }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.relatedBtnHover)}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.relatedBtn)}
+              >
+                View All <FiChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         )}
+
       </main>
     </div>
   );

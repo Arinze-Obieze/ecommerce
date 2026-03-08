@@ -3,73 +3,172 @@ import React, { useState, useEffect } from 'react';
 import { useWishlist } from '@/contexts/WishlistContext';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
-import { FiHeart } from 'react-icons/fi';
+import { FiHeart, FiArrowRight } from 'react-icons/fi';
 
+// ─── THEME ────────────────────────────────────────────────────────────────────
+const THEME = {
+  green:       '#00B86B',
+  greenDark:   '#0F7A4F',
+  greenTint:   '#EDFAF3',
+  greenBorder: '#A8DFC4',
+  white:       '#FFFFFF',
+  pageBg:      '#F9FAFB',
+  charcoal:    '#111111',
+  medGray:     '#666666',
+  mutedText:   '#999999',
+  border:      '#E8E8E8',
+  softGray:    '#F5F5F5',
+};
+
+// ─── SKELETON ─────────────────────────────────────────────────────────────────
+const SkeletonCard = ({ delay = 0 }) => (
+  <div
+    className="animate-pulse"
+    style={{
+      background: THEME.white,
+      border: `1px solid ${THEME.border}`,
+      borderRadius: 14,
+      overflow: 'hidden',
+      animationDelay: `${delay}ms`,
+    }}
+  >
+    <div style={{ aspectRatio: '3/4', background: THEME.softGray }} />
+    <div style={{ padding: '10px 14px 14px' }}>
+      <div style={{ height: 8, background: THEME.softGray, borderRadius: 4, width: '55%', marginBottom: 8 }} />
+      <div style={{ height: 11, background: THEME.softGray, borderRadius: 4, width: '80%', marginBottom: 10 }} />
+      <div style={{ height: 11, background: THEME.softGray, borderRadius: 4, width: '40%', marginBottom: 12 }} />
+      <div style={{ height: 32, background: THEME.softGray, borderRadius: 8 }} />
+    </div>
+  </div>
+);
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function ProfileWishlist() {
   const { wishlistItems, isLoading: isWishlistLoading } = useWishlist();
-  const [products, setProducts] = useState([]);
+  const [products, setProducts]   = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [ctaHov, setCtaHov]       = useState(false);
 
   useEffect(() => {
     const fetchWishlistProducts = async () => {
-      if (wishlistItems.size === 0) {
-        setProducts([]);
-        setIsLoading(false);
-        return;
-      }
-
+      if (wishlistItems.size === 0) { setProducts([]); setIsLoading(false); return; }
       setIsLoading(true);
       try {
-        const ids = Array.from(wishlistItems).join(',');
-        const res = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`);
+        const ids  = Array.from(wishlistItems).join(',');
+        const res  = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`);
         const json = await res.json();
-        
-        if (json.success) {
-          setProducts(json.data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch wishlist products:', error);
+        if (json.success) setProducts(json.data);
+      } catch (err) {
+        console.error('Failed to fetch wishlist products:', err);
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchWishlistProducts();
   }, [wishlistItems]);
 
-  if (isWishlistLoading) return <div>Loading...</div>;
+  if (isWishlistLoading) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">My Wishlist</h2>
-        <span className="text-gray-500">{wishlistItems.size} items</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText, margin: 0, marginBottom: 4 }}>
+            My Account
+          </p>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em' }}>
+            Wishlist
+          </h2>
+        </div>
+
+        {wishlistItems.size > 0 && (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 100,
+              fontSize: 12,
+              fontWeight: 700,
+              background: THEME.greenTint,
+              color: THEME.green,
+              border: `1px solid ${THEME.greenBorder}`,
+            }}
+          >
+            <FiHeart size={11} />
+            {wishlistItems.size} {wishlistItems.size === 1 ? 'item' : 'items'}
+          </span>
+        )}
       </div>
 
+      {/* ── Content ── */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="aspect-[3/4] bg-gray-100 rounded-xl animate-pulse"></div>
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }} className="grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => <SkeletonCard key={i} delay={i * 60} />)}
         </div>
       ) : products.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div style={{ display: 'grid', gap: 14 }} className="grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
           {products.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       ) : (
-        <div className="p-12 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FiHeart className="w-8 h-8 text-gray-300" />
+        /* ── Empty state ── */
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '64px 24px',
+            textAlign: 'center',
+            background: THEME.white,
+            border: `1.5px dashed ${THEME.border}`,
+            borderRadius: 20,
+          }}
+        >
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: '50%',
+              background: THEME.greenTint,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <FiHeart size={24} style={{ color: THEME.green }} />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">Your wishlist is empty</h3>
-          <p className="text-gray-500 mb-6">Items you save will appear here.</p>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: THEME.charcoal, margin: 0, marginBottom: 6, letterSpacing: '-0.02em' }}>
+            Your wishlist is empty
+          </h3>
+          <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 24px', maxWidth: 280, lineHeight: 1.6 }}>
+            Save items you love and come back to them anytime.
+          </p>
           <Link
             href="/shop"
-            className="inline-block px-6 py-2 bg-[#2E5C45] text-white rounded-lg font-medium hover:bg-[#254a38] transition-colors"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '11px 24px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              background: ctaHov ? THEME.greenDark : THEME.green,
+              color: THEME.white,
+              textDecoration: 'none',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={() => setCtaHov(true)}
+            onMouseLeave={() => setCtaHov(false)}
           >
-            Start Shopping
+            Start Shopping <FiArrowRight size={13} />
           </Link>
         </div>
       )}

@@ -3,89 +3,179 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiPhone, FiMapPin, FiCheck, FiX } from 'react-icons/fi';
+import Image from 'next/image';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiPhone, FiMapPin, FiCheck, FiX, FiArrowRight } from 'react-icons/fi';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
+// ─────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────
+const T = {
+  green:       '#00B86B',
+  greenDark:   '#0F7A4F',
+  greenDeep:   '#0A3D2E',
+  greenTint:   '#EDFAF3',
+  greenBorder: '#A8DFC4',
+  charcoal:    '#111111',
+  softGray:    '#F5F5F5',
+  pageBg:      '#F9FAFB',
+  border:      '#E8E8E8',
+  medGray:     '#666666',
+  mutedText:   '#999999',
+  white:       '#FFFFFF',
+  red:         '#E53935',
+  redLight:    '#FEF2F2',
+  gold:        '#F59E0B',
+};
+
+// ─────────────────────────────────────────────────────────────
+// PANEL IMAGES — right side fashion slideshow
+// ─────────────────────────────────────────────────────────────
+const SLIDES = [
+  {
+    url:     'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&h=1200&fit=crop&auto=format',
+    caption: 'Join 500K+\nSmart Shoppers.',
+    sub:     'Fashion, beauty and lifestyle — all in one place',
+  },
+  {
+    url:     'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=900&h=1200&fit=crop&auto=format',
+    caption: 'Discover Styles\nMade for You.',
+    sub:     'Personalised picks from Nigeria\'s top sellers',
+  },
+  {
+    url:     'https://images.unsplash.com/photo-1445205170230-053b83016050?w=900&h=1200&fit=crop&auto=format',
+    caption: 'Shop. Save.\nRepeat.',
+    sub:     'Exclusive deals for ZOVA members every day',
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// NIGERIAN STATES
+// ─────────────────────────────────────────────────────────────
+const NG_STATES = [
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
+  'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
+  'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
+  'Yobe','Zamfara',
+];
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+function ReqPill({ met, label }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 100,
+      background: met ? T.greenTint : T.softGray,
+      color: met ? T.greenDark : T.mutedText,
+      border: `1px solid ${met ? T.greenBorder : 'transparent'}`,
+      transition: 'all 0.2s',
+    }}>
+      <div style={{
+        width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+        background: met ? T.green : '#DDD',
+        transition: 'background 0.2s',
+      }} />
+      {label}
+    </span>
+  );
+}
+
+function FieldWrap({ label, icon, children, style }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7, ...style }}>
+      <label style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        {label}
+      </label>
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex', zIndex: 1 }}>
+          {icon}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────────────────────
 export default function SignupPage() {
   const router = useRouter();
 
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [state, setState] = useState('');
-  const [password, setPassword] = useState('');
+  const [fullName, setFullName]           = useState('');
+  const [email, setEmail]                 = useState('');
+  const [phone, setPhone]                  = useState('');
+  const [state, setState]                   = useState('');
+  const [password, setPassword]           = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const [signupSuccess, setSignupSuccess] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPass, setShowPass]           = useState(false);
+  const [showConfirm, setShowConfirm]     = useState(false);
+  const [error, setError]                 = useState('');
+  const [loading, setLoading]             = useState(false);
+  const [success, setSuccess]             = useState(false);
+  const [passFocused, setPassFocused]     = useState(false);
+  const [slide, setSlide]                 = useState(0);
+  const [mounted, setMounted]             = useState(false);
+  const [submitHov, setSubmitHov]         = useState(false);
+  const [agreeTerms, setAgreeTerms]       = useState(false);
+  const [logoError, setLogoError]         = useState(false);
 
-  // Password requirements validation
-  const [passwordRequirements, setPasswordRequirements] = useState({
-    minLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumber: false,
-    hasSpecialChar: false,
-    passwordsMatch: false,
-  });
+  // Field focus states
+  const [foc, setFoc] = useState({});
+  const [hov, setHov] = useState({});
 
+  const focusField  = (k) => setFoc(p => ({ ...p, [k]: true }));
+  const blurField   = (k) => setFoc(p => ({ ...p, [k]: false }));
+  const enterField  = (k) => setHov(p => ({ ...p, [k]: true }));
+  const leaveField  = (k) => setHov(p => ({ ...p, [k]: false }));
+
+  const reqs = {
+    minLength:  password.length >= 8,
+    hasUpper:   /[A-Z]/.test(password),
+    hasLower:   /[a-z]/.test(password),
+    hasNumber:  /[0-9]/.test(password),
+    hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+  const passStrength   = Object.values(reqs).filter(Boolean).length;
+  const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+  const strengthMeta   = [
+    { label: '',        color: T.border },
+    { label: 'Weak',    color: T.red },
+    { label: 'Fair',    color: '#F97316' },
+    { label: 'Good',    color: T.gold },
+    { label: 'Strong',  color: T.green },
+    { label: 'Perfect', color: T.greenDark },
+  ][passStrength];
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // Auto-advance panel
   useEffect(() => {
-    setIsPageLoading(false);
+    const id = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 5500);
+    return () => clearInterval(id);
   }, []);
-
-  useEffect(() => {
-    setPasswordRequirements({
-      minLength: password.length >= 8,
-      hasUpperCase: /[A-Z]/.test(password),
-      hasLowerCase: /[a-z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-      passwordsMatch: password && confirmPassword && password === confirmPassword,
-    });
-  }, [password, confirmPassword]);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-
+    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     setLoading(true);
-
     try {
-      const res = await fetch('/api/signup', {
+      const res  = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, email, phone, state, password }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to create account');
-        setLoading(false);
-        return;
-      }
-
-      setSignupSuccess(true);
+      if (!res.ok) { setError(data.error || 'Failed to create account'); setLoading(false); return; }
+      setSuccess(true);
       setTimeout(() => router.push('/login'), 2000);
-    } catch (err) {
-      console.error(err);
-      setError('Unexpected error occurred');
-      setLoading(false);
-    }
+    } catch { setError('An unexpected error occurred'); setLoading(false); }
   };
 
   const handleGoogleSignup = async () => {
@@ -93,359 +183,483 @@ export default function SignupPage() {
     try {
       const { error } = await createClient().auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/callback`,
-        },
+        options: { redirectTo: `${location.origin}/auth/callback` },
       });
       if (error) throw error;
-    } catch (error) {
-      setError(error.message);
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); setLoading(false); }
   };
 
-  if (isPageLoading) {
-    return (
-      <div className="login-page h-screen w-full flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50 overflow-hidden">
-        <div className="w-full max-w-2xl p-4 sm:p-8 space-y-6 animate-pulse">
-          <div className="h-12 bg-gray-200 rounded-lg w-3/4 mx-auto"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const inputStyle = (key, extra = {}) => ({
+    width: '100%',
+    padding: '13px 14px 13px 44px',
+    borderRadius: 12,
+    border: `1.5px solid ${foc[key] ? T.green : hov[key] ? T.greenBorder : T.border}`,
+    background: foc[key] ? T.white : T.softGray,
+    fontSize: 14,
+    fontFamily: 'inherit',
+    color: T.charcoal,
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
+    boxShadow: foc[key] ? `0 0 0 3.5px rgba(0,184,107,0.13)` : 'none',
+    ...extra,
+  });
 
   return (
-    <div className="login-page h-screen w-full relative overflow-hidden flex items-center justify-center">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('/bg_big.jpeg')`,
-          }}
-        />
-        <div className="absolute inset-0 bg-black/40 transition-colors duration-500" />
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        * { box-sizing: border-box; }
+        .sp-root  { font-family: 'Outfit', sans-serif; }
+        .serif    { font-family: 'Cormorant Garamond', Georgia, serif; }
 
-      <div className="relative z-10 w-full max-w-2xl p-4 overflow-hidden h-full flex flex-col justify-center">
-        {/* Success Animation Overlay */}
-        {signupSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 shadow-2xl animate-scaleIn">
-              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-checkmark">
-                <FiCheck className="w-12 h-12 text-white" strokeWidth={3} />
+        @keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+        @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
+        @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+        @keyframes scaleIn  { from { opacity:0; transform:scale(0.82); } to { opacity:1; transform:scale(1); } }
+        @keyframes spin     { to { transform:rotate(360deg); } }
+        @keyframes pulseRing {
+          0%   { transform:scale(1);   opacity:0.5; }
+          100% { transform:scale(1.6); opacity:0; }
+        }
+        @keyframes checkDraw {
+          from { stroke-dashoffset:36; }
+          to   { stroke-dashoffset:0; }
+        }
+        @keyframes slideCaption {
+          from { opacity:0; transform:translateY(14px); }
+          to   { opacity:1; transform:none; }
+        }
+
+        .fu-1  { animation: fadeUp 0.48s ease 0.04s both; }
+        .fu-2  { animation: fadeUp 0.48s ease 0.10s both; }
+        .fu-3  { animation: fadeUp 0.48s ease 0.16s both; }
+        .fu-4  { animation: fadeUp 0.48s ease 0.22s both; }
+        .fu-5  { animation: fadeUp 0.48s ease 0.28s both; }
+        .fu-6  { animation: fadeUp 0.48s ease 0.34s both; }
+        .fu-7  { animation: fadeUp 0.48s ease 0.40s both; }
+        .fu-8  { animation: fadeUp 0.48s ease 0.46s both; }
+        .fu-9  { animation: fadeUp 0.48s ease 0.52s both; }
+        .fu-10 { animation: fadeUp 0.48s ease 0.58s both; }
+
+        /* Hide scrollbar but keep scrolling */
+        .sp-scroll::-webkit-scrollbar { width: 0; }
+        .sp-scroll { scrollbar-width: none; }
+
+        /* State dropdown reset */
+        .state-select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+        .state-select option { color: #111; background: #fff; }
+      `}</style>
+
+      <div className="sp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: T.pageBg }}>
+
+        {/* ── SUCCESS OVERLAY ── */}
+        {success && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(16px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'fadeIn 0.25s ease',
+          }}>
+            <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
+              <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,184,107,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${T.green},${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(0,184,107,0.4)` }}>
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+                    <path d="M9 19L16.5 26.5L29 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ strokeDasharray: 36, strokeDashoffset: 0, animation: 'checkDraw 0.45s ease 0.2s both' }} />
+                  </svg>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-center text-gray-800">Account Created!</h3>
-              <p className="text-gray-600 text-center mt-2">Redirecting to login...</p>
+              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', lineHeight: 1.1 }}>Account created!</p>
+              <p style={{ fontSize: 14, color: T.mutedText, margin: 0 }}>Redirecting to sign in…</p>
             </div>
           </div>
         )}
 
-        {/* Main Card */}
-        <div className="backdrop-blur-2xl bg-white/10 rounded-3xl shadow-2xl p-4 sm:p-8 border border-white/20 animate-slideUp w-full max-h-[96vh] sm:max-h-full overflow-y-auto custom-scrollbar">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1 sm:mb-2 animate-fadeIn drop-shadow-lg">
-              Create Account
-            </h1>
-            <p className="text-white/80 animate-fadeIn animation-delay-200 text-sm sm:text-base">
-              Join ShopHub today
-            </p>
-          </div>
+        {/* ══════════════════════════════════════════
+            LEFT — form panel
+        ══════════════════════════════════════════ */}
+        <div className="sp-scroll" style={{
+          flex: '0 0 min(520px, 100%)',
+          display: 'flex', flexDirection: 'column',
+          overflowY: 'auto', position: 'relative',
+          background: T.white, zIndex: 2,
+          boxShadow: '2px 0 32px rgba(0,0,0,0.06)',
+        }}>
+          {/* Green top stripe */}
+          <div style={{ position: 'sticky', top: 0, height: 3, background: `linear-gradient(to right, ${T.green}, ${T.greenDark})`, zIndex: 10, flexShrink: 0 }} />
 
-          <form onSubmit={handleSignup} className="space-y-4">
-            {/* Error Message */}
-            {error && (
-              <div className="rounded-xl bg-red-500/20 backdrop-blur-sm border border-red-400/50 p-3 text-white text-xs sm:text-sm text-center animate-shake">
-                <FiX className="inline mr-2" />
-                {error}
-              </div>
-            )}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 52px' }}>
+            <div style={{ maxWidth: 400, width: '100%', margin: '0 auto' }}>
 
-            {/* Two Column Layout for Desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              {/* Full Name */}
-              <div className="relative group">
-                <label htmlFor="fullName" className="block text-xs sm:text-sm font-medium text-white/90 mb-1 sm:mb-2 text-left">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <FiUser className="w-4 h-4 sm:w-5 sm:h-5 text-white/60" />
-                  </div>
-                  <input
-                    type="text"
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="John Doe"
-                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-xl 
-                      focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                      transition-all duration-300 text-white placeholder-white/50 hover:bg-white/25"
-                    required
-                  />
+              {/* Brand with custom icon */}
+              <div className="fu-1" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
+                <div style={{ 
+                  width: 100, 
+                  height: 100, 
+                  borderRadius: 10, 
+                  background: `linear-gradient(135deg,${T.greenTint},${T.greenTint})`, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  boxShadow: `0 4px 12px rgba(0,184,107,0.3)`,
+                  overflow: 'hidden'
+                }}>
+                  {!logoError ? (
+                    <Image
+                      src="/icon_only.png"
+                      alt="ZOVA"
+                      width={100}
+                      height={100}
+                      className="object-contain"
+                      onError={() => setLogoError(true)}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: 'Outfit,sans-serif' }}>Z</span>
+                  )}
                 </div>
+                <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em' }}>ZOVA</span>
               </div>
 
-              {/* Email */}
-              <div className="relative group">
-                <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/90 mb-1 sm:mb-2 text-left">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <FiMail className="w-4 h-4 sm:w-5 sm:h-5 text-white/60" />
+              {/* Headline */}
+              <div className="fu-2" style={{ marginBottom: 32 }}>
+                <h1 className="serif" style={{ fontSize: 38, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                  Create your<br />account.
+                </h1>
+                <p style={{ fontSize: 14, color: T.mutedText, margin: 0 }}>Join millions of shoppers on ZOVA</p>
+              </div>
+
+              <form onSubmit={handleSignup}>
+                {/* Error */}
+                {error && (
+                  <div style={{ padding: '11px 16px', borderRadius: 11, background: T.redLight, border: '1px solid #FECACA', fontSize: 13, color: T.red, fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FiX size={14} style={{ flexShrink: 0 }} /> {error}
                   </div>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-xl 
-                      focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                      transition-all duration-300 text-white placeholder-white/50 hover:bg-white/25"
-                    required
-                  />
+                )}
+
+                {/* Social first — reduces form fatigue */}
+                <div className="fu-3" style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                  {[
+                    { label: 'Google',   icon: <FaGoogle size={14} color="#EA4335" />,  onClick: handleGoogleSignup, k: 'google' },
+                    { label: 'Facebook', icon: <FaFacebookF size={14} color="#1877F2" />, onClick: () => {},          k: 'fb' },
+                  ].map(btn => (
+                    <button key={btn.k} type="button" onClick={btn.onClick}
+                      onMouseEnter={() => enterField(btn.k)} onMouseLeave={() => leaveField(btn.k)}
+                      style={{
+                        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        padding: '11px 12px', borderRadius: 12, cursor: 'pointer',
+                        border: `1.5px solid ${T.border}`,
+                        background: hov[btn.k] ? T.softGray : T.white,
+                        fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', color: T.charcoal,
+                        transition: 'all 0.15s',
+                        boxShadow: hov[btn.k] ? '0 3px 10px rgba(0,0,0,0.07)' : 'none',
+                        transform: hov[btn.k] ? 'translateY(-1px)' : 'none',
+                      }}>
+                      {btn.icon} {btn.label}
+                    </button>
+                  ))}
                 </div>
-              </div>
 
-              {/* Phone */}
-              <div className="relative group">
-                <label htmlFor="phone" className="block text-xs sm:text-sm font-medium text-white/90 mb-1 sm:mb-2 text-left">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <FiPhone className="w-4 h-4 sm:w-5 sm:h-5 text-white/60" />
-                  </div>
-                  <input
-                    type="tel"
-                    id="phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (555) 123-4567"
-                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-xl 
-                      focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                      transition-all duration-300 text-white placeholder-white/50 hover:bg-white/25"
-                  />
+                {/* Divider */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+                  <div style={{ flex: 1, height: 1, background: T.border }} />
+                  <span style={{ fontSize: 11, color: '#CCC', fontWeight: 700, letterSpacing: '0.1em' }}>OR SIGN UP WITH EMAIL</span>
+                  <div style={{ flex: 1, height: 1, background: T.border }} />
                 </div>
-              </div>
 
-              {/* State */}
-              <div className="relative group">
-                <label htmlFor="state" className="block text-xs sm:text-sm font-medium text-white/90 mb-1 sm:mb-2 text-left">
-                  State
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <FiMapPin className="w-4 h-4 sm:w-5 sm:h-5 text-white/60" />
+                {/* ── 2-col grid ── */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 14px' }}>
+
+                  {/* Full Name */}
+                  <div className="fu-4" style={{ gridColumn: '1 / -1' }}>
+                    <FieldWrap label="Full Name" icon={<FiUser size={15} color={foc.name ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                      <input type="text" value={fullName} required placeholder="Chidi Okonkwo"
+                        onChange={e => setFullName(e.target.value)}
+                        onFocus={() => focusField('name')} onBlur={() => blurField('name')}
+                        onMouseEnter={() => enterField('name')} onMouseLeave={() => leaveField('name')}
+                        style={inputStyle('name')} />
+                    </FieldWrap>
                   </div>
-                  <input
-                    type="text"
-                    id="state"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    placeholder="California"
-                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-xl 
-                      focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                      transition-all duration-300 text-white placeholder-white/50 hover:bg-white/25"
-                  />
+
+                  {/* Email */}
+                  <div className="fu-5" style={{ gridColumn: '1 / -1' }}>
+                    <FieldWrap label="Email Address" icon={<FiMail size={15} color={foc.email ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                      <input type="email" value={email} required placeholder="you@example.com"
+                        onChange={e => setEmail(e.target.value)}
+                        onFocus={() => focusField('email')} onBlur={() => blurField('email')}
+                        onMouseEnter={() => enterField('email')} onMouseLeave={() => leaveField('email')}
+                        style={inputStyle('email')} />
+                    </FieldWrap>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="fu-6">
+                    <FieldWrap label="Phone" icon={<FiPhone size={15} color={foc.phone ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                      <input type="tel" value={phone} placeholder="+234 801 234 5678"
+                        onChange={e => setPhone(e.target.value)}
+                        onFocus={() => focusField('phone')} onBlur={() => blurField('phone')}
+                        onMouseEnter={() => enterField('phone')} onMouseLeave={() => leaveField('phone')}
+                        style={inputStyle('phone')} />
+                    </FieldWrap>
+                  </div>
+
+                  {/* State dropdown */}
+                  <div className="fu-6">
+                    <FieldWrap label="State" icon={<FiMapPin size={15} color={foc.state ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                      <select value={state} onChange={e => setState(e.target.value)}
+                        onFocus={() => focusField('state')} onBlur={() => blurField('state')}
+                        onMouseEnter={() => enterField('state')} onMouseLeave={() => leaveField('state')}
+                        className="state-select"
+                        style={{ ...inputStyle('state'), paddingRight: 14 }}>
+                        <option value="">Select state</option>
+                        {NG_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      {/* Custom chevron */}
+                      <svg style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M3 5l4 4 4-4" stroke={T.mutedText} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </FieldWrap>
+                  </div>
+
+                  {/* Password */}
+                  <div className="fu-7" style={{ gridColumn: '1 / -1' }}>
+                    <FieldWrap label="Password" icon={<FiLock size={15} color={foc.pass ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                      <input type={showPass ? 'text' : 'password'} value={password} required placeholder="Create a password"
+                        onChange={e => setPassword(e.target.value)}
+                        onFocus={() => { focusField('pass'); setPassFocused(true); }}
+                        onBlur={() => { blurField('pass'); setTimeout(() => setPassFocused(false), 180); }}
+                        onMouseEnter={() => enterField('pass')} onMouseLeave={() => leaveField('pass')}
+                        style={inputStyle('pass', { paddingRight: 46 })} />
+                      <button type="button" onClick={() => setShowPass(v => !v)}
+                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
+                        {showPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                      </button>
+                    </FieldWrap>
+
+                    {/* Strength bar */}
+                    {password.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                          {[1,2,3,4,5].map(i => (
+                            <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i <= passStrength ? strengthMeta.color : T.border, transition: 'background 0.3s' }} />
+                          ))}
+                        </div>
+                        {strengthMeta.label && <p style={{ fontSize: 11, color: strengthMeta.color, fontWeight: 700, margin: 0 }}>{strengthMeta.label} password</p>}
+                      </div>
+                    )}
+
+                    {/* Req pills — on focus */}
+                    {passFocused && password.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10, animation: 'fadeDown 0.2s ease' }}>
+                        <ReqPill met={reqs.minLength}  label="8+ chars" />
+                        <ReqPill met={reqs.hasUpper}   label="Uppercase" />
+                        <ReqPill met={reqs.hasLower}   label="Lowercase" />
+                        <ReqPill met={reqs.hasNumber}  label="Number" />
+                        <ReqPill met={reqs.hasSpecial} label="Symbol" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="fu-8" style={{ gridColumn: '1 / -1' }}>
+                    <FieldWrap label="Confirm Password"
+                      icon={
+                        confirmPassword.length > 0
+                          ? passwordsMatch
+                            ? <FiCheck size={15} color={T.green} />
+                            : <FiX size={15} color={T.red} />
+                          : <FiLock size={15} color={foc.confirm ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />
+                      }>
+                      <input type={showConfirm ? 'text' : 'password'} value={confirmPassword} required placeholder="Repeat your password"
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        onFocus={() => focusField('confirm')} onBlur={() => blurField('confirm')}
+                        onMouseEnter={() => enterField('confirm')} onMouseLeave={() => leaveField('confirm')}
+                        style={{
+                          ...inputStyle('confirm', { paddingRight: 46 }),
+                          borderColor: confirmPassword.length > 0 ? (passwordsMatch ? T.green : T.red) : foc.confirm ? T.green : hov.confirm ? T.greenBorder : T.border,
+                          background:  confirmPassword.length > 0 ? (passwordsMatch ? T.greenTint : T.redLight) : foc.confirm ? T.white : T.softGray,
+                          boxShadow:   confirmPassword.length > 0 ? (passwordsMatch ? `0 0 0 3px rgba(0,184,107,0.12)` : `0 0 0 3px rgba(229,57,53,0.1)`) : foc.confirm ? `0 0 0 3.5px rgba(0,184,107,0.13)` : 'none',
+                        }} />
+                      <button type="button" onClick={() => setShowConfirm(v => !v)}
+                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
+                        {showConfirm ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                      </button>
+                    </FieldWrap>
+                    {confirmPassword.length > 0 && (
+                      <p style={{ fontSize: 11.5, fontWeight: 600, margin: '6px 0 0', color: passwordsMatch ? T.greenDark : T.red, animation: 'fadeDown 0.2s ease' }}>
+                        {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Password */}
-              <div className="relative group">
-                <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/90 mb-1 sm:mb-2 text-left">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <FiLock className="w-4 h-4 sm:w-5 sm:h-5 text-white/60" />
+                {/* Terms */}
+                <div className="fu-9" style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '20px 0 22px', cursor: 'pointer' }}
+                  onClick={() => setAgreeTerms(v => !v)}>
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
+                    border: `2px solid ${agreeTerms ? T.green : T.border}`,
+                    background: agreeTerms ? T.green : T.white,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s',
+                  }}>
+                    {agreeTerms && <FiCheck size={10} color="#fff" strokeWidth={3.5} />}
                   </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onFocus={() => setPasswordFocused(true)}
-                    onBlur={() => setTimeout(() => setPasswordFocused(false), 200)}
-                    placeholder="Enter your password"
-                    className="w-full pl-10 sm:pl-12 pr-12 sm:pr-14 py-2.5 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-xl 
-                      focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                      transition-all duration-300 text-white placeholder-white/50 hover:bg-white/25"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-1 transition-colors duration-300"
-                  >
-                    {showPassword ? <FiEyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <FiEye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  <span style={{ fontSize: 12.5, color: T.medGray, lineHeight: 1.5, userSelect: 'none' }}>
+                    I agree to ZOVA's{' '}
+                    <Link href="/terms" style={{ color: T.green, fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
+                    {' '}and{' '}
+                    <Link href="/privacy" style={{ color: T.green, fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>
+                  </span>
+                </div>
+
+                {/* CTA */}
+                <div className="fu-10">
+                  <button type="submit" disabled={loading || !agreeTerms}
+                    onMouseEnter={() => setSubmitHov(true)} onMouseLeave={() => setSubmitHov(false)}
+                    style={{
+                      width: '100%', padding: 14, border: 'none', borderRadius: 13,
+                      fontSize: 15, fontWeight: 700, fontFamily: 'inherit', letterSpacing: '-0.01em',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      cursor: loading || !agreeTerms ? 'not-allowed' : 'pointer',
+                      background: loading || !agreeTerms ? T.border : submitHov ? T.greenDark : T.green,
+                      color: loading || !agreeTerms ? T.mutedText : T.white,
+                      boxShadow: !loading && agreeTerms && submitHov ? `0 10px 30px rgba(0,184,107,0.4)` : !loading && agreeTerms ? `0 5px 18px rgba(0,184,107,0.28)` : 'none',
+                      transform: !loading && agreeTerms && submitHov ? 'translateY(-1px)' : 'none',
+                      transition: 'all 0.18s',
+                      marginBottom: 20,
+                    }}>
+                    {loading
+                      ? <><svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width={17} height={17} viewBox="0 0 17 17" fill="none">
+                          <circle cx="8.5" cy="8.5" r="6" stroke="rgba(0,0,0,0.18)" strokeWidth="2.5" />
+                          <path d="M8.5 2.5a6 6 0 016 6" stroke={T.medGray} strokeWidth="2.5" strokeLinecap="round" />
+                        </svg>Creating account…</>
+                      : <>Create Account &nbsp;<FiArrowRight size={15} /></>
+                    }
                   </button>
                 </div>
 
-                {/* Password Requirements Popover */}
-                {passwordFocused && password && (
-                  <div className="absolute z-20 mt-1 sm:mt-2 w-full p-3 sm:p-4 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 animate-slideDown max-h-[150px] overflow-y-auto">
-                    <p className="text-xs font-semibold text-gray-700 mb-2 sm:mb-3">Password Requirements:</p>
-                    <div className="space-y-1.5 sm:space-y-2">
-                      {[
-                        { key: 'minLength', label: 'At least 8 characters' },
-                        { key: 'hasUpperCase', label: 'One uppercase letter' },
-                        { key: 'hasLowerCase', label: 'One lowercase letter' },
-                        { key: 'hasNumber', label: 'One number' },
-                        { key: 'hasSpecialChar', label: 'One special character' },
-                      ].map((req) => (
-                        <div key={req.key} className="flex items-center gap-2 text-[10px] sm:text-xs">
-                          <div className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
-                            passwordRequirements[req.key] ? 'bg-green-500 scale-100' : 'bg-gray-300 scale-90'
-                          }`}>
-                            {passwordRequirements[req.key] && (
-                              <FiCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" strokeWidth={3} />
-                            )}
-                          </div>
-                          <span className={`transition-colors duration-300 ${
-                            passwordRequirements[req.key] ? 'text-green-600 font-medium' : 'text-gray-500'
-                          }`}>
-                            {req.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Confirm Password */}
-              <div className="relative group">
-                <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-white/90 mb-1 sm:mb-2 text-left">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
-                    <FiLock className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
-                      passwordRequirements.passwordsMatch && confirmPassword ? 'text-green-400' : 'text-white/60'
-                    }`} />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
-                    className={`w-full pl-10 sm:pl-12 pr-10 sm:pr-12 py-2.5 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 rounded-xl 
-                      focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                      transition-all duration-300 text-white placeholder-white/50 hover:bg-white/25
-                      ${passwordRequirements.passwordsMatch && confirmPassword ? 'border-green-400/50' : 'border-white/30'}`}
-                    required
-                  />
-                  {confirmPassword && (
-                    <div className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2">
-                      {passwordRequirements.passwordsMatch ? (
-                        <FiCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
-                      ) : (
-                        <FiX className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+                {/* Sign in */}
+                <p style={{ textAlign: 'center', fontSize: 13.5, color: T.mutedText, margin: 0 }}>
+                  Already have an account?{' '}
+                  <Link href="/login" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
+                    Sign in →
+                  </Link>
+                </p>
+              </form>
             </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="relative w-full py-3 sm:py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 
-                text-white font-semibold rounded-xl shadow-lg hover:shadow-2xl 
-                transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] 
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 
-                text-base sm:text-lg overflow-hidden group mt-4 sm:mt-6"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Creating Account...
-                  </>
-                ) : (
-                  'Create Account'
-                )}
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-            </button>
-
-            {/* Divider */}
-            <div className="relative my-4 sm:my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/30"></div>
-              </div>
-              <div className="relative flex justify-center text-xs sm:text-sm">
-                <span className="px-3 sm:px-4 bg-transparent text-white/70 font-medium">
-                  OR CONTINUE WITH
-                </span>
-              </div>
-            </div>
-
-            {/* Social Signup */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <button
-                onClick={handleGoogleSignup}
-                type="button"
-                className="flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 bg-white/20 backdrop-blur-sm
-                  border-2 border-white/30 rounded-xl text-white font-medium text-sm sm:text-base
-                  hover:bg-white/30 hover:border-white/50 transition-all duration-300 
-                  hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <FaGoogle className="text-white w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Google</span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 bg-[#3b5998] hover:bg-[#2d4373] 
-                  text-white rounded-xl font-medium text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-lg 
-                  transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <FaFacebookF className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Facebook</span>
-              </button>
-            </div>
-
-            {/* Sign In Link */}
-            <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm">
-              <span className="text-white/70">Already have an account? </span>
-              <Link
-                href="/login"
-                className="text-white font-bold hover:underline transition-colors"
-              >
-                Sign In
-              </Link>
-            </div>
-          </form>
+          </div>
         </div>
+
+        {/* ══════════════════════════════════════════
+            RIGHT — fashion imagery panel
+        ══════════════════════════════════════════ */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', minHeight: '100vh' }}>
+          {SLIDES.map((s, i) => (
+            <img key={i} src={s.url} alt="" style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+              opacity: i === slide ? 1 : 0,
+              transform: i === slide ? 'scale(1.04)' : 'scale(1)',
+              transition: 'opacity 0.9s ease, transform 6.5s ease',
+            }} />
+          ))}
+
+          {/* Overlays */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.12) 60%, transparent 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }} />
+
+          {/* Caption */}
+          <div style={{ position: 'absolute', bottom: 48, left: 44, right: 44, zIndex: 5 }}>
+            <div key={slide} style={{ animation: 'slideCaption 0.6s ease both' }}>
+              <h2 className="serif" style={{
+                fontSize: 44, fontWeight: 700, color: '#fff', margin: '0 0 10px',
+                lineHeight: 1.12, letterSpacing: '-0.02em',
+                textShadow: '0 2px 24px rgba(0,0,0,0.35)', whiteSpace: 'pre-line',
+              }}>
+                {SLIDES[slide].caption}
+              </h2>
+              <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.72)', margin: '0 0 24px', fontWeight: 400 }}>
+                {SLIDES[slide].sub}
+              </p>
+            </div>
+
+            {/* Trust pills */}
+            <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 24 }}>
+              {['500K+ Members','Free Delivery on Orders','Buyer Protection','Easy Returns'].map(tag => (
+                <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: T.green, boxShadow: `0 0 6px ${T.green}` }} />
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{tag}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Slide dots */}
+            <div style={{ display: 'flex', gap: 7 }}>
+              {SLIDES.map((_, i) => (
+                <div key={i} onClick={() => setSlide(i)} style={{
+                  height: 3, borderRadius: 99, cursor: 'pointer',
+                  width: i === slide ? 28 : 7,
+                  background: i === slide ? T.green : 'rgba(255,255,255,0.35)',
+                  transition: 'all 0.4s',
+                }} />
+              ))}
+            </div>
+          </div>
+
+          {/* ZOVA brand top-right with custom icon */}
+          <div style={{ position: 'absolute', top: 32, right: 36, zIndex: 5, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ 
+              width: 60, 
+              height: 60, 
+              borderRadius: 9, 
+              background: 'rgba(255,255,255,0.15)', 
+              backdropFilter: 'blur(8px)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              border: '1px solid rgba(255,255,255,0.2)',
+              overflow: 'hidden'
+            }}>
+              {!logoError ? (
+                <Image
+                  src="/icon_only.png"
+                  alt="ZOVA"
+                  width={50}
+                  height={50}
+                  className="object-contain"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <span style={{ fontSize: 12, fontWeight: 800, color: '#fff' }}>Z</span>
+              )}
+            </div>
+            <span style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.03em' }}>ZOVA</span>
+          </div>
+
+          {/* Step indicators — shows signup is quick */}
+          <div style={{ position: 'absolute', top: 32, left: 44, zIndex: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {['Info','Password','Done'].map((step, i) => (
+                <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: i === 0 ? T.green : 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(8px)',
+                    border: `1.5px solid ${i === 0 ? T.green : 'rgba(255,255,255,0.25)'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>{i + 1}</span>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: i === 0 ? '#fff' : 'rgba(255,255,255,0.45)' }}>{step}</span>
+                  {i < 2 && <div style={{ width: 20, height: 1, background: 'rgba(255,255,255,0.2)' }} />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
       </div>
-      
-      {/* Required CSS to hide scrollbar but allow scrolling on small devices if necessary */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 0px;
-          background: transparent;
-        }
-        .custom-scrollbar {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-      `}} />
-    </div>
+    </>
   );
 }

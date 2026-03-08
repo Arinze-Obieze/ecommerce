@@ -1,366 +1,600 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiCheck, FiX } from 'react-icons/fi';
+import Image from 'next/image';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCheck } from 'react-icons/fi';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
+// ─────────────────────────────────────────────────────────────
+// THEME
+// ─────────────────────────────────────────────────────────────
+const T = {
+  green:        '#00B86B',
+  greenDark:    '#0F7A4F',
+  greenDeep:    '#0A3D2E',
+  greenTint:    '#EDFAF3',
+  greenBorder:  '#A8DFC4',
+  charcoal:     '#111111',
+  softGray:     '#F5F5F5',
+  pageBg:       '#F9FAFB',
+  border:       '#E8E8E8',
+  medGray:      '#666666',
+  mutedText:    '#999999',
+  white:        '#FFFFFF',
+  red:          '#E53935',
+  redLight:     '#FEF2F2',
+  gold:         '#F59E0B',
+};
 
+// ─────────────────────────────────────────────────────────────
+// FASHION PANEL IMAGES (Unsplash)
+// ─────────────────────────────────────────────────────────────
+const SLIDES = [
+  {
+    url:     'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&h=1200&fit=crop&auto=format',
+    caption: 'Discover Your\nStyle Today.',
+    sub:     'Shop 2M+ looks from Nigeria\'s top sellers',
+  },
+  {
+    url:     'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=900&h=1200&fit=crop&auto=format',
+    caption: 'Fashion That\nFeels Like You.',
+    sub:     'Curated pieces, delivered fast',
+  },
+  {
+    url:     'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=900&h=1200&fit=crop&auto=format',
+    caption: 'Nigeria\'s Biggest\nMarketplace.',
+    sub:     '50,000+ sellers. Every style. One place.',
+  },
+  {
+    url:     'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&h=1200&fit=crop&auto=format',
+    caption: 'New Arrivals\nEvery Hour.',
+    sub:     'Be first to wear tomorrow\'s trends',
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// FLOATING PRODUCT THUMBNAILS
+// ─────────────────────────────────────────────────────────────
+const FLOATERS = [
+  { src: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=120&h=120&fit=crop', size: 68,  top: '7%',  right: '-22px', rot: 6  },
+  { src: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&h=90&fit=crop',  size: 62,  top: '32%', right: '-18px', rot: -5 },
+  { src: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=120&h=120&fit=crop', size: 58, top: '58%', right: '-20px', rot: 4  },
+  { src: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=120&h=120&fit=crop', size: 64, top: '78%', right: '-16px', rot: -6 },
+];
+
+// ─────────────────────────────────────────────────────────────
+// PASSWORD REQUIREMENT ROW
+// ─────────────────────────────────────────────────────────────
+function ReqRow({ met, label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{
+        width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+        background: met ? T.green : T.border,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.2s, transform 0.2s',
+        transform: met ? 'scale(1.1)' : 'scale(1)',
+      }}>
+        {met && <FiCheck size={9} color="#fff" strokeWidth={3.5} />}
+      </div>
+      <span style={{ fontSize: 12, color: met ? T.greenDark : T.mutedText, fontWeight: met ? 600 : 400, transition: 'color 0.2s' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MAIN
+// ─────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const router = useRouter();
+  const router   = useRouter();
   const supabase = createClient();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  const [loginSuccess, setLoginSuccess] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
-  const [emailAutofilled, setEmailAutofilled] = useState(false);
-  const [passwordAutofilled, setPasswordAutofilled] = useState(false);
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
+  const [showPass, setShowPass]         = useState(false);
+  const [rememberMe, setRememberMe]     = useState(false);
+  const [error, setError]               = useState('');
+  const [loading, setLoading]           = useState(false);
+  const [success, setSuccess]           = useState(false);
+  const [passFocused, setPassFocused]   = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [mounted, setMounted]           = useState(false);
+  const [slide, setSlide]               = useState(0);
+  const [prevSlide, setPrevSlide]       = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const [emailHov, setEmailHov]         = useState(false);
+  const [passHov, setPassHov]           = useState(false);
+  const [submitHov, setSubmitHov]       = useState(false);
+  const [googleHov, setGoogleHov]       = useState(false);
+  const [fbHov, setFbHov]               = useState(false);
+  const [remHov, setRemHov]             = useState(false);
+  const [logoError, setLogoError]       = useState(false);
 
-  const [passwordRequirements, setPasswordRequirements] = useState({
-    minLength: false,
-    hasUpperCase: false,
-    hasLowerCase: false,
-    hasNumber: false,
-    hasSpecialChar: false,
-  });
+  const reqs = {
+    minLength:    password.length >= 8,
+    hasUpper:     /[A-Z]/.test(password),
+    hasLower:     /[a-z]/.test(password),
+    hasNumber:    /[0-9]/.test(password),
+    hasSpecial:   /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+  const passStrength = Object.values(reqs).filter(Boolean).length; // 0-5
 
+  useEffect(() => { setMounted(true); }, []);
+
+  // Auto-advance slides
   useEffect(() => {
-    setIsPageLoading(false);
-  }, []);
-
-  useEffect(() => {
-    setPasswordRequirements({
-      minLength: password.length >= 8,
-      hasUpperCase: /[A-Z]/.test(password),
-      hasLowerCase: /[a-z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    });
-  }, [password]);
+    const id = setInterval(() => {
+      setTransitioning(true);
+      setPrevSlide(slide);
+      setTimeout(() => {
+        setSlide(s => (s + 1) % SLIDES.length);
+        setTimeout(() => { setTransitioning(false); setPrevSlide(null); }, 600);
+      }, 50);
+    }, 5500);
+    return () => clearInterval(id);
+  }, [slide]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
-      const { data: signInData, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
-      }
-      
-      const { data: adminMembership, error: adminCheckError } = await supabase
-        .from('admin_users')
-        .select('id, role, is_active')
-        .eq('user_id', signInData?.user?.id || '')
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (!adminCheckError && adminMembership) {
-        router.push('/admin');
-        return;
-      }
-
-      setLoginSuccess(true);
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
-    } catch {
-      setError('An unexpected error occurred');
-      setLoading(false);
-    }
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInErr) { setError(signInErr.message); setLoading(false); return; }
+      const { data: adminMembership } = await supabase
+        .from('admin_users').select('id').eq('user_id', signInData?.user?.id || '').eq('is_active', true).maybeSingle();
+      if (adminMembership) { router.push('/admin'); return; }
+      setSuccess(true);
+      setTimeout(() => router.push('/'), 1800);
+    } catch { setError('An unexpected error occurred'); setLoading(false); }
   };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${location.origin}/auth/callback`,
-        },
-      });
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}/auth/callback` } });
       if (error) throw error;
-    } catch (error) {
-      setError(error.message);
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); setLoading(false); }
   };
 
-  if (isPageLoading) {
-    return (
-      <div className="login-page h-screen w-full flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50 overflow-hidden">
-        <div className="w-full max-w-md p-8 space-y-6 animate-pulse">
-          <div className="h-12 bg-gray-200 rounded-lg w-3/4 mx-auto"></div>
-          <div className="space-y-4">
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Perfect'][passStrength];
+  const strengthColor = ['#E8E8E8', T.red, '#F97316', T.gold, T.green, T.greenDark][passStrength];
+
+  const inputStyle = (focused, hovered, hasError) => ({
+    width: '100%',
+    padding: '13px 14px 13px 46px',
+    borderRadius: 12,
+    border: `1.5px solid ${hasError ? T.red : focused ? T.green : hovered ? T.greenBorder : T.border}`,
+    background: hasError ? T.redLight : focused ? T.white : T.softGray,
+    fontSize: 14,
+    fontFamily: 'inherit',
+    color: T.charcoal,
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
+    boxShadow: focused ? `0 0 0 3.5px rgba(0,184,107,0.13)` : 'none',
+  });
 
   return (
-    <div className="login-page h-screen w-full relative overflow-hidden flex items-center justify-center">
-      {/* Background Image with Overlay - Using CSS */}
-      <div className="absolute inset-0 z-0">
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url('/bg_big.jpeg')`,
-          }}
-        />
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40 transition-colors duration-500" />
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
-      <div className="relative z-10 w-full max-w-md p-4">
-        {/* Success Animation Overlay */}
-        {loginSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white rounded-2xl p-8 shadow-2xl animate-scaleIn">
-              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-checkmark">
-                <FiCheck className="w-12 h-12 text-white" strokeWidth={3} />
+        * { box-sizing: border-box; }
+        .lp-root { font-family: 'Outfit', sans-serif; }
+        .serif   { font-family: 'Cormorant Garamond', Georgia, serif; }
+
+        @keyframes fadeUp   { from { opacity:0; transform:translateY(20px);   } to { opacity:1; transform:none; } }
+        @keyframes fadeDown { from { opacity:0; transform:translateY(-10px);  } to { opacity:1; transform:none; } }
+        @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+        @keyframes scaleIn  { from { opacity:0; transform:scale(0.82); } to { opacity:1; transform:scale(1); } }
+        @keyframes spin     { to   { transform:rotate(360deg); } }
+        @keyframes pulseRing {
+          0%   { transform:scale(1);   opacity:0.5; }
+          100% { transform:scale(1.65); opacity:0; }
+        }
+        @keyframes checkDraw {
+          from { stroke-dashoffset:36; }
+          to   { stroke-dashoffset:0;  }
+        }
+        @keyframes slideCaption {
+          from { opacity:0; transform:translateY(16px); }
+          to   { opacity:1; transform:none; }
+        }
+        @keyframes floatBob {
+          0%,100% { transform: translateY(0); }
+          50%     { transform: translateY(-8px); }
+        }
+        @keyframes barGrow {
+          from { width:0; }
+        }
+
+        .fade-up-1  { animation: fadeUp 0.5s ease 0.05s both; }
+        .fade-up-2  { animation: fadeUp 0.5s ease 0.12s both; }
+        .fade-up-3  { animation: fadeUp 0.5s ease 0.19s both; }
+        .fade-up-4  { animation: fadeUp 0.5s ease 0.26s both; }
+        .fade-up-5  { animation: fadeUp 0.5s ease 0.33s both; }
+        .fade-up-6  { animation: fadeUp 0.5s ease 0.40s both; }
+        .fade-up-7  { animation: fadeUp 0.5s ease 0.47s both; }
+        .fade-up-8  { animation: fadeUp 0.5s ease 0.54s both; }
+      `}</style>
+
+      <div className="lp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: T.pageBg }}>
+
+        {/* ── SUCCESS OVERLAY ── */}
+        {success && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(16px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'fadeIn 0.25s ease',
+          }}>
+            <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
+              <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
+                <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'rgba(0,184,107,0.18)', animation:'pulseRing 1.1s ease-out infinite' }} />
+                <div style={{ width:88, height:88, borderRadius:'50%', background:`linear-gradient(135deg,${T.green},${T.greenDark})`, display:'flex', alignItems:'center', justifyContent:'center', position:'relative', boxShadow:`0 12px 40px rgba(0,184,107,0.4)` }}>
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+                    <path d="M9 19L16.5 26.5L29 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ strokeDasharray:36, strokeDashoffset:0, animation:'checkDraw 0.45s ease 0.2s both' }} />
+                  </svg>
+                </div>
               </div>
-              <h3 className="text-2xl font-bold text-center text-gray-800">Login Successful!</h3>
-              <p className="text-gray-600 text-center mt-2">Redirecting you now...</p>
+              <p className="serif" style={{ fontSize:32, fontWeight:700, color:T.charcoal, margin:'0 0 8px', lineHeight:1.1 }}>You're in!</p>
+              <p style={{ fontSize:14, color:T.mutedText, margin:0 }}>Taking you to the market…</p>
             </div>
           </div>
         )}
 
-        {/* Main Card with Enhanced Glassmorphism */}
-        <div className="backdrop-blur-2xl bg-white/10 rounded-3xl shadow-2xl p-8 border border-white/20 animate-slideUp">
-          {/* Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 animate-fadeIn drop-shadow-lg">
-              Welcome Back!
-            </h1>
-            <p className="text-white/80 animate-fadeIn animation-delay-200 text-sm sm:text-base">
-              Sign in to continue to ShopHub
-            </p>
-          </div>
+        {/* ══════════════════════════════════════════
+            LEFT — form
+        ══════════════════════════════════════════ */}
+        <div style={{
+          flex: '0 0 min(468px, 100%)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: '0 52px', position: 'relative', overflowY: 'auto',
+          background: T.white, zIndex: 2,
+          boxShadow: '2px 0 32px rgba(0,0,0,0.06)',
+        }}>
+          {/* Decorative green stripe top */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${T.green}, ${T.greenDark})` }} />
 
-          <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
-            {/* Error Message */}
-            {error && (
-              <div className="rounded-xl bg-red-500/20 backdrop-blur-sm border border-red-400/50 p-3 sm:p-4 text-white text-sm text-center animate-shake">
-                <FiX className="inline mr-2" />
-                {error}
-              </div>
-            )}
+          <div style={{ maxWidth: 360, width: '100%', margin: '0 auto', padding: '56px 0' }}>
 
-            {/* Email Field */}
-            <div className="relative group">
-              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/90 mb-1.5 sm:mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <FiMail className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
-                    emailAutofilled ? 'text-green-400' : 'text-white/60'
-                  }`} />
-                </div>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailAutofilled(false);
-                  }}
-                  placeholder="you@example.com"
-                  className={`w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 rounded-xl 
-                    focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                    transition-all duration-300 text-white placeholder-white/50
-                    hover:bg-white/25 ${emailAutofilled ? 'border-green-400/50 bg-green-400/10' : 'border-white/30'}`}
-                  required
-                />
+            {/* Brand with custom icon */}
+            <div className="fade-up-1" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
+              <div style={{ 
+                width: 100, 
+                height: 100, 
+                borderRadius: 10, 
+                background: `linear-gradient(135deg,${T.greenTint},${T.greenTint})`, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                boxShadow: `0 4px 12px rgba(0,184,107,0.3)`,
+                overflow: 'hidden'
+              }}>
+                {!logoError ? (
+                  <Image
+                    src="/icon_only.png"
+                    alt="ZOVA"
+                    width={100}
+                    height={100}
+                    className="object-contain"
+                    onError={() => setLogoError(true)}
+                  />
+                ) : (
+                  <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: 'Outfit,sans-serif' }}>Z</span>
+                )}
               </div>
+              <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em', fontFamily: 'Outfit,sans-serif' }}>ZOVA</span>
             </div>
 
-            {/* Password Field */}
-            <div className="relative group">
-              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/90 mb-1.5 sm:mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <FiLock className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
-                    passwordAutofilled ? 'text-green-400' : 'text-white/60'
-                  }`} />
+            {/* Headline */}
+            <div className="fade-up-2" style={{ marginBottom: 36 }}>
+              <h1 className="serif" style={{ fontSize: 40, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                Welcome back.
+              </h1>
+              <p style={{ fontSize: 14.5, color: T.mutedText, margin: 0, fontWeight: 400 }}>
+                Sign in to your ZOVA account to continue
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin}>
+
+              {/* Error banner */}
+              {error && (
+                <div style={{ padding: '11px 16px', borderRadius: 11, background: T.redLight, border: `1px solid #FECACA`, fontSize: 13, color: T.red, fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease' }}>
+                  {error}
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setPasswordAutofilled(false);
-                  }}
-                  onFocus={() => setPasswordFocused(true)}
-                  onBlur={() => setTimeout(() => setPasswordFocused(false), 200)}
-                  placeholder="Enter your password"
-                  className={`w-full pl-10 sm:pl-12 pr-12 sm:pr-14 py-3 sm:py-3.5 text-sm sm:text-base bg-white/20 backdrop-blur-sm border-2 rounded-xl 
-                    focus:outline-none focus:ring-4 focus:ring-white/20 focus:border-white/50 
-                    transition-all duration-300 text-white placeholder-white/50
-                    hover:bg-white/25 ${passwordAutofilled ? 'border-green-400/50 bg-green-400/10' : 'border-white/30'}`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-1 transition-colors duration-300"
-                >
-                  {showPassword ? <FiEyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <FiEye className="w-4 h-4 sm:w-5 sm:h-5" />}
+              )}
+
+              {/* Email */}
+              <div className="fade-up-3" style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#555', marginBottom: 7, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Email address
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <FiMail size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: emailFocused ? T.green : T.mutedText, transition: 'color 0.2s', pointerEvents: 'none' }} />
+                  <input
+                    type="email" value={email} required autoComplete="email"
+                    onChange={e => setEmail(e.target.value)}
+                    onFocus={() => setEmailFocused(true)}
+                    onBlur={() => setEmailFocused(false)}
+                    onMouseEnter={() => setEmailHov(true)}
+                    onMouseLeave={() => setEmailHov(false)}
+                    placeholder="you@example.com"
+                    style={inputStyle(emailFocused, emailHov, !!error)}
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="fade-up-4" style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+                  <label style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                    Password
+                  </label>
+                  <Link href="/forgot-password" style={{ fontSize: 12.5, color: T.green, fontWeight: 600, textDecoration: 'none' }}>
+                    Forgot password?
+                  </Link>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <FiLock size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: passFocused ? T.green : T.mutedText, transition: 'color 0.2s', pointerEvents: 'none' }} />
+                  <input
+                    type={showPass ? 'text' : 'password'} value={password} required
+                    onChange={e => setPassword(e.target.value)}
+                    onFocus={() => setPassFocused(true)}
+                    onBlur={() => setTimeout(() => setPassFocused(false), 180)}
+                    onMouseEnter={() => setPassHov(true)}
+                    onMouseLeave={() => setPassHov(false)}
+                    placeholder="Enter your password"
+                    style={{ ...inputStyle(passFocused, passHov, !!error), paddingRight: 46 }}
+                  />
+                  <button type="button" onClick={() => setShowPass(v => !v)}
+                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
+                    {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
+
+                {/* Strength bar */}
+                {password.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
+                      {[1,2,3,4,5].map(i => (
+                        <div key={i} style={{
+                          flex: 1, height: 3, borderRadius: 99,
+                          background: i <= passStrength ? strengthColor : T.border,
+                          transition: 'background 0.3s',
+                        }} />
+                      ))}
+                    </div>
+                    {strengthLabel && (
+                      <p style={{ fontSize: 11, color: strengthColor, fontWeight: 700, margin: 0, transition: 'color 0.3s' }}>
+                        {strengthLabel} password
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Requirements dropdown */}
+                {passFocused && password.length > 0 && (
+                  <div style={{
+                    marginTop: 10, padding: '12px 14px', borderRadius: 12,
+                    background: T.greenTint, border: `1px solid ${T.greenBorder}`,
+                    display: 'flex', flexDirection: 'column', gap: 7,
+                    animation: 'fadeDown 0.2s ease',
+                  }}>
+                    <ReqRow met={reqs.minLength}  label="At least 8 characters" />
+                    <ReqRow met={reqs.hasUpper}   label="One uppercase letter" />
+                    <ReqRow met={reqs.hasLower}   label="One lowercase letter" />
+                    <ReqRow met={reqs.hasNumber}  label="One number" />
+                    <ReqRow met={reqs.hasSpecial} label="One special character (!@#…)" />
+                  </div>
+                )}
+              </div>
+
+              {/* Remember me */}
+              <div className="fade-up-5" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, cursor: 'pointer' }}
+                onClick={() => setRememberMe(v => !v)}
+                onMouseEnter={() => setRemHov(true)} onMouseLeave={() => setRemHov(false)}>
+                <div style={{
+                  width: 19, height: 19, borderRadius: 6, flexShrink: 0,
+                  border: `2px solid ${rememberMe ? T.green : T.border}`,
+                  background: rememberMe ? T.green : remHov ? T.softGray : T.white,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.15s',
+                }}>
+                  {rememberMe && <FiCheck size={11} color="#fff" strokeWidth={3.5} />}
+                </div>
+                <span style={{ fontSize: 13.5, color: T.medGray, userSelect: 'none', fontWeight: 400 }}>
+                  Keep me signed in
+                </span>
+              </div>
+
+              {/* CTA */}
+              <div className="fade-up-6">
+                <button type="submit" disabled={loading}
+                  onMouseEnter={() => setSubmitHov(true)} onMouseLeave={() => setSubmitHov(false)}
+                  style={{
+                    width: '100%', padding: '14px', border: 'none', borderRadius: 13,
+                    fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: loading ? T.border : submitHov ? T.greenDark : T.green,
+                    color: loading ? T.mutedText : T.white,
+                    boxShadow: !loading && submitHov ? `0 10px 30px rgba(0,184,107,0.4)` : !loading ? `0 5px 18px rgba(0,184,107,0.28)` : 'none',
+                    transform: !loading && submitHov ? 'translateY(-1px)' : 'none',
+                    transition: 'all 0.18s',
+                    letterSpacing: '-0.01em',
+                  }}>
+                  {loading
+                    ? <><svg style={{ animation: 'spin 0.8s linear infinite', flexShrink:0 }} width={17} height={17} viewBox="0 0 17 17" fill="none">
+                        <circle cx="8.5" cy="8.5" r="6" stroke="rgba(0,0,0,0.18)" strokeWidth="2.5" />
+                        <path d="M8.5 2.5a6 6 0 016 6" stroke={T.medGray} strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>Signing in…</>
+                    : <>Sign In &nbsp;<FiArrowRight size={15} /></>
+                  }
                 </button>
               </div>
 
-              {/* Password Requirements Popover */}
-              {passwordFocused && password && (
-                <div className="absolute z-20 mt-2 w-full p-4 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/20 animate-slideDown max-h-[150px] overflow-y-auto">
-                  <p className="text-xs font-semibold text-gray-700 mb-2 sm:mb-3">Password Requirements:</p>
-                  <div className="space-y-1.5 sm:space-y-2">
-                    {[
-                      { key: 'minLength', label: 'At least 8 characters' },
-                      { key: 'hasUpperCase', label: 'One uppercase letter' },
-                      { key: 'hasLowerCase', label: 'One lowercase letter' },
-                      { key: 'hasNumber', label: 'One number' },
-                      { key: 'hasSpecialChar', label: 'One special character' },
-                    ].map((req) => (
-                      <div key={req.key} className="flex items-center gap-2 text-xs">
-                        <div className={`flex-shrink-0 w-3 h-3 sm:w-4 sm:h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
-                          passwordRequirements[req.key] ? 'bg-green-500 scale-100' : 'bg-gray-300 scale-90'
-                        }`}>
-                          {passwordRequirements[req.key] && (
-                            <FiCheck className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" strokeWidth={3} />
-                          )}
-                        </div>
-                        <span className={`transition-colors duration-300 ${
-                          passwordRequirements[req.key] ? 'text-green-600 font-medium' : 'text-gray-500'
-                        }`}>
-                          {req.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+              {/* Divider */}
+              <div className="fade-up-7" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
+                <div style={{ flex: 1, height: 1, background: T.border }} />
+                <span style={{ fontSize: 11, color: '#CCC', fontWeight: 700, letterSpacing: '0.1em' }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: T.border }} />
+              </div>
+
+              {/* Social buttons */}
+              <div className="fade-up-8" style={{ display: 'flex', gap: 10, marginBottom: 26 }}>
+                {[
+                  {
+                    label: 'Google', icon: <FaGoogle size={14} color="#EA4335" />,
+                    onClick: handleGoogleLogin,
+                    hov: googleHov, setHov: setGoogleHov,
+                  },
+                  {
+                    label: 'Facebook', icon: <FaFacebookF size={14} color="#1877F2" />,
+                    onClick: () => {},
+                    hov: fbHov, setHov: setFbHov,
+                  },
+                ].map(btn => (
+                  <button key={btn.label} type="button" onClick={btn.onClick}
+                    onMouseEnter={() => btn.setHov(true)} onMouseLeave={() => btn.setHov(false)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      padding: '11px 16px', borderRadius: 12, cursor: 'pointer',
+                      border: `1.5px solid ${btn.hov ? T.border : T.border}`,
+                      background: btn.hov ? T.softGray : T.white,
+                      fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', color: T.charcoal,
+                      transition: 'all 0.15s',
+                      boxShadow: btn.hov ? '0 3px 10px rgba(0,0,0,0.07)' : 'none',
+                      transform: btn.hov ? 'translateY(-1px)' : 'none',
+                    }}>
+                    {btn.icon} {btn.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sign up */}
+              <p style={{ textAlign: 'center', fontSize: 13.5, color: T.mutedText, margin: 0 }}>
+                New to ZOVA?{' '}
+                <Link href="/signup" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
+                  Create an account →
+                </Link>
+              </p>
+
+            </form>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════
+            RIGHT — sliding fashion panel
+        ══════════════════════════════════════════ */}
+        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex' }}>
+          {/* Images */}
+          {SLIDES.map((s, i) => (
+            <img key={i} src={s.url} alt="" style={{
+              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+              opacity: i === slide ? 1 : 0,
+              transform: i === slide ? 'scale(1.03)' : 'scale(1)',
+              transition: 'opacity 0.9s ease, transform 6s ease',
+            }} />
+          ))}
+
+          {/* Gradient overlays */}
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.12) 60%, transparent 100%)' }} />
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 55%)' }} />
+
+          {/* Floating product thumbnails */}
+          {mounted && FLOATERS.map((f, i) => (
+            <div key={i} style={{
+              position: 'absolute', right: 0, top: f.top, zIndex: 4,
+              width: f.size, height: f.size, borderRadius: 12,
+              overflow: 'hidden', border: '3px solid rgba(255,255,255,0.85)',
+              boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
+              transform: `translateX(30%) rotate(${f.rot}deg)`,
+              animation: `floatBob ${3.8 + i * 0.6}s ease-in-out ${i * 0.5}s infinite`,
+              transition: 'transform 0.3s',
+            }}>
+              <img src={f.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </div>
+          ))}
+
+          {/* Caption */}
+          <div style={{ position:'absolute', bottom:48, left:44, right:44, zIndex:5 }}>
+            <div key={slide} style={{ animation:'slideCaption 0.6s ease both' }}>
+              <h2 className="serif" style={{
+                fontSize: 44, fontWeight: 700, color: '#fff', margin: '0 0 10px',
+                lineHeight: 1.12, letterSpacing: '-0.02em',
+                textShadow: '0 2px 24px rgba(0,0,0,0.35)',
+                whiteSpace: 'pre-line',
+              }}>
+                {SLIDES[slide].caption}
+              </h2>
+              <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.72)', margin: '0 0 24px', fontWeight: 400 }}>
+                {SLIDES[slide].sub}
+              </p>
+            </div>
+
+            {/* Trust pills */}
+            <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+              {['50K+ Sellers','2M+ Products','Fast Delivery','Buyer Protection'].map(tag => (
+                <div key={tag} style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ width:6, height:6, borderRadius:'50%', background:T.green, boxShadow:`0 0 6px ${T.green}` }} />
+                  <span style={{ fontSize:12.5, color:'rgba(255,255,255,0.8)', fontWeight:600 }}>{tag}</span>
                 </div>
+              ))}
+            </div>
+
+            {/* Slide dots */}
+            <div style={{ display:'flex', gap:7, marginTop:28 }}>
+              {SLIDES.map((_,i) => (
+                <div key={i} onClick={() => setSlide(i)} style={{
+                  height:3, borderRadius:99, cursor:'pointer',
+                  width: i === slide ? 28 : 7,
+                  background: i === slide ? T.green : 'rgba(255,255,255,0.35)',
+                  transition:'all 0.4s',
+                }} />
+              ))}
+            </div>
+          </div>
+
+          {/* ZOVA brand top-right with custom icon */}
+          <div style={{ position:'absolute', top:32, right:36, zIndex:5, display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ 
+              width:60, 
+              height:60, 
+              borderRadius:9, 
+              background:'rgba(255,255,255,0.15)', 
+              backdropFilter:'blur(8px)', 
+              display:'flex', 
+              alignItems:'center', 
+              justifyContent:'center', 
+              border:'1px solid rgba(255,255,255,0.2)',
+              overflow: 'hidden'
+            }}>
+              {!logoError ? (
+                <Image
+                  src="/icon_only.png"
+                  alt="ZOVA"
+                  width={50}
+                  height={50}
+                  className="object-contain"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <span style={{ fontSize:13, fontWeight:800, color:'#fff' }}>Z</span>
               )}
             </div>
+            <span style={{ fontSize:16, fontWeight:800, color:'rgba(255,255,255,0.9)', letterSpacing:'-0.03em' }}>ZOVA</span>
+          </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between text-xs sm:text-sm">
-              <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-white/30 bg-white/20 text-green-500 focus:ring-white/20 focus:ring-2 cursor-pointer transition-all"
-                />
-                <span className="text-white/80 group-hover:text-white transition-colors">
-                  Remember me
-                </span>
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-white/80 hover:text-white font-medium transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
-
-       
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="relative w-full py-3 sm:py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 
-                text-white font-semibold rounded-xl shadow-lg hover:shadow-2xl 
-                transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] 
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 
-                text-base sm:text-lg overflow-hidden group"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Logging In...
-                  </>
-                ) : (
-                  'Log In'
-                )}
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-            </button>
-
-            {/* Divider */}
-            <div className="relative my-4 sm:my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/30"></div>
-              </div>
-              <div className="relative flex justify-center text-xs sm:text-sm">
-                <span className="px-3 sm:px-4 bg-transparent text-white/70 font-medium">
-                  OR CONTINUE WITH
-                </span>
-              </div>
-            </div>
-
-            {/* Social Logins */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              <button
-                onClick={handleGoogleLogin}
-                type="button"
-                className="flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 bg-white/20 backdrop-blur-sm
-                  border-2 border-white/30 rounded-xl text-white font-medium text-sm sm:text-base
-                  hover:bg-white/30 hover:border-white/50 transition-all duration-300 
-                  hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <FaGoogle className="text-white w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Google</span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-2 sm:gap-3 py-2.5 sm:py-3 bg-[#3b5998] hover:bg-[#2d4373] 
-                  text-white rounded-xl font-medium text-sm sm:text-base transition-all duration-300 shadow-md hover:shadow-lg 
-                  transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <FaFacebookF className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>Facebook</span>
-              </button>
-            </div>
-
-            {/* Sign Up Link */}
-            <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm">
-              <span className="text-white/70">Don't have an account? </span>
-              <Link
-                href="/signup"
-                className="text-white font-bold hover:underline transition-colors"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </form>
         </div>
       </div>
-    </div>
+    </>
   );
 }
