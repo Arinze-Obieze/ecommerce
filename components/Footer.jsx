@@ -1,123 +1,96 @@
 "use client";
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   FaFacebook, FaInstagram, FaTwitter, FaYoutube,
   FaPinterest, FaSnapchat, FaTiktok,
   FaApple, FaAndroid,
   FaCcVisa, FaCcMastercard, FaCcPaypal, FaCcAmex, FaCcDiscover,
-  FaArrowRight, FaCheckCircle, FaPhone, FaWhatsapp, FaShieldAlt,
+  FaArrowRight, FaCheckCircle, FaPhone, FaWhatsapp,
 } from 'react-icons/fa';
 import { FiArrowUp } from 'react-icons/fi';
 import { usePathname } from 'next/navigation';
 
-// ============================================================
-// 🎨 THEME — change colors here only
-// ============================================================
 const THEME = {
-  // Page background
-  footerBg:           "#FFFFFF",    // Pure White
-  sectionAltBg:       "#F5F5F5",    // Soft Gray — alternating band
-
-  // Dividers
+  footerBg:           "#FFFFFF",
+  sectionAltBg:       "#F5F5F5",
   divider:            "#E8E8E8",
-
-  // Newsletter band
-  newsletterBg:       "#0A3D2E",    // Deep Emerald
+  newsletterBg:       "#0A3D2E",
   newsletterBorder:   "#ffffff14",
   newsletterHeading:  "#FFFFFF",
   newsletterSub:      "#A8C4B8",
-  newsletterLabel:    "#00B86B",    // ZOVA Green
-
-  // Newsletter inputs
+  newsletterLabel:    "#00B86B",
   inputBg:            "#ffffff0D",
   inputBorder:        "#ffffff22",
   inputText:          "#FFFFFF",
   inputPlaceholder:   "#6B9E8A",
-
-  // Newsletter submit buttons
   btnBg:              "#00B86B",
   btnHover:           "#0F7A4F",
   whatsappBg:         "#25D366",
   whatsappHover:      "#1ebe5d",
   successText:        "#00B86B",
-
-  // Brand column
-  logoAccent:         "#00B86B",    // ZOVA Green on "VA"
-  logoText:           "#111111",    // Dark Charcoal
-  taglineText:        "#666666",    // Medium Gray
+  logoAccent:         "#00B86B",
+  logoText:           "#111111",
+  taglineText:        "#666666",
   bodyText:           "#666666",
-
-  // Navigation links
   navHeading:         "#111111",
   navLink:            "#666666",
   navLinkHover:       "#00B86B",
-
-  // Social icons
   socialBg:           "#F5F5F5",
   socialBorder:       "#E8E8E8",
   socialIcon:         "#666666",
   socialHoverBg:      "#00B86B",
   socialHoverIcon:    "#FFFFFF",
-
-  // App store buttons
-  appBg:              "#111111",    // Dark Charcoal
+  appBg:              "#111111",
   appHoverBg:         "#00B86B",
   appText:            "#FFFFFF",
-
-  // Payment tiles
   paymentBg:          "#F5F5F5",
   paymentBorder:      "#E8E8E8",
   paymentIcon:        "#666666",
-
-  // Trust badge strip
-  trustBg:            "#F0FBF5",    // Faint green tint
+  trustBg:            "#F0FBF5",
   trustBorder:        "#D4EAE0",
   trustText:          "#0A3D2E",
   trustIcon:          "#00B86B",
-
-  // Bottom bar
-  bottomBg:           "#111111",    // Dark Charcoal
+  bottomBg:           "#111111",
   bottomText:         "#999999",
   bottomLinkHover:    "#00B86B",
   copyrightText:      "#666666",
-
-  // Back to top
   backTopBg:          "#00B86B",
   backTopHover:       "#0F7A4F",
   backTopText:        "#FFFFFF",
 };
-// ============================================================
 
+// ── NAV_SECTIONS: use real hrefs for internal pages ──────────
 const NAV_SECTIONS = [
   {
     title: "Company",
     links: [
-      { label: "About Us",               href: "#" },
-      { label: "Fashion Blogger",        href: "#" },
-      { label: "Social Responsibility",  href: "#" },
-      { label: "Careers",                href: "#" },
-      { label: "Student Discount",       href: "#" },
+      { label: "About Us",              href: "/about"               },
+      { label: "Fashion Blogger",       href: "/fashion-blogger"     },
+      { label: "Social Responsibility", href: "/social-responsibility"},
+      { label: "Careers",               href: "/careers"             },
+      { label: "Student Discount",      href: "/student-discount"    },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Shipping Info",  href: "#" },
-      { label: "Free Returns",   href: "#" },
-      { label: "How To Order",   href: "#" },
-      { label: "How To Track",   href: "#" },
-      { label: "Size Guide",     href: "#" },
-      { label: "Refund Policy",  href: "#" },
+      { label: "Shipping Info",  href: "/shipping-info"   },
+      { label: "Free Returns",   href: "/return-policy"   }, // ✅ points to return policy page
+      { label: "How To Order",   href: "/how-to-order"    },
+      { label: "How To Track",   href: "/how-to-track"    },
+      { label: "Size Guide",     href: "/size-guide"      },
+      { label: "Refund Policy",  href: "/return-policy"   }, // ✅ points to return policy page
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy",      href: "#" },
-      { label: "Cookie Policy",       href: "#" },
-      { label: "Terms & Conditions",  href: "#" },
-      { label: "IP Notice",           href: "#" },
-      { label: "Ad Choice",           href: "#" },
+      { label: "Privacy Policy",     href: "/privacy-policy"     },
+      { label: "Cookie Policy",      href: "/cookie-policy"      },
+      { label: "Terms & Conditions", href: "/terms-and-conditions"},
+      { label: "IP Notice",          href: "/ip-notice"          },
+      { label: "Ad Choice",          href: "/ad-choice"          },
     ],
   },
 ];
@@ -135,14 +108,18 @@ const SOCIAL_LINKS = [
 const PAYMENT_ICONS = [FaCcVisa, FaCcMastercard, FaCcPaypal, FaCcAmex, FaCcDiscover];
 
 const TRUST_BADGES = [
-  { icon: "🔒", text: "SSL Secured Checkout"     },
-  { icon: "✅", text: "Verified Sellers Only"     },
-  { icon: "🚚", text: "Free Returns on All Orders"},
-  { icon: "💬", text: "24/7 Customer Support"     },
+  { icon: "🔒", text: "SSL Secured Checkout"      },
+  { icon: "✅", text: "Verified Sellers Only"      },
+  { icon: "🚚", text: "Free Returns on All Orders" },
+  { icon: "💬", text: "24/7 Customer Support"      },
 ];
 
 const BOTTOM_LINKS = [
-  "Privacy Center", "Cookie Policy", "Terms & Conditions", "IP Notice", "Ad Choice",
+  { label: "Privacy Center",     href: "/privacy-policy"      },
+  { label: "Cookie Policy",      href: "/cookie-policy"       },
+  { label: "Terms & Conditions", href: "/terms-and-conditions" },
+  { label: "IP Notice",          href: "/ip-notice"           },
+  { label: "Ad Choice",          href: "/ad-choice"           },
 ];
 
 // ── Newsletter input row ──────────────────────────────────────
@@ -157,12 +134,7 @@ function SubscribeRow({ type, placeholder, value, onChange, onSubmit, success, S
         {type === 'tel' && (
           <select
             className="text-xs border-r outline-none px-2"
-            style={{
-              backgroundColor: 'transparent',
-              borderColor: THEME.inputBorder,
-              color: THEME.inputText,
-              minWidth: 60,
-            }}
+            style={{ backgroundColor: 'transparent', borderColor: THEME.inputBorder, color: THEME.inputText, minWidth: 60 }}
           >
             <option>+234</option>
             <option>+1</option>
@@ -190,7 +162,7 @@ function SubscribeRow({ type, placeholder, value, onChange, onSubmit, success, S
       </div>
       {success && (
         <p className="text-xs mt-2 flex items-center gap-1" style={{ color: THEME.successText }}>
-          <FaCheckCircle /> You're in!
+          <FaCheckCircle /> You&apos;re in!
         </p>
       )}
     </form>
@@ -214,7 +186,7 @@ export default function Footer() {
   return (
     <footer style={{ backgroundColor: THEME.footerBg, fontFamily: "'Poppins', sans-serif" }}>
 
-      {/* ── Trust badges strip ────────────────────────── */}
+      {/* ── Trust badges strip ── */}
       <div style={{ backgroundColor: THEME.trustBg, borderTop: `1px solid ${THEME.trustBorder}`, borderBottom: `1px solid ${THEME.trustBorder}` }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -228,11 +200,9 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Newsletter band ───────────────────────────── */}
+      {/* ── Newsletter band ── */}
       <div style={{ backgroundColor: THEME.newsletterBg }}>
         <div className="max-w-7xl mx-auto px-6 py-12">
-
-          {/* Headline */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.22em] mb-2" style={{ color: THEME.newsletterLabel }}>
@@ -242,10 +212,9 @@ export default function Footer() {
                 Never miss a drop.
               </h2>
               <p className="text-sm mt-1" style={{ color: THEME.newsletterSub }}>
-                Exclusive offers, new arrivals & style inspo — your way.
+                Exclusive offers, new arrivals &amp; style inspo — your way.
               </p>
             </div>
-            {/* Decorative pill */}
             <div
               className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold self-start md:self-auto"
               style={{ backgroundColor: "#00B86B22", border: "1px solid #00B86B44", color: "#00B86B" }}
@@ -254,12 +223,9 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Three input rows */}
           <div className="grid sm:grid-cols-3 gap-5">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>
-                📧 Email
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>📧 Email</p>
               <SubscribeRow
                 type="email" placeholder="your@email.com"
                 value={email} onChange={setEmail}
@@ -269,9 +235,7 @@ export default function Footer() {
               />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>
-                📱 SMS
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>📱 SMS</p>
               <SubscribeRow
                 type="tel" placeholder="Phone number"
                 value={phone} onChange={setPhone}
@@ -281,9 +245,7 @@ export default function Footer() {
               />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>
-                💬 WhatsApp
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>💬 WhatsApp</p>
               <SubscribeRow
                 type="tel" placeholder="WhatsApp number"
                 value={whatsapp} onChange={setWhatsapp}
@@ -296,15 +258,13 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Main body ─────────────────────────────────── */}
+      {/* ── Main body ── */}
       <div style={{ backgroundColor: THEME.footerBg, borderTop: `1px solid ${THEME.divider}` }}>
         <div className="max-w-7xl mx-auto px-6 py-14">
           <div className="grid grid-cols-2 md:grid-cols-7 gap-10">
 
             {/* Brand column */}
             <div className="col-span-2 flex flex-col gap-7">
-
-              {/* Logo */}
               <div>
                 <p className="text-2xl font-black tracking-tight" style={{ color: THEME.logoText }}>
                   ZO<span style={{ color: THEME.logoAccent }}>VA</span>
@@ -319,26 +279,15 @@ export default function Footer() {
 
               {/* Social */}
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: THEME.navHeading }}>
-                  Follow Us
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: THEME.navHeading }}>Follow Us</p>
                 <div className="flex flex-wrap gap-2">
                   {SOCIAL_LINKS.map(({ Icon, label }) => (
                     <a
                       key={label} href="#" aria-label={label}
-                      onClick={(e) => e.preventDefault()}
                       className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-150"
                       style={{ backgroundColor: THEME.socialBg, border: `1px solid ${THEME.socialBorder}`, color: THEME.socialIcon }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = THEME.socialHoverBg;
-                        e.currentTarget.style.borderColor = THEME.socialHoverBg;
-                        e.currentTarget.style.color = THEME.socialHoverIcon;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = THEME.socialBg;
-                        e.currentTarget.style.borderColor = THEME.socialBorder;
-                        e.currentTarget.style.color = THEME.socialIcon;
-                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = THEME.socialHoverBg; e.currentTarget.style.borderColor = THEME.socialHoverBg; e.currentTarget.style.color = THEME.socialHoverIcon; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = THEME.socialBg; e.currentTarget.style.borderColor = THEME.socialBorder; e.currentTarget.style.color = THEME.socialIcon; }}
                     >
                       <Icon className="text-sm" />
                     </a>
@@ -348,13 +297,11 @@ export default function Footer() {
 
               {/* App downloads */}
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: THEME.navHeading }}>
-                  Get The App
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-3" style={{ color: THEME.navHeading }}>Get The App</p>
                 <div className="flex gap-2 flex-wrap">
                   {[{ Icon: FaApple, label: 'App Store' }, { Icon: FaAndroid, label: 'Google Play' }].map(({ Icon, label }) => (
                     <a
-                      key={label} href="#" onClick={(e) => e.preventDefault()}
+                      key={label} href="#"
                       className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all duration-150"
                       style={{ backgroundColor: THEME.appBg, color: THEME.appText }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.appHoverBg)}
@@ -367,7 +314,7 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Nav columns */}
+            {/* Nav columns — using Next.js Link for internal routes */}
             {NAV_SECTIONS.map((section) => (
               <div key={section.title} className="col-span-1">
                 <p
@@ -379,7 +326,7 @@ export default function Footer() {
                 <ul className="space-y-3 mt-1">
                   {section.links.map(({ label, href }) => (
                     <li key={label}>
-                      <a
+                      <Link
                         href={href}
                         className="text-sm transition-colors"
                         style={{ color: THEME.navLink }}
@@ -387,7 +334,7 @@ export default function Footer() {
                         onMouseLeave={(e) => (e.currentTarget.style.color = THEME.navLink)}
                       >
                         {label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -422,29 +369,30 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Bottom bar ────────────────────────────────── */}
+      {/* ── Bottom bar ── */}
       <div style={{ backgroundColor: THEME.bottomBg }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-xs" style={{ color: THEME.copyrightText }}>
-            © 2009–2026 <span style={{ color: THEME.backTopBg, fontWeight: 700 }}>ZOVA</span>. All Rights Reserved.
+            &copy; 2009&ndash;2026 <span style={{ color: THEME.backTopBg, fontWeight: 700 }}>ZOVA</span>. All Rights Reserved.
           </p>
           <div className="flex flex-wrap justify-center gap-5">
-            {BOTTOM_LINKS.map((link) => (
-              <a
-                key={link} href="#" onClick={(e) => e.preventDefault()}
+            {BOTTOM_LINKS.map(({ label, href }) => (
+              <Link
+                key={label}
+                href={href}
                 className="text-xs transition-colors"
                 style={{ color: THEME.bottomText }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = THEME.bottomLinkHover)}
                 onMouseLeave={(e) => (e.currentTarget.style.color = THEME.bottomText)}
               >
-                {link}
-              </a>
+                {label}
+              </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Back to top ───────────────────────────────── */}
+      {/* ── Back to top ── */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label="Back to top"

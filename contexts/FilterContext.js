@@ -61,13 +61,13 @@ function buildParams(f) {
 // Inner provider — uses useSearchParams (must be inside Suspense)
 // ────────────────────────────────────────────────────────────────────────────
 function FilterProviderContent({ children }) {
-  const router      = useRouter();
-  const pathname    = usePathname();
+  const router       = useRouter();
+  const pathname     = usePathname();
   const searchParams = useSearchParams();
 
   // ── Filter state — initialised from URL immediately ──────────────────────
-  const [filters, setFilters]             = useState(() => parseParams(searchParams));
-  const [filtersReady, setFiltersReady]   = useState(false);
+  const [filters, setFilters]           = useState(() => parseParams(searchParams));
+  const [filtersReady, setFiltersReady] = useState(false);
 
   // ── Metadata ──────────────────────────────────────────────────────────────
   const [categories,            setCategories]            = useState([]);
@@ -78,21 +78,28 @@ function FilterProviderContent({ children }) {
     sizes: [], colors: [], brands: [], priceRange: { min: 0, max: 1000000 },
   });
 
-  // ── Ref to skip URL push when URL caused the state change ─────────────────
-  const isUpdatingFromUrl = useRef(false);
-  const prevQueryString   = useRef(searchParams.toString());
+  // ── Refs ──────────────────────────────────────────────────────────────────
+  // filtersRef: always holds the latest committed filters so mutation
+  // callbacks can read current state without stale closures.
+  const filtersRef      = useRef(filters);
+  const prevQueryString = useRef(searchParams.toString());
 
-  // ── KEY FIX: Sync URL → state in useEffect, NOT during render ────────────
+  // Keep ref in sync — safe to set during render for refs
+  filtersRef.current = filters;
+
+  // ── URL → State (external navigation: back/forward, direct links) ────────
   useEffect(() => {
     const qs = searchParams.toString();
-    if (qs === prevQueryString.current) return; // nothing changed
+    if (qs === prevQueryString.current) return; // we pushed this ourselves
+
     prevQueryString.current = qs;
-    isUpdatingFromUrl.current = true;
-    setFilters(parseParams(searchParams));
+    const parsed = parseParams(searchParams);
+    filtersRef.current = parsed;
+    setFilters(parsed);
     setFiltersReady(true);
   }, [searchParams]);
 
-  // Mark ready on first mount (URL already parsed in useState initialiser)
+  // Mark ready on first mount
   useEffect(() => {
     setFiltersReady(true);
   }, []);
@@ -136,71 +143,82 @@ function FilterProviderContent({ children }) {
     })();
   }, [filters.category, filtersReady]);
 
-  // ── Core update function — updates state AND URL atomically ───────────────
-  const updateFilters = useCallback((partial) => {
-    setFilters((prev) => {
-      const next = { ...prev, ...partial };
+  // ── Helper: commit a fully-computed next state + push URL ─────────────────
+  // Called from event handlers (onClick, onChange), NEVER from inside a
+  // setState updater.  React 18 batches both setFilters + router.replace
+  // into a single render — no flash, no "setState during render" error.
+  const commitFilters = useCallback((next) => {
+    filtersRef.current = next;
+    setFilters(next);
 
-      // Push to URL (skip if we're already processing a URL change)
-      if (!isUpdatingFromUrl.current) {
-        const qs      = buildParams(next);
-        const newUrl  = `${pathname}${qs ? `?${qs}` : ''}`;
-        const currUrl = `${pathname}${prev ? `?${buildParams(prev)}` : ''}`;
-        if (newUrl !== currUrl) {
-          prevQueryString.current = qs; // pre-set so the URL effect skips it
-          router.replace(newUrl, { scroll: false });
-        }
-      }
-
-      isUpdatingFromUrl.current = false;
-      return next;
-    });
+    const qs = buildParams(next);
+    if (qs !== prevQueryString.current) {
+      prevQueryString.current = qs;
+      router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
+    }
   }, [pathname, router]);
 
-  // ── Named helpers ─────────────────────────────────────────────────────────
-  const setSearch     = useCallback((search)     => updateFilters({ search,     page: 1 }), [updateFilters]);
-  const setCategory   = useCallback((category)   => updateFilters({ category,   page: 1 }), [updateFilters]);
-  const setCollection = useCallback((collection) => updateFilters({ collection, page: 1 }), [updateFilters]);
-  const setSortBy     = useCallback((sortBy)     => updateFilters({ sortBy }), [updateFilters]);
-  const setPage       = useCallback((page)       => updateFilters({ page }), [updateFilters]);
+  // ── Public mutation helpers ───────────────────────────────────────────────
+  // Each one reads the LATEST state from filtersRef, computes the full next
+  // object, then hands it to commitFilters.  No functional updaters needed.
 
-  const setPriceRange = useCallback((minPrice, maxPrice) =>
-    updateFilters({ minPrice, maxPrice, page: 1 }), [updateFilters]);
+  const updateFilters = useCallback((partial) => {
+    commitFilters({ ...filtersRef.current, ...partial });
+  }, [commitFilters]);
+
+  const setSearch = useCallback((search) => {
+    commitFilters({ ...filtersRef.current, search, page: 1 });
+  }, [commitFilters]);
+
+  const setCategory = useCallback((category) => {
+    commitFilters({ ...filtersRef.current, category, page: 1 });
+  }, [commitFilters]);
+
+  const setCollection = useCallback((collection) => {
+    commitFilters({ ...filtersRef.current, collection, page: 1 });
+  }, [commitFilters]);
+
+  const setSortBy = useCallback((sortBy) => {
+    commitFilters({ ...filtersRef.current, sortBy });
+  }, [commitFilters]);
+
+  const setPage = useCallback((page) => {
+    commitFilters({ ...filtersRef.current, page });
+  }, [commitFilters]);
+
+  const setPriceRange = useCallback((minPrice, maxPrice) => {
+    commitFilters({ ...filtersRef.current, minPrice, maxPrice, page: 1 });
+  }, [commitFilters]);
 
   const toggleSize = useCallback((size) => {
-    setFilters((prev) => {
-      const sizes = prev.sizes.includes(size)
-        ? prev.sizes.filter((s) => s !== size)
-        : [...prev.sizes, size];
-      const next = { ...prev, sizes, page: 1 };
-      const qs = buildParams(next);
-      prevQueryString.current = qs;
-      router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
-      return next;
-    });
-  }, [pathname, router]);
+    const prev  = filtersRef.current;
+    const sizes = prev.sizes.includes(size)
+      ? prev.sizes.filter((s) => s !== size)
+      : [...prev.sizes, size];
+    commitFilters({ ...prev, sizes, page: 1 });
+  }, [commitFilters]);
 
   const toggleColor = useCallback((color) => {
-    setFilters((prev) => {
-      const colors = prev.colors.includes(color)
-        ? prev.colors.filter((c) => c !== color)
-        : [...prev.colors, color];
-      const next = { ...prev, colors, page: 1 };
-      const qs = buildParams(next);
-      prevQueryString.current = qs;
-      router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
-      return next;
-    });
-  }, [pathname, router]);
+    const prev   = filtersRef.current;
+    const colors = prev.colors.includes(color)
+      ? prev.colors.filter((c) => c !== color)
+      : [...prev.colors, color];
+    commitFilters({ ...prev, colors, page: 1 });
+  }, [commitFilters]);
 
-  const toggleInStock = useCallback(() =>
-    updateFilters({ inStock: !filters.inStock, page: 1 }), [filters.inStock, updateFilters]);
+  const toggleInStock = useCallback(() => {
+    const prev = filtersRef.current;
+    commitFilters({ ...prev, inStock: !prev.inStock, page: 1 });
+  }, [commitFilters]);
 
-  const toggleOnSale = useCallback(() =>
-    updateFilters({ onSale: !filters.onSale, page: 1 }), [filters.onSale, updateFilters]);
+  const toggleOnSale = useCallback(() => {
+    const prev = filtersRef.current;
+    commitFilters({ ...prev, onSale: !prev.onSale, page: 1 });
+  }, [commitFilters]);
 
-  const clearAllFilters = useCallback(() =>
-    updateFilters({ ...INITIAL_FILTERS }), [updateFilters]);
+  const clearAllFilters = useCallback(() => {
+    commitFilters({ ...INITIAL_FILTERS });
+  }, [commitFilters]);
 
   // ── Derived values ────────────────────────────────────────────────────────
   const hasActiveFilters = Boolean(
