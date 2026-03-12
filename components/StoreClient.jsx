@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   FiUser, FiStar, FiPackage, FiCheckCircle, FiMapPin,
-  FiTrendingUp, FiMessageCircle, FiShare2, FiGrid,
+  FiTrendingUp, FiMessageCircle, FiShare2, FiGrid, FiChevronDown,
 } from "react-icons/fi";
 import ProductGrid from "./Shop/ProductGrid";
 
@@ -10,480 +10,599 @@ import ProductGrid from "./Shop/ProductGrid";
 // THEME
 // ─────────────────────────────────────────────────────────────
 const T = {
-  green:         '#00B86B',
-  greenDark:     '#0F7A4F',
-  greenDeep:     '#0A3D2E',
-  greenTint:     '#EDFAF3',
-  greenBorder:   '#A8DFC4',
-  white:         '#FFFFFF',
-  pageBg:        '#F9FAFB',
-  charcoal:      '#111111',
-  medGray:       '#666666',
-  mutedText:     '#999999',
-  border:        '#E8E8E8',
-  softGray:      '#F5F5F5',
-  starYellow:    '#F59E0B',
-  starBg:        '#FFFBEB',
-  trendingText:  '#EA580C',
-  trendingBg:    '#FFF7ED',
-  trendingBorder:'#FED7AA',
-  gold:          '#F59E0B',
+  green:          "#00B86B",
+  greenDark:      "#0F7A4F",
+  greenDeep:      "#0A3D2E",
+  greenTint:      "#EDFAF3",
+  greenBorder:    "#A8DFC4",
+  white:          "#FFFFFF",
+  pageBg:         "#F4F6F4",
+  charcoal:       "#0E0E0E",
+  medGray:        "#5A5A5A",
+  mutedText:      "#9A9A9A",
+  border:         "#E4E8E4",
+  softGray:       "#F0F2F0",
+  starYellow:     "#F59E0B",
+  starBg:         "#FFFBEB",
+  trendingText:   "#EA580C",
+  trendingBg:     "#FFF7ED",
+  trendingBorder: "#FED7AA",
+  // entrance palette
+  E_bg:           "#050C07",
+  E_bgMid:        "#08140A",
+  E_panelL:       "#0A1C10",
+  E_panelR:       "#091A0E",
+  E_border:       "rgba(0,184,107,0.16)",
+  E_borderHi:     "rgba(0,184,107,0.42)",
+  E_white:        "#F0F7F2",
+  E_dim:          "rgba(240,247,242,0.32)",
 };
 
-// ─────────────────────────────────────────────────────────────
-// ENTRANCE ANIMATION COMPONENTS
-// ─────────────────────────────────────────────────────────────
-const PARTICLES = ['🛍️','👗','👠','💼','🧣','👒','🎀','✨','🌟','👜','💛','🧵'];
+// ═════════════════════════════════════════════════════════════
+// ENTRANCE OVERLAY — refined, professional
+// ═════════════════════════════════════════════════════════════
 
-function Particle({ emoji, style }) {
+function GrainSVG() {
   return (
-    <span style={{
-      position: 'absolute',
-      fontSize: style.size,
-      opacity: 0,
-      animation: `floatUp ${style.duration}s ease-out ${style.delay}s forwards`,
-      left: style.left,
-      bottom: '-10%',
-      userSelect: 'none',
-      pointerEvents: 'none',
-      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))',
-      zIndex: 15,
-    }}>
-      {emoji}
-    </span>
+    <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", zIndex:30, opacity:0.028, pointerEvents:"none", mixBlendMode:"overlay" }}>
+      <filter id="grain-e">
+        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="0"/>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#grain-e)"/>
+    </svg>
   );
 }
 
-function GatePanel({ side, phase }) {
-  const isLeft  = side === 'left';
-  const opening = phase >= 2;
+function GridLines() {
   return (
-    <div style={{
-      position: 'absolute',
-      top: 0,
-      [isLeft ? 'left' : 'right']: 0,
-      width: '50%',
-      height: '100%',
-      background: `linear-gradient(${isLeft ? '135deg' : '225deg'}, #0A3D2E 0%, #0F7A4F 50%, #0A3D2E 100%)`,
-      transformOrigin: isLeft ? 'left center' : 'right center',
-      transform: opening
-        ? `perspective(1200px) rotateY(${isLeft ? '-' : ''}95deg)`
-        : 'perspective(1200px) rotateY(0deg)',
-      transition: 'transform 1.1s cubic-bezier(0.77, 0, 0.175, 1)',
-      zIndex: 10,
-      boxShadow: isLeft ? '8px 0 40px rgba(0,0,0,0.5)' : '-8px 0 40px rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-    }}>
-      {[...Array(8)].map((_, i) => (
-        <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${10 + i * 11}%`, width: 1, background: 'rgba(255,255,255,0.05)' }} />
+    <div style={{ position:"absolute", inset:0, zIndex:2, pointerEvents:"none" }}>
+      {[33.33, 66.66].map(p => (
+        <div key={`v${p}`} style={{ position:"absolute", top:0, bottom:0, left:`${p}%`, width:1, background:"rgba(0,184,107,0.04)" }}/>
       ))}
-      {[...Array(6)].map((_, i) => (
-        <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${i * 17}%`, height: 1, background: 'rgba(0,0,0,0.25)' }} />
-      ))}
-      <div style={{
-        position: 'absolute',
-        [isLeft ? 'right' : 'left']: '12%',
-        top: '50%', transform: 'translateY(-50%)',
-        width: 10, height: 48, borderRadius: 5,
-        background: T.gold, boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-      }} />
-      <span style={{ fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.3em', textTransform: 'uppercase', transform: isLeft ? 'rotate(-90deg)' : 'rotate(90deg)' }}>
-        ZOVA
-      </span>
-    </div>
-  );
-}
-
-function Awning({ phase }) {
-  return (
-    <div style={{
-      position: 'absolute', top: 0, left: 0, right: 0, height: 70, zIndex: 20, overflow: 'hidden',
-      transform: phase >= 2 ? 'translateY(0)' : 'translateY(-100%)',
-      transition: 'transform 0.6s ease-out 0.8s',
-    }}>
-      <div style={{ height: '100%', background: 'repeating-linear-gradient(90deg, #00B86B 0px, #00B86B 32px, #0A3D2E 32px, #0A3D2E 64px)', position: 'relative' }}>
-        <svg viewBox="0 0 400 30" preserveAspectRatio="none" style={{ position: 'absolute', bottom: -1, left: 0, width: '100%', height: 30 }}>
-          <path d="M0,0 Q25,30 50,0 Q75,30 100,0 Q125,30 150,0 Q175,30 200,0 Q225,30 250,0 Q275,30 300,0 Q325,30 350,0 Q375,30 400,0 L400,30 L0,30 Z" fill="#111111" />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-function WelcomeBanner({ storeName, phase }) {
-  return (
-    <div style={{
-      position: 'absolute', top: 76, left: '50%', transform: 'translateX(-50%)',
-      zIndex: 25, textAlign: 'center',
-      opacity: phase >= 1 ? 1 : 0, transition: 'opacity 0.5s ease 0.3s', pointerEvents: 'none',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 80, marginBottom: 4 }}>
-        {[0,1].map(i => <div key={i} style={{ width: 2, height: 16, background: T.gold, borderRadius: 1 }} />)}
-      </div>
-      <div style={{ background: T.gold, padding: '10px 32px 12px', borderRadius: 6, position: 'relative', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-        <div style={{ position: 'absolute', left: -10, top: 0, bottom: 0, width: 10, background: '#D97706', clipPath: 'polygon(100% 0, 0 50%, 100% 100%)' }} />
-        <div style={{ position: 'absolute', right: -10, top: 0, bottom: 0, width: 10, background: '#D97706', clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }} />
-        <p style={{ fontSize: 10, fontWeight: 800, color: '#92400E', letterSpacing: '0.15em', textTransform: 'uppercase', margin: '0 0 2px' }}>Welcome to</p>
-        <p style={{ fontSize: 22, fontWeight: 900, color: T.charcoal, margin: 0, letterSpacing: '-0.02em', maxWidth: 280, lineHeight: 1.2 }}>{storeName}</p>
-      </div>
-    </div>
-  );
-}
-
-function LightRays({ phase }) {
-  if (phase < 2) return null;
-  return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none', overflow: 'hidden' }}>
-      {[...Array(6)].map((_, i) => (
-        <div key={i} style={{
-          position: 'absolute', top: '30%', left: '50%', width: 3, height: '180%',
-          background: 'linear-gradient(to bottom, rgba(255,215,0,0.18), transparent)',
-          transformOrigin: 'top center',
-          transform: `rotate(${-60 + i * 24}deg)`,
-          animation: `rayPulse 3s ease-in-out ${i * 0.3}s infinite alternate`,
-        }} />
+      {[33.33, 66.66].map(p => (
+        <div key={`h${p}`} style={{ position:"absolute", left:0, right:0, top:`${p}%`, height:1, background:"rgba(0,184,107,0.04)" }}/>
       ))}
     </div>
   );
 }
 
-function CrowdSilhouettes({ phase }) {
-  const shapes = [
-    { left: '8%',  height: 90,  w: 28, delay: 0    },
-    { left: '18%', height: 110, w: 32, delay: 0.1  },
-    { left: '27%', height: 80,  w: 26, delay: 0.2  },
-    { left: '68%', height: 100, w: 30, delay: 0.15 },
-    { left: '77%', height: 88,  w: 27, delay: 0.05 },
-    { left: '86%', height: 115, w: 33, delay: 0.25 },
+function CornerMarks({ show }) {
+  const SIZE = 20;
+  const W = 1.5;
+  const corners = [
+    { top:"5%",    left:"4%",   borderTop:`${W}px solid ${T.E_borderHi}`, borderLeft:`${W}px solid ${T.E_borderHi}` },
+    { top:"5%",    right:"4%",  borderTop:`${W}px solid ${T.E_borderHi}`, borderRight:`${W}px solid ${T.E_borderHi}` },
+    { bottom:"5%", left:"4%",   borderBottom:`${W}px solid ${T.E_borderHi}`, borderLeft:`${W}px solid ${T.E_borderHi}` },
+    { bottom:"5%", right:"4%",  borderBottom:`${W}px solid ${T.E_borderHi}`, borderRight:`${W}px solid ${T.E_borderHi}` },
   ];
+  return corners.map((c, i) => (
+    <div key={i} style={{ position:"absolute", ...c, width:SIZE, height:SIZE, zIndex:25, opacity: show ? 1 : 0, transition:`opacity 0.7s ease ${0.15 + i * 0.07}s` }}/>
+  ));
+}
+
+function TopBar({ show, storeName }) {
   return (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 6, pointerEvents: 'none' }}>
-      {shapes.map((s, i) => (
-        <div key={i} style={{
-          position: 'absolute', bottom: 0, left: s.left, width: s.w, height: s.height,
-          background: 'rgba(0,0,0,0.35)', borderRadius: `${s.w / 2}px ${s.w / 2}px 0 0`,
-          opacity: phase >= 2 ? 0.6 : 0, transform: phase >= 2 ? 'translateY(0)' : 'translateY(30px)',
-          transition: `opacity 0.5s ease ${0.8 + s.delay}s, transform 0.5s ease ${0.8 + s.delay}s`,
-        }}>
-          <div style={{
-            position: 'absolute', top: -s.w * 0.45, left: '50%', transform: 'translateX(-50%)',
-            width: s.w * 0.65, height: s.w * 0.65, borderRadius: '50%', background: 'rgba(0,0,0,0.35)',
-          }} />
+    <div style={{
+      position:"absolute", top:0, left:0, right:0, height:54, zIndex:28,
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      padding:"0 5%",
+      borderBottom:`1px solid ${T.E_border}`,
+      opacity: show ? 1 : 0,
+      transform: show ? "translateY(0)" : "translateY(-8px)",
+      transition:"opacity 0.9s ease 0.2s, transform 0.9s ease 0.2s",
+    }}>
+      {/* Wordmark */}
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ width:22, height:22, borderRadius:5, border:`1.5px solid ${T.green}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:9, height:9, borderRadius:2, background:T.green }}/>
         </div>
-      ))}
+        <span style={{ fontSize:14, fontWeight:900, color:T.E_white, letterSpacing:"0.14em", fontFamily:"'Georgia', serif", textTransform:"uppercase" }}>
+          ZOVA
+        </span>
+      </div>
+      {/* Store name (small) */}
+      <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+        {storeName}
+      </span>
+      {/* Right: location */}
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+          Onitsha Main Market
+        </span>
+        <div style={{ width:1, height:14, background:T.E_border }}/>
+        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+          Nigeria
+        </span>
+      </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// ENTRANCE OVERLAY
-// ─────────────────────────────────────────────────────────────
-function StoreEntranceOverlay({ storeName, onDone }) {
-  const [phase, setPhase]     = useState(0);
-  const [overlayOpacity, setOverlayOpacity] = useState(1);
-  const particles = useRef(
-    [...Array(18)].map((_, i) => ({
-      emoji:    PARTICLES[i % PARTICLES.length],
-      delay:    0.2 + Math.random() * 1.2,
-      duration: 2.2 + Math.random() * 1.5,
-      left:     `${5 + Math.random() * 90}%`,
-      size:     `${16 + Math.random() * 20}px`,
-    }))
+function CentreLockup({ storeName, show, fading }) {
+  return (
+    <div style={{
+      position:"absolute", top:"50%", left:"50%",
+      transform:"translate(-50%, -50%)",
+      zIndex:28, textAlign:"center", pointerEvents:"none",
+      width:"90%", maxWidth:520,
+      opacity: fading ? 0 : (show ? 1 : 0),
+      transition: fading ? "opacity 0.8s ease" : "opacity 1s ease 0.1s",
+    }}>
+      {/* Rule + label */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:18, opacity: show ? 1 : 0, transition:"opacity 1s ease 0.1s" }}>
+        <div style={{ flex:1, height:1, background:`linear-gradient(to right, transparent, ${T.E_borderHi})` }}/>
+        <span style={{ fontSize:9, fontWeight:700, color:T.green, letterSpacing:"0.3em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+          Welcome to
+        </span>
+        <div style={{ flex:1, height:1, background:`linear-gradient(to left, transparent, ${T.E_borderHi})` }}/>
+      </div>
+
+      {/* Store name */}
+      <div style={{
+        fontFamily:"'Georgia', 'Times New Roman', serif",
+        fontSize:"clamp(46px, 9.5vw, 88px)",
+        fontWeight:700, color:T.E_white,
+        letterSpacing:"-0.015em", lineHeight:0.95,
+        opacity: show ? 1 : 0,
+        transform: show ? "translateY(0)" : "translateY(18px)",
+        transition:"opacity 1.1s ease 0.25s, transform 1.1s cubic-bezier(0.22,1,0.36,1) 0.25s",
+      }}>
+        {storeName}
+      </div>
+
+      {/* Underline sweep */}
+      <div style={{
+        width: show ? "100%" : "0%", height:1.5,
+        background:`linear-gradient(to right, transparent 0%, ${T.green} 25%, ${T.green} 75%, transparent 100%)`,
+        margin:"16px auto 0", maxWidth:300, borderRadius:1,
+        transition:"width 1.2s cubic-bezier(0.77,0,0.175,1) 0.65s",
+      }}/>
+
+      {/* Sub-label */}
+      <div style={{
+        marginTop:14, fontSize:10, fontWeight:600, color:T.E_dim,
+        letterSpacing:"0.24em", textTransform:"uppercase",
+        fontFamily:"'Helvetica Neue', sans-serif",
+        opacity: show ? 1 : 0, transition:"opacity 1s ease 0.85s",
+      }}>
+        Opening the store
+      </div>
+    </div>
   );
+}
+
+function GatePanel({ side, open }) {
+  const isLeft = side === "left";
+  return (
+    <div style={{
+      position:"absolute", top:0,
+      [isLeft ? "left" : "right"]: 0,
+      width:"50%", height:"100%",
+      transformOrigin: isLeft ? "left center" : "right center",
+      transform: open
+        ? `perspective(2000px) rotateY(${isLeft ? "-" : ""}115deg)`
+        : "perspective(2000px) rotateY(0deg)",
+      transition:"transform 2.1s cubic-bezier(0.77, 0, 0.175, 1)",
+      zIndex:20, overflow:"hidden", backfaceVisibility:"hidden", willChange:"transform",
+    }}>
+      {/* Base */}
+      <div style={{ position:"absolute", inset:0, background: isLeft
+        ? `linear-gradient(125deg, #030806 0%, ${T.E_panelL} 40%, #0E2416 70%, #060E08 100%)`
+        : `linear-gradient(235deg, #030806 0%, ${T.E_panelR} 40%, #0C2013 70%, #060E08 100%)`
+      }}/>
+      {/* Vertical grain lines */}
+      {Array.from({length:7},(_,i)=>(
+        <div key={i} style={{ position:"absolute", top:0, bottom:0, left:`${i*14.3}%`, width:1, background:"rgba(0,184,107,0.022)" }}/>
+      ))}
+      {/* Outer inset frame */}
+      <div style={{ position:"absolute", top:"4.5%", bottom:"4.5%", left:"6%", right:"6%", border:"1px solid rgba(0,184,107,0.1)", borderRadius:2 }}/>
+      {/* Inner inset frame */}
+      <div style={{ position:"absolute", top:"8%",  bottom:"8%",  left:"11%", right:"11%", border:"1px solid rgba(0,184,107,0.05)", borderRadius:2 }}/>
+      {/* Top recessed panel */}
+      <div style={{ position:"absolute", top:"11%", left:"14%", right:"14%", height:"26%", background:"rgba(0,0,0,0.14)", border:"1px solid rgba(0,184,107,0.07)", borderRadius:2 }}/>
+      {/* Bottom recessed panel */}
+      <div style={{ position:"absolute", top:"43%", bottom:"11%", left:"14%", right:"14%", background:"rgba(0,0,0,0.14)", border:"1px solid rgba(0,184,107,0.07)", borderRadius:2 }}/>
+      {/* Mid rail */}
+      <div style={{ position:"absolute", top:"41%", left:"8%", right:"8%", height:1.5, background:"rgba(0,184,107,0.09)" }}/>
+      {/* Handle */}
+      <div style={{
+        position:"absolute",
+        [isLeft ? "right" : "left"]: "17%",
+        top:"50%", transform:"translateY(-50%)",
+        width:8, height:44,
+        background:"linear-gradient(180deg, #162A1C 0%, #0B1E11 50%, #162A1C 100%)",
+        borderRadius:3.5,
+        border:"1px solid rgba(0,184,107,0.22)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+      }}>
+        <div style={{ width:2.5, height:22, borderRadius:1.5, background:"linear-gradient(180deg, rgba(0,184,107,0.45) 0%, rgba(0,184,107,0.85) 50%, rgba(0,184,107,0.45) 100%)", boxShadow:"0 0 5px rgba(0,184,107,0.25)" }}/>
+      </div>
+      {/* Edge depth shadow */}
+      <div style={{ position:"absolute", inset:0, boxShadow: isLeft ? "inset -70px 0 90px rgba(0,0,0,0.55)" : "inset 70px 0 90px rgba(0,0,0,0.55)" }}/>
+      {/* Hinge edge highlight */}
+      <div style={{ position:"absolute", top:0, bottom:0, [isLeft?"left":"right"]:0, width:2, background:"rgba(0,184,107,0.1)" }}/>
+    </div>
+  );
+}
+
+function ArchFrame() {
+  return (
+    <div style={{
+      position:"absolute", top:"11%", left:"50%", transform:"translateX(-50%)",
+      width:"min(490px, 91vw)", height:"min(610px, 79vh)",
+      zIndex:19, pointerEvents:"none",
+    }}>
+      <svg viewBox="0 0 490 125" style={{ position:"absolute", top:0, left:0, width:"100%", height:"20%", overflow:"visible" }}>
+        <path d="M13,114 L13,62 Q13,-2 245,-2 Q477,-2 477,62 L477,114" fill="none" stroke="rgba(0,184,107,0.32)" strokeWidth="1.5"/>
+        <path d="M0,122 L0,70 Q0,-14 245,-14 Q490,-14 490,70 L490,122" fill="none" stroke="rgba(0,184,107,0.08)" strokeWidth="1"/>
+        {/* Keystone */}
+        <rect x="221" y="-13" width="48" height="22" rx="2" fill="#08140A" stroke="rgba(0,184,107,0.46)" strokeWidth="1"/>
+        <text x="245" y="5" textAnchor="middle" fill="rgba(0,184,107,0.65)" fontSize="7.5" fontFamily="'Helvetica Neue', sans-serif" fontWeight="800" letterSpacing="3.5">ZOVA</text>
+      </svg>
+      {/* Left pillar */}
+      <div style={{ position:"absolute", left:0, top:"19%", bottom:0, width:13, background:"linear-gradient(to right, #020604, #0C1C10)", borderTop:"1.5px solid rgba(0,184,107,0.28)" }}>
+        <div style={{ position:"absolute", top:-8, left:-3, right:-3, height:8, background:"#0A1A0D", borderTop:"1px solid rgba(0,184,107,0.36)" }}/>
+      </div>
+      {/* Right pillar */}
+      <div style={{ position:"absolute", right:0, top:"19%", bottom:0, width:13, background:"linear-gradient(to left, #020604, #0C1C10)", borderTop:"1.5px solid rgba(0,184,107,0.28)" }}>
+        <div style={{ position:"absolute", top:-8, left:-3, right:-3, height:8, background:"#0A1A0D", borderTop:"1px solid rgba(0,184,107,0.36)" }}/>
+      </div>
+    </div>
+  );
+}
+
+function AmbientGlow({ progress }) {
+  return (
+    <div style={{
+      position:"absolute", inset:0, zIndex:3, pointerEvents:"none",
+      background:`radial-gradient(ellipse 55% 45% at 50% 54%, rgba(0,184,107,${0.05 + progress * 0.13}) 0%, transparent 68%)`,
+    }}/>
+  );
+}
+
+function ProgressBar({ progress }) {
+  return (
+    <div style={{ position:"absolute", bottom:0, left:0, right:0, height:2, zIndex:32, background:"rgba(0,184,107,0.07)" }}>
+      <div style={{ height:"100%", width:`${progress * 100}%`, background:`linear-gradient(to right, ${T.greenDark}, ${T.green})`, transition:"width 0.4s linear", boxShadow:`0 0 7px ${T.green}` }}/>
+    </div>
+  );
+}
+
+function BottomRow({ show, storeName, onSkip }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div style={{
+      position:"absolute", bottom:22, left:"5%", right:"5%", zIndex:30,
+      display:"flex", alignItems:"center", justifyContent:"space-between",
+      opacity: show ? 1 : 0, transition:"opacity 0.8s ease 1s",
+    }}>
+      {/* Pulse dot + label */}
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ position:"relative", width:8, height:8 }}>
+          <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:T.green, animation:"e_pulse 2s ease-in-out infinite" }}/>
+          <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:T.green, opacity:0.3, animation:"e_ring 2s ease-in-out infinite" }}/>
+        </div>
+        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.22em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+          Entering {storeName}
+        </span>
+      </div>
+      {/* Skip */}
+      <button type="button" onClick={onSkip}
+        onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+        style={{
+          padding:"7px 18px", borderRadius:2,
+          border:`1px solid ${hov ? T.E_borderHi : T.E_border}`,
+          background: hov ? "rgba(0,184,107,0.1)" : "transparent",
+          color: hov ? T.E_white : T.E_dim,
+          fontSize:10, fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase",
+          cursor:"pointer", transition:"all 0.18s",
+          fontFamily:"'Helvetica Neue', sans-serif",
+        }}
+      >
+        Enter now
+      </button>
+    </div>
+  );
+}
+
+function StoreEntranceOverlay({ storeName, onDone }) {
+  const TOTAL_MS = 5200;
+  const [phase, setPhase]     = useState(0);
+  const [fadeOut, setFadeOut] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const startRef = useRef(null);
+  const rafRef   = useRef(null);
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 400);
-    const t2 = setTimeout(() => setPhase(2), 1100);
-    const t3 = setTimeout(() => setPhase(3), 2900);
-    const t4 = setTimeout(() => setOverlayOpacity(0), 3100);
-    const t5 = setTimeout(() => onDone(), 3900);
-    return () => [t1,t2,t3,t4,t5].forEach(clearTimeout);
+    const tick = ts => {
+      if (!startRef.current) startRef.current = ts;
+      const p = Math.min((ts - startRef.current) / TOTAL_MS, 1);
+      setProgress(p);
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  useEffect(() => {
+    const t = [
+      setTimeout(() => setPhase(1), 300),
+      setTimeout(() => setPhase(2), 1400),
+      setTimeout(() => setFadeOut(true), TOTAL_MS - 700),
+      setTimeout(() => onDone(), TOTAL_MS + 300),
+    ];
+    return () => t.forEach(clearTimeout);
+  }, []);
+
+  const skip = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    setFadeOut(true);
+    setTimeout(onDone, 650);
   }, []);
 
   return (
     <>
       <style>{`
-        @keyframes floatUp {
-          0%   { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.8); }
-          15%  { opacity: 1; }
-          85%  { opacity: 0.8; }
-          100% { opacity: 0; transform: translateY(-70vh) rotate(20deg) scale(1.1); }
-        }
-        @keyframes rayPulse {
-          from { opacity: 0.4; transform: scaleX(0.8); }
-          to   { opacity: 1;   transform: scaleX(1.3); }
-        }
-        @keyframes groundGlow {
-          0%, 100% { opacity: 0.3; }
-          50%       { opacity: 0.7; }
-        }
-        @keyframes bounceDot {
-          0%,100% { transform: translateY(0); }
-          50%     { transform: translateY(-6px); }
-        }
+        @keyframes e_pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.85);opacity:.7} }
+        @keyframes e_ring  { 0%{transform:scale(1);opacity:.3} 100%{transform:scale(2.6);opacity:0} }
       `}</style>
-
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 9999, overflow: 'hidden',
-        opacity: overlayOpacity,
-        transition: overlayOpacity === 0 ? 'opacity 0.7s ease' : 'none',
-        background: '#070F0B',
+        position:"fixed", inset:0, zIndex:9999, overflow:"hidden",
+        opacity: fadeOut ? 0 : 1,
+        transition: fadeOut ? "opacity 0.9s ease" : "none",
+        background: T.E_bg,
+        fontFamily:"'Helvetica Neue', 'Segoe UI', sans-serif",
       }}>
-        {/* Bg radial */}
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 60%, #0F7A4F22 0%, #070F0B 70%)' }} />
+        <div style={{ position:"absolute", inset:0, zIndex:1, background:`radial-gradient(ellipse 75% 65% at 50% 50%, ${T.E_bgMid} 0%, ${T.E_bg} 100%)` }}/>
+        <GridLines/>
+        <GrainSVG/>
+        <AmbientGlow progress={progress}/>
 
-        {/* Ground glow */}
+        {/* Interior glow (appears when gates open) */}
         {phase >= 2 && (
           <div style={{
-            position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 120,
-            background: 'radial-gradient(ellipse at 50% 100%, rgba(0,184,107,0.35) 0%, transparent 70%)',
-            animation: 'groundGlow 2s ease-in-out infinite', zIndex: 8,
-          }} />
+            position:"absolute", top:"11%", left:"50%", transform:"translateX(-50%)",
+            width:"min(490px,91vw)", height:"min(610px,79vh)",
+            zIndex:7, pointerEvents:"none",
+            background:"radial-gradient(ellipse 70% 55% at 50% 42%, rgba(0,184,107,0.09) 0%, transparent 65%)",
+            animation:"fadeIn_e 1.2s ease both",
+          }}/>
         )}
+        {/* Floor reflection */}
+        <div style={{ position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)", width:"min(490px,91vw)", height:70, zIndex:6, pointerEvents:"none", background:`linear-gradient(to top, rgba(0,184,107,${0.03 + progress * 0.07}) 0%, transparent 100%)` }}/>
 
-        <LightRays phase={phase} />
-        <CrowdSilhouettes phase={phase} />
-
-        {/* Particles */}
-        {phase >= 2 && particles.current.map((p, i) => (
-          <Particle key={i} emoji={p.emoji} style={p} />
-        ))}
-
-        <Awning phase={phase} />
-        <WelcomeBanner storeName={storeName} phase={phase} />
-
-        {/* Arch frame */}
+        {/* Gate container */}
         <div style={{
-          position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)',
-          width: 'min(480px, 90vw)', height: 'min(560px, 75vh)',
-          zIndex: 9, pointerEvents: 'none',
+          position:"absolute",
+          top:"calc(11% + min(610px,79vh) * 0.19 + 12px)",
+          left:"50%", transform:"translateX(-50%)",
+          width:"min(464px, 87.5vw)", height:"min(496px, 64vh)",
+          zIndex:20, overflow:"hidden",
         }}>
-          <div style={{
-            position: 'absolute', top: -2, left: -2, right: -2, height: '30%',
-            border: `4px solid ${T.greenDark}`, borderBottom: 'none',
-            borderRadius: '50% 50% 0 0 / 100% 100% 0 0', zIndex: 12,
-          }}>
-            <div style={{
-              position: 'absolute', top: '38%', left: '50%', transform: 'translateX(-50%)',
-              width: 48, height: 28, background: T.greenDeep, border: `3px solid ${T.gold}`,
-              borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ fontSize: 8, fontWeight: 900, color: T.gold, letterSpacing: '0.1em' }}>ZOVA</span>
-            </div>
-          </div>
-          {['left','right'].map(side => (
-            <div key={side} style={{
-              position: 'absolute', top: '28%', [side]: -4, width: 12, bottom: 0, zIndex: 12,
-              background: `linear-gradient(to ${side === 'left' ? 'right' : 'left'}, #0A3D2E, #0F7A4F)`,
-              border: `2px solid ${T.greenDark}`,
-            }} />
-          ))}
+          <GatePanel side="left"  open={phase >= 2}/>
+          <GatePanel side="right" open={phase >= 2}/>
         </div>
 
-        {/* Gate doors */}
-        <div style={{
-          position: 'absolute',
-          top: 'calc(15% + min(560px,75vh) * 0.30)',
-          left: '50%', transform: 'translateX(-50%)',
-          width: 'min(468px, 88vw)', height: 'min(395px, 55vh)',
-          zIndex: 10, overflow: 'hidden',
-        }}>
-          <GatePanel side="left"  phase={phase} />
-          <GatePanel side="right" phase={phase} />
-          {phase >= 2 && (
-            <div style={{
-              position: 'absolute', inset: 0, zIndex: 5, pointerEvents: 'none',
-              background: 'radial-gradient(ellipse at 50% 40%, rgba(0,184,107,0.22) 0%, transparent 70%)',
-            }} />
-          )}
-        </div>
+        <ArchFrame/>
+        <CornerMarks show={phase >= 1}/>
+        <TopBar show={phase >= 1} storeName={storeName}/>
 
-        {/* Entering label */}
-        <div style={{
-          position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)',
-          zIndex: 20, textAlign: 'center',
-          opacity: phase >= 2 ? 1 : 0, transition: 'opacity 0.5s ease 1.2s',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 5 }}>
-              {[0,1,2].map(i => (
-                <div key={i} style={{
-                  width: 7, height: 7, borderRadius: '50%', background: T.green,
-                  animation: `bounceDot 0.9s ease-in-out ${i * 0.18}s infinite`,
-                }} />
-              ))}
-            </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Entering store
-            </span>
-          </div>
-        </div>
+        {/* Lockup fades when gates open */}
+        <CentreLockup storeName={storeName} show={phase >= 1} fading={phase >= 2}/>
+
+        <ProgressBar progress={progress}/>
+        <BottomRow show={phase >= 2} storeName={storeName} onSkip={skip}/>
+
+        <style>{`@keyframes fadeIn_e { from{opacity:0} to{opacity:1} }`}</style>
       </div>
     </>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// STORE UI COMPONENTS
-// ─────────────────────────────────────────────────────────────
-function StatPill({ icon: Icon, label, value, variant = "neutral" }) {
-  const styles = {
-    neutral: { bg: T.softGray,  text: T.medGray,  icon: T.mutedText  },
-    rating:  { bg: T.starBg,    text: T.charcoal, icon: T.starYellow },
-    green:   { bg: T.greenTint, text: T.greenDeep,icon: T.green      },
-  }[variant];
+// ═════════════════════════════════════════════════════════════
+// STORE HEADER
+// ═════════════════════════════════════════════════════════════
+
+function Avatar({ store, size = 96 }) {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 100, background: styles.bg, flexShrink: 0 }}>
-      <Icon size={12} style={{ color: styles.icon }} />
-      <span style={{ fontSize: 12, fontWeight: 700, color: styles.text }}>{value}</span>
-      <span style={{ fontSize: 12, color: T.mutedText }}>{label}</span>
+    <div style={{
+      width:size, height:size, borderRadius:18, flexShrink:0, overflow:"hidden",
+      border:`1.5px solid ${T.border}`, background:T.softGray,
+      display:"flex", alignItems:"center", justifyContent:"center",
+      boxShadow:"0 2px 16px rgba(0,0,0,0.07)",
+    }}>
+      {store.logo_url
+        ? <img src={store.logo_url} alt={store.name} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
+        : <span style={{ fontSize:size * 0.38, fontWeight:900, color:T.green, fontFamily:"'Georgia', serif" }}>{store.name?.charAt(0).toUpperCase()}</span>
+      }
     </div>
   );
 }
 
-function FollowButton() {
-  const [following, setFollowing] = useState(false);
-  const [hov, setHov]             = useState(false);
+function Pill({ children, variant = "neutral" }) {
+  const v = {
+    neutral: { bg:T.softGray,   text:T.medGray   },
+    green:   { bg:T.greenTint,  text:T.greenDeep },
+    star:    { bg:T.starBg,     text:"#92400E"   },
+    trend:   { bg:T.trendingBg, text:T.trendingText },
+  }[variant];
   return (
-    <button type="button"
-      onClick={() => setFollowing(f => !f)}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{
-        padding: '10px 22px', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.18s',
-        border: following ? `1.5px solid ${T.greenBorder}` : 'none',
-        background: following ? T.greenTint : hov ? T.greenDark : T.green,
-        color: following ? T.greenDeep : T.white,
-      }}
-    >
-      {following ? '✓ Following' : '+ Follow'}
-    </button>
+    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 11px", borderRadius:100, fontSize:12, fontWeight:700, background:v.bg, color:v.text, border:`1px solid rgba(0,0,0,0.05)`, whiteSpace:"nowrap" }}>
+      {children}
+    </span>
   );
 }
 
-function MessageButton() {
+function FollowBtn() {
+  const [on, setOn] = useState(false);
+  const [hov, setHov] = useState(false);
+  return (
+    <button type="button" onClick={()=>setOn(o=>!o)}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{
+        height:40, padding:"0 22px", borderRadius:10, fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.16s",
+        border: on ? `1.5px solid ${T.greenBorder}` : "none",
+        background: on ? T.greenTint : hov ? T.greenDark : T.green,
+        color: on ? T.greenDeep : T.white,
+        letterSpacing:"-0.01em",
+      }}
+    >{on ? "✓ Following" : "+ Follow"}</button>
+  );
+}
+
+function MsgBtn() {
   const [hov, setHov] = useState(false);
   return (
     <button type="button"
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
       style={{
-        display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px',
-        borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.18s',
-        border: `1.5px solid ${T.border}`, background: hov ? T.softGray : T.white, color: T.charcoal,
+        height:40, padding:"0 18px", borderRadius:10, fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.16s",
+        border:`1.5px solid ${T.border}`, background: hov ? T.softGray : T.white, color:T.charcoal,
+        display:"flex", alignItems:"center", gap:7,
+      }}
+    ><FiMessageCircle size={14}/> Message</button>
+  );
+}
+
+function ShareBtn({ store }) {
+  const [hov, setHov]     = useState(false);
+  const [ok, setOk]       = useState(false);
+  const handle = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (navigator.share) { try { await navigator.share({ title:store.name, url }); } catch {} }
+    else { try { await navigator.clipboard.writeText(url); setOk(true); setTimeout(()=>setOk(false),1800); } catch {} }
+  };
+  return (
+    <button type="button" onClick={handle}
+      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{
+        width:40, height:40, borderRadius:10, cursor:"pointer",
+        border:`1.5px solid ${T.border}`, background: hov ? T.softGray : T.white,
+        display:"flex", alignItems:"center", justifyContent:"center", transition:"background 0.14s", flexShrink:0,
       }}
     >
-      <FiMessageCircle size={14} /> Message
+      {ok ? <span style={{ fontSize:11, fontWeight:800, color:T.green }}>✓</span> : <FiShare2 size={14} style={{ color:T.charcoal }}/>}
     </button>
   );
 }
 
-function ShareButton({ store }) {
-  const [hov, setHov]     = useState(false);
-  const [copied, setCopied] = useState(false);
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try { await navigator.share({ title: store.name, url }); } catch {}
-    } else {
-      try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
-    }
-  };
+function VerifiedBadge() {
   return (
-    <button type="button" onClick={handleShare}
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{
-        width: 42, height: 42, borderRadius: 10, cursor: 'pointer',
-        border: `1.5px solid ${T.border}`, background: hov ? T.softGray : T.white,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s', flexShrink: 0,
-      }}
-    >
-      {copied
-        ? <span style={{ fontSize: 11, fontWeight: 800, color: T.green }}>✓</span>
-        : <FiShare2 size={15} style={{ color: T.charcoal }} />
-      }
-    </button>
+    <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:11, fontWeight:700, color:T.green, padding:"3px 9px", borderRadius:100, background:T.greenTint, border:`1px solid ${T.greenBorder}` }}>
+      <FiCheckCircle size={10}/> Verified
+    </span>
+  );
+}
+
+function TrendingBadge() {
+  return (
+    <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:11, fontWeight:800, color:T.trendingText, padding:"3px 9px", borderRadius:100, background:T.trendingBg, border:`1px solid ${T.trendingBorder}` }}>
+      <FiTrendingUp size={10}/> Trending
+    </span>
   );
 }
 
 function StoreHeader({ store, productCount, loading }) {
   const rating    = Number(store.rating    || 4.8);
   const followers = Number(store.followers || 0);
+  const reviews   = Number(store.reviews   || 0);
+  const [descOpen, setDescOpen] = useState(false);
+  const desc = store.description || "";
+  const longDesc = desc.length > 120;
 
   return (
-    <div style={{ background: T.white, borderBottom: `1px solid ${T.border}` }}>
-      {/* Awning strip */}
-      <div style={{ height: 8, background: `repeating-linear-gradient(90deg, ${T.green} 0px, ${T.green} 24px, ${T.greenDeep} 24px, ${T.greenDeep} 48px)` }} />
+    <header style={{ background:T.white, borderBottom:`1px solid ${T.border}` }}>
+      {/* Green awning stripe */}
+      <div style={{ height:6, background:`repeating-linear-gradient(90deg, ${T.green} 0px, ${T.green} 20px, ${T.greenDeep} 20px, ${T.greenDeep} 40px)` }}/>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px 24px' }} className="sm:px-6 lg:px-8">
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{ maxWidth:1200, margin:"0 auto", padding:"28px 28px 0" }}>
 
-          {/* Logo */}
-          <div style={{
-            width: 100, height: 100, borderRadius: 20, flexShrink: 0, overflow: 'hidden',
-            border: `2px solid ${T.border}`, background: T.softGray,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          }}>
-            {store.logo_url
-              ? <img src={store.logo_url} alt={store.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span style={{ fontSize: 36, fontWeight: 900, color: T.green }}>{store.name?.charAt(0).toUpperCase()}</span>
-            }
-          </div>
+        {/* Top row: avatar + info + actions */}
+        <div style={{ display:"flex", gap:22, alignItems:"flex-start", flexWrap:"wrap", marginBottom:20 }}>
+          <Avatar store={store}/>
 
-          {/* Info */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: 22, fontWeight: 900, color: T.charcoal, margin: 0, letterSpacing: '-0.025em' }}>
+          {/* Info block */}
+          <div style={{ flex:1, minWidth:200 }}>
+            {/* Name row */}
+            <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:6 }}>
+              <h1 style={{ fontSize:22, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily:"'Georgia', serif" }}>
                 {store.name}
               </h1>
-              {store.kyc_status === 'verified' && (
-                <FiCheckCircle size={16} style={{ color: T.green, flexShrink: 0 }} title="Verified" />
-              )}
-              {store.is_trending && (
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 100,
-                  background: T.trendingBg, color: T.trendingText, border: `1px solid ${T.trendingBorder}`,
-                }}>
-                  <FiTrendingUp size={10} /> Trending
-                </span>
-              )}
+              {store.kyc_status === "verified" && <VerifiedBadge/>}
+              {store.is_trending && <TrendingBadge/>}
             </div>
 
+            {/* Location */}
             {store.location && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
-                <FiMapPin size={11} style={{ color: T.mutedText }} />
-                <span style={{ fontSize: 12, color: T.mutedText }}>{store.location}</span>
+              <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:10 }}>
+                <FiMapPin size={11} style={{ color:T.mutedText }}/>
+                <span style={{ fontSize:12, color:T.mutedText, fontWeight:500 }}>{store.location}</span>
               </div>
             )}
 
-            {store.description && (
-              <p className="line-clamp-2" style={{ fontSize: 13, color: T.medGray, margin: '0 0 12px', maxWidth: 520, lineHeight: 1.65 }}>
-                {store.description}
-              </p>
+            {/* Description */}
+            {desc && (
+              <div style={{ marginBottom:14 }}>
+                <p style={{ fontSize:13, color:T.medGray, lineHeight:1.7, margin:0, maxWidth:500 }}>
+                  {longDesc && !descOpen ? `${desc.slice(0, 120)}…` : desc}
+                </p>
+                {longDesc && (
+                  <button type="button" onClick={()=>setDescOpen(o=>!o)} style={{ fontSize:12, color:T.green, fontWeight:700, background:"none", border:"none", cursor:"pointer", padding:"4px 0 0", display:"flex", alignItems:"center", gap:3 }}>
+                    {descOpen ? "Show less" : "Read more"}
+                    <FiChevronDown size={12} style={{ transform: descOpen ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}/>
+                  </button>
+                )}
+              </div>
             )}
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              <StatPill icon={FiStar}    value={rating.toFixed(1)} label="Rating"    variant="rating"  />
-              <StatPill icon={FiUser}    value={followers.toLocaleString()} label="Followers" variant="neutral" />
-              <StatPill icon={FiPackage} value={loading ? '…' : productCount} label="Products" variant="green" />
+            {/* Stat pills */}
+            <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+              <Pill variant="star">
+                <FiStar size={11} style={{ color:T.starYellow }}/> {rating.toFixed(1)} Rating
+              </Pill>
+              {reviews > 0 && (
+                <Pill variant="neutral">
+                  <FiMessageCircle size={11}/> {reviews.toLocaleString()} Reviews
+                </Pill>
+              )}
+              <Pill variant="neutral">
+                <FiUser size={11}/> {followers.toLocaleString()} Followers
+              </Pill>
+              <Pill variant="green">
+                <FiPackage size={11}/> {loading ? "…" : productCount} Products
+              </Pill>
             </div>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, paddingTop: 4 }}>
-            <ShareButton store={store} />
-            <MessageButton />
-            <FollowButton />
+          {/* Action buttons */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0, paddingTop:2 }}>
+            <ShareBtn store={store}/>
+            <MsgBtn/>
+            <FollowBtn/>
           </div>
         </div>
+
+        {/* Tab bar stub */}
+        <div style={{ display:"flex", gap:0, borderTop:`1px solid ${T.border}`, marginLeft:-28, marginRight:-28, paddingLeft:28 }}>
+          {["All Products", "Top Rated", "New Arrivals"].map((tab, i) => (
+            <button key={tab} type="button" style={{
+              padding:"12px 18px", fontSize:13, fontWeight: i === 0 ? 700 : 500,
+              color: i === 0 ? T.green : T.medGray,
+              background:"transparent", border:"none", cursor:"pointer",
+              borderBottom: i === 0 ? `2px solid ${T.green}` : "2px solid transparent",
+              marginBottom:-1, transition:"all 0.15s", letterSpacing:"-0.01em",
+            }}>{tab}</button>
+          ))}
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════
 // MAIN EXPORT
-// ─────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════
 export default function StoreClient({ store }) {
   const [entranceDone, setEntranceDone] = useState(false);
   const [products, setProducts]         = useState([]);
@@ -503,11 +622,11 @@ export default function StoreClient({ store }) {
           setProducts(prev => page === 1 ? data.data : [...prev, ...data.data]);
           setMeta(data.meta?.pagination || null);
         } else {
-          setError(data.error || 'Failed to load products');
+          setError(data.error || "Failed to load products");
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load products');
+        setError("Failed to load products");
       } finally {
         setLoading(false);
       }
@@ -516,39 +635,38 @@ export default function StoreClient({ store }) {
 
   return (
     <>
-      {/* Entrance animation — auto-plays, unmounts itself when done */}
       {!entranceDone && (
         <StoreEntranceOverlay
-          storeName={store?.name || 'This Store'}
+          storeName={store?.name || "This Store"}
           onDone={() => setEntranceDone(true)}
         />
       )}
 
-      {/* Store content — fades in as entrance fades out */}
       <div style={{
-        minHeight: '100vh',
-        background: T.pageBg,
+        minHeight:"100vh",
+        background:T.pageBg,
         opacity: entranceDone ? 1 : 0,
-        transform: entranceDone ? 'translateY(0)' : 'translateY(16px)',
-        transition: 'opacity 0.7s ease, transform 0.7s ease',
+        transform: entranceDone ? "translateY(0)" : "translateY(14px)",
+        transition:"opacity 0.7s ease, transform 0.7s ease",
       }}>
-        <StoreHeader store={store} productCount={products.length} loading={loading} />
+        <StoreHeader store={store} productCount={products.length} loading={loading}/>
 
-        <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 80px' }} className="sm:px-6 lg:px-8">
-          {/* Section heading */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <main style={{ maxWidth:1200, margin:"0 auto", padding:"36px 28px 96px" }}>
+
+          {/* Section header */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
             <div>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.mutedText, margin: '0 0 3px' }}>Browse</p>
-              <h2 style={{ fontSize: 20, fontWeight: 900, color: T.charcoal, margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:T.mutedText, margin:"0 0 4px", fontFamily:"'Helvetica Neue', sans-serif" }}>Browse</p>
+              <h2 style={{ fontSize:20, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily:"'Georgia', serif", display:"flex", alignItems:"center", gap:10 }}>
                 All Products
                 {!loading && products.length > 0 && (
-                  <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: T.greenTint, padding: '2px 10px', borderRadius: 100, border: `1px solid ${T.greenBorder}` }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:T.green, background:T.greenTint, padding:"2px 10px", borderRadius:100, border:`1px solid ${T.greenBorder}`, fontFamily:"'Helvetica Neue', sans-serif", letterSpacing:0 }}>
                     {products.length}
                   </span>
                 )}
               </h2>
             </div>
-            <FiGrid size={16} style={{ color: T.mutedText }} />
+            <FiGrid size={15} style={{ color:T.mutedText }}/>
           </div>
 
           <ProductGrid
