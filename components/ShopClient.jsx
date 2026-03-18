@@ -74,10 +74,15 @@ function ShopHubContent({ initialCategory }) {
   useEffect(() => {
     if (didSeedCategory.current) return;
     if (!filtersReady) return;
+
     if (initialCategory && filters.category !== initialCategory) {
       setCategory(initialCategory);
+      // DO NOT set didSeedCategory.current = true here.
+      // We must wait for the next render when filters.category === initialCategory
+    } else {
+      // Either we have no initialCategory, or it has successfully propagated into filters.category
+      didSeedCategory.current = true;
     }
-    didSeedCategory.current = true;
   }, [filtersReady, initialCategory, setCategory, filters.category]);
 
   // ── Keep local search input in sync with context ────────────

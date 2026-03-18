@@ -225,14 +225,12 @@ const CategoriesModal = ({ onClose }) => {
             </div>
 
           ) : (
-            <div className="flex" style={{ minHeight: 440 }}>
+            <div className="flex flex-col md:flex-row" style={{ minHeight: 440 }}>
 
-              {/* ── Left Sidebar ── */}
+              {/* ── Left Sidebar (Accordion on Mobile, Sidebar on Desktop) ── */}
               <div
-                className="flex flex-col py-3"
+                className="flex flex-col py-3 md:w-[240px] w-full shrink-0"
                 style={{
-                  width: 240,
-                  flexShrink: 0,
                   backgroundColor: THEME.sidebarBg,
                   borderRight: `1px solid ${THEME.sidebarBorder}`,
                 }}
@@ -249,9 +247,9 @@ const CategoriesModal = ({ onClose }) => {
                     const Icon = iconMap(cat.slug);
                     const isActive = idx === activeCategory;
                     return (
-                      <button
-                        key={cat.id || idx}
-                        type="button"
+                      <React.Fragment key={cat.id || idx}>
+                        <button
+                          type="button"
                         onClick={() => setActiveCategory(idx)}
                         className="relative flex items-center gap-3 px-4 py-3 text-left w-full transition-all duration-150"
                         style={{
@@ -295,20 +293,106 @@ const CategoriesModal = ({ onClose }) => {
                           )}
                         </div>
                         <FiChevronRight
-                          className="w-3.5 h-3.5 flex-shrink-0"
+                          className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
                           style={{
                             color: isActive ? THEME.sidebarActiveBar : THEME.sidebarText,
                             opacity: isActive ? 1 : 0.25,
+                            transform: isActive ? 'rotate(90deg)' : 'rotate(0deg)',
                           }}
                         />
                       </button>
-                    );
-                  })}
-                </div>
+
+                      {/* ── Mobile Accordion Content ── */}
+                      {isActive && (
+                        <div className="md:hidden px-4 pb-4 bg-white/50">
+                          <div className="pt-2">
+                            <Link
+                              href={`/shop/${cat.slug}`}
+                              onClick={handleClose}
+                              className="inline-flex items-center gap-1 text-xs font-bold mb-4 transition-colors"
+                              style={{ color: THEME.ctaGhostText }}
+                            >
+                              View All {cat.name} <FiArrowRight className="w-3.5 h-3.5" />
+                            </Link>
+
+                            <div className="space-y-6">
+                              {cat.children?.map((group, groupIdx) => (
+                                <div key={group.id || groupIdx}>
+                                  <Link
+                                    href={`/shop/${group.slug}`}
+                                    onClick={handleClose}
+                                    className="block text-[11px] font-black uppercase tracking-[0.15em] mb-2 transition-colors"
+                                    style={{ color: THEME.groupLabel }}
+                                  >
+                                    {group.name}
+                                  </Link>
+                                  <div
+                                    className="w-5 h-[2px] mb-2 rounded-full"
+                                    style={{ backgroundColor: THEME.accentDivider, opacity: 0.4 }}
+                                  />
+                                  <ul className="grid grid-cols-2 gap-y-2 gap-x-4">
+                                    {group.children?.map((item, itemIdx) => (
+                                      <li key={item.id || itemIdx}>
+                                        <Link
+                                          href={`/shop/${item.slug}`}
+                                          onClick={handleClose}
+                                          className="text-sm inline-flex items-center gap-1.5 transition-all"
+                                          style={{ color: THEME.itemText }}
+                                        >
+                                          <span className="truncate">{item.name}</span>
+                                          {item.is_new && (
+                                            <span
+                                              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
+                                              style={{
+                                                backgroundColor: THEME.badgeBg,
+                                                color: THEME.badgeText,
+                                                border: `1px solid ${THEME.badgeBorder}`,
+                                              }}
+                                            >
+                                              NEW
+                                            </span>
+                                          )}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Mobile Banner strip */}
+                            <div
+                              className="mt-6 rounded-xl p-4 flex flex-col gap-3"
+                              style={{ backgroundColor: THEME.bannerBg, border: `1px solid ${THEME.bannerBorder}` }}
+                            >
+                              <div>
+                                <p className="text-sm font-bold" style={{ color: THEME.panelHeading }}>
+                                  New Arrivals
+                                </p>
+                                <p className="text-xs mt-0.5" style={{ color: THEME.panelSubText }}>
+                                  Fresh styles in {cat.name}
+                                </p>
+                              </div>
+                              <Link
+                                href={`/shop/${cat.slug}?filter=new`}
+                                onClick={handleClose}
+                                className="w-full justify-center py-2.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                                style={{ backgroundColor: THEME.ctaBg, color: THEME.ctaText }}
+                              >
+                                Shop Now <FiArrowRight className="w-3.5 h-3.5" />
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
 
                 {/* Sidebar CTA */}
                 <div
-                  className="px-4 pt-3 pb-4"
+                  className="px-4 pt-3 pb-4 shrink-0 mt-auto"
                   style={{ borderTop: `1px solid ${THEME.sidebarBorder}` }}
                 >
                   <Link
@@ -324,9 +408,9 @@ const CategoriesModal = ({ onClose }) => {
                 </div>
               </div>
 
-              {/* ── Right Panel ── */}
+              {/* ── Right Panel (Desktop Only) ── */}
               <div
-                className="flex-1 overflow-y-auto"
+                className="hidden md:block flex-1 overflow-y-auto"
                 style={{ backgroundColor: THEME.panelBg, maxHeight: 520 }}
               >
                 {activeCat && (
