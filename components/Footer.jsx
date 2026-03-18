@@ -1,12 +1,11 @@
 "use client";
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import {
   FaFacebook, FaInstagram, FaTwitter, FaYoutube,
   FaPinterest, FaSnapchat, FaTiktok,
   FaApple, FaAndroid,
   FaCcVisa, FaCcMastercard, FaCcPaypal, FaCcAmex, FaCcDiscover,
-  FaArrowRight, FaCheckCircle, FaPhone, FaWhatsapp,
 } from 'react-icons/fa';
 import { FiArrowUp } from 'react-icons/fi';
 import { usePathname } from 'next/navigation';
@@ -15,20 +14,6 @@ const THEME = {
   footerBg:           "#FFFFFF",
   sectionAltBg:       "#F5F5F5",
   divider:            "#E8E8E8",
-  newsletterBg:       "#0A3D2E",
-  newsletterBorder:   "#ffffff14",
-  newsletterHeading:  "#FFFFFF",
-  newsletterSub:      "#A8C4B8",
-  newsletterLabel:    "#00B86B",
-  inputBg:            "#ffffff0D",
-  inputBorder:        "#ffffff22",
-  inputText:          "#FFFFFF",
-  inputPlaceholder:   "#6B9E8A",
-  btnBg:              "#00B86B",
-  btnHover:           "#0F7A4F",
-  whatsappBg:         "#25D366",
-  whatsappHover:      "#1ebe5d",
-  successText:        "#00B86B",
   logoAccent:         "#00B86B",
   logoText:           "#111111",
   taglineText:        "#666666",
@@ -60,7 +45,6 @@ const THEME = {
   backTopText:        "#FFFFFF",
 };
 
-// ── NAV_SECTIONS: use real hrefs for internal pages ──────────
 const NAV_SECTIONS = [
   {
     title: "Company",
@@ -75,22 +59,22 @@ const NAV_SECTIONS = [
   {
     title: "Support",
     links: [
-      { label: "Shipping Info",  href: "/shipping-info"   },
-      { label: "Free Returns",   href: "/return-policy"   }, // ✅ points to return policy page
-      { label: "How To Order",   href: "/how-to-order"    },
-      { label: "How To Track",   href: "/how-to-track"    },
-      { label: "Size Guide",     href: "/size-guide"      },
-      { label: "Refund Policy",  href: "/return-policy"   }, // ✅ points to return policy page
+      { label: "Shipping Info",  href: "/shipping-info"  },
+      { label: "Free Returns",   href: "/return-policy"  },
+      { label: "How To Order",   href: "/how-to-order"   },
+      { label: "How To Track",   href: "/how-to-track"   },
+      { label: "Size Guide",     href: "/size-guide"     },
+      { label: "Refund Policy",  href: "/return-policy"  },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy",     href: "/privacy-policy"     },
-      { label: "Cookie Policy",      href: "/cookie-policy"      },
-      { label: "Terms & Conditions", href: "/terms-and-conditions"},
-      { label: "IP Notice",          href: "/ip-notice"          },
-      { label: "Ad Choice",          href: "/ad-choice"          },
+      { label: "Privacy Policy",     href: "/privacy-policy"      },
+      { label: "Cookie Policy",      href: "/cookie-policy"       },
+      { label: "Terms & Conditions", href: "/terms-and-conditions" },
+      { label: "IP Notice",          href: "/ip-notice"           },
+      { label: "Ad Choice",          href: "/ad-choice"           },
     ],
   },
 ];
@@ -122,66 +106,9 @@ const BOTTOM_LINKS = [
   { label: "Ad Choice",          href: "/ad-choice"           },
 ];
 
-// ── Newsletter input row ──────────────────────────────────────
-function SubscribeRow({ type, placeholder, value, onChange, onSubmit, success, SubmitIcon, submitBg, submitHover }) {
-  const [hovering, setHovering] = useState(false);
-  return (
-    <form onSubmit={onSubmit}>
-      <div
-        className="flex rounded-xl overflow-hidden"
-        style={{ border: `1px solid ${THEME.inputBorder}`, backgroundColor: THEME.inputBg }}
-      >
-        {type === 'tel' && (
-          <select
-            className="text-xs border-r outline-none px-2"
-            style={{ backgroundColor: 'transparent', borderColor: THEME.inputBorder, color: THEME.inputText, minWidth: 60 }}
-          >
-            <option>+234</option>
-            <option>+1</option>
-            <option>+44</option>
-          </select>
-        )}
-        <input
-          type={type === 'tel' ? 'tel' : type}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          required
-          className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent"
-          style={{ color: THEME.inputText }}
-        />
-        <button
-          type="submit"
-          className="px-4 flex items-center justify-center transition-colors"
-          style={{ backgroundColor: hovering ? submitHover : submitBg }}
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
-        >
-          <SubmitIcon className="text-white text-sm" />
-        </button>
-      </div>
-      {success && (
-        <p className="text-xs mt-2 flex items-center gap-1" style={{ color: THEME.successText }}>
-          <FaCheckCircle /> You&apos;re in!
-        </p>
-      )}
-    </form>
-  );
-}
-
-// ── Main Footer ───────────────────────────────────────────────
 export default function Footer() {
   const pathname = usePathname();
   if (['/login', '/signup', '/register', '/forgot-password', '/reset-password'].includes(pathname)) return null;
-
-  const [email,    setEmail]    = useState('');
-  const [phone,    setPhone]    = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [emailOk,  setEmailOk]  = useState(false);
-  const [phoneOk,  setPhoneOk]  = useState(false);
-  const [waOk,     setWaOk]     = useState(false);
-
-  const flash = (setter) => { setter(true); setTimeout(() => setter(false), 3000); };
 
   return (
     <footer style={{ backgroundColor: THEME.footerBg, fontFamily: "'Poppins', sans-serif" }}>
@@ -196,64 +123,6 @@ export default function Footer() {
                 <span className="text-xs font-semibold" style={{ color: THEME.trustText }}>{text}</span>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Newsletter band ── */}
-      <div style={{ backgroundColor: THEME.newsletterBg }}>
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] mb-2" style={{ color: THEME.newsletterLabel }}>
-                Stay in the loop
-              </p>
-              <h2 className="text-3xl font-black leading-tight" style={{ color: THEME.newsletterHeading }}>
-                Never miss a drop.
-              </h2>
-              <p className="text-sm mt-1" style={{ color: THEME.newsletterSub }}>
-                Exclusive offers, new arrivals &amp; style inspo — your way.
-              </p>
-            </div>
-            <div
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold self-start md:self-auto"
-              style={{ backgroundColor: "#00B86B22", border: "1px solid #00B86B44", color: "#00B86B" }}
-            >
-              🎁 Get 10% off your first order
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-3 gap-5">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>📧 Email</p>
-              <SubscribeRow
-                type="email" placeholder="your@email.com"
-                value={email} onChange={setEmail}
-                onSubmit={(e) => { e.preventDefault(); if (email) { flash(setEmailOk); setEmail(''); } }}
-                success={emailOk} SubmitIcon={FaArrowRight}
-                submitBg={THEME.btnBg} submitHover={THEME.btnHover}
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>📱 SMS</p>
-              <SubscribeRow
-                type="tel" placeholder="Phone number"
-                value={phone} onChange={setPhone}
-                onSubmit={(e) => { e.preventDefault(); if (phone) { flash(setPhoneOk); setPhone(''); } }}
-                success={phoneOk} SubmitIcon={FaPhone}
-                submitBg={THEME.btnBg} submitHover={THEME.btnHover}
-              />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-2" style={{ color: THEME.newsletterSub }}>💬 WhatsApp</p>
-              <SubscribeRow
-                type="tel" placeholder="WhatsApp number"
-                value={whatsapp} onChange={setWhatsapp}
-                onSubmit={(e) => { e.preventDefault(); if (whatsapp) { flash(setWaOk); setWhatsapp(''); } }}
-                success={waOk} SubmitIcon={FaWhatsapp}
-                submitBg={THEME.whatsappBg} submitHover={THEME.whatsappHover}
-              />
-            </div>
           </div>
         </div>
       </div>
@@ -314,7 +183,7 @@ export default function Footer() {
               </div>
             </div>
 
-            {/* Nav columns — using Next.js Link for internal routes */}
+            {/* Nav columns */}
             {NAV_SECTIONS.map((section) => (
               <div key={section.title} className="col-span-1">
                 <p
