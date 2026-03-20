@@ -144,13 +144,13 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signInErr) { setError(signInErr.message); setLoading(false); return; }
-      const { data: adminMembership } = await supabase
-        .from('admin_users').select('id').eq('user_id', signInData?.user?.id || '').eq('is_active', true).maybeSingle();
-      if (adminMembership) { router.push('/admin'); return; }
+      const redirectRes = await fetch('/api/auth/post-login-target', { cache: 'no-store' });
+      const redirectJson = await redirectRes.json().catch(() => ({}));
+      const target = typeof redirectJson?.target === 'string' ? redirectJson.target : '/';
       setSuccess(true);
-      setTimeout(() => router.push('/'), 1800);
+      setTimeout(() => router.push(target), 1800);
     } catch { setError('An unexpected error occurred'); setLoading(false); }
   };
 

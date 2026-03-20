@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { resolvePostLoginTarget } from "@/utils/postLoginRedirect";
 
 export async function updateSession(request) {
   let response = NextResponse.next({
@@ -57,15 +58,8 @@ export async function updateSession(request) {
     (request.nextUrl.pathname.startsWith("/login") ||
       request.nextUrl.pathname.startsWith("/signup"))
   ) {
-    const { data: adminMembership } = await supabase
-      .from("admin_users")
-      .select("id, role, is_active")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .maybeSingle();
-
     const url = request.nextUrl.clone();
-    url.pathname = adminMembership ? "/admin" : "/";
+    url.pathname = await resolvePostLoginTarget(supabase, user.id);
     return NextResponse.redirect(url);
   }
 

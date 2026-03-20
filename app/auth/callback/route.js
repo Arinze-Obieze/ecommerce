@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
+import { resolvePostLoginTarget } from '@/utils/postLoginRedirect';
 
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url);
@@ -15,17 +16,8 @@ export async function GET(request) {
       const userId = authUser?.user?.id || null;
       let targetPath = next;
 
-      if (userId) {
-        const { data: adminMembership } = await supabase
-          .from('admin_users')
-          .select('id, is_active')
-          .eq('user_id', userId)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (adminMembership && (next === '/' || next === '/login' || next === '/signup')) {
-          targetPath = '/admin';
-        }
+      if (userId && (next === '/' || next === '/login' || next === '/signup')) {
+        targetPath = await resolvePostLoginTarget(supabase, userId);
       }
 
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer

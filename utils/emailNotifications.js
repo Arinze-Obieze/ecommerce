@@ -53,7 +53,7 @@ export async function sendStoreAccessGrantedEmail({
   const byName = safeName(assignedByName, 'an administrator');
   const safeStoreName = escapeHtml(storeName || 'your store');
   const safeRole = roleLabel(role);
-  const dashboardUrl = `${resolveSiteUrl()}/seller/dashboard`;
+  const dashboardUrl = `${resolveSiteUrl()}/store/dashboard`;
 
   return sendZeptoMail({
     to: recipient,
@@ -85,7 +85,7 @@ export async function sendStoreAccessUpdatedEmail({
   const safeStoreName = escapeHtml(storeName || 'your store');
   const safeRole = roleLabel(role);
   const safeStatus = String(status || '').trim().toLowerCase() || 'active';
-  const dashboardUrl = `${resolveSiteUrl()}/seller/dashboard`;
+  const dashboardUrl = `${resolveSiteUrl()}/store/dashboard`;
 
   return sendZeptoMail({
     to: recipient,
@@ -175,7 +175,7 @@ export async function sendSellerOrderCompletedEmail({
   }
 
   const displayName = safeName(recipientName);
-  const dashboardUrl = `${resolveSiteUrl()}/seller/dashboard`;
+  const dashboardUrl = `${resolveSiteUrl()}/store/dashboard`;
 
   return sendZeptoMail({
     to: recipient,
