@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
 import { writeActivityLog } from '@/utils/serverTelemetry';
+import { sendStoreAccessGrantedEmail } from '@/utils/emailNotifications';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -70,7 +71,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const ctx = await requireStoreApi([STORE_ROLES.OWNER]);
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER]);
   if (!ctx.ok) return ctx.response;
 
   const rateLimit = await enforceRateLimit({
@@ -95,6 +96,10 @@ export async function POST(request) {
 
   if (!validRole(role)) {
     return NextResponse.json({ error: 'Role must be manager or staff' }, { status: 400 });
+  }
+
+  if (ctx.membership.role === STORE_ROLES.MANAGER && role !== STORE_ROLES.STAFF) {
+    return NextResponse.json({ error: 'Managers can only add staff members' }, { status: 403 });
   }
 
   const { data: targetUser, error: targetUserError } = await ctx.adminClient
@@ -133,6 +138,29 @@ export async function POST(request) {
   }
 
   const assignment = assignmentRows?.[0];
+  let emailStatus = 'skipped';
+  let emailError = null;
+
+  if (targetUser.email) {
+    const { data: actorProfile } = await ctx.adminClient
+      .from('users')
+      .select('full_name')
+      .eq('id', ctx.user.id)
+      .maybeSingle();
+
+    const emailResult = await sendStoreAccessGrantedEmail({
+      to: targetUser.email,
+      recipientName: targetUser.full_name,
+      storeName: ctx.store?.name || 'your store',
+      role,
+      assignedByName:
+        actorProfile?.full_name ||
+        (ctx.membership.role === STORE_ROLES.OWNER ? 'Store Owner' : 'Store Manager'),
+    });
+
+    emailStatus = emailResult.ok ? 'sent' : 'failed';
+    emailError = emailResult.ok ? null : emailResult.error || 'Failed to send notification email';
+  }
 
   await writeActivityLog({
     request,
@@ -147,6 +175,8 @@ export async function POST(request) {
       storeId: ctx.membership.store_id,
       memberUserId: targetUser.id,
       role,
+      emailStatus,
+      ...(emailError ? { emailError } : {}),
     },
   });
 
@@ -155,6 +185,8 @@ export async function POST(request) {
     data: {
       ...assignment,
       user: targetUser,
+      email_status: emailStatus,
+      ...(emailError ? { email_error: emailError } : {}),
     },
   });
 }

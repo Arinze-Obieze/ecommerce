@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit } from '@/utils/rateLimit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
+import { notifyOrderCompletionEmails } from '@/utils/emailNotifications';
 
 function createServiceClient() {
   return createClient(
@@ -426,6 +427,26 @@ export async function POST(request) {
       metadata: { orderId: order.id, reference },
       durationMs: Date.now() - startedAt,
     });
+
+    const emailSummary = await notifyOrderCompletionEmails({
+      serviceClient,
+      orderId: order.id,
+    });
+
+    if (!emailSummary.ok || emailSummary.buyer?.status === 'failed' || emailSummary.sellers?.failed > 0) {
+      await writeActivityLog({
+        request,
+        level: 'WARN',
+        service: 'payment-service',
+        action: 'PAYMENT_EMAIL_NOTIFICATION_PARTIAL_FAILURE',
+        status: 'failure',
+        statusCode: 200,
+        message: 'Payment succeeded but one or more order emails failed',
+        userId: user.id,
+        metadata: { orderId: order.id, emailSummary },
+        durationMs: Date.now() - startedAt,
+      });
+    }
 
     return NextResponse.json({
       success: true,

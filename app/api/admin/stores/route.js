@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
 import { writeAdminAuditLog } from '@/utils/adminAudit';
 import { enforceRateLimit } from '@/utils/rateLimit';
+import { sendStoreAccessGrantedEmail } from '@/utils/emailNotifications';
 
 function sanitizeSlug(value) {
   return String(value || '')
@@ -132,6 +133,10 @@ export async function POST(request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
+  let ownerEmailStatus = 'skipped';
+  let ownerEmailError = null;
+  let ownerEmail = null;
+
   if (ownerUserId) {
     const { error: ownerError } = await admin.adminClient
       .from('store_users')
@@ -152,6 +157,30 @@ export async function POST(request) {
         { status: 207 }
       );
     }
+
+    const { data: ownerProfile } = await admin.adminClient
+      .from('users')
+      .select('id, full_name, email')
+      .eq('id', ownerUserId)
+      .maybeSingle();
+
+    ownerEmail = String(ownerProfile?.email || '').trim().toLowerCase() || null;
+    if (!ownerEmail) {
+      const { data: authUserLookup } = await admin.adminClient.auth.admin.getUserById(ownerUserId);
+      ownerEmail = String(authUserLookup?.user?.email || '').trim().toLowerCase() || null;
+    }
+
+    if (ownerEmail) {
+      const emailResult = await sendStoreAccessGrantedEmail({
+        to: ownerEmail,
+        recipientName: ownerProfile?.full_name || null,
+        storeName: store.name,
+        role: 'owner',
+        assignedByName: 'Super Admin',
+      });
+      ownerEmailStatus = emailResult.ok ? 'sent' : 'failed';
+      ownerEmailError = emailResult.ok ? null : emailResult.error || 'Failed to send owner email';
+    }
   }
 
   await writeAdminAuditLog(admin.adminClient, {
@@ -161,8 +190,24 @@ export async function POST(request) {
     targetType: 'store',
     targetId: store.id,
     afterData: store,
-    metadata: { ownerUserId },
+    metadata: {
+      ownerUserId,
+      ownerEmailStatus,
+      ...(ownerEmail ? { ownerEmail } : {}),
+      ...(ownerEmailError ? { ownerEmailError } : {}),
+    },
   });
 
-  return NextResponse.json({ success: true, data: store }, { status: 201 });
+  return NextResponse.json(
+    {
+      success: true,
+      data: store,
+      notifications: {
+        ownerEmailStatus,
+        ...(ownerEmail ? { ownerEmail } : {}),
+        ...(ownerEmailError ? { ownerEmailError } : {}),
+      },
+    },
+    { status: 201 }
+  );
 }

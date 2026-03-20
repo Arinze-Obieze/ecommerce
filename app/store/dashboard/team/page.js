@@ -22,7 +22,7 @@ export default function StoreDashboardTeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('staff');
 
-  const canManageTeam = currentMembership?.role === 'owner';
+  const canManageTeam = currentMembership?.role === 'owner' || currentMembership?.role === 'manager';
 
   const loadTeam = async () => {
     try {
@@ -151,7 +151,7 @@ export default function StoreDashboardTeamPage() {
         </form>
         {!canManageTeam ? (
           <p className="mt-3 text-xs text-amber-700">
-            Only owner can add/remove team members.
+            Only owner or manager can add/remove team members.
           </p>
         ) : null}
       </div>

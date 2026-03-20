@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { enforceRateLimit } from '@/utils/rateLimit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
+import { notifyOrderCompletionEmails } from '@/utils/emailNotifications';
 
 function createServiceClient() {
   return createClient(
@@ -256,6 +257,26 @@ export async function POST(request) {
       metadata: { orderId, reference },
       durationMs: Date.now() - startedAt,
     });
+
+    const emailSummary = await notifyOrderCompletionEmails({
+      serviceClient,
+      orderId: order.id,
+    });
+
+    if (!emailSummary.ok || emailSummary.buyer?.status === 'failed' || emailSummary.sellers?.failed > 0) {
+      await writeActivityLog({
+        request,
+        level: 'WARN',
+        service: 'payment-service',
+        action: 'PAYSTACK_WEBHOOK_EMAIL_NOTIFICATION_PARTIAL_FAILURE',
+        status: 'failure',
+        statusCode: 200,
+        message: 'Webhook completed order but one or more emails failed',
+        userId: order.user_id || null,
+        metadata: { orderId, reference, emailSummary },
+        durationMs: Date.now() - startedAt,
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

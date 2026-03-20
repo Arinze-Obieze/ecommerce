@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
 import { writeActivityLog } from '@/utils/serverTelemetry';
+import { sendStoreAccessRevokedEmail, sendStoreAccessUpdatedEmail } from '@/utils/emailNotifications';
 
 function validRole(role) {
   return role === STORE_ROLES.MANAGER || role === STORE_ROLES.STAFF;
 }
 
 export async function PATCH(request, { params }) {
-  const ctx = await requireStoreApi([STORE_ROLES.OWNER]);
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER]);
   if (!ctx.ok) return ctx.response;
 
   const rateLimit = await enforceRateLimit({
@@ -45,11 +46,18 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: 'Owner assignment cannot be changed here' }, { status: 409 });
   }
 
+  if (ctx.membership.role === STORE_ROLES.MANAGER && assignment.role !== STORE_ROLES.STAFF) {
+    return NextResponse.json({ error: 'Managers can only update staff members' }, { status: 403 });
+  }
+
   const updates = {};
   if (body?.role !== undefined) {
     const role = String(body.role).trim();
     if (!validRole(role)) {
       return NextResponse.json({ error: 'Role must be manager or staff' }, { status: 400 });
+    }
+    if (ctx.membership.role === STORE_ROLES.MANAGER && role !== STORE_ROLES.STAFF) {
+      return NextResponse.json({ error: 'Managers can only assign staff role' }, { status: 403 });
     }
     updates.role = role;
   }
@@ -76,6 +84,28 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: updateError.message }, { status: 400 });
   }
 
+  const updatedAssignment = rows?.[0] || assignment;
+  let emailStatus = 'skipped';
+  let emailError = null;
+
+  const { data: targetUser } = await ctx.adminClient
+    .from('users')
+    .select('id, full_name, email')
+    .eq('id', assignment.user_id)
+    .maybeSingle();
+
+  if (targetUser?.email && (Object.prototype.hasOwnProperty.call(updates, 'role') || Object.prototype.hasOwnProperty.call(updates, 'status'))) {
+    const emailResult = await sendStoreAccessUpdatedEmail({
+      to: targetUser.email,
+      recipientName: targetUser.full_name,
+      storeName: ctx.store?.name || 'your store',
+      role: updatedAssignment.role,
+      status: updatedAssignment.status,
+    });
+    emailStatus = emailResult.ok ? 'sent' : 'failed';
+    emailError = emailResult.ok ? null : emailResult.error || 'Failed to send update notification';
+  }
+
   await writeActivityLog({
     request,
     level: 'INFO',
@@ -89,14 +119,23 @@ export async function PATCH(request, { params }) {
       storeId: ctx.membership.store_id,
       memberUserId: assignment.user_id,
       updates,
+      emailStatus,
+      ...(emailError ? { emailError } : {}),
     },
   });
 
-  return NextResponse.json({ success: true, data: rows?.[0] || null });
+  return NextResponse.json({
+    success: true,
+    data: {
+      ...updatedAssignment,
+      email_status: emailStatus,
+      ...(emailError ? { email_error: emailError } : {}),
+    },
+  });
 }
 
 export async function DELETE(request, { params }) {
-  const ctx = await requireStoreApi([STORE_ROLES.OWNER]);
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER]);
   if (!ctx.ok) return ctx.response;
 
   const rateLimit = await enforceRateLimit({
@@ -132,6 +171,10 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error: 'Owner cannot be removed here' }, { status: 409 });
   }
 
+  if (ctx.membership.role === STORE_ROLES.MANAGER && assignment.role !== STORE_ROLES.STAFF) {
+    return NextResponse.json({ error: 'Managers can only remove staff members' }, { status: 403 });
+  }
+
   const { error: updateError } = await ctx.adminClient
     .from('store_users')
     .update({ status: 'revoked' })
@@ -139,6 +182,24 @@ export async function DELETE(request, { params }) {
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 400 });
+  }
+
+  let emailStatus = 'skipped';
+  let emailError = null;
+  const { data: targetUser } = await ctx.adminClient
+    .from('users')
+    .select('id, full_name, email')
+    .eq('id', assignment.user_id)
+    .maybeSingle();
+
+  if (targetUser?.email) {
+    const emailResult = await sendStoreAccessRevokedEmail({
+      to: targetUser.email,
+      recipientName: targetUser.full_name,
+      storeName: ctx.store?.name || 'your store',
+    });
+    emailStatus = emailResult.ok ? 'sent' : 'failed';
+    emailError = emailResult.ok ? null : emailResult.error || 'Failed to send revoke notification';
   }
 
   await writeActivityLog({
@@ -153,8 +214,18 @@ export async function DELETE(request, { params }) {
     metadata: {
       storeId: ctx.membership.store_id,
       memberUserId: assignment.user_id,
+      emailStatus,
+      ...(emailError ? { emailError } : {}),
     },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    data: {
+      assignmentId: assignment.id,
+      memberUserId: assignment.user_id,
+      email_status: emailStatus,
+      ...(emailError ? { email_error: emailError } : {}),
+    },
+  });
 }

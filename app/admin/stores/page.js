@@ -87,6 +87,21 @@ export default function AdminStoresPage() {
       setForm(initialForm);
       setIsCreateOpen(false);
       await loadStores(1, limit);
+      const ownerEmailStatus = json?.notifications?.ownerEmailStatus || 'skipped';
+      const ownerEmail = json?.notifications?.ownerEmail;
+      const ownerEmailError = json?.notifications?.ownerEmailError;
+
+      let nextNotice = 'Store created successfully.';
+      let nextNoticeType = 'success';
+      if (ownerEmailStatus === 'sent' && ownerEmail) {
+        nextNotice = `${nextNotice} Primary manager notification sent to ${ownerEmail}.`;
+      } else if (ownerEmailStatus === 'failed') {
+        nextNotice = `${nextNotice} Primary manager email failed${ownerEmailError ? `: ${ownerEmailError}` : '.'}`;
+        nextNoticeType = 'warning';
+      }
+
+      setNotice(nextNotice);
+      setNoticeType(nextNoticeType);
       if (res.status === 207) {
         setError(json.error || 'Store created with partial issues');
       }
