@@ -1,37 +1,64 @@
-import { requireStorePage } from '@/utils/storeAuth';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useEffect, useState } from 'react';
+import CreateProductPanel from '@/components/Store/CreateProductPanel';
 
-export default async function StoreDashboardOverviewPage() {
-  const { membership, store, adminClient } = await requireStorePage();
+export default function StoreDashboardOverviewPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [data, setData] = useState(null);
 
-  const [productsRes, teamRes] = await Promise.all([
-    adminClient
-      .from('products')
-      .select('id, is_active, stock_quantity')
-      .eq('store_id', membership.store_id),
-    adminClient
-      .from('store_users')
-      .select('id, status')
-      .eq('store_id', membership.store_id),
-  ]);
+  const loadOverview = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await fetch('/api/store/analytics/overview', { cache: 'no-store' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to load dashboard overview');
+      setData(json.data || null);
+    } catch (err) {
+      setError(err.message || 'Failed to load dashboard overview');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const products = productsRes.data || [];
-  const team = teamRes.data || [];
+  useEffect(() => {
+    loadOverview();
+  }, []);
+
+  const products = data?.products || {};
+  const orders = data?.orders || {};
+  const escrow = data?.escrow || {};
+  const cartDemand = data?.cartDemand || {};
 
   const cards = [
-    { label: 'Products', value: products.length },
-    { label: 'Active Products', value: products.filter((p) => p.is_active).length },
-    { label: 'Out of Stock', value: products.filter((p) => Number(p.stock_quantity || 0) <= 0).length },
-    { label: 'Team Members', value: team.filter((t) => t.status === 'active').length },
+    { label: 'Total Products', value: products.total || 0 },
+    { label: 'Pending Review', value: products.pendingReview || 0 },
+    { label: 'Out of Stock', value: products.outOfStock || 0 },
+    { label: 'Paid Orders', value: orders.paidOrders || 0 },
+    { label: 'Gross Sales', value: `₦${Number(orders.grossSales || 0).toLocaleString()}` },
+    { label: 'Escrow Held', value: `₦${Number(escrow.held || 0).toLocaleString()}` },
+    { label: 'Products in Carts (7d)', value: cartDemand.productsInCarts7d || 0 },
+    { label: 'Units in Carts (7d)', value: cartDemand.unitsInCarts7d || 0 },
   ];
 
   return (
     <div className="space-y-6">
+      <CreateProductPanel onCreated={loadOverview} />
+
+      {error ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
+      ) : null}
+
+      {loading ? (
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 text-sm text-gray-500">Loading store overview...</div>
+      ) : null}
+
       <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">Store Overview</h2>
+        <h2 className="text-lg font-bold text-gray-900">Store Operations Overview</h2>
         <p className="text-sm text-gray-500">
-          Monitor team and catalog health for <span className="font-semibold text-gray-700">{store?.name}</span>.
+          Real-time snapshot of catalog moderation, escrow balances, and buyer demand signals.
         </p>
       </div>
 
@@ -45,11 +72,11 @@ export default async function StoreDashboardOverviewPage() {
       </div>
 
       <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-        <h3 className="text-base font-bold text-gray-900">Next Operational Steps</h3>
+        <h3 className="text-base font-bold text-gray-900">Recommended Next Actions</h3>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-600">
-          <li>Add managers and staff in Team Management so daily operations are distributed.</li>
-          <li>Keep out-of-stock count low by monitoring variant quantities before campaigns.</li>
-          <li>Use role-based access to reduce operational mistakes and improve accountability.</li>
+          <li>Submit draft products for review so they can go live in the catalog.</li>
+          <li>Track high cart-demand products and replenish stock before campaigns.</li>
+          <li>Review escrow queue and payout account setup to speed up settlement cycles.</li>
         </ul>
       </div>
     </div>

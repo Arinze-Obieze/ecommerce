@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FiGrid, FiUsers, FiFileText, FiBarChart2, FiShoppingBag, FiPackage } from 'react-icons/fi';
+import { FiGrid, FiUsers, FiFileText, FiBarChart2, FiShoppingBag, FiPackage, FiCreditCard } from 'react-icons/fi';
 
 const items = [
   { href: '/admin', label: 'Overview', icon: FiGrid },
   { href: '/admin/stores', label: 'Stores', icon: FiUsers },
   { href: '/admin/orders', label: 'Orders', icon: FiShoppingBag },
   { href: '/admin/products', label: 'Products', icon: FiPackage },
+  { href: '/admin/escrow', label: 'Escrow', icon: FiCreditCard },
   { href: '/admin/logs', label: 'System Logs', icon: FiFileText },
   { href: '/admin/analytics', label: 'Analytics', icon: FiBarChart2 },
 ];

@@ -4,6 +4,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit } from '@/utils/rateLimit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
 import { notifyOrderCompletionEmails } from '@/utils/emailNotifications';
+import { ensureEscrowFundedForOrder } from '@/utils/escrow';
 
 function createServiceClient() {
   return createClient(
@@ -427,6 +428,26 @@ export async function POST(request) {
       metadata: { orderId: order.id, reference },
       durationMs: Date.now() - startedAt,
     });
+
+    const escrowResult = await ensureEscrowFundedForOrder({
+      serviceClient,
+      orderId: order.id,
+    });
+
+    if (!escrowResult.ok) {
+      await writeActivityLog({
+        request,
+        level: 'WARN',
+        service: 'payment-service',
+        action: 'PAYMENT_ESCROW_FUNDING_FAILED',
+        status: 'failure',
+        statusCode: 200,
+        message: escrowResult.error || 'Escrow funding failed after successful payment',
+        userId: user.id,
+        metadata: { orderId: order.id, reference },
+        durationMs: Date.now() - startedAt,
+      });
+    }
 
     const emailSummary = await notifyOrderCompletionEmails({
       serviceClient,
