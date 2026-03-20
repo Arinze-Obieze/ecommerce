@@ -64,6 +64,8 @@ function ShopHubContent({ initialCategory }) {
   const [meta, setMeta]                           = useState(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchInput, setSearchInput]             = useState('');
+  const infiniteTriggerRef                        = useRef(null);
+  const isAutoPagingRef                           = useRef(false);
 
   // ── Track whether the initial category has been seeded ─────
   // Once we've applied the initialCategory once, we're done.
@@ -188,9 +190,36 @@ function ShopHubContent({ initialCategory }) {
     return () => clearTimeout(timer);
   }, [searchInput]); // intentionally omit setSearch / filters.search to avoid loop
 
-  const handleLoadMore = () => {
-    if (meta?.hasNextPage && !loading) setPage(filters.page + 1);
-  };
+  const handleAutoLoadMore = useCallback(() => {
+    if (!meta?.hasNextPage || loading || isAutoPagingRef.current) return;
+    isAutoPagingRef.current = true;
+    setPage(filters.page + 1);
+  }, [meta?.hasNextPage, loading, filters.page, setPage]);
+
+  useEffect(() => {
+    if (!loading) isAutoPagingRef.current = false;
+  }, [loading]);
+
+  useEffect(() => {
+    const target = infiniteTriggerRef.current;
+    if (!target || !meta?.hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) handleAutoLoadMore();
+      },
+      {
+        root: null,
+        // Start loading before the user reaches the absolute bottom.
+        rootMargin: '320px 0px',
+        threshold: 0.01,
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [handleAutoLoadMore, meta?.hasNextPage]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: THEME.pageBg }}>
@@ -228,8 +257,10 @@ function ShopHubContent({ initialCategory }) {
               loading={loading}
               error={error}
               meta={meta}
-              onLoadMore={handleLoadMore}
             />
+
+            {/* Infinite-scroll trigger */}
+            <div ref={infiniteTriggerRef} style={{ height: 1 }} />
           </div>
         </div>
       </main>

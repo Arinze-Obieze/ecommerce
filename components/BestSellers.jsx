@@ -41,8 +41,8 @@ const BestSellers = () => {
         const res = await fetch('/api/products?collection=best-sellers&limit=8');
         let json = await res.json();
         
-        // Fallback if no collection data yet
-        if (json.data.length === 0) {
+        // Fallback if no collection data yet (or if the first request failed)
+        if (!json.success || !json.data || json.data.length === 0) {
             const resFallback = await fetch('/api/products?sortBy=rating&limit=8');
             json = await resFallback.json();
         }

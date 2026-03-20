@@ -29,7 +29,7 @@ const PromotionalBanners = () => {
     }, []);
 
   return (
-    <section className="py-12 bg-white mb-20">
+    <section className="py-12 bg-white md:mb-20">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
         {/* Upper Banners (2 Column) */}
@@ -77,52 +77,107 @@ const PromotionalBanners = () => {
 
         {/* Lower Deals Grid (3 Column) */}
         {!loading && deals.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {deals.map((item) => {
-                const discountPercent = item.discount_price 
-                ? Math.round(((item.price - item.discount_price) / item.price) * 100)
-                : 0;
+          <>
+            {/* Mobile: horizontal scroll to preserve vertical space */}
+            <div className="md:hidden -mx-4 px-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="flex gap-4 w-max">
+                {deals.map((item) => {
+                  const discountPercent = item.discount_price
+                    ? Math.round(((item.price - item.discount_price) / item.price) * 100)
+                    : 0;
+
+                  return (
+                    <div key={item.id} className="w-[86vw] max-w-[380px] bg-[#fcfbf9] rounded-xl p-5 flex items-center justify-between border border-gray-100">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-gray-900 mb-1 truncate">{item.name}</h4>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-bold text-gray-900">
+                            {item.discount_price
+                              ? `₦${(item.discount_price).toLocaleString()}`
+                              : `₦${(item.price).toLocaleString()}`}
+                          </span>
+                          {discountPercent > 0 && (
+                            <span className="text-xs font-bold text-white bg-[#2E5C45] px-1.5 py-0.5 rounded">-{discountPercent}%</span>
+                          )}
+                        </div>
+                        {item.discount_price && (
+                          <p className="text-xs text-gray-400 line-through mb-1">₦{(item.price).toLocaleString()}</p>
+                        )}
+
+                        <div className="flex items-end justify-between mt-2">
+                          <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                            <FiCheckCircle className="text-[#2E5C45]" /> Verified Store
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              addToCart(item);
+                            }}
+                            className="w-8 h-8 flex items-center justify-center bg-[#2E5C45]/10 text-[#2E5C45] rounded-full"
+                            title="Add to Cart"
+                          >
+                            <FiShoppingCart className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="w-24 h-24 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 ml-4">
+                        <img src={item.image_urls?.[0] || 'https://placehold.co/400x400?text=No+Image'} alt={item.name} className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Desktop/Tablet: 3-column grid */}
+            <div className="hidden md:grid grid-cols-3 gap-6">
+              {deals.map((item) => {
+                const discountPercent = item.discount_price
+                  ? Math.round(((item.price - item.discount_price) / item.price) * 100)
+                  : 0;
 
                 return (
-                <div key={item.id} className="bg-[#fcfbf9] rounded-xl p-6 flex items-center justify-between border border-gray-100 hover:border-[#2E5C45]/30 transition-colors">
-                <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-gray-900 mb-1 truncate">{item.name}</h4>
-                    <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-gray-900">
-                        {item.discount_price 
-                            ? `₦${(item.discount_price).toLocaleString()}` 
+                  <div key={item.id} className="bg-[#fcfbf9] rounded-xl p-6 flex items-center justify-between border border-gray-100 hover:border-[#2E5C45]/30 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 mb-1 truncate">{item.name}</h4>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-bold text-gray-900">
+                          {item.discount_price
+                            ? `₦${(item.discount_price).toLocaleString()}`
                             : `₦${(item.price).toLocaleString()}`}
-                    </span>
-                    {discountPercent > 0 && (
-                        <span className="text-xs font-bold text-white bg-[#2E5C45] px-1.5 py-0.5 rounded">-{discountPercent}%</span>
-                    )}
-                    </div>
-                    {item.discount_price && (
+                        </span>
+                        {discountPercent > 0 && (
+                          <span className="text-xs font-bold text-white bg-[#2E5C45] px-1.5 py-0.5 rounded">-{discountPercent}%</span>
+                        )}
+                      </div>
+                      {item.discount_price && (
                         <p className="text-xs text-gray-400 line-through mb-1">₦{(item.price).toLocaleString()}</p>
-                    )}
-                    
-                    <div className="flex items-end justify-between mt-2">
+                      )}
+
+                      <div className="flex items-end justify-between mt-2">
                         <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                            <FiCheckCircle className="text-[#2E5C45]" /> Verified Store
+                          <FiCheckCircle className="text-[#2E5C45]" /> Verified Store
                         </div>
-                        <button 
-                            onClick={(e) => {
-                                e.preventDefault();
-                                addToCart(item);
-                            }}
-                            className="w-8 h-8 flex items-center justify-center bg-[#2E5C45]/10 text-[#2E5C45] rounded-full hover:bg-[#2E5C45] hover:text-white transition-all shadow-sm"
-                            title="Add to Cart"
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            addToCart(item);
+                          }}
+                          className="w-8 h-8 flex items-center justify-center bg-[#2E5C45]/10 text-[#2E5C45] rounded-full hover:bg-[#2E5C45] hover:text-white transition-all shadow-sm"
+                          title="Add to Cart"
                         >
-                            <FiShoppingCart className="w-4 h-4" />
+                          <FiShoppingCart className="w-4 h-4" />
                         </button>
+                      </div>
                     </div>
-                </div>
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 ml-4">
-                    <img src={item.image_urls?.[0] || 'https://placehold.co/400x400?text=No+Image'} alt={item.name} className="w-full h-full object-cover" />
-                </div>
-                </div>
-            )})}
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 ml-4">
+                      <img src={item.image_urls?.[0] || 'https://placehold.co/400x400?text=No+Image'} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          </>
         )}
 
       </div>

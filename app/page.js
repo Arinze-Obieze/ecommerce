@@ -22,7 +22,6 @@ export default function Home() {
       <TopStoresCarousel />       {/* 7. Marketplace — surface trusted sellers */}
       <ExploreProducts />         {/* 8. Depth — broad catalogue browse */}
       <RecentlyViewedProducts />  {/* 9. Re-engagement — personal reminder */}
-  
       <NewsletterSection />       {/* 11. Capture — last thing before they leave */}
     </main>
   );

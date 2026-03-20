@@ -16,15 +16,6 @@ export const WishlistProvider = ({ children }) => {
   const supabase = createClient();
   const { success, error: errorToast } = useToast();
 
-  // Fetch wishlist on user login
-  useEffect(() => {
-    if (user) {
-      fetchWishlist();
-    } else {
-      setWishlistItems(new Set());
-    }
-  }, [user]);
-
   const fetchWishlist = async () => {
     setIsLoading(true);
     try {
@@ -38,11 +29,20 @@ export const WishlistProvider = ({ children }) => {
       const ids = new Set(data.map(item => item.product_id));
       setWishlistItems(ids);
     } catch (error) {
-      console.error("Error fetching wishlist:", error);
+      console.error("Error fetching wishlist:", error?.message || error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Fetch wishlist on user login
+  useEffect(() => {
+    if (user) {
+      fetchWishlist();
+    } else {
+      setWishlistItems(new Set());
+    }
+  }, [user]);
 
   const addToWishlist = async (productId) => {
     if (!user) {

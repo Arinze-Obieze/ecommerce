@@ -1,5 +1,4 @@
 "use client";
-import { useState } from 'react';
 import ProductCard from "../ProductCard";
 import { useFilters } from "@/contexts/FilterContext";
 import { FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
@@ -41,9 +40,8 @@ const SkeletonCard = ({ delay = 0 }) => (
 );
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
-export default function ProductGrid({ products, loading, error, meta, onLoadMore }) {
-  const { setSearch, clearAllFilters, hasActiveFilters } = useFilters();
-  const [loadMoreHov, setLoadMoreHov] = useState(false);
+export default function ProductGrid({ products, loading, error, meta }) {
+  const { clearAllFilters, hasActiveFilters } = useFilters();
 
   // ── Loading ──
   if (loading && products.length === 0) {
@@ -193,33 +191,6 @@ export default function ProductGrid({ products, loading, error, meta, onLoadMore
         {/* Append skeleton cards while loading next page */}
         {loading && [...Array(4)].map((_, i) => <SkeletonCard key={`sk-${i}`} delay={i * 50} />)}
       </div>
-
-      {/* Load more */}
-      {meta?.hasNextPage && !loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 44 }}>
-          <button
-            type="button"
-            onClick={onLoadMore}
-            disabled={loading}
-            onMouseEnter={() => setLoadMoreHov(true)}
-            onMouseLeave={() => setLoadMoreHov(false)}
-            style={{
-              padding: '12px 40px',
-              borderRadius: 10,
-              border: `2px solid ${THEME.charcoal}`,
-              background: loadMoreHov ? THEME.charcoal : THEME.white,
-              color: loadMoreHov ? THEME.white : THEME.charcoal,
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: 'pointer',
-              minWidth: 200,
-              transition: 'background 0.2s, color 0.2s',
-            }}
-          >
-            Load More Products
-          </button>
-        </div>
-      )}
 
       {/* End of list */}
       {!meta?.hasNextPage && products.length > 0 && (
