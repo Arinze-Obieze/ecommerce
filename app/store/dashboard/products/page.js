@@ -1,3 +1,5 @@
+// app/store/dashboard/products/page.js
+// UPDATED: "Create Product" button now links to the step-based wizard
 'use client';
 
 import Link from 'next/link';
@@ -32,9 +34,7 @@ export default function StoreProductsPage() {
     }
   };
 
-  useEffect(() => {
-    load();
-  }, [statusFilter]);
+  useEffect(() => { load(); }, [statusFilter]);
 
   const counts = useMemo(() => summary || {}, [summary]);
 
@@ -46,7 +46,8 @@ export default function StoreProductsPage() {
             <h2 className="text-lg font-bold text-gray-900">Products</h2>
             <p className="text-sm text-gray-500">Track moderation outcomes and catalog readiness.</p>
           </div>
-          <Link href="/store/dashboard" className="rounded-xl bg-[#2E5C45] px-4 py-2 text-sm font-semibold text-white hover:bg-[#254a38]">
+          {/* ✅ UPDATED: Links to step-based wizard instead of inline form */}
+          <Link href="./products/new" className="rounded-xl bg-[#2E5C45] px-4 py-2 text-sm font-semibold text-white hover:bg-[#254a38] transition-colors">
             Create Product
           </Link>
         </div>
