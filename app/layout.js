@@ -5,8 +5,8 @@ import { CartProvider } from '@/contexts/CartContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
 import { ToastProvider } from '@/contexts/ToastContext'
 import './globals.css'
-import Footer from '@/components/Footer'
-import Header from '@/components/header'
+import ConditionalFooter from '@/components/ConditionalFooter'   // ← changed
+import ConditionalHeader from '@/components/ConditionalHeader'   // ← changed
 import AnalyticsPageTracker from '@/components/AnalyticsPageTracker'
 
 export const metadata = {
@@ -19,20 +19,20 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="font-sans antialiased bg-white text-gray-900">
         <ToastProvider>
-           <AuthProvider>
-             <CartProvider>
-               <WishlistProvider>
-                 <LocationProvider>
-                   <FilterProvider>
-                     <AnalyticsPageTracker />
-                     <Header/>
-                     {children}
-                     <Footer/>
-                   </FilterProvider>
-                 </LocationProvider>
-               </WishlistProvider>
-             </CartProvider>
-           </AuthProvider>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <LocationProvider>
+                  <FilterProvider>
+                    <AnalyticsPageTracker />
+                    <ConditionalHeader />  {/* ← changed */}
+                    {children}
+                    <ConditionalFooter /> {/* ← changed */}
+                  </FilterProvider>
+                </LocationProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
         </ToastProvider>
       </body>
     </html>
