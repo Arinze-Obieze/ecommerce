@@ -56,6 +56,8 @@ const THEME = {
 };
 // ============================================================
 
+const QUICK_VIEW_DESCRIPTION_LIMIT = 180;
+
 function formatSales(count) {
   if (!count && count !== 0) return null;
   if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
@@ -107,12 +109,18 @@ const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const [cartState, setCartState] = useState('idle');
   const [showQuickView, setShowQuickView] = useState(false);
+  const [isQuickViewDescriptionExpanded, setIsQuickViewDescriptionExpanded] = useState(false);
 
   const discountPercent = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
     : null;
 
   const salesFormatted = formatSales(product.total_sales);
+  const description = String(product.description || '').trim();
+  const hasLongDescription = description.length > QUICK_VIEW_DESCRIPTION_LIMIT;
+  const quickViewDescription = hasLongDescription && !isQuickViewDescriptionExpanded
+    ? `${description.slice(0, QUICK_VIEW_DESCRIPTION_LIMIT).trimEnd()}...`
+    : description;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -161,7 +169,12 @@ const ProductCard = ({ product }) => {
             <div className="absolute inset-0 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQuickView(true); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsQuickViewDescriptionExpanded(false);
+                  setShowQuickView(true);
+                }}
                 className="text-xs font-semibold px-5 py-2 rounded-full shadow-lg transition-colors"
                 style={{ backgroundColor: THEME.quickViewBg, color: THEME.quickViewText, border: '1px solid #E8E8E8' }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.quickViewHover)}
@@ -378,6 +391,27 @@ const ProductCard = ({ product }) => {
                   <p className="text-xs" style={{ color: THEME.storeText }}>
                     Sold by <span className="font-semibold" style={{ color: THEME.nameText }}>{product.stores.name}</span>
                   </p>
+                )}
+
+                {description && (
+                  <div className="rounded-xl border border-[#EFEFEF] bg-[#FAFAFA] p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: THEME.categoryText }}>
+                      Description
+                    </p>
+                    <p className="mt-2 text-sm leading-6" style={{ color: THEME.metaText }}>
+                      {quickViewDescription}
+                    </p>
+                    {hasLongDescription && (
+                      <button
+                        type="button"
+                        onClick={() => setIsQuickViewDescriptionExpanded((current) => !current)}
+                        className="mt-2 text-sm font-semibold"
+                        style={{ color: THEME.nameText }}
+                      >
+                        {isQuickViewDescriptionExpanded ? 'Read less' : 'Read more'}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 <div className="flex-1" />
