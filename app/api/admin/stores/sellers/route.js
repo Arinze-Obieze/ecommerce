@@ -1,7 +1,8 @@
 // app/api/admin/stores/sellers/route.js
-// Returns sellers that are eligible for store creation:
-// - Not already linked via store_id
-// - business_name does not match any existing store name
+// Returns sellers eligible for store creation:
+// - store_id IS NULL (not linked yet, checked fresh from DB)
+// - seller_id does not match any existing store name (store name = seller_id by our convention)
+// - business_name does not match any existing store name (fallback)
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/utils/adminAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
@@ -25,7 +26,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const search = (searchParams.get('search') || '').trim();
 
-  // Step 1: Get all existing store names for cross-reference
+  // Step 1: Get all existing store names (store name = seller_id by our creation convention)
   const { data: existingStores, error: storesError } = await admin.adminClient
     .from('stores')
     .select('name');
@@ -34,11 +35,12 @@ export async function GET(request) {
     return NextResponse.json({ error: storesError.message }, { status: 500 });
   }
 
+  // Build a Set of all existing store names (lowercased) for fast lookup
   const existingStoreNames = new Set(
     (existingStores || []).map((s) => s.name?.toLowerCase().trim()).filter(Boolean)
   );
 
-  // Step 2: Get all sellers
+  // Step 2: Get all sellers — always fetch fresh store_id so trigger updates are reflected
   let sellersQuery = admin.adminClient
     .from('sellers')
     .select(
@@ -58,10 +60,17 @@ export async function GET(request) {
     return NextResponse.json({ error: sellersError.message }, { status: 500 });
   }
 
-  // Step 3: Filter out sellers already linked to a store
+  // Step 3: Exclude sellers that already have a store via ANY of these signals:
+  // a) store_id is set (trigger updated it after store insert)
+  // b) seller_id matches an existing store name (our naming convention: store.name = seller.seller_id)
+  // c) business_name matches an existing store name (fallback for legacy stores)
   const eligible = (sellers || []).filter((seller) => {
-    const nameKey = seller.business_name?.toLowerCase().trim();
-    return !seller.store_id && !existingStoreNames.has(nameKey);
+    if (seller.store_id) return false;
+    const sellerIdKey = seller.seller_id?.toLowerCase().trim();
+    if (sellerIdKey && existingStoreNames.has(sellerIdKey)) return false;
+    const businessNameKey = seller.business_name?.toLowerCase().trim();
+    if (businessNameKey && existingStoreNames.has(businessNameKey)) return false;
+    return true;
   });
 
   return NextResponse.json({ success: true, data: eligible });

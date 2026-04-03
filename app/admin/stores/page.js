@@ -38,6 +38,7 @@ function CreateStoreWizard({ onSuccess, onError }) {
   const [sellers, setSellers] = useState([]);
   const [sellersLoading, setSellersLoading] = useState(true);
   const [sellerSearch, setSellerSearch] = useState('');
+  const [sellerPage, setSellerPage] = useState(1);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,11 @@ function CreateStoreWizard({ onSuccess, onError }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const SELLERS_PER_PAGE = 9;
+
+  // Reset to page 1 whenever search changes
+  useEffect(() => { setSellerPage(1); }, [sellerSearch]);
+
   const filteredSellers = sellers.filter((s) => {
     const q = sellerSearch.toLowerCase();
     return (
@@ -73,6 +79,12 @@ function CreateStoreWizard({ onSuccess, onError }) {
       s.contact_person?.toLowerCase().includes(q)
     );
   });
+
+  const sellerTotalPages = Math.max(1, Math.ceil(filteredSellers.length / SELLERS_PER_PAGE));
+  const pagedSellers = filteredSellers.slice(
+    (sellerPage - 1) * SELLERS_PER_PAGE,
+    sellerPage * SELLERS_PER_PAGE
+  );
 
   const handleSelectSeller = (seller) => {
     setSelectedSeller(seller);
@@ -182,41 +194,83 @@ function CreateStoreWizard({ onSuccess, onError }) {
             {sellerSearch ? 'No sellers match your search.' : 'No eligible sellers found.'}
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {filteredSellers.map((seller) => (
-              <button
-                key={seller.id}
-                type="button"
-                onClick={() => handleSelectSeller(seller)}
-                className="group flex flex-col gap-1.5 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm transition-all hover:border-[#2E5C45] hover:shadow-md"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-gray-900 group-hover:text-[#2E5C45]">
-                      {seller.business_name || seller.seller_id || 'Unnamed seller'}
-                    </p>
-                    <p className="text-xs text-gray-500 font-mono">{seller.seller_id || '—'}</p>
+          <div className="space-y-3">
+            {/* Results count */}
+            <p className="text-xs text-gray-400">
+              Showing {Math.min((sellerPage - 1) * SELLERS_PER_PAGE + 1, filteredSellers.length)}–{Math.min(sellerPage * SELLERS_PER_PAGE, filteredSellers.length)} of {filteredSellers.length} eligible sellers
+            </p>
+
+            {/* 3-column grid */}
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+              {pagedSellers.map((seller) => (
+                <button
+                  key={seller.id}
+                  type="button"
+                  onClick={() => handleSelectSeller(seller)}
+                  className="group flex flex-col gap-1.5 rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm transition-all hover:border-[#2E5C45] hover:shadow-md"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 group-hover:text-[#2E5C45] truncate text-sm">
+                        {seller.business_name || seller.seller_id || 'Unnamed seller'}
+                      </p>
+                      <p className="text-xs text-gray-400 font-mono truncate">{seller.seller_id || '—'}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold capitalize ${tierColor(seller.seller_tier_computed)}`}>
+                      {seller.seller_tier_computed || seller.tier || 'basic'}
+                    </span>
                   </div>
-                  <span className={`shrink-0 rounded-lg border px-2 py-0.5 text-xs font-semibold capitalize ${tierColor(seller.seller_tier_computed)}`}>
-                    {seller.seller_tier_computed || seller.tier || 'basic'}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs text-gray-600">
                   {seller.contact_person && (
-                    <span className="flex items-center gap-1">
-                      <FiUser className="h-3 w-3" /> {seller.contact_person}
+                    <span className="flex items-center gap-1 text-xs text-gray-500 truncate">
+                      <FiUser className="h-3 w-3 shrink-0" /> {seller.contact_person}
                     </span>
                   )}
-                  {seller.business_type && <span className="capitalize">· {seller.business_type}</span>}
-                  {seller.seller_type && <span className="capitalize">· {seller.seller_type}</span>}
+                  <div className="flex gap-2 text-[11px] text-gray-400">
+                    <span>Score: <strong className="text-gray-600">{seller.seller_score ?? '—'}</strong></span>
+                    <span>·</span>
+                    <span>Commission: <strong className="text-gray-600">{seller.commission_rate != null ? `${seller.commission_rate}%` : '—'}</strong></span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Pagination controls */}
+            {sellerTotalPages > 1 && (
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  disabled={sellerPage <= 1}
+                  onClick={() => setSellerPage(p => Math.max(1, p - 1))}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ← Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: sellerTotalPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setSellerPage(p)}
+                      className={`w-7 h-7 rounded-lg text-xs font-semibold transition-colors ${
+                        p === sellerPage
+                          ? 'bg-[#2E5C45] text-white'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex gap-3 text-xs text-gray-500">
-                  <span>Score: <strong className="text-gray-700">{seller.seller_score ?? '—'}</strong></span>
-                  <span>Rating: <strong className="text-gray-700">{seller.store_rating ?? '—'}</strong></span>
-                  <span>Commission: <strong className="text-gray-700">{seller.commission_rate != null ? `${seller.commission_rate}%` : '—'}</strong></span>
-                </div>
-              </button>
-            ))}
+                <button
+                  type="button"
+                  disabled={sellerPage >= sellerTotalPages}
+                  onClick={() => setSellerPage(p => Math.min(sellerTotalPages, p + 1))}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
