@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 
 export default function Step7() {
-  const { state, dispatch, storeContext, goBack, resetWizard, productsPath } = useWizard();
+  const { state, dispatch, storeContext, goBack, resetWizard, productsPath, draftId, clearDraft } = useWizard();
   const router = useRouter();
   const inputRef = useRef(null);
   const [saving, setSaving] = useState(false);
@@ -21,6 +21,18 @@ export default function Step7() {
     const scanned = state.scannedSku.trim();
     if (!scanned) return;
     if (scanned !== state.baseSku) { setMismatch(true); return; }
+    if (!storeContext?.id) {
+      alert("Store context is missing. Reload the page and try again.");
+      return;
+    }
+    if (!state.baseSku) {
+      alert("Generate a base SKU before completing verification.");
+      return;
+    }
+    if (!state.variants.length) {
+      alert("Add at least one product variant before submitting.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -33,6 +45,7 @@ export default function Step7() {
         variants: state.variants, imageStrategy: state.imageStrategy,
         variantNotes: state.variantNotes, productNotes: state.productNotes,
         baseSku: state.baseSku, variantSkus: state.variantSkus,
+        persistedImages: state.persistedImages, draftId,
         printCompleted: state.printCompleted, printType: state.printType, printCopies: state.printCopies,
         scannedSku: scanned,
       }));
@@ -45,6 +58,7 @@ export default function Step7() {
       const result = await res.json();
       if (!res.ok || !result.success) throw new Error(result.error || "Save failed");
 
+      await clearDraft();
       dispatch({ type: "SET_VERIFIED" });
     } catch (err) {
       alert(err.message || "Failed to save. Try again.");

@@ -4,9 +4,19 @@ import { enforceRateLimit } from '@/utils/rateLimit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
 import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
+const PRODUCT_LIST_SELECT = 'id, store_id, name, slug, sku, price, discount_price, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
+const PRODUCT_LIST_SELECT_FALLBACK = 'id, store_id, name, slug, sku, price, discount_price, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
+const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
+
 function toNumber(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+function isMissingBulkDiscountColumnError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42703' ||
+    (message.includes('bulk_discount_tiers') && message.includes('does not exist'));
 }
 
 function sanitizeSlug(value) {
@@ -82,7 +92,7 @@ export async function GET(request) {
 
   let query = ctx.adminClient
     .from('products')
-    .select('id, store_id, name, slug, sku, price, discount_price, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at')
+    .select(PRODUCT_LIST_SELECT)
     .eq('store_id', ctx.membership.store_id)
     .order('created_at', { ascending: false })
     .limit(500);
@@ -95,7 +105,31 @@ export async function GET(request) {
     query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
   }
 
-  const { data, error } = await query;
+  let { data, error } = await query;
+
+  if (error && isMissingBulkDiscountColumnError(error)) {
+    let fallbackQuery = ctx.adminClient
+      .from('products')
+      .select(PRODUCT_LIST_SELECT_FALLBACK)
+      .eq('store_id', ctx.membership.store_id)
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (moderationStatus) {
+      fallbackQuery = fallbackQuery.eq('moderation_status', moderationStatus);
+    }
+
+    if (search) {
+      fallbackQuery = fallbackQuery.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
+    }
+
+    const fallbackResult = await fallbackQuery;
+    data = (fallbackResult.data || []).map((row) => ({
+      ...row,
+      bulk_discount_tiers: null,
+    }));
+    error = fallbackResult.error;
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -244,6 +278,9 @@ export async function POST(request) {
     .single();
 
   if (error) {
+    if (isMissingBulkDiscountColumnError(error)) {
+      return NextResponse.json({ error: BULK_DISCOUNT_MIGRATION_HINT }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 

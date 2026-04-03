@@ -135,7 +135,7 @@ export async function releaseEscrowForOrderStore({
     .select('id, status, paystack_reference, amount')
     .eq('order_id', orderId)
     .eq('store_id', storeId)
-    .in('status', ['queued', 'pending_gateway', 'released'])
+    .in('status', ['queued', 'processing', 'success', 'pending_gateway', 'released'])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -172,7 +172,6 @@ export async function releaseEscrowForOrderStore({
   }
 
   const reference = buildReleaseReference(orderId, storeId);
-  const nowIso = new Date().toISOString();
 
   const { data: payoutRows, error: payoutInsertError } = await serviceClient
     .from('store_payouts')
@@ -194,27 +193,10 @@ export async function releaseEscrowForOrderStore({
     return { ok: false, error: payoutInsertError.message };
   }
 
-  const { error: escrowUpdateError } = await serviceClient
-    .from('escrow_transactions')
-    .update({
-      status: 'released',
-      approved_by: approvedBy || null,
-      metadata: {
-        mode,
-        released_at: nowIso,
-      },
-    })
-    .eq('id', holdTx.id);
-
-  if (escrowUpdateError) {
-    return { ok: false, error: escrowUpdateError.message };
-  }
-
   const { error: orderUpdateError } = await serviceClient
     .from('orders')
     .update({
-      escrow_status: 'released',
-      escrow_released_at: nowIso,
+      escrow_status: 'payout_queued',
       release_approved_by: approvedBy || null,
     })
     .eq('id', orderId)

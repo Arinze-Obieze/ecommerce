@@ -56,6 +56,92 @@ function verifyWebhookSignature(rawBody, secret, signature) {
   }
 }
 
+async function updatePayoutTransferStatus({ serviceClient, eventType, eventData }) {
+  const reference = String(eventData?.reference || '').trim();
+  const transferCode = String(eventData?.transfer_code || '').trim();
+  const lookup = reference
+    ? serviceClient
+        .from('store_payouts')
+        .select('id, order_id, store_id, escrow_transaction_id, status, paystack_reference, paystack_transfer_code')
+        .eq('paystack_reference', reference)
+        .maybeSingle()
+    : serviceClient
+        .from('store_payouts')
+        .select('id, order_id, store_id, escrow_transaction_id, status, paystack_reference, paystack_transfer_code')
+        .eq('paystack_transfer_code', transferCode)
+        .maybeSingle();
+
+  const { data: payout, error: payoutError } = await lookup;
+  if (payoutError) {
+    return { ok: false, error: payoutError.message };
+  }
+  if (!payout?.id) {
+    return { ok: false, error: 'Payout not found for transfer webhook' };
+  }
+
+  const nowIso = new Date().toISOString();
+  const isSuccess = eventType === 'transfer.success';
+  const isFailure = eventType === 'transfer.failed' || eventType === 'transfer.reversed';
+  const nextStatus = isSuccess ? 'success' : isFailure ? 'failed' : null;
+
+  if (!nextStatus) {
+    return { ok: true, ignored: true };
+  }
+
+  const { error: payoutUpdateError } = await serviceClient
+    .from('store_payouts')
+    .update({
+      status: nextStatus,
+      released_at: isSuccess ? nowIso : null,
+      failure_reason: isSuccess ? null : (eventData?.complete_message || eventData?.reason || eventData?.message || eventType),
+      paystack_transfer_code: transferCode || payout.paystack_transfer_code || null,
+      metadata: {
+        gateway_event: eventType,
+        gateway_status: eventData?.status || nextStatus,
+        webhook_received_at: nowIso,
+      },
+    })
+    .eq('id', payout.id);
+
+  if (payoutUpdateError) {
+    return { ok: false, error: payoutUpdateError.message };
+  }
+
+  if (isSuccess) {
+    if (payout.escrow_transaction_id) {
+      await serviceClient
+        .from('escrow_transactions')
+        .update({
+          status: 'released',
+          metadata: {
+            gateway_event: eventType,
+            transfer_code: transferCode || null,
+            transferred_at: nowIso,
+          },
+        })
+        .eq('id', payout.escrow_transaction_id);
+    }
+
+    await serviceClient
+      .from('orders')
+      .update({
+        escrow_status: 'released',
+        escrow_released_at: nowIso,
+      })
+      .eq('id', payout.order_id);
+  } else {
+    await serviceClient
+      .from('orders')
+      .update({
+        escrow_status: 'funded',
+      })
+      .eq('id', payout.order_id)
+      .neq('escrow_status', 'released');
+  }
+
+  return { ok: true, payoutId: payout.id, status: nextStatus };
+}
+
 export async function POST(request) {
   const startedAt = Date.now();
   try {
@@ -104,7 +190,37 @@ export async function POST(request) {
     }
 
     const eventPayload = JSON.parse(rawBody);
-    if (eventPayload?.event !== 'charge.success') {
+    const eventType = String(eventPayload?.event || '').trim().toLowerCase();
+    if (['transfer.success', 'transfer.failed', 'transfer.reversed'].includes(eventType)) {
+      const serviceClient = createServiceClient();
+      const transferResult = await updatePayoutTransferStatus({
+        serviceClient,
+        eventType,
+        eventData: eventPayload?.data || {},
+      });
+
+      if (!transferResult.ok) {
+        await writeActivityLog({
+          request,
+          level: 'WARN',
+          service: 'payment-service',
+          action: 'PAYSTACK_TRANSFER_WEBHOOK_FAILED',
+          status: 'failure',
+          statusCode: 200,
+          message: transferResult.error || 'Transfer webhook processing failed',
+          metadata: {
+            eventType,
+            reference: eventPayload?.data?.reference || null,
+            transferCode: eventPayload?.data?.transfer_code || null,
+          },
+          durationMs: Date.now() - startedAt,
+        });
+      }
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (eventType !== 'charge.success') {
       return NextResponse.json({ success: true });
     }
 

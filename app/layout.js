@@ -8,6 +8,7 @@ import './globals.css'
 import ConditionalFooter from '@/components/ConditionalFooter'   // ← changed
 import ConditionalHeader from '@/components/ConditionalHeader'   // ← changed
 import AnalyticsPageTracker from '@/components/AnalyticsPageTracker'
+import FloatingDashboardCTA from '@/components/FloatingDashboardCTA'
 
 export const metadata = {
   title: 'Shop Clothing',
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
                   <FilterProvider>
                     <AnalyticsPageTracker />
                     <ConditionalHeader />  {/* ← changed */}
+                    <FloatingDashboardCTA />
                     {children}
                     <ConditionalFooter /> {/* ← changed */}
                   </FilterProvider>
