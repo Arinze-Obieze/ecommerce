@@ -5,6 +5,7 @@ import NewArrivals from "@/components/NewArrivals";
 import BestSellers from "@/components/BestSellers";
 import PromotionalBanners from "@/components/PromotionalBanners";
 import TopStoresCarousel from "@/components/TopStoresCarousel";
+import RecommendedForYou from "@/components/RecommendedForYou";
 import ExploreProducts from "@/components/ExploreProducts";
 import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
 import Testimonials from "@/components/Testimonials";
@@ -20,6 +21,7 @@ export default function Home() {
       <BestSellers />             {/* 5. Social proof — what others are buying */}
       <PromotionalBanners />      {/* 6. Urgency — deals after desire is built */}
       <TopStoresCarousel />       {/* 7. Marketplace — surface trusted sellers */}
+      <RecommendedForYou />       {/* 8. Personalization — smart picks by context/session */}
       <ExploreProducts />         {/* 8. Depth — broad catalogue browse */}
       <RecentlyViewedProducts />  {/* 9. Re-engagement — personal reminder */}
       <NewsletterSection />       {/* 11. Capture — last thing before they leave */}

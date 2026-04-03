@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useWishlist } from '@/contexts/WishlistContext';
 import ProductCard from '@/components/ProductCard';
+import ProductImpressionTracker from '@/components/ProductImpressionTracker';
 import Link from 'next/link';
 import { FiHeart, FiArrowRight } from 'react-icons/fi';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {
@@ -55,7 +57,9 @@ export default function ProfileWishlist() {
       setIsLoading(true);
       try {
         const ids  = Array.from(wishlistItems).join(',');
-        const res  = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`);
+        const res  = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`, {
+          headers: getRecommendationRequestHeaders('profile_wishlist'),
+        });
         const json = await res.json();
         if (json.success) setProducts(json.data);
       } catch (err) {
@@ -111,8 +115,16 @@ export default function ProfileWishlist() {
         </div>
       ) : products.length > 0 ? (
         <div style={{ display: 'grid', gap: 14 }} className="grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map(product => (
-            <ProductCard key={product.id} product={product} />
+          {products.map((product, index) => (
+            <ProductImpressionTracker
+              key={product.id}
+              product={product}
+              surface="profile_wishlist"
+              position={index + 1}
+              metadata={{ sortStrategy: 'wishlist' }}
+            >
+              <ProductCard product={product} />
+            </ProductImpressionTracker>
           ))}
         </div>
       ) : (

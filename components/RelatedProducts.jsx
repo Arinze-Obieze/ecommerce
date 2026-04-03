@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
+import ProductImpressionTracker from './ProductImpressionTracker';
 import SectionCarousel from './SectionCarousel';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
   const [products, setProducts] = useState([]);
@@ -19,7 +21,9 @@ const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
             queryParams.append('storeId', storeId);
         }
 
-        const res = await fetch(`/api/products?${queryParams.toString()}`);
+        const res = await fetch(`/api/products?${queryParams.toString()}`, {
+          headers: getRecommendationRequestHeaders('related_products'),
+        });
         const json = await res.json();
 
         if (json.success && json.data) {
@@ -55,8 +59,16 @@ const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
 
   return (
     <SectionCarousel title="You Might Also Like">
-        {products.map((product) => (
-           <ProductCard key={product.id} product={product} /> 
+        {products.map((product, index) => (
+          <ProductImpressionTracker
+            key={product.id}
+            product={product}
+            surface="related_products"
+            position={index + 1}
+            metadata={{ sortStrategy: 'smart' }}
+          >
+            <ProductCard product={product} />
+          </ProductImpressionTracker>
         ))}
     </SectionCarousel>
   );

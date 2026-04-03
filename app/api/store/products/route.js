@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
+import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
+import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
 function toNumber(value) {
   const numeric = Number(value);
@@ -80,7 +82,7 @@ export async function GET(request) {
 
   let query = ctx.adminClient
     .from('products')
-    .select('id, store_id, name, slug, price, discount_price, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at')
+    .select('id, store_id, name, slug, sku, price, discount_price, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at')
     .eq('store_id', ctx.membership.store_id)
     .order('created_at', { ascending: false })
     .limit(500);
@@ -143,7 +145,16 @@ export async function POST(request) {
   const rawVideoUrls = Array.isArray(body?.video_urls) ? body.video_urls.map(normalizeUrl).filter(Boolean) : [];
   const media = normalizeMediaArray(body?.media);
   const primaryImageInput = normalizeUrl(body?.primary_image_url);
-  const specifications = body?.specifications && typeof body.specifications === 'object' ? body.specifications : null;
+  const specificationResult = normalizeSpecifications(body?.specifications);
+  if (specificationResult.error) {
+    return NextResponse.json({ error: specificationResult.error }, { status: 400 });
+  }
+  const specifications = specificationResult.value;
+  const bulkDiscountResult = normalizeBulkDiscountTiers(body?.bulk_discount_tiers);
+  if (bulkDiscountResult.error) {
+    return NextResponse.json({ error: bulkDiscountResult.error }, { status: 400 });
+  }
+  const bulkDiscountTiers = bulkDiscountResult.value;
   const submitForReview = Boolean(body?.submit_for_review);
 
   if (!name) {
@@ -161,6 +172,20 @@ export async function POST(request) {
   const slug = sanitizeSlug(slugInput);
   if (!slug) {
     return NextResponse.json({ error: 'Valid slug is required' }, { status: 400 });
+  }
+
+  const { data: store, error: storeError } = await ctx.adminClient
+    .from('stores')
+    .select('id, slug, name')
+    .eq('id', ctx.membership.store_id)
+    .maybeSingle();
+
+  if (storeError) {
+    return NextResponse.json({ error: storeError.message }, { status: 500 });
+  }
+
+  if (!store) {
+    return NextResponse.json({ error: 'Store not found' }, { status: 404 });
   }
 
   let imageUrls = media.length > 0
@@ -182,14 +207,23 @@ export async function POST(request) {
 
   const nowIso = new Date().toISOString();
   const moderationStatus = submitForReview ? 'pending_review' : 'draft';
+  const sku = await generateProductSku(ctx.adminClient, {
+    storeId: ctx.membership.store_id,
+    storeSlug: store.slug,
+    storeName: store.name,
+    productSlug: slug,
+    productName: name,
+  });
 
   const insertPayload = {
     store_id: ctx.membership.store_id,
     name,
     slug,
+    sku,
     description,
     price,
     discount_price: discountPrice,
+    bulk_discount_tiers: bulkDiscountTiers,
     stock_quantity: stockQuantity,
     is_active: false,
     image_urls: imageUrls,
@@ -206,7 +240,7 @@ export async function POST(request) {
   const { data, error } = await ctx.adminClient
     .from('products')
     .insert(insertPayload)
-    .select('id, store_id, name, slug, moderation_status, is_active, submitted_at, created_at')
+    .select('id, store_id, name, slug, sku, moderation_status, is_active, submitted_at, created_at')
     .single();
 
   if (error) {

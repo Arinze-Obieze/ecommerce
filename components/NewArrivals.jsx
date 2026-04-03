@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
+import ProductImpressionTracker from './ProductImpressionTracker';
 import SectionCarousel from './SectionCarousel';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 const NewArrivals = () => {
   const [products, setProducts] = useState([]);
@@ -10,12 +12,16 @@ const NewArrivals = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/products?collection=new-arrivals&limit=8');
+        const res = await fetch('/api/products?collection=new-arrivals&limit=8', {
+          headers: getRecommendationRequestHeaders('new_arrivals'),
+        });
         let json = await res.json();
         
         // Fallback if no collection data yet (or if the first request failed)
         if (!json.success || !json.data || json.data.length === 0) {
-            const resFallback = await fetch('/api/products?sortBy=newest&limit=8');
+            const resFallback = await fetch('/api/products?sortBy=newest&limit=8', {
+              headers: getRecommendationRequestHeaders('new_arrivals'),
+            });
             json = await resFallback.json();
         }
 
@@ -44,8 +50,16 @@ const NewArrivals = () => {
 
   return (
     <SectionCarousel title="New Arrivals" linkText="View All" linkHref="/shop?sortBy=newest">
-        {products.map((product) => (
-           <ProductCard key={product.id} product={product} /> 
+        {products.map((product, index) => (
+          <ProductImpressionTracker
+            key={product.id}
+            product={product}
+            surface="new_arrivals"
+            position={index + 1}
+            metadata={{ sortStrategy: 'smart' }}
+          >
+            <ProductCard product={product} />
+          </ProductImpressionTracker>
         ))}
     </SectionCarousel>
   );

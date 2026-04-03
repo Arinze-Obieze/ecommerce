@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiArrowRight, FiGrid } from 'react-icons/fi';
 import ProductCard from './ProductCard';
+import ProductImpressionTracker from './ProductImpressionTracker';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 // ─── THEME ───────────────────────────────────────────────────────────────────
 const THEME = {
@@ -54,7 +56,9 @@ const ExploreProducts = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res  = await fetch('/api/products?limit=12');
+        const res  = await fetch('/api/products?limit=12', {
+          headers: getRecommendationRequestHeaders('home_explore'),
+        });
         const json = await res.json();
         if (json.success) setProducts(json.data);
       } catch (err) {
@@ -148,8 +152,16 @@ const ExploreProducts = () => {
           style={{ display: 'grid', gap: 12 }}
           className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-5"
         >
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {products.map((product, index) => (
+            <ProductImpressionTracker
+              key={product.id}
+              product={product}
+              surface="home_explore"
+              position={index + 1}
+              metadata={{ sortStrategy: 'smart' }}
+            >
+              <ProductCard product={product} />
+            </ProductImpressionTracker>
           ))}
         </div>
 

@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useWishlist } from '@/contexts/WishlistContext';
 import ProductCard from '@/components/ProductCard';
+import ProductImpressionTracker from '@/components/ProductImpressionTracker';
 import Link from 'next/link';
 import { FiHeart, FiArrowRight, FiShoppingBag } from 'react-icons/fi';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 const THEME = {
   green:       '#00B86B',
@@ -43,7 +45,9 @@ export default function WishlistPage() {
       setIsLoading(true);
       try {
         const ids  = Array.from(wishlistItems).join(',');
-        const res  = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`);
+        const res  = await fetch(`/api/products?ids=${ids}&limit=100&includeOutOfStock=true`, {
+          headers: getRecommendationRequestHeaders('wishlist_page'),
+        });
         const json = await res.json();
         if (json.success) setProducts(json.data);
       } catch (e) {
@@ -89,8 +93,16 @@ export default function WishlistPage() {
         /* ── Products ── */
         ) : products.length > 0 ? (
           <div style={{ display: 'grid', gap: 12 }} className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-            {products.map(product => (
-              <ProductCard key={product.id} product={product} />
+            {products.map((product, index) => (
+              <ProductImpressionTracker
+                key={product.id}
+                product={product}
+                surface="wishlist_page"
+                position={index + 1}
+                metadata={{ sortStrategy: 'wishlist' }}
+              >
+                <ProductCard product={product} />
+              </ProductImpressionTracker>
             ))}
           </div>
 

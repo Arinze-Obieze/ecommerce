@@ -5,6 +5,7 @@ import {
   FiTrendingUp, FiMessageCircle, FiShare2, FiGrid, FiChevronDown,
 } from "react-icons/fi";
 import ProductGrid from "./Shop/ProductGrid";
+import { getRecommendationRequestHeaders } from "@/utils/recommendationRequest";
 
 // ─────────────────────────────────────────────────────────────
 // THEME
@@ -434,37 +435,6 @@ function Pill({ children, variant = "neutral" }) {
   );
 }
 
-function FollowBtn() {
-  const [on, setOn] = useState(false);
-  const [hov, setHov] = useState(false);
-  return (
-    <button type="button" onClick={()=>setOn(o=>!o)}
-      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-      style={{
-        height:40, padding:"0 22px", borderRadius:10, fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.16s",
-        border: on ? `1.5px solid ${T.greenBorder}` : "none",
-        background: on ? T.greenTint : hov ? T.greenDark : T.green,
-        color: on ? T.greenDeep : T.white,
-        letterSpacing:"-0.01em",
-      }}
-    >{on ? "✓ Following" : "+ Follow"}</button>
-  );
-}
-
-function MsgBtn() {
-  const [hov, setHov] = useState(false);
-  return (
-    <button type="button"
-      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-      style={{
-        height:40, padding:"0 18px", borderRadius:10, fontSize:13, fontWeight:700, cursor:"pointer", transition:"all 0.16s",
-        border:`1.5px solid ${T.border}`, background: hov ? T.softGray : T.white, color:T.charcoal,
-        display:"flex", alignItems:"center", gap:7,
-      }}
-    ><FiMessageCircle size={14}/> Message</button>
-  );
-}
-
 function ShareBtn({ store }) {
   const [hov, setHov]     = useState(false);
   const [ok, setOk]       = useState(false);
@@ -578,8 +548,6 @@ function StoreHeader({ store, productCount, loading }) {
           {/* Action buttons */}
           <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0, paddingTop:2 }}>
             <ShareBtn store={store}/>
-            <MsgBtn/>
-            <FollowBtn/>
           </div>
         </div>
 
@@ -616,11 +584,13 @@ export default function StoreClient({ store }) {
     (async () => {
       try {
         setLoading(true);
-        const res  = await fetch(`/api/products?storeId=${store.id}&limit=20&page=${page}`);
+        const res  = await fetch(`/api/products?storeId=${store.id}&limit=20&page=${page}`, {
+          headers: getRecommendationRequestHeaders('store_page'),
+        });
         const data = await res.json();
         if (data.success) {
           setProducts(prev => page === 1 ? data.data : [...prev, ...data.data]);
-          setMeta(data.meta?.pagination || null);
+          setMeta(data.meta || null);
         } else {
           setError(data.error || "Failed to load products");
         }
@@ -673,7 +643,9 @@ export default function StoreClient({ store }) {
             products={products}
             loading={loading}
             error={error}
-            meta={meta}
+            meta={meta?.pagination || null}
+            surface="store_page"
+            trackingMeta={meta?.scoring || null}
             onLoadMore={() => setPage(p => p + 1)}
           />
         </main>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { FiShoppingCart, FiTrendingUp, FiAward, FiCheck, FiX } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
+import { trackAnalyticsEvent } from '@/utils/analytics';
 
 // ============================================================
 // 🎨 THEME
@@ -121,6 +122,16 @@ const ProductCard = ({ product }) => {
     setTimeout(() => setCartState('idle'), 2000);
   };
 
+  const handleProductClick = () => {
+    trackAnalyticsEvent('product_card_click', {
+      product_id: product.id,
+      product_name: product.name,
+      store_id: product.store_id || null,
+      price: Number(product.discount_price || product.price || 0),
+      category: product.categories?.[0]?.slug || product.categories?.[0]?.name || null,
+    });
+  };
+
   return (
     <>
       {/* ── Card ── */}
@@ -137,7 +148,7 @@ const ProductCard = ({ product }) => {
       >
 
         {/* ── Image ── */}
-        <Link href={`/products/${product.slug}`} className="relative block shrink-0">
+        <Link href={`/products/${product.slug}`} className="relative block shrink-0" onClick={handleProductClick}>
           <div className="aspect-[3/4] overflow-hidden relative" style={{ backgroundColor: THEME.skeletonBg }}>
             <img
               src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
@@ -202,7 +213,7 @@ const ProductCard = ({ product }) => {
             {product.categories?.[0]?.name || 'Collection'}
           </p>
 
-          <Link href={`/products/${product.slug}`}>
+          <Link href={`/products/${product.slug}`} onClick={handleProductClick}>
             <h3 className="text-sm font-medium leading-snug line-clamp-2 hover:underline" style={{ color: THEME.nameText }}>
               {product.name}
             </h3>

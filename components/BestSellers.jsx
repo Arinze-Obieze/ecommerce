@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
+import ProductImpressionTracker from './ProductImpressionTracker';
 import SectionCarousel from './SectionCarousel';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 const THEME = {
   colors: {
@@ -38,12 +40,16 @@ const BestSellers = () => {
       try {
         // Try fetching by collection first, fallback to rating
         // For now using collection=best-sellers
-        const res = await fetch('/api/products?collection=best-sellers&limit=8');
+        const res = await fetch('/api/products?collection=best-sellers&limit=8', {
+          headers: getRecommendationRequestHeaders('best_sellers'),
+        });
         let json = await res.json();
         
         // Fallback if no collection data yet (or if the first request failed)
         if (!json.success || !json.data || json.data.length === 0) {
-            const resFallback = await fetch('/api/products?sortBy=rating&limit=8');
+            const resFallback = await fetch('/api/products?sortBy=rating&limit=8', {
+              headers: getRecommendationRequestHeaders('best_sellers'),
+            });
             json = await resFallback.json();
         }
 
@@ -109,8 +115,16 @@ const BestSellers = () => {
       linkText="View All" 
       linkHref="/shop?collection=best-sellers"
     >
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products.map((product, index) => (
+        <ProductImpressionTracker
+          key={product.id}
+          product={product}
+          surface="best_sellers"
+          position={index + 1}
+          metadata={{ sortStrategy: 'smart' }}
+        >
+          <ProductCard product={product} />
+        </ProductImpressionTracker>
       ))}
     </SectionCarousel>
   );

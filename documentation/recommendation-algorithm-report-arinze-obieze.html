@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace Recommendation Algorithm Implementation Report</title>
+  <style>
+    :root {
+      --ink: #132238;
+      --muted: #53657d;
+      --line: #d9e2ec;
+      --soft: #f5f8fb;
+      --card: #ffffff;
+      --brand: #0f766e;
+      --brand-2: #1d4ed8;
+      --brand-3: #0b3b66;
+      --accent: #f59e0b;
+      --danger: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top right, rgba(29, 78, 216, 0.08), transparent 28%),
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 24%),
+        #eef4f8;
+      line-height: 1.6;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 10px 35px rgba(16, 24, 40, 0.08);
+    }
+
+    .cover {
+      min-height: 297mm;
+      padding: 28mm 24mm;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(145deg, #f8fffe 0%, #eef6ff 55%, #f7fbff 100%);
+    }
+
+    .cover::before {
+      content: "";
+      position: absolute;
+      width: 240mm;
+      height: 240mm;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15,118,110,0.18), rgba(15,118,110,0));
+      top: -120mm;
+      right: -40mm;
+    }
+
+    .cover::after {
+      content: "";
+      position: absolute;
+      width: 160mm;
+      height: 160mm;
+      border-radius: 36px;
+      transform: rotate(24deg);
+      background: linear-gradient(145deg, rgba(29,78,216,0.10), rgba(15,118,110,0.04));
+      bottom: -70mm;
+      left: -40mm;
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brand-3);
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(11,59,102,0.12);
+    }
+
+    .cover h1 {
+      position: relative;
+      z-index: 1;
+      margin: 22mm 0 8mm;
+      max-width: 135mm;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: #10233a;
+    }
+
+    .cover .subtitle {
+      position: relative;
+      z-index: 1;
+      max-width: 128mm;
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 22mm;
+    }
+
+    .author-card {
+      position: relative;
+      z-index: 1;
+      width: 88mm;
+      padding: 7mm;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(16, 35, 58, 0.10);
+      backdrop-filter: blur(10px);
+    }
+
+    .author-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .author-card .name {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--brand-3);
+      margin-top: 6px;
+    }
+
+    .cover-grid {
+      position: absolute;
+      inset: auto 24mm 22mm 24mm;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cover-stat {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(16,35,58,0.08);
+    }
+
+    .cover-stat strong {
+      display: block;
+      font-size: 14px;
+      color: var(--brand-3);
+    }
+
+    .cover-stat span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .content {
+      padding: 18mm 18mm 20mm;
+      background: white;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--brand-3);
+    }
+
+    h3 {
+      margin: 16px 0 8px;
+      font-size: 18px;
+      color: #16395f;
+    }
+
+    p {
+      margin: 0 0 12px;
+      font-size: 14px;
+    }
+
+    ul, ol {
+      margin: 0 0 14px 20px;
+      padding: 0;
+      font-size: 14px;
+    }
+
+    li { margin-bottom: 6px; }
+
+    .section {
+      margin-bottom: 16mm;
+      page-break-inside: avoid;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: 1.35fr 0.9fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .panel strong {
+      color: var(--brand-3);
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: white;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 600;
+      color: #26425e;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+    }
+
+    .stage {
+      border-radius: 18px;
+      padding: 16px;
+      color: white;
+      min-height: 155px;
+      background: linear-gradient(160deg, #0b3b66, #1d4ed8);
+    }
+
+    .stage:nth-child(2) {
+      background: linear-gradient(160deg, #0f766e, #0b3b66);
+    }
+
+    .stage:nth-child(3) {
+      background: linear-gradient(160deg, #1e3a8a, #0f766e);
+    }
+
+    .stage .step {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.18);
+      margin-bottom: 10px;
+    }
+
+    .stage h4 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .stage p, .stage li {
+      font-size: 13px;
+      color: rgba(255,255,255,0.92);
+    }
+
+    .formula {
+      padding: 16px;
+      border-radius: 18px;
+      background: #0f172a;
+      color: #e5eef8;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      border: 1px solid #1e293b;
+      margin: 12px 0;
+    }
+
+    .twocol {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: #fffaf0;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin: 12px 0;
+      color: #6b4b12;
+    }
+
+    .warn {
+      border-left-color: var(--danger);
+      background: #fff5f5;
+      color: #7f1d1d;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+    }
+
+    th {
+      color: var(--brand-3);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: #f8fbff;
+    }
+
+    .refs a {
+      color: var(--brand-2);
+      text-decoration: none;
+      word-break: break-word;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+
+      .page {
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        box-shadow: none;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page cover">
+    <div class="eyebrow">Marketplace Implementation Report</div>
+    <h1>Recommendation Algorithm Implementation for a Modern E-commerce Marketplace</h1>
+    <p class="subtitle">
+      A client-facing implementation report describing the recommendation and ranking system that was built,
+      including smart scoring, anonymous-session behavior, impression tracking, aggregate metrics, and debugging support.
+    </p>
+
+    <div class="author-card">
+      <div class="label">Prepared By</div>
+      <div class="name">Arinze Obieze</div>
+    </div>
+
+    <div class="cover-grid">
+      <div class="cover-stat">
+        <strong>3-Stage System</strong>
+        <span>Candidate generation, scoring, and re-ranking</span>
+      </div>
+      <div class="cover-stat">
+        <strong>Cold-Start Ready</strong>
+        <span>Supports first-time and anonymous users from day one</span>
+      </div>
+      <div class="cover-stat">
+        <strong>Production Ready</strong>
+        <span>Implemented across storefront, analytics, and admin workflows</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page content">
+    <section class="section">
+      <h2>1. Executive Summary</h2>
+      <div class="intro">
+        <div>
+          <p>
+            The recommendation algorithm implemented for this marketplace is not a single “sort by newest”
+            or “sort by popularity” rule. It is a structured recommendation system that retrieves relevant products,
+            scores them across several commercial and trust dimensions, and then re-ranks the final list to improve list quality.
+          </p>
+          <p>
+            In practice, this implementation optimizes for more than one objective at the same time:
+            relevance, purchase likelihood, product quality, seller trust, inventory health, freshness, diversity,
+            and long-term marketplace health.
+          </p>
+        </div>
+        <div class="panel">
+          <strong>Implemented approach:</strong>
+          <p class="small">Built a three-stage recommendation architecture with contextual ranking for new users, anonymous session personalization for logged-out users, and stronger personalization for signed-in repeat users when behavioral history is available.</p>
+          <div class="pill-list">
+            <span class="pill">Relevance</span>
+            <span class="pill">Conversion</span>
+            <span class="pill">Trust</span>
+            <span class="pill">Diversity</span>
+            <span class="pill">Exploration</span>
+            <span class="pill">Fair Exposure</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>2. Why The Marketplace Needed More Than Sorting</h2>
+      <p>
+        Basic sorting methods such as <em>newest first</em>, <em>price low to high</em>, and <em>highest rated</em> remain useful as customer controls,
+        but they were too limited to function as the main ranking strategy of the marketplace.
+      </p>
+      <p>A marketplace has to balance several realities at once:</p>
+      <ul>
+        <li>Some products are new and have no engagement history.</li>
+        <li>Some sellers are operationally stronger and more reliable than others.</li>
+        <li>Some products attract clicks but convert poorly.</li>
+        <li>Some product lists look repetitive even if each item scores well individually.</li>
+        <li>Different surfaces have different intent: home, category, search, store page, PDP recommendations, and account surfaces.</li>
+      </ul>
+      <div class="callout">
+        The implemented recommendation system ranks by <strong>score</strong>, not by a single field in the database. The resulting marketplace ranking flow behaves as a decision engine, not just an ordering rule.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>3. Implemented Architecture</h2>
+      <div class="stage-grid">
+        <div class="stage">
+          <div class="step">Stage 1</div>
+          <h4>Candidate Generation</h4>
+          <p>Retrieves a broad set of relevant products from search, category, popularity, store, and similarity pools before final ordering.</p>
+          <ul>
+            <li>Optimizes recall</li>
+            <li>Fast and broad</li>
+            <li>Does not decide final order</li>
+          </ul>
+        </div>
+        <div class="stage">
+          <div class="step">Stage 2</div>
+          <h4>Scoring</h4>
+          <p>Assigns a score to each candidate using multiple signals such as relevance, quality, trust, conversion, stock, and freshness.</p>
+          <ul>
+            <li>Produces ranked preference</li>
+            <li>Implemented as heuristic weighted scoring</li>
+            <li>Structured for future model-based ranking</li>
+          </ul>
+        </div>
+        <div class="stage">
+          <div class="step">Stage 3</div>
+          <h4>Re-ranking</h4>
+          <p>Improves the final list by enforcing diversity, seller caps, cold-start exposure, and commercial quality controls.</p>
+          <ul>
+            <li>Improves list quality</li>
+            <li>Protects marketplace health</li>
+            <li>Supports fairness and exploration</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>4. What The Algorithm Optimizes For</h2>
+      <p>The implemented algorithm optimizes for meaningful commerce outcomes, not just surface-level engagement.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Outcome</th>
+            <th>Why It Matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Purchase likelihood</td>
+            <td>Direct business value and strongest signal of marketplace usefulness.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Add-to-cart likelihood</td>
+            <td>Useful leading indicator where purchase data is sparse.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Relevance</td>
+            <td>Ensures the products shown actually match user intent and page context.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Trust and quality</td>
+            <td>Reduces returns, disappointments, and marketplace credibility issues.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Healthy catalog exposure</td>
+            <td>Prevents ranking collapse into only a few old winners or a few dominant stores.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="warn callout">
+        If the system optimizes mostly for clicks, it will likely over-promote curiosity-driven products and under-optimize for purchase quality, trust, and long-term seller health.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>5. Core Scoring Components</h2>
+      <div class="twocol">
+        <div class="panel">
+          <h3>Relevance</h3>
+          <p>Measures how well a product matches the query, category, surface, or related-item context.</p>
+          <h3>Conversion</h3>
+          <p>Estimates likelihood that the product leads to add-to-cart or purchase.</p>
+          <h3>Popularity</h3>
+          <p>Uses demand signals such as views, clicks, carts, wishlists, and recent purchases.</p>
+          <h3>Product Quality</h3>
+          <p>Captures rating, review volume, image completeness, content quality, and return risk.</p>
+        </div>
+        <div class="panel">
+          <h3>Seller Trust</h3>
+          <p>Reflects fulfillment quality, cancellation rate, dispute history, and seller verification.</p>
+          <h3>Inventory Health</h3>
+          <p>Protects the experience by favoring items with stable stock and low oversell risk.</p>
+          <h3>Freshness</h3>
+          <p>Allows newer products to enter the market without letting recency dominate forever.</p>
+          <h3>Personalization / Business Signals</h3>
+          <p>Uses user affinity where available, plus controlled strategic boosts when needed.</p>
+        </div>
+      </div>
+
+      <div class="formula">Base Score =
+0.30 * Relevance
++ 0.20 * Conversion
++ 0.10 * Popularity
++ 0.10 * Product Quality
++ 0.10 * Seller Trust
++ 0.08 * Freshness
++ 0.07 * Inventory Health
++ 0.05 * Personalization
+
+Served Score =
+Base Score
++ Exploration Bonus
++ Merchandising Boost
+- Return Risk Penalty
+- Overexposure Penalty</div>
+
+      <p class="small">
+        The precise weights are being used as an explainable starting policy and can be tuned further using online experiments and observed business outcomes.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>6. Different Surfaces Use Different Logic</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Surface</th>
+            <th>Primary Goal</th>
+            <th>Implemented Ranking Emphasis</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Home page</td>
+            <td>Inspire and orient</td>
+            <td>Popularity, freshness, quality, diversity, strategic merchandising</td>
+          </tr>
+          <tr>
+            <td>Category page</td>
+            <td>Efficient browsing</td>
+            <td>Category relevance, conversion, stock health, trust, some freshness</td>
+          </tr>
+          <tr>
+            <td>Search results</td>
+            <td>Answer user intent</td>
+            <td>Strong relevance first, then conversion and trust</td>
+          </tr>
+          <tr>
+            <td>Product detail recommendations</td>
+            <td>Continue shopping</td>
+            <td>Similarity, compatibility, quality, complementarity</td>
+          </tr>
+          <tr>
+            <td>Store page</td>
+            <td>Represent seller well</td>
+            <td>Store bestsellers, recent arrivals, trusted items, good stock</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>7. Re-ranking Rules</h2>
+      <p>
+        After scoring, the system improves the list as a whole. This is the step that makes the product feed look intentional and premium instead of repetitive.
+      </p>
+      <ul>
+        <li>Cap repeated exposure from the same seller in the first visible slots.</li>
+        <li>Avoid near-duplicate products appearing side by side.</li>
+        <li>Mix price bands so the feed does not become too expensive or too cheap.</li>
+        <li>Mix subcategories or styles on broad browse pages.</li>
+        <li>Reserve some space for newer, underexposed, but promising items.</li>
+        <li>Downrank risky products and sellers with poor operational performance.</li>
+      </ul>
+      <div class="callout">
+        Individual product strength is not enough. The implemented ranking system also produces a <strong>good list</strong>.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>8. How It Works For The Very First User</h2>
+      <p>
+        A first-time user is a classic cold-start case. The system has little or no identity-based history, but it still has contextual information.
+      </p>
+      <div class="twocol">
+        <div class="panel">
+          <strong>Signals still available for a first-time visitor:</strong>
+          <ul>
+            <li>Landing page or entry surface</li>
+            <li>Current category or collection</li>
+            <li>Search query</li>
+            <li>Device type</li>
+            <li>Location or market context where relevant</li>
+            <li>Traffic source or campaign source</li>
+            <li>Immediate in-session actions</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <strong>Implemented ranking mode:</strong>
+          <p>The system uses contextual cold-start ranking. In other words, it acts like a smart merchandiser before acting like a personal assistant.</p>
+          <div class="formula">First-time user score =
+0.30 relevance
++ 0.20 conversion
++ 0.15 popularity
++ 0.10 quality
++ 0.10 seller trust
++ 0.10 freshness
++ 0.05 inventory health</div>
+        </div>
+      </div>
+      <h3>Example</h3>
+      <p>
+        If a first-time visitor lands on a “men’s loafers” search or category page, the system prioritizes the best matching loafers with strong conversion history, trusted sellers, solid stock, and a healthy spread in style and price. It does not keep pushing generic site-wide bestsellers that do not match the user’s immediate context.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>9. How It Works For A User Who Is Not Logged In</h2>
+      <p>
+        A user who is not logged in is not the same thing as a first-time user. They may still have rich anonymous behavior attached to their browser session or device.
+      </p>
+      <div class="twocol">
+        <div class="panel">
+          <strong>Useful anonymous signals:</strong>
+          <ul>
+            <li>Recently viewed products</li>
+            <li>Recent searches</li>
+            <li>Clicked categories</li>
+            <li>Time spent on PDPs</li>
+            <li>Add-to-cart behavior</li>
+            <li>Wishlist behavior where locally stored</li>
+            <li>Preferred price band</li>
+            <li>Session recency and page sequence</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <strong>Implemented ranking mode:</strong>
+          <p>The system uses anonymous session personalization on top of the contextual cold-start baseline.</p>
+          <p class="small">
+            The implementation assigns a stable anonymous ID and session ID in client storage so the recommendation system can build short-term preference memory before sign-in.
+          </p>
+        </div>
+      </div>
+      <h3>Example</h3>
+      <p>
+        A shopper is not logged in, but within 10 minutes they search for “black sneakers,” open four black footwear products, ignore premium price points above their pattern, and add one discounted pair to cart. The system responds by boosting similar sneakers, similar price bands, similar colors, and adjacent related items. This is meaningful personalization even without an account login.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>10. Cold-Start Handling For New Products</h2>
+      <p>
+        New products have little or no behavioral history, so a performance-only ranking system would suppress them. This is why the implemented recommendation system uses a hybrid strategy.
+      </p>
+      <ul>
+        <li>Use product attributes and content quality to estimate promise.</li>
+        <li>Apply a temporary freshness boost.</li>
+        <li>Allow measured exploration exposure.</li>
+        <li>Use seller trust as a confidence anchor for new listings.</li>
+      </ul>
+      <div class="callout">
+        A new product from a verified seller with complete imagery, solid pricing, clear copy, and healthy inventory receives some exposure even before it has accumulated purchase history.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>11. Exploration vs Exploitation</h2>
+      <p>
+        A good marketplace recommendation system cannot only exploit what is already known to work. The implemented strategy also explores promising but uncertain products.
+      </p>
+      <div class="twocol">
+        <div class="panel">
+          <strong>Exploitation</strong>
+          <p>Show products that are already known to perform well on relevance, conversion, quality, and trust.</p>
+        </div>
+        <div class="panel">
+          <strong>Exploration</strong>
+          <p>Deliberately test new or underexposed products that appear promising but do not yet have enough evidence.</p>
+        </div>
+      </div>
+      <p>
+        A practical policy is to keep the majority of exposure stable and exploitative, while reserving a small share, often 5-10%, for controlled exploration among new or underexposed quality products.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>12. Fairness Across Sellers</h2>
+      <p>
+        The recommendation system supports marketplace health, not just short-term winner concentration. If the system always promotes only the largest or oldest sellers, catalog depth weakens and smaller high-quality sellers may disengage.
+      </p>
+      <ul>
+        <li>Track seller exposure over time.</li>
+        <li>Cap repeated exposure from one seller in top slots.</li>
+        <li>Allocate some qualified exposure to underexposed but high-quality sellers.</li>
+        <li>Use trust thresholds so fairness does not override safety and quality.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>13. Data and Event Requirements</h2>
+      <p>
+        The recommendation system improves only if it learns from what was shown, what was ignored, and what converted. For that reason, impression-level logging was implemented as a core part of the rollout.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Event / Dataset</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Impressions</td>
+            <td>Teaches the system which products were shown and not only which were clicked.</td>
+          </tr>
+          <tr>
+            <td>Clicks / PDP views</td>
+            <td>Captures engagement and browsing interest.</td>
+          </tr>
+          <tr>
+            <td>Add-to-cart / wishlist</td>
+            <td>Strong signals of commercial intent.</td>
+          </tr>
+          <tr>
+            <td>Purchase events</td>
+            <td>Primary signal of recommendation value.</td>
+          </tr>
+          <tr>
+            <td>Returns / cancellations</td>
+            <td>Helps downrank low-quality or risky products and sellers.</td>
+          </tr>
+          <tr>
+            <td>Seller quality metrics</td>
+            <td>Supports trust-aware marketplace ranking.</td>
+          </tr>
+          <tr>
+            <td>Anonymous and signed-in profiles</td>
+            <td>Enables session-level and long-term personalization.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>14. Implementation Summary</h2>
+      <ol>
+        <li><strong>Smart ranking API:</strong> Implemented weighted scoring in the products API using relevance, conversion, popularity, quality, seller trust, freshness, inventory, personalization, discount, exploration, and risk controls.</li>
+        <li><strong>Anonymous context support:</strong> Added anonymous and session-aware request headers so logged-out users can still receive adaptive recommendations.</li>
+        <li><strong>Impression tracking:</strong> Implemented client-side product impression tracking with duplicate suppression per session and per surface position.</li>
+        <li><strong>Aggregate metrics pipeline:</strong> Added a recommendation metrics table and refresh function to pre-compute 30-day product performance signals from analytics events.</li>
+        <li><strong>Operational tooling:</strong> Added an admin ranking debug page so score breakdowns, ranking strategy, persona detection, and metrics source can be inspected during testing.</li>
+      </ol>
+      <div class="callout">
+        The delivered system uses an explainable smart heuristic foundation and leaves a clear path for later learning-to-rank upgrades without changing the core recommendation flow.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>15. Example End-To-End Flows</h2>
+      <h3>Example A: Brand New Visitor On Home Page</h3>
+      <p>
+        The system retrieves broad high-quality candidates from active categories, strong stores, recent arrivals, and popular products. It scores them on quality, popularity, trust, freshness, and stock. Then it re-ranks to ensure diversity across stores, categories, and price points.
+      </p>
+
+      <h3>Example B: Logged-Out User Browsing Bags</h3>
+      <p>
+        The user has no account session, but the platform sees recent bag searches, PDP views, and mid-price clicks. The system adapts by increasing bag affinity, preferred price range, and style similarity while preserving diversity and trust.
+      </p>
+
+      <h3>Example C: Signed-In Repeat User</h3>
+      <p>
+        The platform now uses both session data and long-term history, such as purchased categories, favorite stores, repeated styles, and price tolerance. Personalization becomes stronger, but relevance, trust, and list quality still remain guardrails.
+      </p>
+    </section>
+
+    <section class="section refs">
+      <h2>16. Research References</h2>
+      <p>The implementation choices in this report were informed by established research and production ranking practice.</p>
+      <ul>
+        <li>
+          Google Research. <em>Recommending What Video to Watch Next: A Multitask Ranking System.</em><br />
+          <a href="https://research.google/pubs/recommending-what-video-to-watch-next-a-multitask-ranking-system/">https://research.google/pubs/recommending-what-video-to-watch-next-a-multitask-ranking-system/</a>
+        </li>
+        <li>
+          Google Research. <em>TF-Ranking: Scalable TensorFlow Library for Learning-to-Rank.</em><br />
+          <a href="https://research.google/pubs/tf-ranking-scalable-tensorflow-library-for-learning-to-rank-2/">https://research.google/pubs/tf-ranking-scalable-tensorflow-library-for-learning-to-rank-2/</a>
+        </li>
+        <li>
+          IJCAI 2022. <em>Multi-Stage Recommender Systems: A Survey / Review of architecture and ranking stages.</em><br />
+          <a href="https://www.ijcai.org/proceedings/2022/771">https://www.ijcai.org/proceedings/2022/771</a>
+        </li>
+        <li>
+          Google Research. <em>Learning to Rank with Selection Bias in Personal Search.</em><br />
+          <a href="https://research.google/pubs/learning-to-rank-with-selection-bias-in-personal-search/">https://research.google/pubs/learning-to-rank-with-selection-bias-in-personal-search/</a>
+        </li>
+        <li>
+          Google Research. <em>Expediting Exploration by Attribute-to-Feature Mapping for Cold-Start Recommendations.</em><br />
+          <a href="https://research.google/pubs/expediting-exploration-by-attribute-to-feature-mapping-for-cold-start-recommendations/">https://research.google/pubs/expediting-exploration-by-attribute-to-feature-mapping-for-cold-start-recommendations/</a>
+        </li>
+        <li>
+          Microsoft Research. <em>A Contextual-Bandit Approach to Personalized News Article Recommendation.</em><br />
+          <a href="https://www.microsoft.com/en-us/research/publication/a-contextual-bandit-approach-to-personalized-news-article-recommendation-3/?lang=ja">https://www.microsoft.com/en-us/research/publication/a-contextual-bandit-approach-to-personalized-news-article-recommendation-3/?lang=ja</a>
+        </li>
+        <li>
+          Google Research. <em>Towards Unified Metrics for Accuracy and Diversity for Recommender Systems.</em><br />
+          <a href="https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/">https://research.google/pubs/towards-unified-metrics-for-accuracy-and-diversity-for-recommender-systems/</a>
+        </li>
+        <li>
+          User Modeling and User-Adapted Interaction. <em>Fairness and Exposure in Recommendation Systems.</em><br />
+          <a href="https://link.springer.com/article/10.1007/s11257-023-09364-z">https://link.springer.com/article/10.1007/s11257-023-09364-z</a>
+        </li>
+      </ul>
+      <p class="footer-note">
+        Final implementation summary: the marketplace now uses a multi-stage, context-aware, score-based recommendation system with explainable heuristic ranking, anonymous-session awareness, diversity-aware re-ranking, analytics-backed performance signals, and admin tooling for inspection.
+      </p>
+    </section>
+  </div>
+</body>
+</html>

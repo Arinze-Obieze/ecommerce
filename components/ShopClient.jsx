@@ -6,6 +6,7 @@ import { useFilters } from "@/contexts/FilterContext";
 import ShopHeader from "./Shop/ShopHeader";
 import ProductGrid from "./Shop/ProductGrid";
 import MobileFilterDrawer from "./Shop/MobileFilterDrawer";
+import { getRecommendationRequestHeaders } from "@/utils/recommendationRequest";
 
 // ============================================================
 // 🎨 THEME
@@ -116,7 +117,9 @@ function ShopHubContent({ initialCategory }) {
       if (filters.inStock)        params.set('inStock', 'true');
       if (filters.onSale)         params.set('onSale',  'true');
 
-      const res  = await fetch(`/api/products?${params.toString()}`);
+      const res  = await fetch(`/api/products?${params.toString()}`, {
+        headers: getRecommendationRequestHeaders('shop_grid'),
+      });
       const json = await res.json();
 
       if (!json.success) { setError(json.error || 'Failed to load products'); return; }
@@ -257,6 +260,8 @@ function ShopHubContent({ initialCategory }) {
               loading={loading}
               error={error}
               meta={meta}
+              surface="shop_grid"
+              trackingMeta={meta?.scoring || null}
             />
 
             {/* Infinite-scroll trigger */}

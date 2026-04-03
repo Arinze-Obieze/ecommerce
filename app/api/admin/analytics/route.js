@@ -82,6 +82,7 @@ export async function GET(request) {
   const actors1 = new Set(events.filter((e) => new Date(e.created_at).getTime() >= now - 24 * 60 * 60 * 1000).map(actorKey).filter(Boolean));
 
   const funnel = {
+    product_impression: new Set(events.filter((e) => e.event_name === 'product_impression').map(actorKey).filter(Boolean)).size,
     view_item: new Set(events.filter((e) => e.event_name === 'view_item').map(actorKey).filter(Boolean)).size,
     add_to_cart: new Set(events.filter((e) => e.event_name === 'add_to_cart').map(actorKey).filter(Boolean)).size,
     begin_checkout: new Set(events.filter((e) => e.event_name === 'begin_checkout').map(actorKey).filter(Boolean)).size,
@@ -116,6 +117,39 @@ export async function GET(request) {
     .map(([term, count]) => ({ term, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 12);
+
+  const recommendationEvents = events.filter((e) => e.event_name === 'product_impression');
+  const recommendationSurfaceMap = new Map();
+  const personaMap = new Map();
+  const productExposureMap = new Map();
+
+  for (const event of recommendationEvents) {
+    const surface = String(event.properties?.surface || 'unknown');
+    recommendationSurfaceMap.set(surface, (recommendationSurfaceMap.get(surface) || 0) + 1);
+
+    const persona = String(event.properties?.persona || 'unknown');
+    personaMap.set(persona, (personaMap.get(persona) || 0) + 1);
+
+    const productId = Number(event.properties?.product_id);
+    const productName = String(event.properties?.product_name || `Product ${productId || ''}`).trim();
+    if (Number.isInteger(productId)) {
+      const current = productExposureMap.get(productId) || { product_id: productId, product_name: productName, impressions: 0 };
+      current.impressions += 1;
+      productExposureMap.set(productId, current);
+    }
+  }
+
+  const recommendationSurfaceMix = [...recommendationSurfaceMap.entries()]
+    .map(([surface, count]) => ({ surface, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const recommendationPersonaMix = [...personaMap.entries()]
+    .map(([persona, count]) => ({ persona, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const topExposedProducts = [...productExposureMap.values()]
+    .sort((a, b) => b.impressions - a.impressions)
+    .slice(0, 10);
 
   const completedByUser = new Map();
   for (const order of orders90.filter((o) => o.status === 'completed' && o.user_id)) {
@@ -186,6 +220,12 @@ export async function GET(request) {
       behavior: {
         topSearchTerms,
         zeroResultSearches,
+      },
+      recommendations: {
+        impressions: recommendationEvents.length,
+        recommendationSurfaceMix,
+        recommendationPersonaMix,
+        topExposedProducts,
       },
       cohorts: {
         newBuyers,

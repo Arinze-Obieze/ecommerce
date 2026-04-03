@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import redis from '@/utils/redis';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
+import { DEFAULT_RETURN_POLICY, normalizeReturnPolicyRecord } from '@/utils/returnPolicy';
 
 export const dynamic = 'force-dynamic';
 
@@ -111,10 +112,24 @@ export async function GET(request, { params }) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
+    const { data: returnPolicyRecord, error: returnPolicyError } = await supabase
+      .from('platform_content')
+      .select('title, description, data, updated_at, updated_by')
+      .eq('content_key', 'return_policy')
+      .maybeSingle();
+
+    const returnPolicy =
+      returnPolicyError && returnPolicyError.code !== 'PGRST116' && returnPolicyError.code !== '42P01'
+        ? DEFAULT_RETURN_POLICY
+        : returnPolicyRecord
+          ? normalizeReturnPolicyRecord(returnPolicyRecord)
+          : DEFAULT_RETURN_POLICY;
+
     // Flatten logic matching frontend expectations
     const flattenedProduct = {
         ...product,
-        category: product.product_categories?.[0]?.categories
+        category: product.product_categories?.[0]?.categories,
+        return_policy: returnPolicy,
     };
 
     // 3. Set Cache (TTL 5 mins)

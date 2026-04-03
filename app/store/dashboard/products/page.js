@@ -37,6 +37,11 @@ export default function StoreProductsPage() {
   useEffect(() => { load(); }, [statusFilter]);
 
   const counts = useMemo(() => summary || {}, [summary]);
+  const summarizeBulkDiscounts = (tiers) => {
+    if (!Array.isArray(tiers) || tiers.length === 0) return '-';
+    const highestTier = [...tiers].sort((a, b) => b.minimum_quantity - a.minimum_quantity)[0];
+    return `${highestTier.discount_percent}% @ ${highestTier.minimum_quantity}+`;
+  };
 
   return (
     <div className="space-y-6">
@@ -93,9 +98,11 @@ export default function StoreProductsPage() {
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="py-2 pr-3">Name</th>
+                  <th className="py-2 pr-3">SKU</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Live</th>
                   <th className="py-2 pr-3">Stock</th>
+                  <th className="py-2 pr-3">Bulk</th>
                   <th className="py-2 pr-3">Media</th>
                   <th className="py-2 pr-3">Submitted</th>
                   <th className="py-2 pr-3">Rejection</th>
@@ -108,9 +115,11 @@ export default function StoreProductsPage() {
                       <div className="font-semibold text-gray-900">{row.name}</div>
                       <div className="text-xs text-gray-500">/{row.slug}</div>
                     </td>
+                    <td className="py-2 pr-3 font-mono text-xs text-gray-700">{row.sku || '-'}</td>
                     <td className="py-2 pr-3 capitalize">{row.moderation_status}</td>
                     <td className="py-2 pr-3">{row.is_active ? 'Yes' : 'No'}</td>
                     <td className="py-2 pr-3">{row.stock_quantity}</td>
+                    <td className="py-2 pr-3">{summarizeBulkDiscounts(row.bulk_discount_tiers)}</td>
                     <td className="py-2 pr-3">{(row.image_urls?.length || 0)} img / {(row.video_urls?.length || 0)} vid</td>
                     <td className="py-2 pr-3">{row.submitted_at ? new Date(row.submitted_at).toLocaleString() : '-'}</td>
                     <td className="py-2 pr-3 text-red-700">{row.rejection_reason || '-'}</td>
@@ -118,7 +127,7 @@ export default function StoreProductsPage() {
                 ))}
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-gray-500">No products found for this filter.</td>
+                    <td colSpan={9} className="py-6 text-center text-gray-500">No products found for this filter.</td>
                   </tr>
                 ) : null}
               </tbody>

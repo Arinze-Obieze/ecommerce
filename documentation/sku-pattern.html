@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SKU Pattern</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      color: #111827;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #1f4d3a;
+      margin-bottom: 12px;
+    }
+    h2 {
+      color: #1f4d3a;
+      margin-top: 28px;
+      margin-bottom: 8px;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "Courier New", monospace;
+    }
+    ul {
+      margin-top: 8px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    .example {
+      background: #f9fafb;
+      border-left: 4px solid #2e5c45;
+      padding: 10px 14px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>SKU Pattern</h1>
+
+  <p>Yes.</p>
+
+  <p>The SKU pattern is:</p>
+
+  <p><code>ZVA-&lt;STORE4&gt;-&lt;PROD4&gt;-&lt;SEQ4&gt;</code></p>
+
+  <h2>How Each Part Works</h2>
+  <ul>
+    <li><code>ZVA</code>: fixed marketplace prefix</li>
+    <li><code>&lt;STORE4&gt;</code>: first 4 uppercase alphanumeric characters from the store slug; if that is missing, it falls back to the store name</li>
+    <li><code>&lt;PROD4&gt;</code>: first 4 uppercase alphanumeric characters from the product slug; if that is missing, it falls back to the product name</li>
+    <li><code>&lt;SEQ4&gt;</code>: a 4-digit sequence number padded with zeros, incremented per matching store/product prefix</li>
+  </ul>
+
+  <h2>Examples</h2>
+  <div class="example">Store slug <code>zara</code>, product slug <code>shirt-men</code> -&gt; <code>ZVA-ZARA-SHIR-0001</code></div>
+  <div class="example">Store slug <code>nike-outlet</code>, product slug <code>air-max-90</code> -&gt; <code>ZVA-NIKE-AIRM-0001</code></div>
+  <div class="example">Next product with the same store/product prefix becomes <code>...-0002</code></div>
+
+  <h2>Implementation Details</h2>
+  <ul>
+    <li>Non-alphanumeric characters are stripped before building the codes.</li>
+    <li>If a store or product code is shorter than 4 characters, it is padded with <code>X</code>.</li>
+    <li>The sequence is determined by checking existing SKUs with the same <code>ZVA-STORE4-PROD4-</code> prefix and adding 1.</li>
+  </ul>
+
+  <p>So yes, it follows both store and product.</p>
+</body>
+</html>

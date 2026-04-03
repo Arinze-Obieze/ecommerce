@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiChevronRight, FiCheckCircle, FiShoppingCart } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 const PromotionalBanners = () => {
     const [deals, setDeals] = useState([]);
@@ -13,7 +14,9 @@ const PromotionalBanners = () => {
       const fetchDeals = async () => {
         try {
           // Fetch items with discounts, limit 3
-          const res = await fetch('/api/products?hasDiscount=true&limit=3');
+          const res = await fetch('/api/products?hasDiscount=true&limit=3', {
+            headers: getRecommendationRequestHeaders('promo_banners'),
+          });
           const json = await res.json();
           if (json.success) {
             setDeals(json.data);
@@ -57,9 +60,9 @@ const PromotionalBanners = () => {
              <div className="absolute right-0 bottom-0 top-0 w-1/2 bg-[url('https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center md:mask-gradient-left"></div>
              
              {/* Gradient Mask */}
-             <div className="absolute inset-0 bg-gradient-to-r from-[#f0f4f1] via-[#f0f4f1]/80 to-transparent pointer-events-none"></div>
+             <div className="absolute inset-0 bg-linear-to-r from-[#f0f4f1] via-[#f0f4f1]/80 to-transparent pointer-events-none"></div>
 
-             <div className="absolute inset-0 p-8 flex flex-col justify-center items-start relative z-10">
+             <div className="inset-0 p-8 flex flex-col justify-center items-start relative z-10">
                <h3 className="text-3xl md:text-4xl font-bold text-[#1a382b] mb-2">BEST SELLERS</h3>
                <Link href="/shop?sortBy=rating" className="flex items-center gap-1 text-gray-700 font-medium mb-6 hover:text-[#2E5C45]">
                   Shop Now <FiChevronRight />
@@ -120,7 +123,7 @@ const PromotionalBanners = () => {
                           </button>
                         </div>
                       </div>
-                      <div className="w-24 h-24 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 ml-4">
+                      <div className="w-24 h-24 rounded-lg bg-gray-200 overflow-hidden shrink-0 ml-4">
                         <img src={item.image_urls?.[0] || 'https://placehold.co/400x400?text=No+Image'} alt={item.name} className="w-full h-full object-cover" />
                       </div>
                     </div>
@@ -170,7 +173,7 @@ const PromotionalBanners = () => {
                         </button>
                       </div>
                     </div>
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg bg-gray-200 overflow-hidden flex-shrink-0 ml-4">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg bg-gray-200 overflow-hidden shrink-0 ml-4">
                       <img src={item.image_urls?.[0] || 'https://placehold.co/400x400?text=No+Image'} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                   </div>

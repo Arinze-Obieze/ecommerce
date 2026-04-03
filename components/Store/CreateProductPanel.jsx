@@ -3,15 +3,19 @@
 import { useMemo, useState } from 'react';
 import { createClient as createSupabaseClient } from '@/utils/supabase/client';
 
-const initialForm = {
-  name: '',
-  slug: '',
-  description: '',
-  price: '',
-  discount_price: '',
-  stock_quantity: '',
-  submit_for_review: true,
-};
+function createInitialForm() {
+  return {
+    name: '',
+    slug: '',
+    description: '',
+    price: '',
+    discount_price: '',
+    stock_quantity: '',
+    submit_for_review: true,
+    specifications: [{ key: '', value: '' }],
+    bulk_discount_tiers: [{ minimum_quantity: '', discount_percent: '' }],
+  };
+}
 
 function inferMediaType(file) {
   if (file?.type?.startsWith('image/')) return 'image';
@@ -21,7 +25,7 @@ function inferMediaType(file) {
 
 export default function CreateProductPanel({ onCreated }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(createInitialForm);
   const [media, setMedia] = useState([]);
   const [primaryImageUrl, setPrimaryImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -111,6 +115,52 @@ export default function CreateProductPanel({ onCreated }) {
     });
   };
 
+  const updateSpecification = (index, field, value) => {
+    setForm((current) => ({
+      ...current,
+      specifications: current.specifications.map((spec, specIndex) => (
+        specIndex === index ? { ...spec, [field]: value } : spec
+      )),
+    }));
+  };
+
+  const addSpecification = () => {
+    setForm((current) => ({
+      ...current,
+      specifications: [...current.specifications, { key: '', value: '' }],
+    }));
+  };
+
+  const updateBulkDiscountTier = (index, field, value) => {
+    setForm((current) => ({
+      ...current,
+      bulk_discount_tiers: current.bulk_discount_tiers.map((tier, tierIndex) => (
+        tierIndex === index ? { ...tier, [field]: value } : tier
+      )),
+    }));
+  };
+
+  const addBulkDiscountTier = () => {
+    setForm((current) => ({
+      ...current,
+      bulk_discount_tiers: [...current.bulk_discount_tiers, { minimum_quantity: '', discount_percent: '' }],
+    }));
+  };
+
+  const removeBulkDiscountTier = (index) => {
+    setForm((current) => ({
+      ...current,
+      bulk_discount_tiers: current.bulk_discount_tiers.filter((_, tierIndex) => tierIndex !== index),
+    }));
+  };
+
+  const removeSpecification = (index) => {
+    setForm((current) => ({
+      ...current,
+      specifications: current.specifications.filter((_, specIndex) => specIndex !== index),
+    }));
+  };
+
   const onCreate = async (e) => {
     e.preventDefault();
     try {
@@ -128,8 +178,44 @@ export default function CreateProductPanel({ onCreated }) {
         throw new Error('Primary image must be chosen from uploaded images');
       }
 
+      const hasIncompleteSpecification = form.specifications.some((spec) => {
+        const key = String(spec?.key || '').trim();
+        const value = String(spec?.value || '').trim();
+        return (key && !value) || (!key && value);
+      });
+
+      if (hasIncompleteSpecification) {
+        throw new Error('Each specification must include both a name and a value.');
+      }
+
+      const specifications = form.specifications
+        .map((spec) => ({
+          key: String(spec?.key || '').trim(),
+          value: String(spec?.value || '').trim(),
+        }))
+        .filter((spec) => spec.key && spec.value);
+
+      const hasIncompleteBulkDiscountTier = form.bulk_discount_tiers.some((tier) => {
+        const minimumQuantity = String(tier?.minimum_quantity || '').trim();
+        const discountPercent = String(tier?.discount_percent || '').trim();
+        return (minimumQuantity && !discountPercent) || (!minimumQuantity && discountPercent);
+      });
+
+      if (hasIncompleteBulkDiscountTier) {
+        throw new Error('Each bulk discount tier must include both minimum quantity and discount percent.');
+      }
+
+      const bulkDiscountTiers = form.bulk_discount_tiers
+        .map((tier) => ({
+          minimum_quantity: String(tier?.minimum_quantity || '').trim(),
+          discount_percent: String(tier?.discount_percent || '').trim(),
+        }))
+        .filter((tier) => tier.minimum_quantity && tier.discount_percent);
+
       const payload = {
         ...form,
+        specifications,
+        bulk_discount_tiers: bulkDiscountTiers,
         media,
         primary_image_url: selectedPrimary,
       };
@@ -142,12 +228,12 @@ export default function CreateProductPanel({ onCreated }) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to create product');
 
-      setForm(initialForm);
+      setForm(createInitialForm());
       setMedia([]);
       setPrimaryImageUrl('');
       setNotice(payload.submit_for_review
-        ? 'Product submitted for admin review. It will stay hidden until approved.'
-        : 'Product saved as draft.');
+        ? `Product submitted for admin review. SKU: ${json.data?.sku || 'Generated automatically'}.`
+        : `Product saved as draft. SKU: ${json.data?.sku || 'Generated automatically'}.`);
       setIsOpen(false);
       if (typeof onCreated === 'function') {
         onCreated(json.data);
@@ -200,6 +286,10 @@ export default function CreateProductPanel({ onCreated }) {
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
             required
           />
+          <div className="rounded-xl border border-[#dbe7e0] bg-[#f7fbf8] px-3 py-3 text-sm text-gray-700 md:col-span-2">
+            <p className="font-semibold text-gray-900">SKU is generated automatically</p>
+            <p className="mt-1 text-xs text-gray-500">Pattern: `ZVA-STORE-PROD-0001` using your store code, product code, and the next sequence number for that store.</p>
+          </div>
           <input
             type="number"
             min="1"
@@ -234,6 +324,98 @@ export default function CreateProductPanel({ onCreated }) {
             />
             Submit for review immediately
           </label>
+
+          <div className="rounded-xl border border-gray-200 p-3 md:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Bulk Discounts</p>
+                <p className="mt-1 text-xs text-gray-500">Offer automatic percentage discounts when buyers reach quantity thresholds, like 20% off at 40+ units.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addBulkDiscountTier}
+                className="rounded-lg border border-[#2E5C45] px-3 py-2 text-xs font-semibold text-[#2E5C45]"
+              >
+                Add Tier
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {form.bulk_discount_tiers.map((tier, index) => (
+                <div key={index} className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  <input
+                    type="number"
+                    min="2"
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    placeholder="Minimum quantity"
+                    value={tier.minimum_quantity}
+                    onChange={(e) => updateBulkDiscountTier(index, 'minimum_quantity', e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    step="0.01"
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    placeholder="Discount percent"
+                    value={tier.discount_percent}
+                    onChange={(e) => updateBulkDiscountTier(index, 'discount_percent', e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeBulkDiscountTier(index)}
+                    disabled={form.bulk_discount_tiers.length <= 1}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-gray-200 p-3 md:col-span-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Specifications</p>
+                <p className="mt-1 text-xs text-gray-500">Add optional product details like material, fit, care, or dimensions.</p>
+              </div>
+              <button
+                type="button"
+                onClick={addSpecification}
+                className="rounded-lg border border-[#2E5C45] px-3 py-2 text-xs font-semibold text-[#2E5C45]"
+              >
+                Add Specification
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {form.specifications.map((spec, index) => (
+                <div key={index} className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  <input
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    placeholder="Specification name"
+                    value={spec.key}
+                    onChange={(e) => updateSpecification(index, 'key', e.target.value)}
+                  />
+                  <input
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    placeholder="Value"
+                    value={spec.value}
+                    onChange={(e) => updateSpecification(index, 'value', e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSpecification(index)}
+                    disabled={form.specifications.length <= 1}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="rounded-xl border border-gray-200 p-3 md:col-span-2">
             <p className="text-sm font-semibold text-gray-900">Product Media</p>

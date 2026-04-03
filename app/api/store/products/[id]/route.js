@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
+import { normalizeSpecifications } from '@/utils/productCatalog';
+import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
 function toNumber(value) {
   const numeric = Number(value);
@@ -67,7 +69,7 @@ export async function PATCH(request, { params }) {
 
   const { data: product, error: productError } = await ctx.adminClient
     .from('products')
-    .select('id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls')
+    .select('id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls, bulk_discount_tiers')
     .eq('id', id)
     .eq('store_id', ctx.membership.store_id)
     .maybeSingle();
@@ -126,7 +128,18 @@ export async function PATCH(request, { params }) {
     updates.video_urls = media.filter((m) => m.type === 'video').map((m) => m.public_url);
   }
   if (body?.specifications !== undefined) {
-    updates.specifications = body.specifications && typeof body.specifications === 'object' ? body.specifications : null;
+    const specificationResult = normalizeSpecifications(body.specifications);
+    if (specificationResult.error) {
+      return NextResponse.json({ error: specificationResult.error }, { status: 400 });
+    }
+    updates.specifications = specificationResult.value;
+  }
+  if (body?.bulk_discount_tiers !== undefined) {
+    const bulkDiscountResult = normalizeBulkDiscountTiers(body.bulk_discount_tiers);
+    if (bulkDiscountResult.error) {
+      return NextResponse.json({ error: bulkDiscountResult.error }, { status: 400 });
+    }
+    updates.bulk_discount_tiers = bulkDiscountResult.value;
   }
 
   if (Object.keys(updates).length === 0 && !body?.submit_for_review && !body?.archive) {
@@ -178,7 +191,7 @@ export async function PATCH(request, { params }) {
     .update(updates)
     .eq('id', product.id)
     .eq('store_id', ctx.membership.store_id)
-    .select('id, store_id, name, slug, moderation_status, is_active, submitted_at, reviewed_at, rejection_reason, updated_at')
+    .select('id, store_id, name, slug, sku, moderation_status, is_active, submitted_at, reviewed_at, rejection_reason, updated_at')
     .single();
 
   if (error) {
