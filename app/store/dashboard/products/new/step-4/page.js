@@ -51,16 +51,17 @@ export default function Step4() {
   const uniqueColors = [...new Set(state.variants.map(v => v.color).filter(Boolean))];
 
   const validate = () => {
+    const hasImage = (key) => state.images[key] || state.persistedImages[key];
     const s = state.imageStrategy;
     if (s === "general") {
-      if (!state.images["general_front"] || !state.images["general_back"]) return "Upload Front and Back views.";
+      if (!hasImage("general_front") || !hasImage("general_back")) return "Upload Front and Back views.";
     } else if (s === "variant") {
       for (const c of uniqueColors) {
         const safe = c.replace(/\s/g, "_");
-        if (!state.images[`variant_${safe}_front`] || !state.images[`variant_${safe}_back`]) return `Upload Front & Back for ${c}.`;
+        if (!hasImage(`variant_${safe}_front`) || !hasImage(`variant_${safe}_back`)) return `Upload Front & Back for ${c}.`;
       }
     } else if (s === "mixed") {
-      if (!state.images["mixed_general_front"] || !state.images["mixed_general_back"]) return "Upload General Front and Back.";
+      if (!hasImage("mixed_general_front") || !hasImage("mixed_general_back")) return "Upload General Front and Back.";
     }
     return null;
   };

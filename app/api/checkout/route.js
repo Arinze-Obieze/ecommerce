@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit } from '@/utils/rateLimit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
+import { calculateBulkPricing } from '@/utils/bulkPricing';
 
 function createServiceClient() {
   return createClient(
@@ -54,7 +55,7 @@ async function buildAuthoritativeOrder(serviceClient, rawItems) {
 
   const { data: products, error: productsError } = await serviceClient
     .from('products')
-    .select('id, price, discount_price, is_active')
+    .select('id, price, discount_price, bulk_discount_tiers, is_active')
     .in('id', productIds);
 
   if (productsError) {
@@ -94,7 +95,7 @@ async function buildAuthoritativeOrder(serviceClient, rawItems) {
       }
     }
 
-    const unitPrice = toNumber(product.discount_price ?? product.price);
+    const unitPrice = toNumber(calculateBulkPricing(product, item.quantity).finalUnitPrice);
     if (unitPrice === null || unitPrice < 0) {
       throw new Error(`Invalid product price for product ${item.product_id}`);
     }

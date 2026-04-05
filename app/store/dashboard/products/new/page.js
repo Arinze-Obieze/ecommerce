@@ -2,5 +2,5 @@
 import { redirect } from "next/navigation";
 
 export default function NewProductIndex() {
-  redirect("./new/step-1");
+  redirect("./step-1");
 }

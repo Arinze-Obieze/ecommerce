@@ -2,8 +2,104 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
+function normalizeText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeVariantKey(color, size) {
+  return `${normalizeText(color).toLowerCase()}__${normalizeText(size).toLowerCase()}`;
+}
+
+function buildVariantSku(baseSku, color, size) {
+  const c3 = normalizeText(color).replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 3);
+  const s = normalizeText(size).replace(/\s/g, "").toUpperCase();
+  return `${baseSku}-${c3}-${s}`;
+}
+
+function normalizeManifest(manifest = {}) {
+  if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) return {};
+
+  return Object.fromEntries(
+    Object.entries(manifest)
+      .map(([key, value]) => {
+        if (!key || !value || typeof value !== "object") return null;
+        const storagePath = normalizeText(value.storagePath || value.storage_path);
+        if (!storagePath) return null;
+
+        return [key, {
+          publicUrl: normalizeText(value.publicUrl || value.public_url) || null,
+          storagePath,
+          originalFilename: normalizeText(value.originalFilename || value.original_filename) || null,
+          mimeType: normalizeText(value.mimeType || value.mime_type) || null,
+          sizeBytes: Math.max(0, Number.parseInt(value.sizeBytes || value.size_bytes, 10) || 0),
+        }];
+      })
+      .filter(Boolean)
+  );
+}
+
+function getRequiredImageKeys(imageStrategy, colors) {
+  if (imageStrategy === "variant") {
+    return colors.flatMap((color) => {
+      const safe = color.replace(/\s/g, "_");
+      return [`variant_${safe}_front`, `variant_${safe}_back`];
+    });
+  }
+
+  if (imageStrategy === "mixed") {
+    return ["mixed_general_front", "mixed_general_back"];
+  }
+
+  return ["general_front", "general_back"];
+}
+
+async function cleanupCreatedRecords(supabase, productId, storagePaths = []) {
+  if (!productId) return;
+
+  if (storagePaths.length > 0) {
+    try {
+      await supabase.storage.from("product-images").remove(storagePaths);
+    } catch {}
+  }
+
+  try {
+    await supabase.from("product_images").delete().eq("product_id", productId);
+  } catch {}
+
+  try {
+    await supabase.from("product_variants_internal").delete().eq("product_id", productId);
+  } catch {}
+
+  try {
+    await supabase.from("products_internal").delete().eq("product_id", productId);
+  } catch {}
+}
+
+async function cleanupDraftRecord(supabase, draftId, storeId, userId, imageManifest = {}) {
+  const manifestValues = Object.values(imageManifest || {}).filter(Boolean);
+  const storagePaths = manifestValues.map((value) => value.storagePath).filter(Boolean);
+
+  if (storagePaths.length > 0) {
+    try {
+      await supabase.storage.from("product-images").remove(storagePaths);
+    } catch {}
+  }
+
+  if (!draftId) return;
+
+  try {
+    await supabase
+      .from("product_creation_drafts")
+      .delete()
+      .eq("id", draftId)
+      .eq("store_id", storeId)
+      .eq("user_id", userId);
+  } catch {}
+}
+
 export async function POST(request) {
   let productId = null;
+  let uploadedStoragePaths = [];
 
   try {
     const supabase = await createClient();
@@ -20,8 +116,80 @@ export async function POST(request) {
     if (!raw) {
       return NextResponse.json({ success: false, error: "Missing wizard_data" }, { status: 400 });
     }
-    const wd = JSON.parse(raw);
+    let wd;
+    try {
+      wd = JSON.parse(raw);
+    } catch {
+      return NextResponse.json({ success: false, error: "Invalid wizard_data payload" }, { status: 400 });
+    }
     console.log("[Create] Product:", wd.productName, "| SKU:", wd.baseSku);
+
+    const baseSku = normalizeText(wd.baseSku);
+    const scannedSku = normalizeText(wd.scannedSku);
+    if (!baseSku) {
+      return NextResponse.json({ success: false, error: "Missing base SKU" }, { status: 400 });
+    }
+    if (!scannedSku || scannedSku !== baseSku) {
+      return NextResponse.json({ success: false, error: "Scanned SKU does not match base SKU" }, { status: 400 });
+    }
+
+    const productName = normalizeText(wd.productName);
+    const description = normalizeText(wd.description);
+    const material = normalizeText(wd.material);
+    const category = normalizeText(wd.category);
+    const subcategory = normalizeText(wd.subcategory);
+    if (!productName || !description || !material || !category || !subcategory) {
+      return NextResponse.json({ success: false, error: "Missing required product fields" }, { status: 400 });
+    }
+
+    const rawVariants = Array.isArray(wd.variants) ? wd.variants : [];
+    const normalizedVariants = rawVariants.map((variant) => ({
+      color: normalizeText(variant?.color),
+      size: normalizeText(variant?.size),
+      quantity: parseInt(variant?.quantity, 10) || 0,
+      price: parseFloat(variant?.price) || 0,
+    }));
+
+    if (normalizedVariants.length === 0) {
+      return NextResponse.json({ success: false, error: "At least one variant is required" }, { status: 400 });
+    }
+
+    if (normalizedVariants.some((variant) => !variant.color || !variant.size || variant.quantity <= 0 || variant.price <= 0)) {
+      return NextResponse.json({ success: false, error: "Every variant must include color, size, quantity > 0, and price > 0" }, { status: 400 });
+    }
+
+    const duplicateKeys = new Set();
+    const seenVariantKeys = new Set();
+    normalizedVariants.forEach((variant) => {
+      const key = normalizeVariantKey(variant.color, variant.size);
+      if (seenVariantKeys.has(key)) duplicateKeys.add(key);
+      seenVariantKeys.add(key);
+    });
+    if (duplicateKeys.size > 0) {
+      return NextResponse.json({ success: false, error: "Duplicate color and size combinations are not allowed" }, { status: 400 });
+    }
+
+    const uniqueColors = [...new Set(normalizedVariants.map((variant) => variant.color))];
+    const imageStrategy = normalizeText(wd.imageStrategy) || "general";
+    if (imageStrategy === "variant" && uniqueColors.length === 0) {
+      return NextResponse.json({ success: false, error: "Variant image strategy requires at least one color variant" }, { status: 400 });
+    }
+
+    const uploadedImageKeys = new Set();
+    const persistedImages = normalizeManifest(wd.persistedImages || {});
+    for (const [key, val] of formData.entries()) {
+      if (key === "wizard_data") continue;
+      if (val instanceof File && val.size > 0) uploadedImageKeys.add(key);
+    }
+
+    const missingRequiredImages = getRequiredImageKeys(imageStrategy, uniqueColors)
+      .filter((key) => !uploadedImageKeys.has(key) && !persistedImages[key]);
+    if (missingRequiredImages.length > 0) {
+      return NextResponse.json({
+        success: false,
+        error: `Missing required images: ${missingRequiredImages.join(", ")}`,
+      }, { status: 400 });
+    }
 
     // 3. Validate store — try owner_id then user_id then just id (RLS protects)
     let store = null;
@@ -42,15 +210,18 @@ export async function POST(request) {
 
     // 4. SKU uniqueness
     const { data: dup } = await supabase
-      .from("products_internal").select("product_id").eq("base_sku", wd.baseSku).limit(1);
+      .from("products_internal").select("product_id").eq("base_sku", baseSku).limit(1);
     if (dup?.length) {
-      return NextResponse.json({ success: false, error: `SKU ${wd.baseSku} already exists` }, { status: 409 });
+      return NextResponse.json({ success: false, error: `SKU ${baseSku} already exists` }, { status: 409 });
     }
 
     // 5. Totals
-    const validVariants = (wd.variantSkus || []).filter(v => v.color && v.size);
-    const totalQty = validVariants.reduce((s, v) => s + (parseInt(v.quantity) || 0), 0);
-    const prices = validVariants.map(v => parseFloat(v.price) || 0);
+    const validVariants = normalizedVariants.map((variant) => ({
+      ...variant,
+      sku: buildVariantSku(baseSku, variant.color, variant.size),
+    }));
+    const totalQty = validVariants.reduce((s, v) => s + v.quantity, 0);
+    const prices = validVariants.map(v => v.price);
     const basePrice = prices.length ? Math.min(...prices) : 0;
     const now = new Date().toISOString();
 
@@ -60,21 +231,21 @@ export async function POST(request) {
     const productRec = {
       product_id: productId,
       seller_id: store.id,
-      product_name: wd.productName,
-      description: wd.description || "",
-      category: wd.category,
-      subcategory: wd.subcategory,
-      brand: wd.brand || null,
-      material: wd.material,
-      gender: wd.gender || null,
-      age_group: wd.ageGroup || null,
-      base_sku: wd.baseSku,
+      product_name: productName,
+      description,
+      category,
+      subcategory,
+      brand: normalizeText(wd.brand) || null,
+      material,
+      gender: normalizeText(wd.gender) || null,
+      age_group: normalizeText(wd.ageGroup) || null,
+      base_sku: baseSku,
       price: basePrice,
       quantity: totalQty,
       status: "active",
       approval_status: "pending",
-      image_strategy: wd.imageStrategy || "general",
-      notes: wd.productNotes || null,
+      image_strategy: imageStrategy,
+      notes: normalizeText(wd.productNotes) || null,
     };
 
     console.log("[Create] Inserting product:", productId);
@@ -115,9 +286,18 @@ export async function POST(request) {
     let imgCount = 0;
     const imgErrors = [];
 
+    const imageEntries = [];
+    for (const [key, manifest] of Object.entries(persistedImages)) {
+      imageEntries.push({ key, kind: "persisted", manifest });
+    }
     for (const [key, val] of formData.entries()) {
       if (key === "wizard_data") continue;
       if (!(val instanceof File) || val.size === 0) continue;
+      imageEntries.push({ key, kind: "file", file: val });
+    }
+
+    for (const entry of imageEntries) {
+      const { key } = entry;
 
       try {
         // Parse the field key to determine image type and variant color
@@ -145,7 +325,9 @@ export async function POST(request) {
         // Build storage path matching R code pattern
         const categorySafe = (wd.category || "general").toLowerCase().replace(/\s/g, "_");
         const imageId = `IMG_${Date.now()}_${imgCount}`;
-        const ext = val.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = entry.kind === "file"
+          ? entry.file.name.split(".").pop()?.toLowerCase() || "jpg"
+          : entry.manifest.originalFilename?.split(".").pop()?.toLowerCase() || "jpg";
 
         let storagePath;
         if (varColor) {
@@ -157,22 +339,34 @@ export async function POST(request) {
 
         console.log("[Create] Uploading:", key, "→", storagePath);
 
-        // Convert File to Buffer — this is what Supabase JS client needs in Node
-        const arrayBuffer = await val.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        if (entry.kind === "file") {
+          const arrayBuffer = await entry.file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
 
-        const { error: upErr } = await supabase.storage
-          .from("product-images")
-          .upload(storagePath, buffer, {
-            contentType: val.type || "image/jpeg",
-            upsert: true,
-          });
+          const { error: upErr } = await supabase.storage
+            .from("product-images")
+            .upload(storagePath, buffer, {
+              contentType: entry.file.type || "image/jpeg",
+              upsert: true,
+            });
 
-        if (upErr) {
-          console.error("[Create] Upload failed:", key, upErr.message);
-          imgErrors.push(`${key}: ${upErr.message}`);
-          continue;
+          if (upErr) {
+            console.error("[Create] Upload failed:", key, upErr.message);
+            imgErrors.push(`${key}: ${upErr.message}`);
+            continue;
+          }
+        } else {
+          const { error: copyErr } = await supabase.storage
+            .from("product-images")
+            .copy(entry.manifest.storagePath, storagePath);
+
+          if (copyErr) {
+            console.error("[Create] Draft image copy failed:", key, copyErr.message);
+            imgErrors.push(`${key}: ${copyErr.message}`);
+            continue;
+          }
         }
+        uploadedStoragePaths.push(storagePath);
 
         // Get public URL
         const { data: urlData } = supabase.storage
@@ -187,9 +381,9 @@ export async function POST(request) {
           image_id: imageId,
           product_id: productId,
           image_path: storagePath,
-          original_filename: val.name,
-          file_size: val.size,
-          mime_type: val.type || "image/jpeg",
+          original_filename: entry.kind === "file" ? entry.file.name : entry.manifest.originalFilename,
+          file_size: entry.kind === "file" ? entry.file.size : entry.manifest.sizeBytes,
+          mime_type: entry.kind === "file" ? (entry.file.type || "image/jpeg") : (entry.manifest.mimeType || "image/jpeg"),
           image_type: imgType,
           image_strategy: imgStrategy,
           variant_color: varColor || null,
@@ -216,6 +410,14 @@ export async function POST(request) {
       }
     }
     console.log("[Create] Images:", imgCount, "saved,", imgErrors.length, "errors");
+    if (imgErrors.length > 0) {
+      await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+      productId = null;
+      return NextResponse.json({
+        success: false,
+        error: `Image upload failed: ${imgErrors.join("; ")}`,
+      }, { status: 500 });
+    }
 
     // 9. Variant notes
     if (wd.variantNotes && Object.keys(wd.variantNotes).length > 0) {
@@ -237,7 +439,7 @@ export async function POST(request) {
       const { error: printErr } = await supabase.from("barcode_print_log").insert({
         print_id: `PRINT_${productId}_${Date.now()}`,
         product_id: productId,
-        sku: wd.baseSku,
+        sku: baseSku,
         print_type: wd.printType || "all",
         copies_printed: wd.printCopies || 1,
         printed_by: user.id,
@@ -250,22 +452,29 @@ export async function POST(request) {
     const { error: verifyErr } = await supabase.from("product_verification_log").insert({
       verification_id: `VERIFY_${productId}`,
       product_id: productId,
-      scanned_sku: wd.scannedSku,
-      expected_sku: wd.baseSku,
-      match_result: true,
+      scanned_sku: scannedSku,
+      expected_sku: baseSku,
+      match_result: scannedSku === baseSku,
       verified_by: user.id,
       verified_at: now,
     });
     if (verifyErr) console.warn("[Create] Verify log failed:", verifyErr.message);
 
+    await cleanupDraftRecord(
+      supabase,
+      normalizeText(wd.draftId),
+      store.id,
+      user.id,
+      persistedImages
+    );
+
     console.log("[Create] ✅ DONE:", productId);
 
     return NextResponse.json({
       success: true,
-      product: { id: productId, base_sku: wd.baseSku, name: wd.productName, status: "active" },
+      product: { id: productId, base_sku: baseSku, name: productName, status: "active" },
       variants_created: varRecs.length,
       images_uploaded: imgCount,
-      image_errors: imgErrors.length ? imgErrors : undefined,
     });
 
   } catch (err) {
@@ -273,7 +482,7 @@ export async function POST(request) {
     if (productId) {
       try {
         const supabase = await createClient();
-        await supabase.from("products_internal").delete().eq("product_id", productId);
+        await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
       } catch {}
     }
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

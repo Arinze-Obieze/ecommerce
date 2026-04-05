@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
+import { normalizeSpecifications } from '@/utils/productCatalog';
+import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
+
+const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls, bulk_discount_tiers';
+const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls';
+const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
 
 function toNumber(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
+}
+
+function isMissingBulkDiscountColumnError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return error?.code === '42703' ||
+    (message.includes('bulk_discount_tiers') && message.includes('does not exist'));
 }
 
 function sanitizeSlug(value) {
@@ -65,12 +77,26 @@ export async function PATCH(request, { params }) {
   const { id } = await params;
   const body = await request.json().catch(() => ({}));
 
-  const { data: product, error: productError } = await ctx.adminClient
+  let { data: product, error: productError } = await ctx.adminClient
     .from('products')
-    .select('id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls')
+    .select(PRODUCT_DETAIL_SELECT)
     .eq('id', id)
     .eq('store_id', ctx.membership.store_id)
     .maybeSingle();
+
+  if (productError && isMissingBulkDiscountColumnError(productError)) {
+    const fallbackResult = await ctx.adminClient
+      .from('products')
+      .select(PRODUCT_DETAIL_SELECT_FALLBACK)
+      .eq('id', id)
+      .eq('store_id', ctx.membership.store_id)
+      .maybeSingle();
+
+    product = fallbackResult.data
+      ? { ...fallbackResult.data, bulk_discount_tiers: null }
+      : fallbackResult.data;
+    productError = fallbackResult.error;
+  }
 
   if (productError) {
     return NextResponse.json({ error: productError.message }, { status: 500 });
@@ -126,7 +152,18 @@ export async function PATCH(request, { params }) {
     updates.video_urls = media.filter((m) => m.type === 'video').map((m) => m.public_url);
   }
   if (body?.specifications !== undefined) {
-    updates.specifications = body.specifications && typeof body.specifications === 'object' ? body.specifications : null;
+    const specificationResult = normalizeSpecifications(body.specifications);
+    if (specificationResult.error) {
+      return NextResponse.json({ error: specificationResult.error }, { status: 400 });
+    }
+    updates.specifications = specificationResult.value;
+  }
+  if (body?.bulk_discount_tiers !== undefined) {
+    const bulkDiscountResult = normalizeBulkDiscountTiers(body.bulk_discount_tiers);
+    if (bulkDiscountResult.error) {
+      return NextResponse.json({ error: bulkDiscountResult.error }, { status: 400 });
+    }
+    updates.bulk_discount_tiers = bulkDiscountResult.value;
   }
 
   if (Object.keys(updates).length === 0 && !body?.submit_for_review && !body?.archive) {
@@ -178,10 +215,13 @@ export async function PATCH(request, { params }) {
     .update(updates)
     .eq('id', product.id)
     .eq('store_id', ctx.membership.store_id)
-    .select('id, store_id, name, slug, moderation_status, is_active, submitted_at, reviewed_at, rejection_reason, updated_at')
+    .select('id, store_id, name, slug, sku, moderation_status, is_active, submitted_at, reviewed_at, rejection_reason, updated_at')
     .single();
 
   if (error) {
+    if (isMissingBulkDiscountColumnError(error)) {
+      return NextResponse.json({ error: BULK_DISCOUNT_MIGRATION_HINT }, { status: 409 });
+    }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 

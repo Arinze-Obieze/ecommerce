@@ -46,7 +46,7 @@ export default function AdminAnalyticsPage() {
   if (loading) return <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6">Loading analytics...</div>;
   if (error) return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">{error}</div>;
 
-  const { acquisition, funnel, behavior, cohorts, commerce, geography, devices, reliability } = data;
+  const { acquisition, funnel, behavior, recommendations, cohorts, commerce, geography, devices, reliability } = data;
 
   return (
     <div className="space-y-6">
@@ -75,6 +75,7 @@ export default function AdminAnalyticsPage() {
         <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-bold">Commerce Funnel</h2>
           <div className="space-y-2 text-sm">
+            <p className="flex justify-between"><span>Product impression</span><strong>{funnel.product_impression}</strong></p>
             <p className="flex justify-between"><span>View item</span><strong>{funnel.view_item}</strong></p>
             <p className="flex justify-between"><span>Add to cart</span><strong>{funnel.add_to_cart}</strong></p>
             <p className="flex justify-between"><span>Begin checkout</span><strong>{funnel.begin_checkout}</strong></p>
@@ -148,6 +149,69 @@ export default function AdminAnalyticsPage() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+          <h2 className="mb-3 text-lg font-bold">Recommendation Reach</h2>
+          <p className="text-sm text-gray-700">Tracked impressions (30d): <strong>{recommendations.impressions}</strong></p>
+          <p className="mt-2 text-xs text-gray-500">This reflects product cards actually seen in recommendation surfaces.</p>
+        </div>
+
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+          <h2 className="mb-3 text-lg font-bold">Surface Mix</h2>
+          <div className="space-y-2 text-sm">
+            {recommendations.recommendationSurfaceMix.map((row) => (
+              <div key={row.surface} className="flex justify-between rounded-lg bg-[#f3f8f5] px-3 py-2">
+                <span>{row.surface}</span>
+                <strong>{row.count}</strong>
+              </div>
+            ))}
+            {recommendations.recommendationSurfaceMix.length === 0 ? <p className="text-gray-500">No recommendation impressions yet.</p> : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+          <h2 className="mb-3 text-lg font-bold">Persona Mix</h2>
+          <div className="space-y-2 text-sm">
+            {recommendations.recommendationPersonaMix.map((row) => (
+              <div key={row.persona} className="flex justify-between rounded-lg bg-[#f3f8f5] px-3 py-2">
+                <span>{row.persona}</span>
+                <strong>{row.count}</strong>
+              </div>
+            ))}
+            {recommendations.recommendationPersonaMix.length === 0 ? <p className="text-gray-500">No persona mix data yet.</p> : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+        <h2 className="mb-4 text-lg font-bold">Top Exposed Recommended Products</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th className="py-2 pr-3">Product</th>
+                <th className="py-2 pr-3">Product ID</th>
+                <th className="py-2 pr-3">Impressions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recommendations.topExposedProducts.map((row) => (
+                <tr key={row.product_id} className="border-b border-gray-50">
+                  <td className="py-2 pr-3">{row.product_name}</td>
+                  <td className="py-2 pr-3 font-mono text-xs">{row.product_id}</td>
+                  <td className="py-2 pr-3">{row.impressions}</td>
+                </tr>
+              ))}
+              {recommendations.topExposedProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="py-6 text-center text-gray-500">No recommendation exposure data yet.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
         </div>
       </div>
 

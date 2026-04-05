@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import PaymentSuccessModal from '@/components/PaymentSuccessModal';
 import { trackAnalyticsEvent } from '@/utils/analytics';
+import { calculateBulkPricing } from '@/utils/bulkPricing';
 
 export default function CartPage() {
   const router = useRouter();
@@ -21,6 +22,17 @@ export default function CartPage() {
   });
   const isPaymentFinalizingRef = React.useRef(false);
   const hasPaymentSucceededRef = React.useRef(false);
+  const cartPricing = React.useMemo(
+    () => cart.map((item) => ({
+      key: `${item.id}-${item.variant_id ?? 'base'}`,
+      pricing: calculateBulkPricing(item, item.quantity),
+    })),
+    [cart]
+  );
+  const pricingMap = React.useMemo(
+    () => new Map(cartPricing.map((entry) => [entry.key, entry.pricing])),
+    [cartPricing]
+  );
 
   // Load Paystack Script
   React.useEffect(() => {
@@ -35,8 +47,8 @@ export default function CartPage() {
 
   // Calculate totals
   const subtotal = cart.reduce((total, item) => {
-    const price = item.discount_price || item.price;
-    return total + (price * item.quantity);
+    const pricing = pricingMap.get(`${item.id}-${item.variant_id ?? 'base'}`) || calculateBulkPricing(item, item.quantity);
+    return total + pricing.lineTotal;
   }, 0);
   
   const shipping = subtotal > 50000 ? 0 : 2500; // Free shipping over 50k logic example
@@ -233,6 +245,10 @@ export default function CartPage() {
           <div className="flex-1 space-y-4">
             {cart.map((item) => (
               <div key={`${item.id}-${item.variant_id ?? 'base'}`} className="bg-white p-3 md:p-5 rounded-2xl border border-gray-100 flex gap-4 transition-all hover:shadow-md">
+                {(() => {
+                  const pricing = pricingMap.get(`${item.id}-${item.variant_id ?? 'base'}`) || calculateBulkPricing(item, item.quantity);
+                  return (
+                    <>
                 {/* Image */}
                 <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-50 rounded-xl border border-gray-100 overflow-hidden shrink-0">
                   <img 
@@ -264,13 +280,18 @@ export default function CartPage() {
                      {/* Price */}
                     <div className="flex flex-col mb-3 md:mb-0">
                         <span className="font-bold text-gray-900 md:text-lg text-base leading-none mb-1">
-                           ₦{(item.discount_price || item.price).toLocaleString()}
+                           ₦{pricing.finalUnitPrice.toLocaleString()} each
                         </span>
-                        {item.discount_price && (
+                        {pricing.finalUnitPrice < pricing.baseUnitPrice && (
                           <span className="text-xs text-gray-400 line-through">
-                             ₦{item.price.toLocaleString()}
+                             ₦{pricing.baseUnitPrice.toLocaleString()} each
                           </span>
                         )}
+                        {pricing.hasBulkDiscount ? (
+                          <span className="mt-1 text-xs font-semibold text-[#0F7A4F]">
+                            {pricing.appliedTier.discount_percent}% bulk discount applied for {pricing.appliedTier.minimum_quantity}+ units
+                          </span>
+                        ) : null}
                     </div>
 
                     {/* Quantity Control */}
@@ -324,6 +345,9 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
+                    </>
+                  );
+                })()}
               </div>
             ))}
             

@@ -17,8 +17,24 @@ export default function Step3() {
   const sizes = getSizeOptions(state.category);
 
   const toggleArr = (arr, val) => arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+  const keyForVariant = (variant) => `${variant.color?.trim().toLowerCase() || ""}__${variant.size?.trim().toLowerCase() || ""}`;
+
+  const findDuplicateKeys = (variants) => {
+    const seen = new Set();
+    const duplicates = new Set();
+
+    variants.forEach((variant) => {
+      const key = keyForVariant(variant);
+      if (!key || key === "__") return;
+      if (seen.has(key)) duplicates.add(key);
+      seen.add(key);
+    });
+
+    return duplicates;
+  };
 
   const doPreview = () => {
+    setError(null);
     let items = [];
     if (bulkMode === "color") {
       if (!bf.size || !bf.colors.length) return;
@@ -32,6 +48,11 @@ export default function Step3() {
   };
 
   const doConfirm = () => {
+    const merged = [...state.variants, ...preview];
+    if (findDuplicateKeys(merged).size > 0) {
+      setError("Duplicate color and size combinations are not allowed.");
+      return;
+    }
     dispatch({ type: "SET_VARIANTS", payload: [...state.variants, ...preview] });
     setBulkMode(null); setBulkStep(1); setPreview([]);
     setBf({ size: "", color: "", colors: [], sizes: [], qty: 10, price: 5000 });
@@ -41,8 +62,16 @@ export default function Step3() {
 
   const handleNext = () => {
     setError(null);
-    if (!state.variants.some(v => v.color && v.size && v.quantity > 0 && v.price > 0)) {
-      setError("Add at least one complete variant (color, size, qty > 0, price > 0).");
+    if (state.variants.length === 0) {
+      setError("Add at least one variant before continuing.");
+      return;
+    }
+    if (state.variants.some(v => !v.color || !v.size || v.quantity <= 0 || v.price <= 0)) {
+      setError("Complete every variant with color, size, qty > 0, and price > 0.");
+      return;
+    }
+    if (findDuplicateKeys(state.variants).size > 0) {
+      setError("Each color and size combination must be unique.");
       return;
     }
     goNext();

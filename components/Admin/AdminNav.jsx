@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   FiGrid, FiUsers, FiFileText, FiBarChart2,
-  FiShoppingBag, FiPackage, FiCreditCard
+  FiShoppingBag, FiPackage, FiCreditCard, FiRefreshCw, FiSliders
 } from 'react-icons/fi';
 
 const groups = [
@@ -25,8 +25,10 @@ const groups = [
   {
     label: 'System',
     items: [
+      { href: '/admin/return-policy', label: 'Return Policy', icon: FiRefreshCw },
       { href: '/admin/logs',      label: 'System Logs', icon: FiFileText },
       { href: '/admin/analytics', label: 'Analytics',   icon: FiBarChart2 },
+      { href: '/admin/ranking-debug', label: 'Ranking Debug', icon: FiSliders },
     ],
   },
 ];

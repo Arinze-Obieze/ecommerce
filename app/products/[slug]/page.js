@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
   FiShoppingCart, FiHeart, FiStar, FiChevronLeft,
   FiMinus, FiPlus, FiShare2, FiCheck, FiTruck,
-  FiRefreshCw, FiShield, FiPackage, FiZoomIn,
+  FiRefreshCw, FiShield, FiZoomIn,
 } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -12,6 +12,8 @@ import { createClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from '@/components/RelatedProducts';
+import { DEFAULT_RETURN_POLICY } from '@/utils/returnPolicy';
+import { calculateBulkPricing, getBulkDiscountTiers } from '@/utils/bulkPricing';
 
 // ─────────────────────────────────────────────────────────────
 // THEME
@@ -101,8 +103,10 @@ function ImageGallery({ images, productName }) {
     <div style={{ display: 'flex', gap: 12 }}>
       {/* Thumbnails — desktop only */}
       {all.length > 1 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}
-             className="hidden lg:flex">
+        <div
+          className="hidden lg:flex"
+          style={{ flexDirection: 'column', gap: 8, flexShrink: 0, maxHeight: 'min(72vh, 900px)', overflowY: 'auto', paddingRight: 4 }}
+        >
           {all.map((url, i) => (
             <button key={i} type="button" onClick={() => setSelected(i)}
               style={{
@@ -152,8 +156,10 @@ function ImageGallery({ images, productName }) {
 
         {/* Mobile thumbnails */}
         {all.length > 1 && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}
-               className="lg:hidden">
+          <div
+            className="flex lg:hidden"
+            style={{ gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}
+          >
             {all.map((url, i) => (
               <button key={i} type="button" onClick={() => setSelected(i)}
                 style={{
@@ -412,6 +418,83 @@ function ReviewsTab({ product, user, supabase, onReviewAdded }) {
   );
 }
 
+function ReturnPolicyTable({ policy }) {
+  const rows = Array.isArray(policy?.rows) && policy.rows.length ? policy.rows : DEFAULT_RETURN_POLICY.rows;
+
+  return (
+    <div style={{ display: 'grid', gap: 18 }}>
+      <div>
+        <p style={{ fontSize: 18, fontWeight: 900, color: T.charcoal, margin: '0 0 6px' }}>
+          {policy?.title || DEFAULT_RETURN_POLICY.title}
+        </p>
+        <p style={{ fontSize: 14, color: T.medGray, lineHeight: 1.7, margin: 0 }}>
+          {policy?.subtitle || DEFAULT_RETURN_POLICY.subtitle}
+        </p>
+      </div>
+
+      <div style={{ overflowX: 'auto', border: `1px solid ${T.border}`, borderRadius: 16 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+          <thead>
+            <tr style={{ background: T.pageBg }}>
+              {['Scenario', 'Window', 'Condition', 'Resolution', 'Notes'].map((label) => (
+                <th
+                  key={label}
+                  style={{
+                    padding: '14px 16px',
+                    borderBottom: `1px solid ${T.border}`,
+                    textAlign: 'left',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: T.charcoal,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.id || index} style={{ background: index % 2 === 0 ? T.white : '#FCFCFC' }}>
+                <td style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, fontSize: 13, fontWeight: 700, color: T.charcoal }}>
+                  {row.scenario}
+                </td>
+                <td style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, fontSize: 13, color: T.medGray }}>
+                  {row.window}
+                </td>
+                <td style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, fontSize: 13, color: T.medGray, lineHeight: 1.65 }}>
+                  {row.condition}
+                </td>
+                <td style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, fontSize: 13, color: T.greenDark, fontWeight: 700 }}>
+                  {row.resolution}
+                </td>
+                <td style={{ padding: '14px 16px', borderBottom: `1px solid ${T.border}`, fontSize: 13, color: T.medGray, lineHeight: 1.65 }}>
+                  {row.notes}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 18, border: `1px solid ${T.border}`, borderRadius: 14 }}>
+        <IconTile icon={FiShield} bg={T.greenTint} color={T.green} />
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 800, color: T.charcoal, margin: '0 0 4px' }}>Need help with a return?</p>
+          <p style={{ fontSize: 13, color: T.medGray, margin: 0, lineHeight: 1.65 }}>
+            {policy?.support_text || DEFAULT_RETURN_POLICY.support_text}{' '}
+            <Link href="/support" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
+              Contact Support
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────
 // MAIN PAGE
 // ─────────────────────────────────────────────────────────────
@@ -421,6 +504,7 @@ export default function ProductPage({ params }) {
   const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [product, setProduct]       = useState(null);
+  const [returnPolicy, setReturnPolicy] = useState(DEFAULT_RETURN_POLICY);
   const [variants, setVariants]     = useState([]);
   const [loading, setLoading]       = useState(true);
   const [selectedSize, setSelectedSize]   = useState(null);
@@ -459,6 +543,7 @@ export default function ProductPage({ params }) {
 
         const fetchedVariants = Array.isArray(vData?.variants) ? vData.variants : [];
         setProduct(pData);
+        setReturnPolicy(pData.return_policy || DEFAULT_RETURN_POLICY);
         setVariants(fetchedVariants);
 
         try {
@@ -507,9 +592,17 @@ export default function ProductPage({ params }) {
     : Number(product?.stock_quantity) || 0;
   const requiresVariant   = variants.length > 0;
   const canAddToCart      = requiresVariant ? Boolean(selectedVariant) && effectiveStock > 0 : effectiveStock > 0;
-  const discountPercent   = product?.discount_price
+  const bulkPricing       = useMemo(() => calculateBulkPricing(product, quantity), [product, quantity]);
+  const bulkDiscountTiers = useMemo(() => getBulkDiscountTiers(product), [product]);
+  const baseDiscountPercent = product?.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100) : null;
-  const currentPrice      = product?.discount_price || product?.price;
+  const currentPrice      = bulkPricing.finalUnitPrice;
+  const compareAtPrice    = bulkPricing.hasBulkDiscount
+    ? bulkPricing.baseUnitPrice
+    : (product?.discount_price ? product.price : null);
+  const activeDiscountPercent = bulkPricing.hasBulkDiscount
+    ? bulkPricing.appliedTier?.discount_percent
+    : baseDiscountPercent;
   const inWishlist        = product ? isInWishlist(product.id) : false;
 
   const showToast = (msg) => {
@@ -677,18 +770,35 @@ export default function ProductPage({ params }) {
               <span style={{ fontSize: 30, fontWeight: 900, color: T.charcoal, letterSpacing: '-0.03em' }}>
                 ₦{currentPrice?.toLocaleString()}
               </span>
-              {product.discount_price && (
+              {compareAtPrice ? (
                 <>
                   <span style={{ fontSize: 18, color: T.mutedText, textDecoration: 'line-through', fontWeight: 500 }}>
-                    ₦{product.price?.toLocaleString()}
+                    ₦{compareAtPrice?.toLocaleString()}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 800, color: T.saleRed,
                                   background: T.saleBg, padding: '3px 8px', borderRadius: 6 }}>
-                    -{discountPercent}%
+                    -{activeDiscountPercent}%
                   </span>
                 </>
-              )}
+              ) : null}
             </div>
+
+            {bulkPricing.hasBulkDiscount && product.price > bulkPricing.baseUnitPrice ? (
+              <p style={{ fontSize: 12, color: T.mutedText, margin: '0 0 8px' }}>
+                Regular list price: ₦{product.price.toLocaleString()}
+              </p>
+            ) : null}
+
+            {bulkPricing.hasBulkDiscount ? (
+              <div style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 12, background: T.greenTint, border: `1px solid ${T.greenBorder}` }}>
+                <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 800, color: T.greenDeep }}>
+                  {bulkPricing.appliedTier.discount_percent}% bulk discount active at {bulkPricing.appliedTier.minimum_quantity}+ units
+                </p>
+                <p style={{ margin: 0, fontSize: 12, color: T.greenDeep }}>
+                  You save ₦{bulkPricing.totalSavings.toLocaleString()} at quantity {quantity}.
+                </p>
+              </div>
+            ) : null}
 
             {product.sku && (
               <p style={{ fontSize: 11, color: T.mutedText, margin: '0 0 16px', fontWeight: 500 }}>
@@ -752,10 +862,49 @@ export default function ProductPage({ params }) {
               </button>
             </div>
 
+            {bulkDiscountTiers.length > 0 ? (
+              <div style={{ marginBottom: 22, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16, background: '#FCFCFC' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: T.charcoal }}>Bulk pricing</p>
+                  <span style={{ fontSize: 12, color: T.medGray }}>
+                    Quantity {quantity} total: ₦{bulkPricing.lineTotal.toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {bulkDiscountTiers.map((tier) => {
+                    const isActiveTier = bulkPricing.appliedTier?.minimum_quantity === tier.minimum_quantity;
+                    const tierPrice = calculateBulkPricing(product, tier.minimum_quantity).finalUnitPrice;
+                    return (
+                      <div
+                        key={tier.minimum_quantity}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                          padding: '10px 12px',
+                          borderRadius: 12,
+                          border: `1px solid ${isActiveTier ? T.greenBorder : T.border}`,
+                          background: isActiveTier ? T.greenTint : T.white,
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 700, color: T.charcoal }}>
+                          Buy {tier.minimum_quantity}+ pieces
+                        </span>
+                        <span style={{ fontSize: 13, color: isActiveTier ? T.greenDeep : T.medGray, fontWeight: 700 }}>
+                          {tier.discount_percent}% off • ₦{tierPrice.toLocaleString()} each
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
             {/* Trust pills */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
               <TrustPill icon={FiTruck}    label="Free delivery over ₦50k" />
-              <TrustPill icon={FiRefreshCw} label="30-day returns" />
+              <TrustPill icon={FiRefreshCw} label={returnPolicy?.rows?.[0]?.window || '30-day returns'} />
               <TrustPill icon={FiShield}   label="Buyer protection" />
             </div>
 
@@ -849,29 +998,7 @@ export default function ProductPage({ params }) {
 
             {/* Policies */}
             {activeTab === 'policies' && (
-              <div style={{ display: 'grid', gap: 20, maxWidth: 640 }}>
-                {[
-                  { icon: FiRefreshCw, title: 'Return Window',      body: 'Eligible items can be returned within 30 days of delivery in original condition with tags attached.' },
-                  { icon: FiPackage,   title: 'Refund Timelines',   body: 'Refunds are processed within 5–7 business days after the returned item is received and inspected.' },
-                  { icon: FiShield,    title: 'Buyer Protection',   body: 'All purchases are covered by ZOVA buyer protection. We mediate disputes between buyers and sellers.' },
-                  { icon: FiTruck,     title: 'Delivery',           body: 'Standard delivery takes 3–5 business days. Express options may be available at checkout.' },
-                ].map(({ icon: Icon, title, body }) => (
-                  <div key={title} style={{ display: 'flex', gap: 14, padding: 18,
-                                             border: `1px solid ${T.border}`, borderRadius: 14 }}>
-                    <IconTile icon={Icon} bg={T.greenTint} color={T.green} />
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 800, color: T.charcoal, margin: '0 0 4px' }}>{title}</p>
-                      <p style={{ fontSize: 13, color: T.medGray, margin: 0, lineHeight: 1.65 }}>{body}</p>
-                    </div>
-                  </div>
-                ))}
-                <p style={{ fontSize: 13, color: T.medGray, marginTop: 4 }}>
-                  Need help?{' '}
-                  <Link href="/support" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
-                    Contact Support →
-                  </Link>
-                </p>
-              </div>
+              <ReturnPolicyTable policy={returnPolicy} />
             )}
           </div>
         </div>

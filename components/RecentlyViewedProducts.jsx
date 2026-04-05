@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
+import ProductImpressionTracker from './ProductImpressionTracker';
 import SectionCarousel from './SectionCarousel';
+import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
 
 const RecentlyViewedProducts = ({ currentProductId = null }) => {
   const [products, setProducts] = useState([]);
@@ -22,7 +24,9 @@ const RecentlyViewedProducts = ({ currentProductId = null }) => {
           return;
         }
 
-        const res = await fetch(`/api/products?ids=${idsToFetch.join(',')}&limit=10`);
+        const res = await fetch(`/api/products?ids=${idsToFetch.join(',')}&limit=10`, {
+          headers: getRecommendationRequestHeaders('recently_viewed'),
+        });
         const json = await res.json();
 
         if (json.success && json.data.length > 0) {
@@ -56,8 +60,16 @@ const RecentlyViewedProducts = ({ currentProductId = null }) => {
 
   return (
     <SectionCarousel title="Recently Viewed">
-        {products.map((product) => (
-           <ProductCard key={product.id} product={product} /> 
+        {products.map((product, index) => (
+          <ProductImpressionTracker
+            key={product.id}
+            product={product}
+            surface="recently_viewed"
+            position={index + 1}
+            metadata={{ sortStrategy: 'recent_history' }}
+          >
+            <ProductCard product={product} />
+          </ProductImpressionTracker>
         ))}
     </SectionCarousel>
   );

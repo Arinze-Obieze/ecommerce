@@ -60,6 +60,7 @@ export default function StoreInventoryPage() {
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs uppercase tracking-wide text-gray-500">
                   <th className="py-2 pr-3">Product</th>
+                  <th className="py-2 pr-3">SKU</th>
                   <th className="py-2 pr-3">Moderation</th>
                   <th className="py-2 pr-3">Live</th>
                   <th className="py-2 pr-3">Stock</th>
@@ -72,6 +73,7 @@ export default function StoreInventoryPage() {
                       <div className="font-semibold text-gray-900">{row.name}</div>
                       <div className="text-xs text-gray-500">/{row.slug}</div>
                     </td>
+                    <td className="py-2 pr-3 font-mono text-xs text-gray-700">{row.sku || '-'}</td>
                     <td className="py-2 pr-3 capitalize">{row.moderation_status}</td>
                     <td className="py-2 pr-3">{row.is_active ? 'Yes' : 'No'}</td>
                     <td className="py-2 pr-3 font-semibold">{row.stock_quantity}</td>
@@ -79,7 +81,7 @@ export default function StoreInventoryPage() {
                 ))}
                 {rows.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-6 text-center text-gray-500">No inventory data available.</td>
+                    <td colSpan={5} className="py-6 text-center text-gray-500">No inventory data available.</td>
                   </tr>
                 ) : null}
               </tbody>

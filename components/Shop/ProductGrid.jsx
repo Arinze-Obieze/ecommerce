@@ -1,5 +1,6 @@
 "use client";
 import ProductCard from "../ProductCard";
+import ProductImpressionTracker from "../ProductImpressionTracker";
 import { useFilters } from "@/contexts/FilterContext";
 import { FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 
@@ -40,7 +41,7 @@ const SkeletonCard = ({ delay = 0 }) => (
 );
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
-export default function ProductGrid({ products, loading, error, meta }) {
+export default function ProductGrid({ products, loading, error, meta, surface = null, trackingMeta = null }) {
   const { clearAllFilters, hasActiveFilters } = useFilters();
 
   // ── Loading ──
@@ -185,8 +186,19 @@ export default function ProductGrid({ products, loading, error, meta }) {
         style={{ display: 'grid', gap: 10 }}
         className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5"
       >
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+        {products.map((product, index) => (
+          <ProductImpressionTracker
+            key={product.id}
+            product={product}
+            surface={surface || meta?.scoring?.surface || 'shop_grid'}
+            position={index + 1}
+            metadata={{
+              sortStrategy: trackingMeta?.sortStrategy || meta?.scoring?.strategy || null,
+              persona: trackingMeta?.persona || meta?.scoring?.persona || null,
+            }}
+          >
+            <ProductCard product={product} />
+          </ProductImpressionTracker>
         ))}
         {/* Append skeleton cards while loading next page */}
         {loading && [...Array(4)].map((_, i) => <SkeletonCard key={`sk-${i}`} delay={i * 50} />)}

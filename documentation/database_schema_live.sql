@@ -151,6 +151,19 @@ CREATE TABLE IF NOT EXISTS public.banners (
   is_active boolean(boolean)NULL DEFAULT false
 );
 
+-- ===== platform_content =====
+CREATE TABLE IF NOT EXISTS public.platform_content (
+  id string(uuid)NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  -- Note: This is a Primary Key.<pk/>
+  content_key string(text)NOT NULL,
+  title string(text)NOT NULL,
+  description string(text)NULL,
+  data unknown(jsonb)NOT NULL DEFAULT '{}'::jsonb,
+  created_at string(timestamp with time zone)NOT NULL DEFAULT now(),
+  updated_at string(timestamp with time zone)NOT NULL DEFAULT now(),
+  updated_by string(uuid)NULL
+);
+
 -- ===== cart =====
 CREATE TABLE IF NOT EXISTS public.cart (
   id string(uuid)NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -336,6 +349,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   description string(text)NULL,
   price number(numeric)NOT NULL,
   discount_price number(numeric)NULL,
+  bulk_discount_tiers unknown(jsonb)NULL,
   stock_quantity integer(integer)NULL DEFAULT 0,
   rating number(numeric)NULL DEFAULT 0,
   is_active boolean(boolean)NULL DEFAULT true,
