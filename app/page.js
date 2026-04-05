@@ -1,4 +1,4 @@
- import Hero from "@/components/Hero";
+import Hero from "@/components/Hero";
 import TrustBar from "@/components/TrustBar";
 import FeaturedCategories from "@/components/FeaturedCategories";
 import NewArrivals from "@/components/NewArrivals";
@@ -14,7 +14,7 @@ export default function Home() {
   return (
     <main>
       <Hero />                    {/* 1. Hook — big visual, CTA */}
-      <TrustBar />                {/* 2. Credibility — before they scroll away */}
+      {/* <TrustBar /> */}        {/* 2. Credibility — disabled */}
       <FeaturedCategories />      {/* 3. Navigate — help them find their world */}
       <NewArrivals />             {/* 4. Freshness — show the store is alive */}
       <BestSellers />             {/* 5. Social proof — what others are buying */}
