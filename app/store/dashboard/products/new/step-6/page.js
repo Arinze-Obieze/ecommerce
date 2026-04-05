@@ -1,133 +1,206 @@
-// app/store/dashboard/products/new/step-6/page.js
+// app/store/dashboard/products/new/step-5/page.js
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
+import { buildSkuPrefix, buildVariantSku, getColorTw } from "@/lib/product-wizard-constants";
+import { createClient } from "@/utils/supabase/client";
 
-function Barcode({ sku, label }) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-      {label && <p className="text-xs font-semibold text-gray-500 mb-1.5">{label}</p>}
-      <div className="flex items-end justify-center gap-[1px] h-10 mb-1.5">
-        {(sku || "").split("").map((ch, i) => (
-          <div key={i} className="bg-gray-900 rounded-[0.5px]"
-            style={{ width: ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 1.5, height: `${55 + (ch.charCodeAt(0) % 40)}%` }} />
-        ))}
-      </div>
-      <p className="text-[11px] font-mono text-gray-700 tracking-wide">{sku}</p>
-    </div>
-  );
-}
+function slugify(t) { return (t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
 
-export default function Step6() {
-  const { state, dispatch, goNext, goBack } = useWizard();
-  const [showSkip, setShowSkip] = useState(false);
+export default function Step5() {
+  const { state, dispatch, storeContext, goNext, goBack } = useWizard();
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(null);
 
-  const hasVariants = state.variantSkus.length > 0;
-  const effectivePrintType = hasVariants ? state.printType : "base";
-  const total = effectivePrintType === "base" ? Math.max(state.printCopies, 1) : state.variantSkus.length * Math.max(state.printCopies, 1);
+  const [genError, setGenError] = useState(null);
 
-  const doPrint = () => {
-    const barcodes = effectivePrintType === "base"
-      ? [{ sku: state.baseSku, label: state.productName }]
-      : state.variantSkus.map(v => ({ sku: v.sku, label: `${v.color} – ${v.size}` }));
-    const labels = [];
-    for (const bc of barcodes) for (let c = 0; c < state.printCopies; c++) labels.push(bc);
+  const generate = async () => {
+    if (!storeContext) {
+      console.log("[SKU] storeContext not ready yet, skipping");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setGenError(null);
+    try {
+      const storeSlug = storeContext.slug || storeContext.name || "";
+      const productSlug = slugify(state.productName);
+      const prefix = buildSkuPrefix(storeSlug, productSlug);
+      console.log("[SKU] Generating with prefix:", prefix, "store:", storeSlug, "product:", productSlug);
 
-    const w = window.open("", "_blank", "width=800,height=600");
-    if (!w) return;
-    w.document.write(`<html><head><title>Barcodes</title><style>
-      body{font-family:monospace;margin:0;padding:16px}
-      .g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-      .l{border:1px solid #ccc;padding:14px;text-align:center;page-break-inside:avoid}
-      .l h4{margin:0 0 6px;font-size:10px;color:#666}
-      .l .s{font-size:13px;font-weight:bold;letter-spacing:1.5px}
-      .b{display:flex;justify-content:center;gap:1px;margin:6px 0;height:45px;align-items:flex-end}
-      .br{background:#000;border-radius:.5px}
-      @media print{body{padding:8px}.g{gap:6px}}
-    </style></head><body><div class="g">${labels.map(l => `<div class="l"><h4>${l.label}</h4><div class="b">${
-      l.sku.split("").map(ch => `<div class="br" style="width:${ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 2}px;height:${55 + (ch.charCodeAt(0) % 40)}%"></div>`).join("")
-    }</div><div class="s">${l.sku}</div></div>`).join("")}</div><script>window.onload=()=>window.print()</script></body></html>`);
-    w.document.close();
-    dispatch({ type: "SET_PRINT_STATUS", payload: { printCompleted: true, printType: state.printType, printCopies: state.printCopies } });
+      // Try to find existing SKUs with this prefix
+      let seq = 1;
+      try {
+        const supabase = createClient();
+        const { data, error: queryErr } = await supabase
+          .from("products_internal")
+          .select("base_sku")
+          .like("base_sku", `${prefix}-%`)
+          .order("base_sku", { ascending: false })
+          .limit(1);
+
+        if (queryErr) {
+          // Table might not have base_sku column yet — that's OK, start at 0001
+          console.warn("[SKU] Query error (non-fatal, using seq=1):", queryErr.message);
+        } else if (data?.length) {
+          const last = parseInt(data[0].base_sku.split("-").pop(), 10);
+          if (!isNaN(last)) seq = last + 1;
+          console.log("[SKU] Found existing, next seq:", seq);
+        }
+      } catch (dbErr) {
+        console.warn("[SKU] DB lookup failed (non-fatal):", dbErr.message);
+      }
+
+      const baseSku = `${prefix}-${String(seq).padStart(4, "0")}`;
+
+      // Build variant SKUs from the variants in state
+      const validVariants = state.variants.filter(v => v.color && v.size);
+      console.log("[SKU] Valid variants:", validVariants.length, "of", state.variants.length);
+
+      const variantSkus = validVariants.map(v => ({
+        ...v,
+        sku: buildVariantSku(baseSku, v.color, v.size),
+      }));
+
+      dispatch({ type: "SET_SKU", baseSku, variantSkus });
+      console.log("[SKU] Generated:", baseSku, "with", variantSkus.length, "variant SKUs");
+    } catch (err) {
+      console.error("[SKU] Generation failed:", err);
+      setGenError(err.message || "Failed to generate SKU");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleNext = () => {
-    if (!state.printCompleted) { setShowSkip(true); return; }
-    goNext();
+  // Generate when storeContext becomes available
+  useEffect(() => {
+    if (storeContext) {
+      generate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeContext]);
+
+  const copy = async (sku, k) => {
+    try { await navigator.clipboard.writeText(sku); setCopied(k); setTimeout(() => setCopied(null), 1500); } catch {}
+  };
+
+  const totalQty = state.variants.reduce((s, v) => s + (v.quantity || 0), 0);
+
+  const downloadCSV = () => {
+    const rows = [["Product","Base SKU","Variant SKU","Color","Size","Qty","Price"],
+      ...state.variantSkus.map(v => [state.productName, state.baseSku, v.sku, v.color, v.size, v.quantity, v.price])];
+    const blob = new Blob([rows.map(r => r.join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = `SKU_${state.baseSku}.csv`; a.click();
   };
 
   return (
-    <WizardShell title="Print Barcodes" subtitle={`Print labels for ${state.variantSkus.length} variant${state.variantSkus.length !== 1 ? "s" : ""}`}>
-      <div className="max-w-lg mx-auto">
-        {/* Options */}
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5 space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Print Type</label>
-            <select value={effectivePrintType} onChange={e => dispatch({ type: "SET_PRINT_STATUS", payload: { printType: e.target.value } })}
-              disabled={!hasVariants}
-              className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm disabled:opacity-60">
-              {hasVariants && <option value="all">All Variants ({state.variantSkus.length})</option>}
-              <option value="base">Base Product Only</option>
-            </select>
+    <WizardShell title="Generated SKU" subtitle="Unique product codes for tracking">
+      {/* Base SKU */}
+      <div className="bg-gradient-to-br from-[#2E5C45]/5 to-emerald-50 border-2 border-[#2E5C45]/20 rounded-2xl p-6 text-center mb-6">
+        <p className="text-[10px] font-bold text-[#2E5C45] uppercase tracking-widest mb-2">Base Product SKU</p>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-3">
+            <div className="w-4 h-4 border-2 border-[#2E5C45]/30 border-t-[#2E5C45] rounded-full animate-spin" />
+            <span className="text-sm text-gray-500">Generating…</span>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Copies per Label</label>
-            <input type="number" min={1} max={50} value={state.printCopies}
-              onChange={e => dispatch({ type: "SET_PRINT_STATUS", payload: { printCopies: parseInt(e.target.value) || 1 } })}
-              className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm" />
+        ) : !state.baseSku ? (
+          <div className="py-3">
+            <p className="text-sm text-gray-500 mb-2">Could not generate SKU automatically.</p>
+            <button type="button" onClick={generate}
+              className="px-4 py-2 rounded-lg bg-[#2E5C45] text-white text-sm font-semibold hover:bg-[#254a38]">
+              Generate Now
+            </button>
           </div>
-        </div>
-
-        {/* Preview */}
-        <div className="border-2 border-dashed border-[#dbe7e0] rounded-2xl p-4 mb-5">
-          <p className="text-[10px] font-semibold text-gray-400 text-center mb-3 uppercase tracking-wide">Preview</p>
-          <div className="space-y-2.5">
-            {effectivePrintType === "base"
-              ? <Barcode sku={state.baseSku} label={state.productName} />
-              : <>
-                  {state.variantSkus.slice(0, 3).map((v, i) => <Barcode key={i} sku={v.sku} label={`${v.color} – ${v.size}`} />)}
-                  {state.variantSkus.length > 3 && <p className="text-xs text-gray-400 text-center">+ {state.variantSkus.length - 3} more</p>}
-                </>
-            }
-          </div>
-        </div>
-
-        {/* Print button */}
-        <button type="button" onClick={doPrint}
-          className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#2E5C45] text-white font-bold text-sm hover:bg-[#254a38] shadow-sm transition-all mb-3">
-          🖨 Print {total} Label{total !== 1 ? "s" : ""}
-        </button>
-
-        {state.printCompleted && state.printCopies > 0 && (
-          <div className="flex items-start gap-2.5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl mb-2">
-            <div className="w-7 h-7 rounded-full bg-[#2E5C45] flex items-center justify-center shrink-0">
-              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+        ) : (
+          <>
+            <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-wider font-mono">{state.baseSku || "—"}</p>
+            <div className="flex items-center justify-center gap-[1.5px] my-3 opacity-60">
+              {(state.baseSku || "").split("").map((ch, i) => (
+                <div key={i} className="bg-gray-800 rounded-[0.5px]" style={{ width: ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 1.5, height: 35 + (ch.charCodeAt(0) % 12) }} />
+              ))}
             </div>
-            <div>
-              <p className="text-sm font-bold text-emerald-900">Labels Ready</p>
-              <p className="text-xs text-emerald-700">Attach to products, then proceed to verification.</p>
-            </div>
-          </div>
+          </>
         )}
+        <div className="flex items-center justify-center gap-2 mt-3">
+          <button type="button" onClick={() => copy(state.baseSku, "base")}
+            className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 hover:border-[#2E5C45]">
+            {copied === "base" ? "✓ Copied" : "Copy"}
+          </button>
+          <button type="button" onClick={generate} disabled={loading}
+            className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 hover:border-[#2E5C45] disabled:opacity-50">
+            Regenerate
+          </button>
+        </div>
       </div>
 
-      <WizardNav onBack={goBack} onNext={handleNext} nextLabel="Continue to Verify" />
-
-      {showSkip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Skip Printing?</h3>
-            <p className="text-sm text-gray-500 mb-5">You can print later from the product detail page.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowSkip(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#2E5C45] text-white font-semibold text-sm">Print First</button>
-              <button onClick={() => { dispatch({ type: "SET_PRINT_STATUS", payload: { printCompleted: true, printCopies: 0 } }); setShowSkip(false); goNext(); }}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold text-sm">Skip</button>
-            </div>
-          </div>
+      {/* Variant SKUs */}
+      {genError && (
+        <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 mb-4">
+          ⚠ {genError}. <button type="button" onClick={generate} className="underline font-semibold">Retry</button>
         </div>
       )}
+
+      {!storeContext && !loading && (
+        <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700 mb-4">
+          ⚠ Could not load store context. Make sure your store has a slug or name set.
+        </div>
+      )}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-gray-900">Variant SKUs ({state.variantSkus.length})</h3>
+          <button type="button" onClick={downloadCSV}
+            className="px-3 py-1.5 rounded-lg bg-gray-50 border border-[#dbe7e0] text-xs font-semibold text-gray-600 hover:border-[#2E5C45]/30">
+            ↓ CSV
+          </button>
+        </div>
+        <div className="rounded-xl border border-[#dbe7e0] overflow-hidden">
+          <div className="hidden sm:grid grid-cols-[1.5fr_1fr_1fr_1.5fr_2.5fr] gap-1 px-3 py-2 bg-gray-50 border-b border-[#dbe7e0] text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+            <span>Color</span><span>Size</span><span>Qty</span><span>Price</span><span>SKU</span>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {state.variantSkus.map((v, i) => (
+              <div key={i} className="grid grid-cols-2 sm:grid-cols-[1.5fr_1fr_1fr_1.5fr_2.5fr] gap-1.5 px-3 py-2.5 items-center hover:bg-gray-50/50">
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-3.5 h-3.5 rounded-full ${getColorTw(v.color)} shrink-0`} />
+                  <span className="text-sm font-medium">{v.color}</span>
+                </div>
+                <span className="text-sm text-gray-600">{v.size}</span>
+                <span className="text-sm text-gray-600">{v.quantity}</span>
+                <span className="text-sm font-medium">₦{(v.price || 0).toLocaleString()}</span>
+                <div className="col-span-2 sm:col-span-1 flex items-center gap-1.5">
+                  <code className="text-[11px] font-mono text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded truncate flex-1">{v.sku}</code>
+                  <button type="button" onClick={() => copy(v.sku, `v${i}`)}
+                    className="p-1 rounded text-gray-400 hover:text-[#2E5C45] hover:bg-[#2E5C45]/5 shrink-0 text-xs">
+                    {copied === `v${i}` ? "✓" : "⧉"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+        {[
+          { l: "Product", v: state.productName },
+          { l: "Category", v: `${state.category} / ${state.subcategory}` },
+          { l: "Variants", v: state.variantSkus.length },
+          { l: "Total Stock", v: totalQty },
+          { l: "Material", v: state.material || "—" },
+          { l: "Total SKUs", v: state.variantSkus.length + 1, hl: true },
+        ].map(item => (
+          <div key={item.l} className="bg-gray-50 rounded-xl p-3.5 border border-[#dbe7e0]">
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{item.l}</p>
+            <p className={`text-sm font-bold truncate ${item.hl ? "text-[#2E5C45]" : "text-gray-900"}`}>{item.v}</p>
+          </div>
+        ))}
+      </div>
+
+      <WizardNav onBack={goBack} onNext={goNext} nextLabel="Continue to Print" />
     </WizardShell>
   );
 }

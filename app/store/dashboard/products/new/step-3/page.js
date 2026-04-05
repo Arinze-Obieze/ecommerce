@@ -1,245 +1,404 @@
-// app/store/dashboard/products/new/step-3/page.js
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { COLORS_LIST, getSizeOptions, getColorTw } from "@/lib/product-wizard-constants";
+import {
+  COUNTRIES,
+  FIBER_TYPES,
+  WASHING_OPTIONS,
+  BLEACHING_OPTIONS,
+  DRYING_OPTIONS,
+  IRONING_OPTIONS,
+  DRY_CLEANING_OPTIONS,
+  CHILDREN_SAFETY_OPTIONS,
+  FLAMMABILITY_OPTIONS,
+} from "@/lib/product-wizard-constants";
+
+function Tooltip({ text }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return (
+    <span ref={ref} className="relative inline-flex ml-1 align-middle" style={{ verticalAlign: "middle" }}>
+      <span
+        role="button" tabIndex={0}
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); setOpen((v) => !v); } }}
+        className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center hover:bg-[#2E5C45]/20 hover:text-[#2E5C45] transition-colors cursor-pointer select-none"
+        aria-label="More info"
+      >
+        i
+      </span>
+      {open && (
+        <span className="absolute z-50 left-5 top-0 w-60 rounded-xl bg-gray-900 text-white text-xs p-3 shadow-xl leading-relaxed block">
+          {text}
+          <span className="absolute -left-1.5 top-2 w-3 h-3 bg-gray-900 rotate-45 block" />
+        </span>
+      )}
+    </span>
+  );
+}
+
+// FIX: min-w-0 on select prevents overflow; placeholder is "0" not "%" to avoid
+// duplicate % sign; spacer div keeps alignment when remove button is hidden
+function FiberRow({ fiber, onChange, onRemove, canRemove }) {
+  return (
+    <div className="flex items-center gap-2">
+      <select
+        value={fiber.type}
+        onChange={(e) => onChange({ ...fiber, type: e.target.value })}
+        className="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-[#2E5C45]/20 focus:border-[#2E5C45]"
+      >
+        <option value="">Select fiber…</option>
+        {FIBER_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
+      </select>
+      <div className="relative flex-shrink-0 w-20">
+        <input
+          type="number" min="1" max="100"
+          value={fiber.percent}
+          onChange={(e) => onChange({
+            ...fiber,
+            percent: e.target.value === "" ? "" : Math.min(100, Math.max(1, parseInt(e.target.value) || 1)),
+          })}
+          placeholder="0"
+          className="w-full pl-3 pr-7 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-[#2E5C45]/20 focus:border-[#2E5C45]"
+        />
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">%</span>
+      </div>
+      {canRemove ? (
+        <button type="button" onClick={onRemove}
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+          ×
+        </button>
+      ) : (
+        <div className="flex-shrink-0 w-8" />
+      )}
+    </div>
+  );
+}
+
+// FIX: min-h-[88px] + justify-center keeps all tiles same height regardless of label length
+// break-words on label prevents overflow on narrow mobile tiles
+function CareTile({ option, selected, onSelect }) {
+  return (
+    <div
+      role="button" tabIndex={0}
+      onClick={() => onSelect(option.value)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onSelect(option.value); }}
+      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-150 cursor-pointer select-none min-h-[88px] justify-center
+        ${selected ? "border-[#2E5C45] bg-[#2E5C45]/5 shadow-sm" : "border-[#dbe7e0] bg-white hover:border-[#2E5C45]/40"}`}
+    >
+      {selected && (
+        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#2E5C45] flex items-center justify-center">
+          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </span>
+      )}
+      <span className="text-base font-mono font-bold text-gray-700 leading-none">{option.symbol}</span>
+      <span className={`text-[10px] leading-tight font-medium break-words w-full ${selected ? "text-[#2E5C45]" : "text-gray-500"}`}>
+        {option.label}
+      </span>
+      <Tooltip text={option.desc} />
+    </div>
+  );
+}
+
+function CareMultiTile({ option, selected, onToggle }) {
+  return (
+    <div
+      role="button" tabIndex={0}
+      onClick={() => onToggle(option.value)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onToggle(option.value); }}
+      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-center transition-all duration-150 cursor-pointer select-none min-h-[88px] justify-center
+        ${selected ? "border-[#2E5C45] bg-[#2E5C45]/5 shadow-sm" : "border-[#dbe7e0] bg-white hover:border-[#2E5C45]/40"}`}
+    >
+      {selected && (
+        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#2E5C45] flex items-center justify-center">
+          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </span>
+      )}
+      <span className="text-base font-mono font-bold text-gray-700 leading-none">{option.symbol}</span>
+      <span className={`text-[10px] leading-tight font-medium break-words w-full ${selected ? "text-[#2E5C45]" : "text-gray-500"}`}>
+        {option.label}
+      </span>
+      <Tooltip text={option.desc} />
+    </div>
+  );
+}
+
+function CareSection({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-xl border border-[#dbe7e0] overflow-hidden">
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-[#f8fbf9] hover:bg-[#f0f7f3] transition-colors">
+        <span className="text-sm font-semibold text-gray-800">{title}</span>
+        <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && <div className="px-4 py-4 bg-white">{children}</div>}
+    </div>
+  );
+}
+
+function CountrySelect({ value, onChange, placeholder = "Select country…", id }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const filtered = COUNTRIES.filter((c) =>
+    c.name.toLowerCase().includes(query.toLowerCase()) || c.code.toLowerCase().includes(query.toLowerCase())
+  );
+  const selected = COUNTRIES.find((c) => c.code === value);
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return (
+    <div ref={ref} className="relative">
+      <button type="button" id={id}
+        onClick={() => { setOpen((v) => !v); setQuery(""); }}
+        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#2E5C45]/20 focus:border-[#2E5C45]">
+        <span className={selected ? "text-gray-900 truncate" : "text-gray-400 truncate"}>
+          {selected ? selected.name : placeholder}
+        </span>
+        <svg className={`w-4 h-4 text-gray-400 flex-shrink-0 ml-2 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+          <div className="p-2 border-b border-gray-100">
+            <input autoFocus type="text" placeholder="Search country…" value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]" />
+          </div>
+          <ul className="max-h-48 overflow-y-auto">
+            <li>
+              <button type="button" onClick={() => { onChange(""); setOpen(false); }}
+                className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:bg-gray-50">— None —</button>
+            </li>
+            {filtered.map((c) => (
+              <li key={c.code}>
+                <button type="button" onClick={() => { onChange(c.code); setOpen(false); setQuery(""); }}
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-[#f0f7f3] ${value === c.code ? "bg-[#2E5C45]/5 text-[#2E5C45] font-semibold" : "text-gray-700"}`}>
+                  <span className="mr-2 text-gray-400 text-xs font-mono">{c.code}</span>{c.name}
+                </button>
+              </li>
+            ))}
+            {filtered.length === 0 && <li className="px-3 py-4 text-sm text-gray-400 text-center">No countries found</li>}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Step3() {
   const { state, dispatch, goNext, goBack } = useWizard();
-  const [bulkMode, setBulkMode] = useState(null);
-  const [bulkStep, setBulkStep] = useState(1);
-  const [error, setError] = useState(null);
-  const [bf, setBf] = useState({ size: "", color: "", colors: [], sizes: [], qty: 10, price: 5000 });
-  const [preview, setPreview] = useState([]);
+  const [errors, setErrors] = useState({});
 
-  const sizes = getSizeOptions(state.category);
+  const fibers = state.fiberComposition?.length ? state.fiberComposition : [{ type: "", percent: "" }];
+  const totalPercent = fibers.reduce((s, f) => s + (parseInt(f.percent) || 0), 0);
+  const percentOk = totalPercent === 100;
+  const percentColor = totalPercent > 100 ? "text-red-500" : totalPercent === 100 ? "text-[#2E5C45]" : "text-amber-500";
+  const progressColor = totalPercent > 100 ? "bg-red-400" : totalPercent === 100 ? "bg-[#2E5C45]" : "bg-amber-400";
 
-  const toggleArr = (arr, val) => arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
-  const keyForVariant = (variant) => `${variant.color?.trim().toLowerCase() || ""}__${variant.size?.trim().toLowerCase() || ""}`;
+  const setFibers = (updated) => dispatch({ type: "SET_LABEL_INFO", payload: { fiberComposition: updated } });
+  const addFiber = () => { if (fibers.length < 10) setFibers([...fibers, { type: "", percent: "" }]); };
+  const updateFiber = (idx, val) => setFibers(fibers.map((f, i) => (i === idx ? val : f)));
+  const removeFiber = (idx) => setFibers(fibers.filter((_, i) => i !== idx));
 
-  const findDuplicateKeys = (variants) => {
-    const seen = new Set();
-    const duplicates = new Set();
-
-    variants.forEach((variant) => {
-      const key = keyForVariant(variant);
-      if (!key || key === "__") return;
-      if (seen.has(key)) duplicates.add(key);
-      seen.add(key);
-    });
-
-    return duplicates;
+  const set = (field, value) => {
+    dispatch({ type: "SET_LABEL_INFO", payload: { [field]: value } });
+    if (errors[field]) setErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
   };
 
-  const doPreview = () => {
-    setError(null);
-    let items = [];
-    if (bulkMode === "color") {
-      if (!bf.size || !bf.colors.length) return;
-      items = bf.colors.map(c => ({ color: c, size: bf.size, quantity: bf.qty, price: bf.price }));
-    } else {
-      if (!bf.color || !bf.sizes.length) return;
-      items = bf.sizes.map(s => ({ color: bf.color, size: s, quantity: bf.qty, price: bf.price }));
+  const toggleMulti = (field, value) => {
+    const current = Array.isArray(state[field]) ? state[field] : [];
+    set(field, current.includes(value) ? current.filter((v) => v !== value) : [...current, value]);
+  };
+
+  const validate = () => {
+    const e = {};
+    const filled = fibers.filter((f) => f.type || f.percent);
+    if (filled.some((f) => !f.type || !f.percent)) {
+      e.fiberComposition = "Each fiber row needs both a type and a percentage.";
+    } else if (filled.length > 0 && !percentOk) {
+      e.fiberComposition = `Fiber percentages must total 100% (currently ${totalPercent}%)`;
     }
-    setPreview(items);
-    setBulkStep(2);
+    return e;
   };
-
-  const doConfirm = () => {
-    const merged = [...state.variants, ...preview];
-    if (findDuplicateKeys(merged).size > 0) {
-      setError("Duplicate color and size combinations are not allowed.");
-      return;
-    }
-    dispatch({ type: "SET_VARIANTS", payload: [...state.variants, ...preview] });
-    setBulkMode(null); setBulkStep(1); setPreview([]);
-    setBf({ size: "", color: "", colors: [], sizes: [], qty: 10, price: 5000 });
-  };
-
-  const doCancel = () => { setBulkMode(null); setBulkStep(1); setPreview([]); };
 
   const handleNext = () => {
-    setError(null);
-    if (state.variants.length === 0) {
-      setError("Add at least one variant before continuing.");
-      return;
-    }
-    if (state.variants.some(v => !v.color || !v.size || v.quantity <= 0 || v.price <= 0)) {
-      setError("Complete every variant with color, size, qty > 0, and price > 0.");
-      return;
-    }
-    if (findDuplicateKeys(state.variants).size > 0) {
-      setError("Each color and size combination must be unique.");
-      return;
-    }
+    const e = validate();
+    if (Object.keys(e).length) { setErrors(e); return; }
     goNext();
   };
 
   return (
-    <WizardShell title="Product Variants" subtitle="Define sizes, colors, quantities and prices">
-      {error && <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 mb-5">{error}</div>}
+    <WizardShell title="Label & Care Information" subtitle="Provide the information required to appear on your product's clothing tag">
+      <div className="space-y-6">
 
-      {/* Bulk Add */}
-      <div className="bg-gray-50 border border-[#dbe7e0] rounded-2xl p-4 sm:p-5 mb-5">
-        <h3 className="text-sm font-bold text-gray-900 mb-3">⚡ Quick Bulk Add</h3>
-
-        {!bulkMode && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button type="button" onClick={() => setBulkMode("color")}
-              className="p-4 rounded-xl border-2 border-dashed border-[#dbe7e0] bg-white hover:border-[#2E5C45]/40 transition-all text-left">
-              <p className="text-sm font-bold text-gray-900">Multiple Colors</p>
-              <p className="text-xs text-gray-500">One size, many colors</p>
+        {/* Fiber composition */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-semibold text-gray-700">
+              Fiber composition
+              <Tooltip text="List every fiber in the garment with its exact percentage. The total must equal 100%. Legally required in most countries (US FTC, EU Regulation 1007/2011, etc.)." />
+            </label>
+            <span className={`text-xs font-semibold flex-shrink-0 ml-2 ${percentColor}`}>{totalPercent}% / 100%</span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-100 rounded-full mb-3 overflow-hidden">
+            <div className={`h-full rounded-full transition-all duration-300 ${progressColor}`}
+              style={{ width: `${Math.min(100, totalPercent)}%` }} />
+          </div>
+          <div className="space-y-2">
+            {fibers.map((fiber, idx) => (
+              <FiberRow key={idx} fiber={fiber}
+                onChange={(val) => updateFiber(idx, val)}
+                onRemove={() => removeFiber(idx)}
+                canRemove={fibers.length > 1} />
+            ))}
+          </div>
+          {errors.fiberComposition && <p className="mt-1.5 text-xs text-red-500">{errors.fiberComposition}</p>}
+          {fibers.length < 10 && (
+            <button type="button" onClick={addFiber}
+              className="mt-2.5 flex items-center gap-1.5 text-sm text-[#2E5C45] font-semibold hover:underline">
+              <span className="text-lg leading-none">+</span> Add fiber
             </button>
-            <button type="button" onClick={() => setBulkMode("size")}
-              className="p-4 rounded-xl border-2 border-dashed border-[#dbe7e0] bg-white hover:border-[#2E5C45]/40 transition-all text-left">
-              <p className="text-sm font-bold text-gray-900">Multiple Sizes</p>
-              <p className="text-xs text-gray-500">One color, many sizes</p>
-            </button>
-          </div>
-        )}
-
-        {bulkMode && bulkStep === 1 && (
-          <div className="bg-white rounded-xl border border-[#dbe7e0] p-4 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {bulkMode === "color" ? (
-                <>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Fixed Size</label>
-                    <select value={bf.size} onChange={e => setBf({ ...bf, size: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
-                      <option value="">Pick size</option>
-                      {sizes.map(s => <option key={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Colors</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {COLORS_LIST.map(c => (
-                        <button key={c.name} type="button" onClick={() => setBf({ ...bf, colors: toggleArr(bf.colors, c.name) })}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-semibold
-                            ${bf.colors.includes(c.name) ? "border-[#2E5C45] bg-[#2E5C45]/5 text-[#2E5C45]" : "border-gray-200 text-gray-600"}`}>
-                          <span className={`w-3 h-3 rounded-full ${c.tw} shrink-0`} />{c.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Fixed Color</label>
-                    <select value={bf.color} onChange={e => setBf({ ...bf, color: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm">
-                      <option value="">Pick color</option>
-                      {COLORS_LIST.map(c => <option key={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-1">Sizes</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {sizes.map(s => (
-                        <button key={s} type="button" onClick={() => setBf({ ...bf, sizes: toggleArr(bf.sizes, s) })}
-                          className={`px-2.5 py-1 rounded-lg border text-xs font-bold
-                            ${bf.sizes.includes(s) ? "border-[#2E5C45] bg-[#2E5C45]/5 text-[#2E5C45]" : "border-gray-200 text-gray-600"}`}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Default Qty</label>
-                <input type="number" min={1} value={bf.qty} onChange={e => setBf({ ...bf, qty: parseInt(e.target.value) || 1 })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Default Price (₦)</label>
-                <input type="number" min={0} step={100} value={bf.price} onChange={e => setBf({ ...bf, price: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={doCancel} className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-500 hover:bg-gray-50">Cancel</button>
-              <button type="button" onClick={doPreview} className="flex-1 px-3 py-2 rounded-lg bg-[#2E5C45] text-white text-sm font-bold hover:bg-[#254a38]">Preview</button>
-            </div>
-          </div>
-        )}
-
-        {bulkMode && bulkStep === 2 && (
-          <div className="bg-white rounded-xl border border-[#dbe7e0] p-4 space-y-3">
-            <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Adjust qty/price per row before adding.</p>
-            <div className="space-y-1.5 max-h-[260px] overflow-y-auto">
-              {preview.map((item, i) => (
-                <div key={i} className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 bg-gray-50 rounded-lg items-center">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-3.5 h-3.5 rounded-full ${getColorTw(item.color)} shrink-0`} />
-                    <span className="text-sm font-semibold">{item.color}</span>
-                  </div>
-                  <span className="text-sm text-gray-600">{item.size}</span>
-                  <input type="number" min={1} value={item.quantity}
-                    onChange={e => setPreview(p => p.map((x, j) => j === i ? { ...x, quantity: parseInt(e.target.value) || 1 } : x))}
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm w-full" />
-                  <input type="number" min={0} step={100} value={item.price}
-                    onChange={e => setPreview(p => p.map((x, j) => j === i ? { ...x, price: parseInt(e.target.value) || 0 } : x))}
-                    className="px-2 py-1.5 rounded-lg border border-gray-200 text-sm w-full" />
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={doCancel} className="px-3 py-2 rounded-lg text-sm font-semibold text-gray-500">Cancel</button>
-              <button type="button" onClick={doConfirm} className="flex-1 px-3 py-2 rounded-lg bg-[#2E5C45] text-white text-sm font-bold">Add {preview.length} Variants</button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Variant list */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-900">Variants ({state.variants.length})</h3>
-        <button type="button" onClick={() => dispatch({ type: "ADD_VARIANT", payload: { color: "", size: "", quantity: 1, price: 0 } })}
-          className="px-3 py-1.5 rounded-lg bg-[#2E5C45]/10 text-[#2E5C45] text-xs font-bold hover:bg-[#2E5C45]/20">+ Add Single</button>
-      </div>
-
-      {state.variants.length === 0 ? (
-        <div className="text-center py-8 text-gray-400 text-sm">No variants yet. Use bulk add or add singles.</div>
-      ) : (
-        <div className="space-y-2">
-          {/* Desktop header */}
-          <div className="hidden sm:grid grid-cols-[2fr_1.5fr_1fr_1.5fr_36px] gap-2 px-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
-            <span>Color</span><span>Size</span><span>Qty</span><span>Price (₦)</span><span />
-          </div>
-          {state.variants.map((v, i) => (
-            <div key={i} className="grid grid-cols-2 sm:grid-cols-[2fr_1.5fr_1fr_1.5fr_36px] gap-2 p-2.5 bg-gray-50 rounded-xl border border-[#dbe7e0] items-center">
-              <div className="relative">
-                <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full ${getColorTw(v.color)} pointer-events-none`} />
-                <select value={v.color} onChange={e => dispatch({ type: "UPDATE_VARIANT", index: i, payload: { color: e.target.value } })}
-                  className="w-full pl-8 pr-2 py-2 rounded-lg border border-gray-200 text-sm font-medium">
-                  <option value="">Color</option>
-                  {COLORS_LIST.map(c => <option key={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-              <select value={v.size} onChange={e => dispatch({ type: "UPDATE_VARIANT", index: i, payload: { size: e.target.value } })}
-                className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm font-medium">
-                <option value="">Size</option>
-                {sizes.map(s => <option key={s}>{s}</option>)}
-              </select>
-              <input type="number" min={0} value={v.quantity} onChange={e => dispatch({ type: "UPDATE_VARIANT", index: i, payload: { quantity: parseInt(e.target.value) || 0 } })}
-                className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm" />
-              <input type="number" min={0} step={100} value={v.price} onChange={e => dispatch({ type: "UPDATE_VARIANT", index: i, payload: { price: parseInt(e.target.value) || 0 } })}
-                className="w-full px-2 py-2 rounded-lg border border-gray-200 text-sm" />
-              <button type="button" onClick={() => dispatch({ type: "REMOVE_VARIANT", payload: i })}
-                className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
-            </div>
-          ))}
+          )}
         </div>
-      )}
 
-      <WizardNav onBack={goBack} onNext={handleNext} nextLabel="Continue to Images" />
+        {/* Country of origin */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Country of origin
+              <Tooltip text="The country where the garment was primarily manufactured. Legally required in most markets (US, EU, AU, CA, etc.)." />
+            </label>
+            <CountrySelect id="country_of_origin" value={state.countryOfOrigin || ""}
+              onChange={(v) => set("countryOfOrigin", v)} placeholder="Select country…" />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              Country of transformation
+              <Tooltip text="If the garment was substantially transformed in a different country from where the raw fabric was made, enter that country here. Leave blank if same as origin." />
+            </label>
+            <CountrySelect id="country_of_transformation" value={state.countryOfTransformation || ""}
+              onChange={(v) => set("countryOfTransformation", v)} placeholder="Same as origin (optional)" />
+          </div>
+        </div>
+
+        {/* Brand */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Brand name / trademark
+            <Tooltip text="The brand or trademark name that will appear on the label. Leave blank to use your store name." />
+          </label>
+          <input type="text"
+            value={state.labelBrand || state.brand || ""}
+            onChange={(e) => set("labelBrand", e.target.value)}
+            placeholder="e.g. Acme Apparel™"
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-[#2E5C45]/20 focus:border-[#2E5C45]" />
+        </div>
+
+        {/* Care instructions */}
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-3">
+            Care instructions
+            <Tooltip text="Select one option per category. Click the ⓘ on each tile to see what each symbol means." />
+          </p>
+          <div className="space-y-3">
+
+            <CareSection title="Washing" defaultOpen>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-stretch">
+                {WASHING_OPTIONS.map((opt) => (
+                  <CareTile key={opt.value} option={opt}
+                    selected={state.careWashing === opt.value}
+                    onSelect={(v) => set("careWashing", state.careWashing === v ? null : v)} />
+                ))}
+              </div>
+            </CareSection>
+
+            <CareSection title="Bleaching">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-stretch">
+                {BLEACHING_OPTIONS.map((opt) => (
+                  <CareTile key={opt.value} option={opt}
+                    selected={state.careBleaching === opt.value}
+                    onSelect={(v) => set("careBleaching", state.careBleaching === v ? null : v)} />
+                ))}
+              </div>
+            </CareSection>
+
+            <CareSection title="Drying">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-stretch">
+                {DRYING_OPTIONS.map((opt) => (
+                  <CareTile key={opt.value} option={opt}
+                    selected={state.careDrying === opt.value}
+                    onSelect={(v) => set("careDrying", state.careDrying === v ? null : v)} />
+                ))}
+              </div>
+            </CareSection>
+
+            <CareSection title="Ironing">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-stretch">
+                {IRONING_OPTIONS.map((opt) => (
+                  <CareTile key={opt.value} option={opt}
+                    selected={state.careIroning === opt.value}
+                    onSelect={(v) => set("careIroning", state.careIroning === v ? null : v)} />
+                ))}
+              </div>
+            </CareSection>
+
+            <CareSection title="Dry cleaning">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-stretch">
+                {DRY_CLEANING_OPTIONS.map((opt) => (
+                  <CareTile key={opt.value} option={opt}
+                    selected={state.careDryCleaning === opt.value}
+                    onSelect={(v) => set("careDryCleaning", state.careDryCleaning === v ? null : v)} />
+                ))}
+              </div>
+            </CareSection>
+
+            <CareSection title="Children's safety warnings">
+              <p className="text-xs text-gray-400 mb-3">Select all that apply.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-stretch">
+                {CHILDREN_SAFETY_OPTIONS.map((opt) => (
+                  <CareMultiTile key={opt.value} option={opt}
+                    selected={(state.childrenSafetyFlags || []).includes(opt.value)}
+                    onToggle={(v) => toggleMulti("childrenSafetyFlags", v)} />
+                ))}
+              </div>
+            </CareSection>
+
+            <CareSection title="Flammability">
+              <p className="text-xs text-gray-400 mb-3">Select all that apply.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-stretch">
+                {FLAMMABILITY_OPTIONS.map((opt) => (
+                  <CareMultiTile key={opt.value} option={opt}
+                    selected={(state.flammabilityFlags || []).includes(opt.value)}
+                    onToggle={(v) => toggleMulti("flammabilityFlags", v)} />
+                ))}
+              </div>
+            </CareSection>
+
+          </div>
+        </div>
+      </div>
+
+      <WizardNav onBack={goBack} onNext={handleNext} nextLabel="Continue to Variants" />
     </WizardShell>
   );
 }

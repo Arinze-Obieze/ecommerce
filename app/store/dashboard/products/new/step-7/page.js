@@ -1,157 +1,133 @@
-// app/store/dashboard/products/new/step-7/page.js
+// app/store/dashboard/products/new/step-6/page.js
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { useRouter } from "next/navigation";
 
+function Barcode({ sku, label }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
+      {label && <p className="text-xs font-semibold text-gray-500 mb-1.5">{label}</p>}
+      <div className="flex items-end justify-center gap-[1px] h-10 mb-1.5">
+        {(sku || "").split("").map((ch, i) => (
+          <div key={i} className="bg-gray-900 rounded-[0.5px]"
+            style={{ width: ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 1.5, height: `${55 + (ch.charCodeAt(0) % 40)}%` }} />
+        ))}
+      </div>
+      <p className="text-[11px] font-mono text-gray-700 tracking-wide">{sku}</p>
+    </div>
+  );
+}
 
-export default function Step7() {
-  const { state, dispatch, storeContext, goBack, resetWizard, productsPath, draftId, clearDraft } = useWizard();
-  const router = useRouter();
-  const inputRef = useRef(null);
-  const [saving, setSaving] = useState(false);
-  const [mismatch, setMismatch] = useState(false);
+export default function Step6() {
+  const { state, dispatch, goNext, goBack } = useWizard();
+  const [showSkip, setShowSkip] = useState(false);
 
-  useEffect(() => { if (!state.isVerified) inputRef.current?.focus(); }, [state.isVerified]);
+  const hasVariants = state.variantSkus.length > 0;
+  const effectivePrintType = hasVariants ? state.printType : "base";
+  const total = effectivePrintType === "base" ? Math.max(state.printCopies, 1) : state.variantSkus.length * Math.max(state.printCopies, 1);
 
-  const handleVerify = async () => {
-    setMismatch(false);
-    const scanned = state.scannedSku.trim();
-    if (!scanned) return;
-    if (scanned !== state.baseSku) { setMismatch(true); return; }
-    if (!storeContext?.id) {
-      alert("Store context is missing. Reload the page and try again.");
-      return;
-    }
-    if (!state.baseSku) {
-      alert("Generate a base SKU before completing verification.");
-      return;
-    }
-    if (!state.variants.length) {
-      alert("Add at least one product variant before submitting.");
-      return;
-    }
+  const doPrint = () => {
+    const barcodes = effectivePrintType === "base"
+      ? [{ sku: state.baseSku, label: state.productName }]
+      : state.variantSkus.map(v => ({ sku: v.sku, label: `${v.color} – ${v.size}` }));
+    const labels = [];
+    for (const bc of barcodes) for (let c = 0; c < state.printCopies; c++) labels.push(bc);
 
-    setSaving(true);
-    try {
-      const fd = new FormData();
-      fd.append("wizard_data", JSON.stringify({
-        storeId: storeContext.id, storeSlug: storeContext.slug,
-        category: state.category, subcategory: state.subcategory,
-        productName: state.productName, brand: state.brand, material: state.material,
-        description: state.description, gender: state.gender, ageGroup: state.ageGroup,
-        variants: state.variants, imageStrategy: state.imageStrategy,
-        variantNotes: state.variantNotes, productNotes: state.productNotes,
-        baseSku: state.baseSku, variantSkus: state.variantSkus,
-        persistedImages: state.persistedImages, draftId,
-        printCompleted: state.printCompleted, printType: state.printType, printCopies: state.printCopies,
-        scannedSku: scanned,
-      }));
-
-      Object.entries(state.images).forEach(([key, file]) => {
-        if (file instanceof File) fd.append(key, file);
-      });
-
-      const res = await fetch("/api/store/products/create", { method: "POST", body: fd });
-      const result = await res.json();
-      if (!res.ok || !result.success) throw new Error(result.error || "Save failed");
-
-      await clearDraft();
-      dispatch({ type: "SET_VERIFIED" });
-    } catch (err) {
-      alert(err.message || "Failed to save. Try again.");
-    } finally {
-      setSaving(false);
-    }
+    const w = window.open("", "_blank", "width=800,height=600");
+    if (!w) return;
+    w.document.write(`<html><head><title>Barcodes</title><style>
+      body{font-family:monospace;margin:0;padding:16px}
+      .g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+      .l{border:1px solid #ccc;padding:14px;text-align:center;page-break-inside:avoid}
+      .l h4{margin:0 0 6px;font-size:10px;color:#666}
+      .l .s{font-size:13px;font-weight:bold;letter-spacing:1.5px}
+      .b{display:flex;justify-content:center;gap:1px;margin:6px 0;height:45px;align-items:flex-end}
+      .br{background:#000;border-radius:.5px}
+      @media print{body{padding:8px}.g{gap:6px}}
+    </style></head><body><div class="g">${labels.map(l => `<div class="l"><h4>${l.label}</h4><div class="b">${
+      l.sku.split("").map(ch => `<div class="br" style="width:${ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 2}px;height:${55 + (ch.charCodeAt(0) % 40)}%"></div>`).join("")
+    }</div><div class="s">${l.sku}</div></div>`).join("")}</div><script>window.onload=()=>window.print()</script></body></html>`);
+    w.document.close();
+    dispatch({ type: "SET_PRINT_STATUS", payload: { printCompleted: true, printType: state.printType, printCopies: state.printCopies } });
   };
 
-  
+  const handleNext = () => {
+    if (!state.printCompleted) { setShowSkip(true); return; }
+    goNext();
+  };
 
-  // ── SUCCESS ────────────────────────────────────────────────
-  if (state.isVerified) {
-    return (
-      <WizardShell title="Registration Complete" subtitle="">
-        <div className="max-w-md mx-auto text-center py-4">
-          <div className="w-16 h-16 rounded-full bg-[#2E5C45] mx-auto mb-5 flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Product Registered!</h2>
-          <p className="text-sm text-gray-500 mb-6">Verified and saved to the marketplace.</p>
-
-          <div className="grid grid-cols-2 gap-2.5 mb-6 text-left">
-            {[
-              { l: "SKU", v: state.baseSku, mono: true },
-              { l: "Store", v: storeContext?.name || "—" },
-              { l: "Variants", v: state.variantSkus.length },
-              { l: "Status", v: "VERIFIED", hl: true },
-            ].map(item => (
-              <div key={item.l} className="bg-gray-50 rounded-xl p-3.5 border border-[#dbe7e0]">
-                <p className="text-[10px] font-semibold text-gray-500 mb-0.5">{item.l}</p>
-                <p className={`text-sm font-bold truncate ${item.hl ? "text-[#2E5C45]" : item.mono ? "font-mono text-gray-900" : "text-gray-900"}`}>{item.v}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2.5">
-            <button type="button" onClick={resetWizard}
-              className="flex-1 px-5 py-2.5 rounded-xl bg-[#2E5C45] text-white font-bold text-sm hover:bg-[#254a38] shadow-sm">
-              + Register Another
-            </button>
-            <button type="button" onClick={() => router.push(productsPath)}
-              className="flex-1 px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200">
-              View Products
-            </button>
-          </div>
-        </div>
-      </WizardShell>
-    );
-  }
-
-  // ── VERIFY ─────────────────────────────────────────────────
   return (
-    <WizardShell title="Verify Registration" subtitle="Scan or type the barcode to complete">
-      <div className="max-w-md mx-auto">
-        <div className="bg-gradient-to-b from-blue-50 to-white border-2 border-blue-100 rounded-2xl p-6 text-center mb-5">
-          <div className="text-4xl mb-3">📱</div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">Ready to Scan</h3>
-          <p className="text-xs text-gray-500 mb-4">Use barcode scanner or type manually</p>
-
-          <input ref={inputRef} type="text" value={state.scannedSku}
-            onChange={e => { dispatch({ type: "SET_SCANNED_SKU", payload: e.target.value }); setMismatch(false); }}
-            onKeyDown={e => { if (e.key === "Enter") handleVerify(); }}
-            placeholder="Scan or type SKU…"
-            className={`w-full px-4 py-3.5 rounded-xl border-2 text-center text-sm font-mono font-semibold transition-all
-              ${mismatch ? "border-red-300 bg-red-50/50 text-red-700" : "border-gray-200 text-gray-900 focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20"}`}
-          />
-
-          {mismatch && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-left text-xs">
-              <p className="font-bold text-red-700 mb-1">SKU Mismatch</p>
-              <p className="text-red-600">Scanned: <span className="font-mono font-bold">{state.scannedSku.trim()}</span></p>
-              <p className="text-red-600">Expected: <span className="font-mono font-bold">{state.baseSku}</span></p>
-            </div>
-          )}
-
-          <p className="mt-3 text-[11px] text-gray-400">
-            Expected: <code className="font-mono bg-gray-50 px-1.5 py-0.5 rounded text-gray-600">{state.baseSku}</code>
-          </p>
+    <WizardShell title="Print Barcodes" subtitle={`Print labels for ${state.variantSkus.length} variant${state.variantSkus.length !== 1 ? "s" : ""}`}>
+      <div className="max-w-lg mx-auto">
+        {/* Options */}
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-5 space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Print Type</label>
+            <select value={effectivePrintType} onChange={e => dispatch({ type: "SET_PRINT_STATUS", payload: { printType: e.target.value } })}
+              disabled={!hasVariants}
+              className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm disabled:opacity-60">
+              {hasVariants && <option value="all">All Variants ({state.variantSkus.length})</option>}
+              <option value="base">Base Product Only</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-1">Copies per Label</label>
+            <input type="number" min={1} max={50} value={state.printCopies}
+              onChange={e => dispatch({ type: "SET_PRINT_STATUS", payload: { printCopies: parseInt(e.target.value) || 1 } })}
+              className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-white text-sm" />
+          </div>
         </div>
 
-        <button type="button" onClick={handleVerify} disabled={saving || !state.scannedSku.trim()}
-          className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#2E5C45] text-white font-bold text-sm hover:bg-[#254a38] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all">
-          {saving ? (
-            <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</>
-          ) : (
-            <>✓ Verify & Complete</>
-          )}
+        {/* Preview */}
+        <div className="border-2 border-dashed border-[#dbe7e0] rounded-2xl p-4 mb-5">
+          <p className="text-[10px] font-semibold text-gray-400 text-center mb-3 uppercase tracking-wide">Preview</p>
+          <div className="space-y-2.5">
+            {effectivePrintType === "base"
+              ? <Barcode sku={state.baseSku} label={state.productName} />
+              : <>
+                  {state.variantSkus.slice(0, 3).map((v, i) => <Barcode key={i} sku={v.sku} label={`${v.color} – ${v.size}`} />)}
+                  {state.variantSkus.length > 3 && <p className="text-xs text-gray-400 text-center">+ {state.variantSkus.length - 3} more</p>}
+                </>
+            }
+          </div>
+        </div>
+
+        {/* Print button */}
+        <button type="button" onClick={doPrint}
+          className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#2E5C45] text-white font-bold text-sm hover:bg-[#254a38] shadow-sm transition-all mb-3">
+          🖨 Print {total} Label{total !== 1 ? "s" : ""}
         </button>
+
+        {state.printCompleted && state.printCopies > 0 && (
+          <div className="flex items-start gap-2.5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl mb-2">
+            <div className="w-7 h-7 rounded-full bg-[#2E5C45] flex items-center justify-center shrink-0">
+              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-900">Labels Ready</p>
+              <p className="text-xs text-emerald-700">Attach to products, then proceed to verification.</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      <WizardNav onBack={goBack} showBack={true} onNext={null} />
+      <WizardNav onBack={goBack} onNext={handleNext} nextLabel="Continue to Verify" />
+
+      {showSkip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Skip Printing?</h3>
+            <p className="text-sm text-gray-500 mb-5">You can print later from the product detail page.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowSkip(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#2E5C45] text-white font-semibold text-sm">Print First</button>
+              <button onClick={() => { dispatch({ type: "SET_PRINT_STATUS", payload: { printCompleted: true, printCopies: 0 } }); setShowSkip(false); goNext(); }}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold text-sm">Skip</button>
+            </div>
+          </div>
+        </div>
+      )}
     </WizardShell>
   );
 }

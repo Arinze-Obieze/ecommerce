@@ -72,12 +72,16 @@ function wizardReducer(state, action) {
           Object.entries(action.payload || {}).map(([key, value]) => [key, value.publicUrl])
         ),
       };
+        case "SET_LABEL_INFO":
+      return { ...state, ...action.payload };ç
     case "RESET":
       return { ...INITIAL_WIZARD_STATE };
     default:
       return state;
   }
 }
+
+
 
 export function WizardProvider({ children, storeData }) {
   const router = useRouter();
@@ -105,8 +109,8 @@ export function WizardProvider({ children, storeData }) {
   const loading = false; // store is already loaded server-side, no async wait
 
   // Current step from URL
-  const currentStep = (() => {
-    const match = pathname?.match(/step-(\d)/);
+   const currentStep = (() => {
+    const match = pathname?.match(/step-(\d+)/);
     return match ? parseInt(match[1]) : 1;
   })();
 
@@ -132,12 +136,13 @@ export function WizardProvider({ children, storeData }) {
   }, [router, basePath]);
 
   const goNext = useCallback(() => {
-    if (currentStep < 7) goToStep(currentStep + 1);
+    if (currentStep < 8) goToStep(currentStep + 1);
   }, [currentStep, goToStep]);
-
+ 
   const goBack = useCallback(() => {
     if (currentStep > 1) goToStep(currentStep - 1);
   }, [currentStep, goToStep]);
+
 
   const exitWizard = useCallback(() => {
     void fetch("/api/store/products/draft", { method: "DELETE" }).catch(() => {});

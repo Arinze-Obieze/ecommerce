@@ -1,206 +1,188 @@
-// app/store/dashboard/products/new/step-5/page.js
+// app/store/dashboard/products/new/step-4/page.js
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { buildSkuPrefix, buildVariantSku, getColorTw } from "@/lib/product-wizard-constants";
-import { createClient } from "@/utils/supabase/client";
+import { IMAGE_STRATEGIES, GENERAL_IMAGE_SLOTS, VARIANT_IMAGE_SLOTS, getColorTw } from "@/lib/product-wizard-constants";
 
-function slugify(t) { return (t || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
-
-export default function Step5() {
-  const { state, dispatch, storeContext, goNext, goBack } = useWizard();
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(null);
-
-  const [genError, setGenError] = useState(null);
-
-  const generate = async () => {
-    if (!storeContext) {
-      console.log("[SKU] storeContext not ready yet, skipping");
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setGenError(null);
-    try {
-      const storeSlug = storeContext.slug || storeContext.name || "";
-      const productSlug = slugify(state.productName);
-      const prefix = buildSkuPrefix(storeSlug, productSlug);
-      console.log("[SKU] Generating with prefix:", prefix, "store:", storeSlug, "product:", productSlug);
-
-      // Try to find existing SKUs with this prefix
-      let seq = 1;
-      try {
-        const supabase = createClient();
-        const { data, error: queryErr } = await supabase
-          .from("products_internal")
-          .select("base_sku")
-          .like("base_sku", `${prefix}-%`)
-          .order("base_sku", { ascending: false })
-          .limit(1);
-
-        if (queryErr) {
-          // Table might not have base_sku column yet — that's OK, start at 0001
-          console.warn("[SKU] Query error (non-fatal, using seq=1):", queryErr.message);
-        } else if (data?.length) {
-          const last = parseInt(data[0].base_sku.split("-").pop(), 10);
-          if (!isNaN(last)) seq = last + 1;
-          console.log("[SKU] Found existing, next seq:", seq);
-        }
-      } catch (dbErr) {
-        console.warn("[SKU] DB lookup failed (non-fatal):", dbErr.message);
-      }
-
-      const baseSku = `${prefix}-${String(seq).padStart(4, "0")}`;
-
-      // Build variant SKUs from the variants in state
-      const validVariants = state.variants.filter(v => v.color && v.size);
-      console.log("[SKU] Valid variants:", validVariants.length, "of", state.variants.length);
-
-      const variantSkus = validVariants.map(v => ({
-        ...v,
-        sku: buildVariantSku(baseSku, v.color, v.size),
-      }));
-
-      dispatch({ type: "SET_SKU", baseSku, variantSkus });
-      console.log("[SKU] Generated:", baseSku, "with", variantSkus.length, "variant SKUs");
-    } catch (err) {
-      console.error("[SKU] Generation failed:", err);
-      setGenError(err.message || "Failed to generate SKU");
-    } finally {
-      setLoading(false);
-    }
+function Slot({ slotKey, label, required, preview, onUpload, onRemove }) {
+  const ref = useRef(null);
+  const handle = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { alert("Max 5 MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) { alert("JPG, PNG or WebP only"); return; }
+    onUpload(slotKey, f, URL.createObjectURL(f));
+    e.target.value = "";
   };
-
-  // Generate when storeContext becomes available
-  useEffect(() => {
-    if (storeContext) {
-      generate();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeContext]);
-
-  const copy = async (sku, k) => {
-    try { await navigator.clipboard.writeText(sku); setCopied(k); setTimeout(() => setCopied(null), 1500); } catch {}
-  };
-
-  const totalQty = state.variants.reduce((s, v) => s + (v.quantity || 0), 0);
-
-  const downloadCSV = () => {
-    const rows = [["Product","Base SKU","Variant SKU","Color","Size","Qty","Price"],
-      ...state.variantSkus.map(v => [state.productName, state.baseSku, v.sku, v.color, v.size, v.quantity, v.price])];
-    const blob = new Blob([rows.map(r => r.join(",")).join("\n")], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = `SKU_${state.baseSku}.csv`; a.click();
-  };
-
   return (
-    <WizardShell title="Generated SKU" subtitle="Unique product codes for tracking">
-      {/* Base SKU */}
-      <div className="bg-gradient-to-br from-[#2E5C45]/5 to-emerald-50 border-2 border-[#2E5C45]/20 rounded-2xl p-6 text-center mb-6">
-        <p className="text-[10px] font-bold text-[#2E5C45] uppercase tracking-widest mb-2">Base Product SKU</p>
-        {loading ? (
-          <div className="flex items-center justify-center gap-2 py-3">
-            <div className="w-4 h-4 border-2 border-[#2E5C45]/30 border-t-[#2E5C45] rounded-full animate-spin" />
-            <span className="text-sm text-gray-500">Generating…</span>
-          </div>
-        ) : !state.baseSku ? (
-          <div className="py-3">
-            <p className="text-sm text-gray-500 mb-2">Could not generate SKU automatically.</p>
-            <button type="button" onClick={generate}
-              className="px-4 py-2 rounded-lg bg-[#2E5C45] text-white text-sm font-semibold hover:bg-[#254a38]">
-              Generate Now
+    <div className="flex flex-col">
+      <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handle} />
+      {preview ? (
+        <div className="relative group rounded-xl overflow-hidden border-2 border-[#2E5C45]/30 aspect-square bg-gray-50">
+          <img src={preview} alt={label} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <button type="button" onClick={() => onRemove(slotKey)} className="p-2 rounded-full bg-white/90 text-red-500 hover:bg-white">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-        ) : (
-          <>
-            <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-wider font-mono">{state.baseSku || "—"}</p>
-            <div className="flex items-center justify-center gap-[1.5px] my-3 opacity-60">
-              {(state.baseSku || "").split("").map((ch, i) => (
-                <div key={i} className="bg-gray-800 rounded-[0.5px]" style={{ width: ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 1.5, height: 35 + (ch.charCodeAt(0) % 12) }} />
-              ))}
-            </div>
-          </>
-        )}
-        <div className="flex items-center justify-center gap-2 mt-3">
-          <button type="button" onClick={() => copy(state.baseSku, "base")}
-            className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 hover:border-[#2E5C45]">
-            {copied === "base" ? "✓ Copied" : "Copy"}
-          </button>
-          <button type="button" onClick={generate} disabled={loading}
-            className="px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-xs font-semibold text-gray-700 hover:border-[#2E5C45] disabled:opacity-50">
-            Regenerate
-          </button>
+          <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-[#2E5C45] text-white text-[9px] font-bold">✓</div>
+        </div>
+      ) : (
+        <button type="button" onClick={() => ref.current?.click()}
+          className="rounded-xl border-2 border-dashed border-[#dbe7e0] aspect-square flex flex-col items-center justify-center gap-1.5 hover:border-[#2E5C45]/40 hover:bg-[#2E5C45]/5 transition-all cursor-pointer">
+          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+          <span className="text-[10px] text-gray-500 font-medium">Upload</span>
+        </button>
+      )}
+      <p className="text-[11px] font-semibold text-gray-600 mt-1.5 text-center truncate">{label}{required && <span className="text-red-400"> *</span>}</p>
+    </div>
+  );
+}
+
+export default function Step4() {
+  const { state, dispatch, goNext, goBack } = useWizard();
+  const [error, setError] = useState(null);
+  const [openColors, setOpenColors] = useState({});
+
+  const up = (k, f, p) => dispatch({ type: "SET_IMAGE", key: k, file: f, preview: p });
+  const rm = (k) => dispatch({ type: "REMOVE_IMAGE", key: k });
+  const uniqueColors = [...new Set(state.variants.map(v => v.color).filter(Boolean))];
+
+  const validate = () => {
+    const hasImage = (key) => state.images[key] || state.persistedImages[key];
+    const s = state.imageStrategy;
+    if (s === "general") {
+      if (!hasImage("general_front") || !hasImage("general_back")) return "Upload Front and Back views.";
+    } else if (s === "variant") {
+      for (const c of uniqueColors) {
+        const safe = c.replace(/\s/g, "_");
+        if (!hasImage(`variant_${safe}_front`) || !hasImage(`variant_${safe}_back`)) return `Upload Front & Back for ${c}.`;
+      }
+    } else if (s === "mixed") {
+      if (!hasImage("mixed_general_front") || !hasImage("mixed_general_back")) return "Upload General Front and Back.";
+    }
+    return null;
+  };
+
+  const handleNext = () => { setError(null); const e = validate(); if (e) { setError(e); return; } goNext(); };
+
+  return (
+    <WizardShell title="Product Images" subtitle="Upload photos for your product">
+      {error && <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 mb-5">{error}</div>}
+
+      {/* Strategy selector */}
+      <div className="mb-6">
+        <h3 className="text-sm font-bold text-gray-900 mb-2.5">Upload Strategy</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {IMAGE_STRATEGIES.map(s => {
+            const sel = state.imageStrategy === s.value;
+            return (
+              <button key={s.value} type="button" onClick={() => dispatch({ type: "SET_IMAGE_STRATEGY", payload: s.value })}
+                className={`p-3.5 rounded-xl border-2 text-left transition-all ${sel ? "border-[#2E5C45] bg-[#2E5C45]/5" : "border-[#dbe7e0] hover:border-[#2E5C45]/30"}`}>
+                <p className={`text-sm font-bold ${sel ? "text-[#2E5C45]" : "text-gray-900"}`}>{s.label}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">{s.desc}</p>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Variant SKUs */}
-      {genError && (
-        <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 mb-4">
-          ⚠ {genError}. <button type="button" onClick={generate} className="underline font-semibold">Retry</button>
-        </div>
-      )}
-
-      {!storeContext && !loading && (
-        <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700 mb-4">
-          ⚠ Could not load store context. Make sure your store has a slug or name set.
-        </div>
-      )}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-gray-900">Variant SKUs ({state.variantSkus.length})</h3>
-          <button type="button" onClick={downloadCSV}
-            className="px-3 py-1.5 rounded-lg bg-gray-50 border border-[#dbe7e0] text-xs font-semibold text-gray-600 hover:border-[#2E5C45]/30">
-            ↓ CSV
-          </button>
-        </div>
-        <div className="rounded-xl border border-[#dbe7e0] overflow-hidden">
-          <div className="hidden sm:grid grid-cols-[1.5fr_1fr_1fr_1.5fr_2.5fr] gap-1 px-3 py-2 bg-gray-50 border-b border-[#dbe7e0] text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
-            <span>Color</span><span>Size</span><span>Qty</span><span>Price</span><span>SKU</span>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {state.variantSkus.map((v, i) => (
-              <div key={i} className="grid grid-cols-2 sm:grid-cols-[1.5fr_1fr_1fr_1.5fr_2.5fr] gap-1.5 px-3 py-2.5 items-center hover:bg-gray-50/50">
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-3.5 h-3.5 rounded-full ${getColorTw(v.color)} shrink-0`} />
-                  <span className="text-sm font-medium">{v.color}</span>
-                </div>
-                <span className="text-sm text-gray-600">{v.size}</span>
-                <span className="text-sm text-gray-600">{v.quantity}</span>
-                <span className="text-sm font-medium">₦{(v.price || 0).toLocaleString()}</span>
-                <div className="col-span-2 sm:col-span-1 flex items-center gap-1.5">
-                  <code className="text-[11px] font-mono text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded truncate flex-1">{v.sku}</code>
-                  <button type="button" onClick={() => copy(v.sku, `v${i}`)}
-                    className="p-1 rounded text-gray-400 hover:text-[#2E5C45] hover:bg-[#2E5C45]/5 shrink-0 text-xs">
-                    {copied === `v${i}` ? "✓" : "⧉"}
-                  </button>
-                </div>
-              </div>
+      {/* General */}
+      {state.imageStrategy === "general" && (
+        <div className="mb-5">
+          <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3">
+            These images apply to all {state.variants.length} variants.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {GENERAL_IMAGE_SLOTS.map(sl => (
+              <Slot key={sl.key} slotKey={`general_${sl.key}`} label={sl.label} required={sl.required}
+                preview={state.imagePreviews[`general_${sl.key}`]} onUpload={up} onRemove={rm} />
             ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-        {[
-          { l: "Product", v: state.productName },
-          { l: "Category", v: `${state.category} / ${state.subcategory}` },
-          { l: "Variants", v: state.variantSkus.length },
-          { l: "Total Stock", v: totalQty },
-          { l: "Material", v: state.material || "—" },
-          { l: "Total SKUs", v: state.variantSkus.length + 1, hl: true },
-        ].map(item => (
-          <div key={item.l} className="bg-gray-50 rounded-xl p-3.5 border border-[#dbe7e0]">
-            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{item.l}</p>
-            <p className={`text-sm font-bold truncate ${item.hl ? "text-[#2E5C45]" : "text-gray-900"}`}>{item.v}</p>
+      {/* Variant */}
+      {state.imageStrategy === "variant" && (
+        <div className="space-y-3 mb-5">
+          {uniqueColors.length === 0 ? (
+            <p className="text-center py-6 text-sm text-gray-400">No color variants found. Go back and add variants.</p>
+          ) : uniqueColors.map(color => {
+            const safe = color.replace(/\s/g, "_");
+            const open = openColors[color] !== false;
+            const varSizes = state.variants.filter(v => v.color === color).map(v => v.size);
+            return (
+              <div key={color} className="border border-[#dbe7e0] rounded-xl overflow-hidden">
+                <button type="button" onClick={() => setOpenColors(p => ({ ...p, [color]: !open }))}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-left">
+                  <span className={`w-4 h-4 rounded-full ${getColorTw(color)} shrink-0`} />
+                  <span className="text-sm font-bold text-gray-900 flex-1">{color}</span>
+                  <span className="text-xs text-gray-500">{varSizes.join(", ")}</span>
+                  <span className="text-gray-400">{open ? "▲" : "▼"}</span>
+                </button>
+                {open && (
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {VARIANT_IMAGE_SLOTS.map(sl => (
+                        <Slot key={sl.key} slotKey={`variant_${safe}_${sl.key}`} label={sl.label} required={sl.required}
+                          preview={state.imagePreviews[`variant_${safe}_${sl.key}`]} onUpload={up} onRemove={rm} />
+                      ))}
+                    </div>
+                    <textarea rows={2} value={state.variantNotes[color] || ""}
+                      onChange={e => dispatch({ type: "SET_VARIANT_NOTE", color, note: e.target.value })}
+                      placeholder={`Notes for ${color}…`}
+                      className="w-full mt-3 px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Mixed */}
+      {state.imageStrategy === "mixed" && (
+        <div className="space-y-5 mb-5">
+          <div>
+            <h4 className="text-sm font-bold text-gray-900 mb-2.5">General Images</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {GENERAL_IMAGE_SLOTS.slice(0, 4).map(sl => (
+                <Slot key={sl.key} slotKey={`mixed_general_${sl.key}`} label={sl.label} required={sl.required}
+                  preview={state.imagePreviews[`mixed_general_${sl.key}`]} onUpload={up} onRemove={rm} />
+              ))}
+            </div>
           </div>
-        ))}
+          <div>
+            <h4 className="text-sm font-bold text-gray-900 mb-2">Variant-Specific (optional)</h4>
+            {uniqueColors.map(color => {
+              const safe = color.replace(/\s/g, "_");
+              return (
+                <div key={color} className="flex items-start gap-2.5 p-3 bg-gray-50 rounded-xl mb-2">
+                  <span className={`w-3.5 h-3.5 rounded-full ${getColorTw(color)} shrink-0 mt-1`} />
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    {VARIANT_IMAGE_SLOTS.slice(0, 2).map(sl => (
+                      <Slot key={sl.key} slotKey={`mixed_variant_${safe}_${sl.key}`} label={`${color} ${sl.label}`} required={false}
+                        preview={state.imagePreviews[`mixed_variant_${safe}_${sl.key}`]} onUpload={up} onRemove={rm} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Notes */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <label className="block text-sm font-bold text-gray-900 mb-1.5">📝 Product Notes</label>
+        <textarea rows={3} value={state.productNotes} onChange={e => dispatch({ type: "SET_PRODUCT_NOTES", payload: e.target.value })}
+          placeholder="Care instructions, special notes…"
+          className="w-full px-3 py-2 rounded-lg border border-amber-200 bg-white text-sm resize-none" />
       </div>
 
-      <WizardNav onBack={goBack} onNext={goNext} nextLabel="Continue to Print" />
+      <WizardNav onBack={goBack} onNext={handleNext} nextLabel="Continue to SKU" />
     </WizardShell>
   );
 }

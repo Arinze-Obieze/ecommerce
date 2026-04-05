@@ -37,6 +37,24 @@ function normalizeManifest(manifest = {}) {
       .filter(Boolean)
   );
 }
+function buildCareInstructionsJson(wd) {
+  return {
+    washing:         wd.careWashing      || null,
+    bleaching:       wd.careBleaching    || null,
+    drying:          wd.careDrying       || null,
+    ironing:         wd.careIroning      || null,
+    dry_cleaning:    wd.careDryCleaning  || null,
+    children_safety: Array.isArray(wd.childrenSafetyFlags) ? wd.childrenSafetyFlags : [],
+    flammability:    Array.isArray(wd.flammabilityFlags)   ? wd.flammabilityFlags   : [],
+  };
+}
+ 
+function buildFiberComposition(wd) {
+  if (!Array.isArray(wd.fiberComposition) || wd.fiberComposition.length === 0) return null;
+  const valid = wd.fiberComposition.filter((f) => f.type && parseInt(f.percent) > 0);
+  return valid.length > 0 ? valid : null;
+}
+
 
 function getRequiredImageKeys(imageStrategy, colors) {
   if (imageStrategy === "variant") {
@@ -246,6 +264,16 @@ export async function POST(request) {
       approval_status: "pending",
       image_strategy: imageStrategy,
       notes: normalizeText(wd.productNotes) || null,
+      fiber_composition:          buildFiberComposition(wd),
+      country_of_origin:          normalizeText(wd.countryOfOrigin)         || null,
+      country_of_transformation:  normalizeText(wd.countryOfTransformation) || null,
+      brand:                      normalizeText(wd.labelBrand) || normalizeText(wd.brand) || null,
+      care_instructions:          JSON.stringify(buildCareInstructionsJson(wd)),
+      care_instructions_json:     buildCareInstructionsJson(wd),
+      children_safety_flags:      Array.isArray(wd.childrenSafetyFlags) && wd.childrenSafetyFlags.length > 0
+                                    ? wd.childrenSafetyFlags : null,
+      flammability_class:         Array.isArray(wd.flammabilityFlags) && wd.flammabilityFlags.length > 0
+                                    ? wd.flammabilityFlags.join(",") : null,
     };
 
     console.log("[Create] Inserting product:", productId);
