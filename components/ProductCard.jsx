@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { FiShoppingCart, FiTrendingUp, FiAward, FiCheck, FiX } from 'react-icons/fi';
+import { FiShoppingCart, FiTrendingUp, FiAward, FiCheck, FiX, FiZoomIn, FiPlus, FiMinus } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
 import { trackAnalyticsEvent } from '@/utils/analytics';
 
@@ -110,6 +110,17 @@ const ProductCard = ({ product }) => {
   const [cartState, setCartState] = useState('idle');
   const [showQuickView, setShowQuickView] = useState(false);
   const [isQuickViewDescriptionExpanded, setIsQuickViewDescriptionExpanded] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [imageZoom, setImageZoom] = useState(1);
+  const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 });
+  const [isPanningImage, setIsPanningImage] = useState(false);
+  const panStateRef = useRef({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+  });
 
   const discountPercent = product.discount_price
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
@@ -140,6 +151,75 @@ const ProductCard = ({ product }) => {
     });
   };
 
+  useEffect(() => {
+    if (!showQuickView && !showImageViewer) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        if (showImageViewer) {
+          setShowImageViewer(false);
+          setImageZoom(1);
+        } else {
+          setShowQuickView(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showQuickView, showImageViewer]);
+
+  useEffect(() => {
+    if (imageZoom <= 1) {
+      setImageOffset({ x: 0, y: 0 });
+      setIsPanningImage(false);
+    }
+  }, [imageZoom]);
+
+  const closeImageViewer = () => {
+    setShowImageViewer(false);
+    setImageZoom(1);
+    setImageOffset({ x: 0, y: 0 });
+    setIsPanningImage(false);
+  };
+
+  const handleImagePointerDown = (event) => {
+    if (imageZoom <= 1) return;
+    event.preventDefault();
+    panStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: imageOffset.x,
+      originY: imageOffset.y,
+    };
+    setIsPanningImage(true);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleImagePointerMove = (event) => {
+    if (!isPanningImage || panStateRef.current.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - panStateRef.current.startX;
+    const deltaY = event.clientY - panStateRef.current.startY;
+    setImageOffset({
+      x: panStateRef.current.originX + deltaX,
+      y: panStateRef.current.originY + deltaY,
+    });
+  };
+
+  const handleImagePointerUp = (event) => {
+    if (panStateRef.current.pointerId !== event.pointerId) return;
+    setIsPanningImage(false);
+    panStateRef.current.pointerId = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  };
+
   return (
     <>
       {/* ── Card ── */}
@@ -148,7 +228,7 @@ const ProductCard = ({ product }) => {
         style={{
           border: `1px solid ${THEME.cardBorder}`,
           boxShadow: THEME.cardShadow,
-          borderRadius: '12px',
+          borderRadius: '14px',
           overflow: 'hidden',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.boxShadow = THEME.cardHoverShadow)}
@@ -156,7 +236,7 @@ const ProductCard = ({ product }) => {
       >
 
         {/* ── Image ── */}
-        <Link href={`/products/${product.slug}`} className="relative block shrink-0" onClick={handleProductClick}>
+        <Link href={`/products/${product.slug}`} scroll className="relative block shrink-0" onClick={handleProductClick}>
           <div className="aspect-[3/4] overflow-hidden relative" style={{ backgroundColor: THEME.skeletonBg }}>
             <img
               src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
@@ -220,20 +300,20 @@ const ProductCard = ({ product }) => {
         </Link>
 
         {/* ── Body ── */}
-        <div className="px-3 pt-2.5 pb-3 flex-1 flex flex-col gap-1.5">
+        <div className="px-3 pt-3 pb-3.5 sm:px-3.5 sm:pt-3.5 sm:pb-4 flex-1 flex flex-col gap-2">
 
           <p className="text-[10px] uppercase tracking-widest line-clamp-1" style={{ color: THEME.categoryText }}>
             {product.categories?.[0]?.name || 'Collection'}
           </p>
 
-          <Link href={`/products/${product.slug}`} onClick={handleProductClick}>
-            <h3 className="text-sm font-medium leading-snug line-clamp-2 hover:underline" style={{ color: THEME.nameText }}>
+          <Link href={`/products/${product.slug}`} scroll onClick={handleProductClick}>
+            <h3 className="text-[15px] sm:text-sm font-semibold leading-snug line-clamp-2 hover:underline min-h-[2.6rem]" style={{ color: THEME.nameText }}>
               {product.name}
             </h3>
           </Link>
 
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm font-bold" style={{ color: THEME.priceText }}>
+          <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+            <span className="text-base sm:text-sm font-bold" style={{ color: THEME.priceText }}>
               ₦{(product.discount_price || product.price).toLocaleString()}
             </span>
             {product.discount_price && (
@@ -268,7 +348,7 @@ const ProductCard = ({ product }) => {
           <div className="flex-1" />
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center justify-between gap-2 pt-1.5">
             {product.stores ? (
               <Link
                 href={`/store/${product.stores.slug || product.stores.id}`}
@@ -276,7 +356,7 @@ const ProductCard = ({ product }) => {
                 className="min-w-0 flex-1"
               >
                 <span
-                  className="text-[11px] truncate block transition-colors"
+                  className="text-[11px] sm:text-[10px] truncate block transition-colors"
                   style={{ color: THEME.storeText }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = THEME.storeHover)}
                   onMouseLeave={(e) => (e.currentTarget.style.color = THEME.storeText)}
@@ -292,7 +372,7 @@ const ProductCard = ({ product }) => {
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold flex-shrink-0 transition-all duration-150"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold flex-shrink-0 transition-all duration-150"
               style={{
                 backgroundColor: cartState === 'added' ? THEME.cartSuccessBg : THEME.cartBg,
                 color: THEME.cartText,
@@ -313,12 +393,13 @@ const ProductCard = ({ product }) => {
       {/* ── Quick View Modal ── */}
       {showQuickView && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          className="fixed inset-0 z-[120] flex items-end justify-center bg-black/40 p-3 pt-[116px] sm:items-center sm:p-4"
           style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
           onClick={() => setShowQuickView(false)}
         >
           <div
-            className="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl"
+            className="bg-white w-full max-w-2xl overflow-hidden shadow-2xl rounded-t-[28px] rounded-b-[22px] sm:rounded-2xl"
+            style={{ maxHeight: 'calc(100vh - 128px)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col sm:flex-row">
@@ -326,98 +407,131 @@ const ProductCard = ({ product }) => {
               {/* Image panel */}
               <div
                 className="w-full sm:w-[42%] flex-shrink-0 relative"
-                style={{ backgroundColor: THEME.skeletonBg, aspectRatio: '3/4' }}
+                style={{
+                  backgroundColor: '#F7F7F7',
+                  aspectRatio: '3/4',
+                  maxHeight: '38vh',
+                }}
               >
-                <img
-                  src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImageViewer(true);
+                    setImageZoom(1);
+                    setImageOffset({ x: 0, y: 0 });
+                  }}
+                  className="block h-full w-full cursor-zoom-in"
+                  aria-label={`Zoom ${product.name} image`}
+                >
+                  <img
+                    src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
+                    alt={product.name}
+                    className="w-full h-full object-contain sm:object-cover"
+                    style={{ padding: '14px 14px 0' }}
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowImageViewer(true);
+                    setImageZoom(1);
+                    setImageOffset({ x: 0, y: 0 });
+                  }}
+                  className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur"
+                  style={{ color: THEME.nameText }}
+                >
+                  <FiZoomIn className="h-3.5 w-3.5" />
+                  Zoom
+                </button>
               </div>
 
               {/* Info panel */}
-              <div className="flex-1 p-6 flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '80vh' }}>
+              <div className="flex-1 min-h-0 flex flex-col">
+                <div className="overflow-y-auto px-5 pt-4 pb-4 sm:px-6 sm:pt-6 sm:pb-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="h-1.5 w-12 rounded-full bg-[#E9E9E9] sm:hidden" />
+                    <button
+                      type="button"
+                      onClick={() => setShowQuickView(false)}
+                      className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+                      style={{ color: '#666' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F5F5')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      aria-label="Close quick view"
+                    >
+                      <FiX className="w-4 h-4" />
+                      <span>Close</span>
+                    </button>
+                  </div>
 
-                {/* Close */}
-                <button
-                  type="button"
-                  onClick={() => setShowQuickView(false)}
-                  className="self-end p-1.5 rounded-full transition-colors"
-                  style={{ color: '#999' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F5F5')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <FiX className="w-4 h-4" />
-                </button>
+                  <p className="text-[10px] uppercase tracking-widest" style={{ color: THEME.categoryText }}>
+                    {product.categories?.[0]?.name || 'Collection'}
+                  </p>
 
-                <p className="text-[10px] uppercase tracking-widest" style={{ color: THEME.categoryText }}>
-                  {product.categories?.[0]?.name || 'Collection'}
-                </p>
+                  <h2 className="mt-2 text-[15px] sm:text-lg font-bold leading-snug" style={{ color: THEME.nameText }}>
+                    {product.name}
+                  </h2>
 
-                <h2 className="text-lg font-bold leading-snug" style={{ color: THEME.nameText }}>
-                  {product.name}
-                </h2>
-
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-black" style={{ color: THEME.priceText }}>
-                    ₦{(product.discount_price || product.price).toLocaleString()}
-                  </span>
-                  {product.discount_price && (
-                    <span className="text-sm line-through" style={{ color: THEME.originalPrice }}>
-                      ₦{product.price.toLocaleString()}
+                  <div className="mt-3 flex items-baseline flex-wrap gap-2">
+                    <span className="text-[18px] sm:text-2xl font-black" style={{ color: THEME.priceText }}>
+                      ₦{(product.discount_price || product.price).toLocaleString()}
                     </span>
+                    {product.discount_price && (
+                      <span className="text-sm line-through" style={{ color: THEME.originalPrice }}>
+                        ₦{product.price.toLocaleString()}
+                      </span>
+                    )}
+                    {discountPercent && (
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-sm" style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}>
+                        -{discountPercent}%
+                      </span>
+                    )}
+                  </div>
+
+                  {(product.is_trending || product.category_rank) && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {product.is_trending && <TrendingBadge velocity={product.trending_velocity} />}
+                      {product.category_rank && <RankBadge rank={product.category_rank} />}
+                    </div>
                   )}
-                  {discountPercent && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-sm" style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}>
-                      -{discountPercent}%
-                    </span>
+
+                  {salesFormatted && (
+                    <p className="mt-3 text-xs" style={{ color: THEME.metaText }}>
+                      <span className="font-semibold" style={{ color: THEME.priceText }}>{salesFormatted}</span> units sold
+                    </p>
+                  )}
+
+                  {product.stores && (
+                    <p className="mt-2 text-xs" style={{ color: THEME.storeText }}>
+                      Sold by <span className="font-semibold" style={{ color: THEME.nameText }}>{product.stores.name}</span>
+                    </p>
+                  )}
+
+                  {description && (
+                    <div className="mt-4 rounded-xl border border-[#EFEFEF] bg-[#FAFAFA] p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: THEME.categoryText }}>
+                        Description
+                      </p>
+                      <p className="mt-2 text-sm leading-6" style={{ color: THEME.metaText }}>
+                        {quickViewDescription}
+                      </p>
+                      {hasLongDescription && (
+                        <button
+                          type="button"
+                          onClick={() => setIsQuickViewDescriptionExpanded((current) => !current)}
+                          className="mt-2 text-sm font-semibold"
+                          style={{ color: THEME.nameText }}
+                        >
+                          {isQuickViewDescriptionExpanded ? 'Read less' : 'Read more'}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 
-                {(product.is_trending || product.category_rank) && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {product.is_trending && <TrendingBadge velocity={product.trending_velocity} />}
-                    {product.category_rank && <RankBadge rank={product.category_rank} />}
-                  </div>
-                )}
-
-                {salesFormatted && (
-                  <p className="text-xs" style={{ color: THEME.metaText }}>
-                    <span className="font-semibold" style={{ color: THEME.priceText }}>{salesFormatted}</span> units sold
-                  </p>
-                )}
-
-                {product.stores && (
-                  <p className="text-xs" style={{ color: THEME.storeText }}>
-                    Sold by <span className="font-semibold" style={{ color: THEME.nameText }}>{product.stores.name}</span>
-                  </p>
-                )}
-
-                {description && (
-                  <div className="rounded-xl border border-[#EFEFEF] bg-[#FAFAFA] p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: THEME.categoryText }}>
-                      Description
-                    </p>
-                    <p className="mt-2 text-sm leading-6" style={{ color: THEME.metaText }}>
-                      {quickViewDescription}
-                    </p>
-                    {hasLongDescription && (
-                      <button
-                        type="button"
-                        onClick={() => setIsQuickViewDescriptionExpanded((current) => !current)}
-                        className="mt-2 text-sm font-semibold"
-                        style={{ color: THEME.nameText }}
-                      >
-                        {isQuickViewDescriptionExpanded ? 'Read less' : 'Read more'}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex-1" />
-
                 {/* CTA buttons */}
-                <div className="flex gap-2 pt-2">
+                <div className="border-t border-[#EFEFEF] bg-white px-5 py-4 sm:px-6">
+                  <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={(e) => { handleAddToCart(e); setShowQuickView(false); }}
@@ -430,6 +544,7 @@ const ProductCard = ({ product }) => {
                   </button>
                   <Link
                     href={`/products/${product.slug}`}
+                    scroll
                     onClick={() => setShowQuickView(false)}
                     className="px-4 py-3 rounded-xl text-sm font-semibold border transition-colors flex items-center whitespace-nowrap"
                     style={{ borderColor: '#E8E8E8', color: THEME.nameText }}
@@ -439,8 +554,89 @@ const ProductCard = ({ product }) => {
                     View Details
                   </Link>
                 </div>
-
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImageViewer && (
+        <div
+          className="fixed inset-0 z-[130] bg-[rgba(17,17,17,0.94)]"
+          onClick={closeImageViewer}
+        >
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between gap-3 px-4 py-4 text-white">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{product.name}</p>
+                <p className="text-xs text-white/70">
+                  {imageZoom > 1 ? 'Drag the image to inspect details.' : 'Use the zoom controls below for a closer look.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeImageViewer}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold"
+                aria-label="Close image viewer"
+              >
+                <FiX className="h-4 w-4" />
+                Close
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto px-4 pb-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex min-h-full items-center justify-center">
+                <img
+                  src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
+                  alt={product.name}
+                  className="max-h-[82vh] w-auto max-w-full object-contain transition-transform duration-200 ease-out"
+                  style={{
+                    transform: `translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageZoom})`,
+                    transformOrigin: 'center center',
+                    cursor: imageZoom > 1 ? (isPanningImage ? 'grabbing' : 'grab') : 'zoom-in',
+                    touchAction: imageZoom > 1 ? 'none' : 'auto',
+                  }}
+                  onPointerDown={handleImagePointerDown}
+                  onPointerMove={handleImagePointerMove}
+                  onPointerUp={handleImagePointerUp}
+                  onPointerCancel={handleImagePointerUp}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 px-4 pb-5" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setImageZoom((current) => Math.max(1, Number((current - 0.25).toFixed(2))))}
+                disabled={imageZoom <= 1}
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                <FiMinus className="h-4 w-4" />
+                Zoom Out
+              </button>
+              <span className="min-w-[68px] text-center text-sm font-semibold text-white">{Math.round(imageZoom * 100)}%</span>
+              <button
+                type="button"
+                onClick={() => setImageZoom((current) => Math.min(3, Number((current + 0.25).toFixed(2))))}
+                disabled={imageZoom >= 3}
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              >
+                <FiPlus className="h-4 w-4" />
+                Zoom In
+              </button>
+              {imageZoom > 1 || imageOffset.x !== 0 || imageOffset.y !== 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageZoom(1);
+                    setImageOffset({ x: 0, y: 0 });
+                  }}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Reset
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

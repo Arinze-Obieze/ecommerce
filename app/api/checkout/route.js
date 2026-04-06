@@ -33,6 +33,58 @@ function calculateShipping(subtotal) {
   return subtotal > 50000 ? 0 : 2500;
 }
 
+function sanitizeText(value, maxLength = 255) {
+  const normalized = String(value || '').trim();
+  return normalized ? normalized.slice(0, maxLength) : '';
+}
+
+function normalizeDeliveryAddress(value) {
+  const address = value && typeof value === 'object' ? value : {};
+
+  return {
+    id: sanitizeText(address.id, 64) || null,
+    type: sanitizeText(address.type, 40) || 'Address',
+    address: sanitizeText(address.address, 200),
+    addressLine2: sanitizeText(address.addressLine2, 200),
+    city: sanitizeText(address.city, 100),
+    state: sanitizeText(address.state, 100),
+    postalCode: sanitizeText(address.postalCode, 20),
+    country: sanitizeText(address.country, 100) || 'Nigeria',
+    phone: sanitizeText(address.phone, 32),
+    isDefault: Boolean(address.isDefault),
+  };
+}
+
+function validateDeliveryAddress(address) {
+  if (!address.address || !address.city || !address.state || !address.phone) {
+    throw new Error('A valid delivery address is required before payment.');
+  }
+}
+
+async function saveOrderShippingAddress(serviceClient, orderId, userId, address) {
+  const payload = {
+    order_id: orderId,
+    user_id: userId,
+    source_address_id: address.id || null,
+    label: address.type || 'Address',
+    address_line1: address.address,
+    address_line2: address.addressLine2 || null,
+    city: address.city,
+    state: address.state,
+    postal_code: address.postalCode || null,
+    country: address.country || 'Nigeria',
+    phone: address.phone,
+  };
+
+  const { error } = await serviceClient
+    .from('order_shipping_addresses')
+    .upsert(payload, { onConflict: 'order_id' });
+
+  if (error) {
+    throw new Error(`Could not save order delivery address: ${error.message}`);
+  }
+}
+
 async function buildAuthoritativeOrder(serviceClient, rawItems) {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     throw new Error('Cart is empty');
@@ -122,7 +174,7 @@ export async function POST(request) {
   const startedAt = Date.now();
   let currentUser = null;
   try {
-    const { items } = await request.json();
+    const { items, deliveryAddress, addressMode, saveAddress } = await request.json();
 
     const authClient = await createServerClient();
     const {
@@ -173,6 +225,8 @@ export async function POST(request) {
 
     const serviceClient = createServiceClient();
     const authoritativeOrder = await buildAuthoritativeOrder(serviceClient, items);
+    const normalizedDeliveryAddress = normalizeDeliveryAddress(deliveryAddress);
+    validateDeliveryAddress(normalizedDeliveryAddress);
 
     const { data: orderId, error } = await serviceClient.rpc('checkout_transaction', {
       p_user_id: user.id,
@@ -200,6 +254,8 @@ export async function POST(request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    await saveOrderShippingAddress(serviceClient, orderId, user.id, normalizedDeliveryAddress);
+
     await writeAnalyticsEvent({
       eventName: 'begin_checkout',
       userId: user.id,
@@ -210,6 +266,9 @@ export async function POST(request) {
         subtotal: authoritativeOrder.subtotal,
         shipping: authoritativeOrder.shipping,
         total: authoritativeOrder.total,
+        address_mode: sanitizeText(addressMode, 24) || 'saved',
+        used_saved_address: Boolean(normalizedDeliveryAddress.id),
+        saved_address_for_future: Boolean(saveAddress),
       },
     });
 
@@ -226,6 +285,9 @@ export async function POST(request) {
         orderId,
         itemsCount: authoritativeOrder.items.length,
         total: authoritativeOrder.total,
+        addressMode: sanitizeText(addressMode, 24) || 'saved',
+        saveAddress: Boolean(saveAddress),
+        deliveryAddress: normalizedDeliveryAddress,
       },
       durationMs: Date.now() - startedAt,
     });

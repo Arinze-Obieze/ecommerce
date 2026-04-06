@@ -55,10 +55,10 @@ const HeaderLogo = () => {
   const [logoError, setLogoError] = useState(false);
 
   return (
-    <Link href="/" className="flex-shrink-0 group">
+    <Link href="/" className="shrink-0 group">
       <div className="flex items-center gap-3">
         {/* Logo image with fallback - increased size */}
-        <div className="relative w-14 h-14 flex-shrink-0 transition-transform duration-300 group-hover:scale-110">
+        <div className="relative w-14 h-14 shrink-0 transition-transform duration-300 group-hover:scale-110">
           {!logoError ? (
             <Image
               src="/logo.png"
@@ -118,7 +118,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
         }}
       >
         <FiSearch
-          className="ml-3.5 w-4 h-4 flex-shrink-0 transition-colors"
+          className="ml-3.5 w-4 h-4 shrink-0 transition-colors"
           style={{ color: focused ? THEME.colors.primary : 'rgba(255, 255, 255, 0.6)' }}
         />
         <input
@@ -151,7 +151,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
         )}
         <button
           onClick={onSubmit}
-          className="mr-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 flex-shrink-0"
+          className="mr-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 shrink-0"
           style={{ 
             backgroundColor: THEME.colors.primary, 
             color: THEME.colors.white,
@@ -313,6 +313,8 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         type="button"
         className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-200"
         style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
           e.currentTarget.style.color = THEME.colors.primary;
@@ -323,7 +325,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         }}
       >
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all"
           style={{ 
             backgroundColor: isOpen ? THEME.colors.primary : 'rgba(255, 255, 255, 0.2)',
           }}
@@ -333,6 +335,12 @@ const UserMenu = ({ user, signOut, adminRole }) => {
             style={{ color: isOpen ? THEME.colors.white : THEME.colors.white }} 
           />
         </div>
+        <span
+          className="md:hidden text-[10px] font-bold uppercase tracking-[0.12em]"
+          style={{ color: isOpen ? THEME.colors.primary : 'rgba(255, 255, 255, 0.72)' }}
+        >
+          {/* Menu */}
+        </span>
         <div className="hidden lg:flex flex-col items-start leading-none gap-0.5">
           <span className="text-xs font-bold" style={{ color: THEME.colors.white }}>
             {user ? displayName.split(" ")[0] : "Account"}
@@ -347,7 +355,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
           )}
         </div>
         <FiChevronDown
-          className="hidden md:block w-3.5 h-3.5 transition-all duration-300"
+          className="w-3.5 h-3.5 transition-all duration-300"
           style={{
             color: isOpen ? THEME.colors.primary : 'rgba(255, 255, 255, 0.6)',
             transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
@@ -474,9 +482,16 @@ const Header = () => {
 
   if (["/login", "/signup", "/forgot-password", "/reset-password"].includes(pathname)) return null;
 
+  const searchEnabledRoutes = [
+    "/",
+    "/shop",
+    "/stores",
+  ];
+  const showSearch = searchEnabledRoutes.includes(pathname) || pathname?.startsWith("/shop/");
+
   return (
     <header
-      className="sticky top-0 z-[100] transition-all duration-300"
+      className="sticky top-0 z-100 transition-all duration-300"
       style={{
         backgroundColor: THEME.colors.deepEmerald, // Deep Emerald background
         borderBottom: `1px solid ${scrolled ? THEME.colors.primary : 'rgba(255, 255, 255, 0.1)'}`,
@@ -488,14 +503,16 @@ const Header = () => {
 
           <HeaderLogo />
 
-          <SearchBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onSubmit={handleSearchSubmit}
-          />
+          {showSearch ? (
+            <SearchBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onSubmit={handleSearchSubmit}
+            />
+          ) : <div className="hidden md:block flex-1" />}
 
           {/* Right actions */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             <CurrencySelector />
             <Divider mobileHidden />
             <WishlistIcon />
@@ -507,14 +524,16 @@ const Header = () => {
         </div>
 
         {/* Mobile search */}
-        <div className="mt-3 md:hidden">
-          <SearchBar
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onSubmit={handleSearchSubmit}
-            isMobile
-          />
-        </div>
+        {showSearch ? (
+          <div className="mt-3 md:hidden">
+            <SearchBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onSubmit={handleSearchSubmit}
+              isMobile
+            />
+          </div>
+        ) : null}
       </div>
     </header>
   );

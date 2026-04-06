@@ -337,7 +337,7 @@ export default function StorePayoutsPage() {
               >
                 {saving ? 'Saving...' : 'Save Payout Account'}
               </button>
-              {resolving ? <span className="text-sm text-gray-500">Verifying account with Paystack...</span> : null}
+              {resolving ? <span className="text-sm text-gray-500">Verifying account...</span> : null}
               {resolveError ? <span className="text-sm text-red-600">{resolveError}</span> : null}
             </div>
           </form>

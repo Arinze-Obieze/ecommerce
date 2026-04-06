@@ -54,11 +54,11 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
 
   return (
     <div
+      className="p-5 sm:p-6"
       style={{
         background: THEME.white,
         border: `1.5px solid ${hov ? THEME.greenBorder : THEME.border}`,
         borderRadius: 18,
-        padding: '22px 24px',
         position: 'relative',
         transition: 'border-color 0.2s, box-shadow 0.2s',
         boxShadow: hov ? '0 4px 16px rgba(0,0,0,0.06)' : 'none',
@@ -74,8 +74,8 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
         <span
           style={{
             position: 'absolute',
-            top: 16,
-            right: 16,
+            top: 14,
+            right: 14,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
@@ -95,7 +95,7 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
       )}
 
       {/* Icon + Label */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, paddingRight: addr.isDefault ? 72 : 0, minWidth: 0 }}>
         <div
           style={{
             width: 38,
@@ -110,23 +110,23 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
         >
           <FiMapPin size={17} style={{ color: THEME.green }} />
         </div>
-        <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.01em' }}>
+        <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.01em', wordBreak: 'break-word' }}>
           {addr.type}
         </h3>
       </div>
 
       {/* Address lines */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 20, minWidth: 0 }}>
         {[
           addr.address,
           addr.addressLine2,
           `${addr.city}, ${addr.state}`,
           addr.country,
         ].filter(Boolean).map((line, i) => (
-          <p key={i} style={{ fontSize: 13, color: THEME.medGray, margin: 0, lineHeight: 1.5 }}>{line}</p>
+          <p key={i} style={{ fontSize: 13, color: THEME.medGray, margin: 0, lineHeight: 1.5, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{line}</p>
         ))}
         {addr.phone && (
-          <p style={{ fontSize: 13, fontWeight: 600, color: THEME.charcoal, margin: '6px 0 0' }}>{addr.phone}</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: THEME.charcoal, margin: '6px 0 0', overflowWrap: 'anywhere' }}>{addr.phone}</p>
         )}
       </div>
 

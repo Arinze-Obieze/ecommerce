@@ -4,8 +4,8 @@ import { enforceRateLimit } from '@/utils/rateLimit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
 import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
-const PRODUCT_LIST_SELECT = 'id, store_id, name, slug, sku, price, discount_price, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
-const PRODUCT_LIST_SELECT_FALLBACK = 'id, store_id, name, slug, sku, price, discount_price, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
+const PRODUCT_LIST_SELECT = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
+const PRODUCT_LIST_SELECT_FALLBACK = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
 const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
 
 function toNumber(value) {
@@ -68,6 +68,34 @@ function normalizeMediaArray(value) {
       };
     })
     .filter(Boolean);
+}
+
+function canDeleteProduct(product) {
+  return ['draft', 'rejected', 'archived'].includes(String(product?.moderation_status || '').trim().toLowerCase());
+}
+
+async function buildDuplicateSlug(adminClient, storeId, sourceSlug) {
+  const baseSlug = sanitizeSlug(sourceSlug) || 'product-copy';
+  const copyBase = `${baseSlug}-copy`;
+
+  const { data, error } = await adminClient
+    .from('products')
+    .select('slug')
+    .eq('store_id', storeId)
+    .ilike('slug', `${copyBase}%`);
+
+  if (error) {
+    throw new Error(error.message || 'Failed to prepare duplicate product slug');
+  }
+
+  const usedSlugs = new Set((data || []).map((row) => String(row.slug || '').trim().toLowerCase()));
+  if (!usedSlugs.has(copyBase)) return copyBase;
+
+  let suffix = 2;
+  while (usedSlugs.has(`${copyBase}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${copyBase}-${suffix}`;
 }
 
 export async function GET(request) {
@@ -166,6 +194,195 @@ export async function POST(request) {
   }
 
   const body = await request.json().catch(() => ({}));
+  const action = String(body?.action || '').trim().toLowerCase();
+
+  if (action) {
+    const ids = [...new Set((Array.isArray(body?.ids) ? body.ids : []).map((id) => String(id || '').trim()).filter(Boolean))];
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'Select at least one product.' }, { status: 400 });
+    }
+    if (ids.length > 100) {
+      return NextResponse.json({ error: 'Bulk actions are limited to 100 products at a time.' }, { status: 400 });
+    }
+
+    const { data: products, error: productsError } = await ctx.adminClient
+      .from('products')
+      .select(PRODUCT_LIST_SELECT)
+      .eq('store_id', ctx.membership.store_id)
+      .in('id', ids);
+
+    if (productsError && !isMissingBulkDiscountColumnError(productsError)) {
+      return NextResponse.json({ error: productsError.message }, { status: 500 });
+    }
+
+    let resolvedProducts = products || [];
+    if (productsError && isMissingBulkDiscountColumnError(productsError)) {
+      const fallbackResult = await ctx.adminClient
+        .from('products')
+        .select(PRODUCT_LIST_SELECT_FALLBACK)
+        .eq('store_id', ctx.membership.store_id)
+        .in('id', ids);
+
+      if (fallbackResult.error) {
+        return NextResponse.json({ error: fallbackResult.error.message }, { status: 500 });
+      }
+
+      resolvedProducts = (fallbackResult.data || []).map((row) => ({
+        ...row,
+        bulk_discount_tiers: null,
+      }));
+    }
+
+    if (resolvedProducts.length === 0) {
+      return NextResponse.json({ error: 'No matching products found.' }, { status: 404 });
+    }
+
+    if ((action === 'bulk_archive' || action === 'bulk_unarchive' || action === 'bulk_delete') && ctx.membership.role === STORE_ROLES.STAFF) {
+      return NextResponse.json({ error: 'Staff cannot perform this bulk action.' }, { status: 403 });
+    }
+
+    if (action === 'bulk_archive') {
+      const targetIds = resolvedProducts
+        .filter((product) => product.moderation_status !== 'archived')
+        .map((product) => product.id);
+
+      if (targetIds.length === 0) {
+        return NextResponse.json({ success: true, data: { count: 0, skipped: resolvedProducts.length } });
+      }
+
+      const { error } = await ctx.adminClient
+        .from('products')
+        .update({ moderation_status: 'archived', is_active: false })
+        .eq('store_id', ctx.membership.store_id)
+        .in('id', targetIds);
+
+      if (error) {
+        return NextResponse.json({ error: error.message || 'Failed to archive products' }, { status: 400 });
+      }
+
+      return NextResponse.json({ success: true, data: { count: targetIds.length, skipped: resolvedProducts.length - targetIds.length } });
+    }
+
+    if (action === 'bulk_unarchive') {
+      const targetIds = resolvedProducts
+        .filter((product) => product.moderation_status === 'archived')
+        .map((product) => product.id);
+
+      if (targetIds.length === 0) {
+        return NextResponse.json({ success: true, data: { count: 0, skipped: resolvedProducts.length } });
+      }
+
+      const { error } = await ctx.adminClient
+        .from('products')
+        .update({
+          moderation_status: 'draft',
+          is_active: false,
+          reviewed_at: null,
+          reviewed_by: null,
+          rejection_reason: null,
+          published_at: null,
+        })
+        .eq('store_id', ctx.membership.store_id)
+        .in('id', targetIds);
+
+      if (error) {
+        return NextResponse.json({ error: error.message || 'Failed to unarchive products' }, { status: 400 });
+      }
+
+      return NextResponse.json({ success: true, data: { count: targetIds.length, skipped: resolvedProducts.length - targetIds.length } });
+    }
+
+    if (action === 'bulk_delete') {
+      const deletableIds = resolvedProducts.filter(canDeleteProduct).map((product) => product.id);
+      const blocked = resolvedProducts
+        .filter((product) => !canDeleteProduct(product))
+        .map((product) => ({ id: product.id, name: product.name, status: product.moderation_status }));
+
+      if (deletableIds.length > 0) {
+        const { error } = await ctx.adminClient
+          .from('products')
+          .delete()
+          .eq('store_id', ctx.membership.store_id)
+          .in('id', deletableIds);
+
+        if (error) {
+          return NextResponse.json({ error: error.message || 'Failed to delete products' }, { status: 400 });
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: { count: deletableIds.length, skipped: blocked.length, blocked },
+      });
+    }
+
+    if (action === 'bulk_duplicate') {
+      const { data: store, error: storeError } = await ctx.adminClient
+        .from('stores')
+        .select('id, slug, name')
+        .eq('id', ctx.membership.store_id)
+        .maybeSingle();
+
+      if (storeError) {
+        return NextResponse.json({ error: storeError.message }, { status: 500 });
+      }
+
+      if (!store) {
+        return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+      }
+
+      const created = [];
+
+      for (const product of resolvedProducts) {
+        try {
+          const duplicateSlug = await buildDuplicateSlug(ctx.adminClient, ctx.membership.store_id, product.slug);
+          const duplicateName = `${String(product.name || '').trim() || 'Untitled product'} Copy`;
+          const duplicateSku = await generateProductSku(ctx.adminClient, {
+            storeId: ctx.membership.store_id,
+            storeSlug: store.slug,
+            storeName: store.name,
+            productSlug: duplicateSlug,
+            productName: duplicateName,
+          });
+
+          const { data, error } = await ctx.adminClient
+            .from('products')
+            .insert({
+              store_id: ctx.membership.store_id,
+              name: duplicateName,
+              slug: duplicateSlug,
+              sku: duplicateSku,
+              description: product.description || '',
+              price: product.price,
+              discount_price: product.discount_price,
+              bulk_discount_tiers: product.bulk_discount_tiers || null,
+              stock_quantity: product.stock_quantity,
+              is_active: false,
+              image_urls: Array.isArray(product.image_urls) ? product.image_urls : [],
+              video_urls: Array.isArray(product.video_urls) ? product.video_urls : [],
+              specifications: product.specifications || null,
+              moderation_status: 'draft',
+              submitted_at: null,
+              reviewed_at: null,
+              reviewed_by: null,
+              rejection_reason: null,
+              published_at: null,
+            })
+            .select('id, name, slug, sku')
+            .single();
+
+          if (error) throw error;
+          created.push(data);
+        } catch (error) {
+          return NextResponse.json({ error: error.message || 'Failed to duplicate products' }, { status: 400 });
+        }
+      }
+
+      return NextResponse.json({ success: true, data: { count: created.length, created } }, { status: 201 });
+    }
+
+    return NextResponse.json({ error: 'Unsupported bulk action' }, { status: 400 });
+  }
 
   const name = String(body?.name || '').trim();
   const slugInput = String(body?.slug || name).trim();

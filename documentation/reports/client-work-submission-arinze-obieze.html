@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Work Submission</title>
+    <style>
+      :root {
+        --ink: #17211b;
+        --muted: #5f6f64;
+        --line: #dbe6de;
+        --accent: #1f6a47;
+        --accent-soft: #eef7f1;
+        --paper: #ffffff;
+        --page: #f4f5f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--ink);
+        background: var(--page);
+        line-height: 1.55;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        background: var(--paper);
+        padding: 22mm 18mm 20mm;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.15;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        margin: 14px 0 0;
+        max-width: 620px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .hero {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 18px;
+        margin-bottom: 24px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin: 18px 0 24px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        background: #fbfcfb;
+        border-radius: 14px;
+        padding: 14px 15px;
+      }
+
+      .card h2 {
+        margin: 0 0 6px;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .section {
+        margin: 0 0 22px;
+      }
+
+      .section h3 {
+        margin: 0 0 10px;
+        padding-bottom: 7px;
+        border-bottom: 1px solid var(--line);
+        font-size: 18px;
+      }
+
+      .section p {
+        margin: 0 0 10px;
+        font-size: 14px;
+      }
+
+      ul {
+        margin: 10px 0 0 18px;
+        padding: 0;
+      }
+
+      li {
+        margin: 0 0 8px;
+        font-size: 14px;
+      }
+
+      .note {
+        margin-top: 24px;
+        border: 1px solid var(--line);
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 14px 15px;
+      }
+
+      .note h4 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      .note p {
+        margin: 0;
+        font-size: 13px;
+        color: #365545;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .page {
+          margin: 0;
+          width: auto;
+          min-height: auto;
+          padding: 16mm 15mm 15mm;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Project Delivery Summary</p>
+        <h1>Client Work Submission</h1>
+        <p class="subtitle">
+          This document summarizes the product, checkout, account, and order-management work completed in the current authored delivery set, excluding features or fixes pulled from other commits.
+        </p>
+      </header>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Prepared For</h2>
+          <p>Client submission and delivery review.</p>
+        </article>
+        <article class="card">
+          <h2>Coverage</h2>
+          <p>Authored local work only, focused on user experience, seller tools, checkout, and account flows.</p>
+        </article>
+      </section>
+
+      <section class="section">
+        <h3>Product Creation And Seller Product Management</h3>
+        <ul>
+          <li>Reworked the seller product creation flow into a clearer publish-oriented sequence covering variants, media, specifications, compliance, and final review.</li>
+          <li>Added structured completion checks so sellers can quickly see what is still preventing submission.</li>
+          <li>Expanded wizard state handling for specification summaries, structured entries, and safer draft restoration.</li>
+          <li>Introduced a seller product detail experience for reviewing and editing product data, pricing, stock, media, specifications, and bulk discount tiers.</li>
+          <li>Improved the seller products dashboard with richer list views, selection state, and bulk actions such as duplicate, archive, unarchive, and delete.</li>
+          <li>Extended store product APIs to support richer detail reads, editing, duplication, slug generation, SKU generation, and moderation-aware handling.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Inventory Operations</h3>
+        <ul>
+          <li>Added a dedicated store inventory API for reads, direct stock adjustments, variant adjustments, and low-stock restocking actions.</li>
+          <li>Introduced inventory summaries for total products, low-stock items, out-of-stock items, and variant-managed products.</li>
+          <li>Logged inventory activity with adjustment metadata, reasons, notes, actor context, and history retrieval.</li>
+          <li>Rebuilt the seller inventory dashboard with search, filtering, manual stock controls, quick restock flows, variant inspection, and recent adjustment history.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Product Detail, Cart, And Mobile Shopping Experience</h3>
+        <ul>
+          <li>Redesigned the product detail page with richer mixed media support for both images and videos.</li>
+          <li>Improved product storytelling through overview content, specifications, return-policy presentation, and mobile-friendly collapsible sections.</li>
+          <li>Refined mobile buying flow with a clearer sticky purchase CTA and stronger selected-variant feedback.</li>
+          <li>Improved cart and product-card behavior to preserve selected size and color context through shopping and add-to-cart interactions.</li>
+          <li>Refined cart quantity controls and responsive layout so product adjustments are easier on smaller screens.</li>
+          <li>Updated bulk-pricing logic so discount pricing only overrides the base price when it is valid.</li>
+          <li>Improved mobile product quick view by reducing oversized imagery, restoring the primary CTAs, and keeping overlays above the sticky header.</li>
+          <li>Added a dedicated fullscreen image viewer with zoom controls and drag support for closer product inspection.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Checkout, Delivery, And Order Experience</h3>
+        <ul>
+          <li>Removed duplicate success messaging on product detail pages so add-to-cart feedback is clearer and less repetitive.</li>
+          <li>Improved payment success feedback with celebratory confirmation, stronger messaging, and a redirect path into order review.</li>
+          <li>Created a dedicated order-details experience showing order metadata, payment reference, status information, product lines, quantities, totals, and variant details where available.</li>
+          <li>Connected recent activity and order history entries directly to individual order-detail pages.</li>
+          <li>Introduced clearer order-progress presentation based on status, fulfillment state, escrow state, and order-lifecycle markers.</li>
+          <li>Enforced delivery-address capture before payment for physical-product orders.</li>
+          <li>Supported both saved-address selection and single-use address entry during checkout, with the option to save new addresses for future use.</li>
+          <li>Added order-level delivery-address snapshot support so the exact address used for an order can be preserved and shown later.</li>
+          <li>Reworked checkout into a clearer step-based flow where users review cart contents first, then enter delivery details in a dedicated second-step modal before payment.</li>
+          <li>Improved delivery input quality for Nigeria-only fulfillment with searchable state and city selection, full state coverage including FCT, and a typed city fallback for unlisted locations.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Account, Navigation, And Profile Improvements</h3>
+        <ul>
+          <li>Updated the header profile trigger to read more clearly as a dropdown with stronger menu affordance.</li>
+          <li>Made the customer profile navigation collapsed by default and expandable on demand.</li>
+          <li>Added clearer routes back to home and shop from the profile area.</li>
+          <li>Fixed mobile overflow issues in the profile overview and saved-address presentation.</li>
+          <li>Replaced placeholder recent activity behavior with meaningful recent order activity.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Authentication, Onboarding, And Documentation</h3>
+        <ul>
+          <li>Added a reset-password page with recovery-session validation, password-strength requirements, confirmation checks, and post-reset redirection.</li>
+          <li>Changed store-owner assignment onboarding from temporary passwords to secure invite and setup links.</li>
+          <li>Limited header search visibility to routes where search is relevant.</li>
+          <li>Added updated implementation reports for the product-creation/cart flow and mobile product-detail redesign.</li>
+          <li>Removed outdated documentation artifacts and cleaned up local documentation tracking.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Research And Decision References</h3>
+        <p>
+          Where design decisions were guided by established ecommerce and UX research, the following references informed the direction of the implemented work:
+        </p>
+        <ul>
+          <li><a href="https://www.christenseninstitute.org/theory/jobs-to-be-done/">Christensen Institute: Jobs to Be Done Theory</a></li>
+          <li><a href="https://www.interaction-design.org/literature/topics/progressive-disclosure">Interaction Design Foundation: Progressive Disclosure</a></li>
+          <li><a href="https://media.nngroup.com/media/articles/attachments/NNg_Jakob%27s_Usability_Heuristic_Summary.pdf">Nielsen Norman Group: Jakob Nielsen’s Usability Heuristic Summary</a></li>
+          <li><a href="https://baymard.com/blog/current-state-ecommerce-product-page-ux">Baymard Institute: Current State of Ecommerce Product Page UX</a></li>
+          <li><a href="https://baymard.com/blog/use-buttons-for-size-selection">Baymard Institute: Always Use Buttons for Size Selection</a></li>
+          <li><a href="https://baymard.com/blog/synchronize-product-data-across-variations">Baymard Institute: Data Should Be Synchronized Across Product Variations</a></li>
+          <li><a href="https://baymard.com/blog/auto-update-users-quantity-changes">Baymard Institute: Use Buttons or Buttons Plus an Open Text Field for Updating Cart Quantity</a></li>
+          <li><a href="https://baymard.com/blog/accordion-style-checkout">Baymard Institute: Accordion-Style Checkout</a></li>
+          <li><a href="https://baymard.com/blog/accordion-checkout-usability">Baymard Institute: Collapsing Completed Checkout Steps into Summaries</a></li>
+          <li><a href="https://baymard.com/blog/post-checkout-ux-best-practices">Baymard Institute: Post-Checkout UX Best Practices</a></li>
+          <li><a href="https://baymard.com/blog/avoid-horizontal-tabs">Baymard Institute: Avoid Horizontal Tabs for Core Product Content</a></li>
+          <li><a href="https://baymard.com/blog/avoid-using-subpages">Baymard Institute: Avoid Using Subpages for Product Details</a></li>
+          <li><a href="https://designsystem.digital.gov/components/accordion/">U.S. Web Design System: Accordion Guidance</a></li>
+        </ul>
+      </section>
+
+      <div class="note">
+        <h4>Validation</h4>
+        <p>The current delivery set was checked against the project build flow after the more recent checkout, order, profile, and quick-view updates.</p>
+      </div>
+    </main>
+  </body>
+</html>

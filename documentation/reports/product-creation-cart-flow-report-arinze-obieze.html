@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Creation, Variant Selection, Add-to-Cart, and Cart UX Report</title>
+  <style>
+    :root {
+      --ink: #16202a;
+      --muted: #5c6975;
+      --line: #d9e1e7;
+      --bg: #f6f8fa;
+      --accent: #174c65;
+      --accent-soft: #e9f2f6;
+      --green: #0f6a46;
+      --amber: #9a5f00;
+      --red: #9a2d2d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Georgia", "Times New Roman", serif;
+      color: var(--ink);
+      background: white;
+      line-height: 1.55;
+    }
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 56px 72px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 14px;
+      color: #10212d;
+    }
+    h1 {
+      font-size: 34px;
+      margin-top: 8px;
+    }
+    h2 {
+      font-size: 24px;
+      margin-top: 36px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 18px;
+      margin-top: 24px;
+    }
+    p {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+    ul, ol {
+      margin: 0 0 14px 22px;
+      padding: 0;
+      font-size: 15px;
+    }
+    li { margin: 0 0 8px; }
+    .cover {
+      min-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+    }
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font: 700 12px/1.4 Arial, Helvetica, sans-serif;
+    }
+    .meta, .small {
+      color: var(--muted);
+      font: 14px/1.6 Arial, Helvetica, sans-serif;
+    }
+    .summary-box, .callout, .principle, .risk, .metric-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 18px 0;
+    }
+    .summary-box {
+      background: linear-gradient(180deg, #f8fbfd, #ffffff);
+    }
+    .callout {
+      background: var(--accent-soft);
+      border-color: #c6dce6;
+    }
+    .principle {
+      background: #f7fbf9;
+      border-color: #d4e8dd;
+    }
+    .risk {
+      background: #fff8ef;
+      border-color: #ead7ba;
+    }
+    .metric-box {
+      background: #fbfbfc;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 18px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f4f7f9;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kicker {
+      color: var(--green);
+      font: 700 13px/1.4 Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .footer-note {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 13px/1.6 Arial, Helvetica, sans-serif;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(23, 76, 101, 0.25);
+    }
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+    @media print {
+      .page {
+        max-width: none;
+        padding: 28px 34px 40px;
+      }
+      a {
+        color: inherit;
+        border-bottom: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="cover">
+      <div class="eyebrow">Commerce UX Report</div>
+      <h1>Product Creation, Variant Selection, Add-to-Cart, and Cart Flow Redesign</h1>
+      <p style="font-size:18px; max-width: 760px;">
+        A full product and UX report covering seller product creation, media, variants, inventory logic, product detail page behavior, add-to-cart, and cart experience, with recommendations grounded in industry research and ecommerce standards.
+      </p>
+      <div class="meta">
+        <div><strong>Prepared by:</strong> Arinze Obieze</div>
+        <div><strong>Date:</strong> April 6, 2026</div>
+        <div><strong>Scope:</strong> Product creation flow, variant management, media architecture, stock behavior, PDP selection UX, add-to-cart, and cart experience</div>
+      </div>
+      <div class="summary-box">
+        <div class="kicker">Executive Summary</div>
+        <p>
+          I redesigned the commerce flow around two realities: sellers need a faster path to publish understandable products, and buyers need clearer evidence before they commit to add to cart. The current flow asks sellers to complete compliance and operations work too early, while still underserving buyers on media clarity, variant understanding, and cart visibility.
+        </p>
+        <p>
+          The revised model changes the image step into a media step, brings product video into initial creation, separates buyer-facing specifications from apparel-compliance labels, keeps barcode printing out of the critical path for listing creation, strengthens variant modeling, and makes the selected variant explicit from PDP through cart. The result is a flow that is easier to complete for sellers and easier to trust for buyers.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-break">
+      <h2>1. What I Changed</h2>
+      <p>The redesigned flow does the following:</p>
+      <ol>
+        <li>Renames the current <strong>Images</strong> step to <strong>Media</strong> and adds product video upload directly in that step.</li>
+        <li>Shows blocking media errors both inline and in toast notifications, including explicit messages such as <em>Upload Front and Back views</em>.</li>
+        <li>Reorders the creation flow so merchandising comes before operations.</li>
+        <li>Separates <strong>buyer-facing specifications</strong> from <strong>apparel label/compliance data</strong>.</li>
+        <li>Makes label completion skippable only for draft creation, not for final publish on apparel products.</li>
+        <li>Removes barcode printing from the critical path of listing creation and exposes it later in the seller product detail and products list surfaces.</li>
+        <li>Removes barcode scan verification as a requirement to create a product listing.</li>
+        <li>Strengthens the variant model so media, inventory, and cart behavior are all tied to the selected variant in a consistent way.</li>
+        <li>Makes selected size and color visible at every point where the buyer makes a commitment: PDP, add-to-cart feedback, mini-cart, cart, and checkout.</li>
+        <li>Defines a metrics model to evaluate success using a HEART-style measurement framework.</li>
+      </ol>
+
+      <div class="principle">
+        <div class="kicker">Core Product Principle</div>
+        <p>
+          The product creation flow should optimize for <strong>creating a sellable product first</strong>, while compliance and operations should be <strong>visible, accountable, and recoverable</strong>, but not allowed to distort the seller’s primary listing task.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Research and Design Frameworks Used</h2>
+      <h3>2.1 Jobs to Be Done</h3>
+      <p>
+        I used Jobs to Be Done as the primary framing model. The Christensen Institute defines JTBD as a lens for understanding the circumstances that drive decisions, and emphasizes that people “hire” products and services to make progress in a given context.
+      </p>
+      <p>
+        Applied here, the seller is not trying to “fill a form.” The seller is trying to <strong>get a product listed accurately, quickly, and without future operational mistakes</strong>. The buyer is not trying to “use a PDP.” The buyer is trying to <strong>decide whether this exact variant is right, available, and safe to purchase</strong>.
+      </p>
+
+      <h3>2.2 Progressive Disclosure</h3>
+      <p>
+        Progressive disclosure is the right UX principle for this flow because seller product creation contains three layers of complexity: core merchandising, optional enrichment, and compliance/operations. Exposing all of them at once increases cognitive load and slows completion. The revised flow keeps essentials upfront and reveals deeper tasks at the appropriate moment.
+      </p>
+
+      <h3>2.3 User Control and Freedom</h3>
+      <p>
+        Nielsen Norman Group’s heuristic on user control and freedom is especially relevant here. Sellers need clear exit paths, safe draft behavior, and the ability to postpone operational tasks like printing without losing confidence or progress.
+      </p>
+
+      <h3>2.4 HEART Metrics</h3>
+      <p>
+        For measurement, I used Google’s HEART model. Google introduced HEART as a way to map product goals to user-centered metrics. It is a strong fit here because this work should be measured not only by conversion, but also by task success, confidence, adoption, and retention.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Research Findings That Drove the Redesign</h2>
+      <div class="two-col">
+        <div class="metric-box">
+          <div class="kicker">Product Content</div>
+          <p>According to Salsify’s 2024 Consumer Research Report, <strong>78%</strong> of shoppers say product images and <strong>78%</strong> say product descriptions are extremely or very important when deciding to complete a purchase.</p>
+          <p>The same report shows <strong>37%</strong> rate product videos as extremely or very important for completing a purchase.</p>
+        </div>
+        <div class="metric-box">
+          <div class="kicker">Discovery and Clickthrough</div>
+          <p>Salsify also reports that <strong>76%</strong> of shoppers say high-quality product images are extremely or very important in their decision to click into a product page from search results.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="metric-box">
+          <div class="kicker">Abandonment Risk</div>
+          <p>Salsify reports that <strong>45%</strong> of shoppers have abandoned a sale because of no or low-quality product images or videos, and <strong>42%</strong> have abandoned because of incomplete or poorly written titles or descriptions.</p>
+        </div>
+        <div class="metric-box">
+          <div class="kicker">Returns Risk</div>
+          <p>The same report states that <strong>45%</strong> of shoppers returned an item within the last year because of incorrect product content.</p>
+        </div>
+      </div>
+
+      <p>
+        Baymard’s research shows that product images are often the primary way users evaluate products online, and that <strong>56%</strong> of users investigate product images as their first action on the PDP. Baymard also shows that variation handling remains a severe weakness on many sites, with <strong>28%</strong> of sites suffering major product-variation UX issues.
+      </p>
+      <p>
+        For variants specifically, Baymard shows that size selectors hidden in dropdowns are frequently overlooked, and that exposed size buttons perform better. This is directly relevant to apparel and footwear, where selecting the wrong or unavailable option creates immediate add-to-cart friction.
+      </p>
+
+      <div class="risk">
+        <div class="kicker">Compliance Constraint</div>
+        <p>
+          For apparel, label information is not just optional metadata. FTC guidance requires fiber disclosure, origin disclosure, and care labeling rules in applicable contexts. EU textile rules also require fibre composition information to be available to the consumer before purchase, including online. This means label information should be <strong>separated from the seller’s main listing task</strong>, but it should <strong>not</strong> be treated as permanently optional for publish-ready apparel listings.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-break">
+      <h2>4. Current-State Product Diagnosis</h2>
+      <h3>4.1 The creation flow is mixing three different jobs</h3>
+      <p>The current creation flow combines:</p>
+      <ul>
+        <li>Merchandising work: category, title, description, variants, media.</li>
+        <li>Compliance work: fiber composition, care, origin, apparel labeling.</li>
+        <li>Warehouse/operations work: SKU generation, barcode printing, barcode scan verification.</li>
+      </ul>
+      <p>
+        This causes unnecessary friction because these jobs do not happen at the same point in a seller’s mental workflow. The listing team wants to create and publish. The warehouse team may print later. Compliance may be completed by a different person or completed after sourcing details are finalized.
+      </p>
+
+      <h3>4.2 Media is underpowered for apparel</h3>
+      <p>
+        Apparel is a media-heavy category. Front and back views are essential, but they are not enough. Buyers also need detail shots, texture clarity, scale cues, and sometimes motion or fit context. The current step is named <strong>Images</strong>, which is too narrow. Product video currently exists elsewhere in the seller experience, but not in the initial creation flow. That creates a fragmented seller mental model.
+      </p>
+
+      <h3>4.3 Labels are modeled as a single seller step instead of two distinct product layers</h3>
+      <p>
+        The current label step is overloaded. It mixes buyer-useful product specifics with apparel-compliance data. These are not the same thing. Buyers need product specifications that help them understand what they are buying. Compliance teams need label details that satisfy textile rules. These should be separate data objects and separate UX sections.
+      </p>
+
+      <h3>4.4 Variants are too narrow for real merchandising</h3>
+      <p>
+        The current variant structure is workable for a basic inventory table, but not strong enough for high-confidence product understanding. The model centers on color, size, quantity, and price. That is a good baseline, but not enough to support richer media mapping, variant-specific messaging, better cart clarity, and better future extensibility.
+      </p>
+
+      <h3>4.5 Printing and scan verification are incorrectly placed in the listing flow</h3>
+      <p>
+        Barcode printing and barcode scan verification are operational actions, not merchandising actions. They should not sit in the main listing creation funnel. Requiring them before listing completion raises time-to-list, introduces artificial failure points, and confuses sellers who simply want a product online.
+      </p>
+
+      <h3>4.6 The buyer flow loses clarity between PDP and cart</h3>
+      <p>
+        The selected variant is not surfaced strongly enough as the buyer moves from PDP to cart. When a product has multiple sizes or colors, the system must always repeat back the exact chosen variant. Otherwise, buyers hesitate, edit unnecessarily, or abandon to double-check.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. Redesigned End-to-End Architecture</h2>
+      <h3>5.1 New seller flow</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Purpose</th>
+            <th>Why this order is better</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1. Category</td>
+            <td>Select product type and subcategory</td>
+            <td>Sets downstream variant, media, and compliance logic</td>
+          </tr>
+          <tr>
+            <td>2. Core Details</td>
+            <td>Title, brand, short summary, product description</td>
+            <td>Lets the seller define what is being sold before entering deeper structure</td>
+          </tr>
+          <tr>
+            <td>3. Variants & Inventory</td>
+            <td>Color, size, stock, price, availability</td>
+            <td>Variant structure determines media, PDP behavior, and add-to-cart logic</td>
+          </tr>
+          <tr>
+            <td>4. Media</td>
+            <td>Images and videos</td>
+            <td>Media should be attached after the seller knows what variants exist</td>
+          </tr>
+          <tr>
+            <td>5. Specifications</td>
+            <td>Buyer-facing specification details</td>
+            <td>Clarifies the product for buyers without mixing in legal labeling complexity</td>
+          </tr>
+          <tr>
+            <td>6. Compliance Labels</td>
+            <td>Fiber content, origin, care, warnings</td>
+            <td>Keeps legal data visible and accountable, but out of the early merchandising path</td>
+          </tr>
+          <tr>
+            <td>7. SKU & Review</td>
+            <td>Generate identifiers, review summary, publish readiness</td>
+            <td>SKU is necessary for internal tracking, but barcode printing is not necessary for listing creation</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <div class="kicker">Important Structural Change</div>
+        <p>
+          I recommend removing <strong>Print</strong> and <strong>Verify by barcode scan</strong> from the creation wizard entirely. Those actions should move to post-save product operations. This is the cleanest and most standards-aligned decision.
+        </p>
+      </div>
+
+      <h3>5.2 Publish logic</h3>
+      <p>I recommend two seller outcomes instead of one:</p>
+      <ul>
+        <li><strong>Save Draft</strong>: allows incomplete label/compliance data and skipped print operations.</li>
+        <li><strong>Submit / Publish Ready</strong>: requires all buyer-facing essentials and required apparel-compliance fields.</li>
+      </ul>
+      <p>
+        This resolves the user’s original request about skipping the whole label step. My recommendation is: <strong>yes for draft, no for publish-ready apparel</strong>. That is the right tradeoff between seller speed and legal/product accuracy.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Detailed Recommendations by Experience Area</h2>
+      <h3>6.1 Media Step</h3>
+      <p>The current Images step should become <strong>Media</strong>.</p>
+      <p>It should contain four zones:</p>
+      <ol>
+        <li><strong>Required image set</strong>: Front view and Back view.</li>
+        <li><strong>Recommended image set</strong>: Side view, detail view, material/texture, on-model or in-context image, scale image.</li>
+        <li><strong>Product video</strong>: Optional but strongly recommended. One main video is enough for MVP.</li>
+        <li><strong>Variant-specific media</strong>: Per-color media where necessary.</li>
+      </ol>
+
+      <p>I recommend the following UI behavior:</p>
+      <ul>
+        <li>Show blocking errors both inline and via toast.</li>
+        <li>Use explicit language, for example: <em>Upload Front and Back views.</em></li>
+        <li>Show what is required, what is recommended, and why.</li>
+        <li>Allow video upload in the same step so the seller has one mental model for all merchandising media.</li>
+        <li>Support a shared media model: general media for all variants plus optional per-color media.</li>
+      </ul>
+
+      <p>
+        Baymard’s variation research specifically supports reusing most media types across variations, while still providing variation-specific angle/cutout images. This is exactly the right model for apparel, where color-specific appearance matters but not every asset must be duplicated.
+      </p>
+
+      <h3>6.2 Specifications and Labels</h3>
+      <p>The current label step should be split into two sections:</p>
+      <ol>
+        <li><strong>Product Specifications</strong></li>
+        <li><strong>Existing Garment Label / Compliance Information</strong></li>
+      </ol>
+
+      <p>
+        The default entry experience should start with a freeform or structured specification editor, because this is what supports buyer understanding. Examples include fit, sleeve length, neckline, closure type, heel height, fabric feel, occasion, and what is included in the package.
+      </p>
+      <p>
+        Only after that should the flow ask whether the seller already has the garment’s existing label details. That section can then capture fiber composition, country of origin, transformation, care symbols, children’s safety flags, and flammability warnings.
+      </p>
+
+      <div class="risk">
+        <div class="kicker">Decision</div>
+        <p>
+          I do <strong>not</strong> recommend treating the label section as fully optional for a published apparel product. I do recommend allowing it to be skipped for draft creation, with a clear status badge such as <strong>Label data incomplete</strong>.
+        </p>
+      </div>
+
+      <h3>6.3 SKU, Barcode, and Print</h3>
+      <p>
+        SKU generation should stay in the listing flow because it is a core internal identifier. Barcode printing should not. Printing is an operational task and should move to the seller product detail page and products list.
+      </p>
+      <p>I recommend the following:</p>
+      <ul>
+        <li>Generate base SKU and variant SKUs automatically at save time.</li>
+        <li>Store print status separately: <em>Not printed</em>, <em>Printed</em>, <em>Reprinted</em>.</li>
+        <li>Expose a visible <strong>Print Labels</strong> action from the products list and product detail page.</li>
+        <li>Show print status without requiring a modal.</li>
+        <li>Remove scan verification from product creation.</li>
+      </ul>
+
+      <p>
+        This directly answers the original concern about Step Print. The step should either be removed from creation or changed into a non-blocking optional operational checkpoint. My recommendation is to remove it from creation and surface it later where sellers naturally manage inventory.
+      </p>
+
+      <h3>6.4 Variant Management</h3>
+      <p>The revised variant model should support:</p>
+      <ul>
+        <li>Attribute values: color, size, and future extensibility for length, fit, width, material finish, or bundle type.</li>
+        <li>Per-variant stock quantity.</li>
+        <li>Per-variant price and compare-at price where needed.</li>
+        <li>Per-variant SKU.</li>
+        <li>Per-variant status: active, out of stock, hidden.</li>
+        <li>Per-variant media mapping, especially by color.</li>
+      </ul>
+
+      <p>
+        For apparel, I recommend a matrix UI for size-by-color combinations rather than relying only on a flat row list. Sellers reason about apparel inventory as a matrix. The UI should match that mental model.
+      </p>
+
+      <h3>6.5 Product Detail Page and Add-to-Cart</h3>
+      <p>The buyer-facing PDP should follow these rules:</p>
+      <ul>
+        <li>Color selection changes the gallery to the selected color’s primary media.</li>
+        <li>Size options should be exposed as buttons, not hidden in dropdowns.</li>
+        <li>Unavailable sizes should remain visible but disabled.</li>
+        <li>The selected variant summary should appear near the CTA, for example: <em>Selected: Black / M</em>.</li>
+        <li>The primary CTA should never allow ambiguity about what is being added.</li>
+        <li>The success state should repeat the selected variant.</li>
+      </ul>
+
+      <p>
+        Baymard’s research on size buttons and synchronized variation data strongly supports these decisions. They reduce preventable errors, disappointment, and wasted effort.
+      </p>
+
+      <h3>6.6 Cart</h3>
+      <p>The cart should always show:</p>
+      <ul>
+        <li>Product image tied to the selected variant if available.</li>
+        <li>Selected color.</li>
+        <li>Selected size.</li>
+        <li>Per-item stock constraints.</li>
+        <li>Price and discount logic for the exact selected variant.</li>
+      </ul>
+
+      <p>
+        The current quantity stepper direction is good and aligns with Baymard’s guidance that quantity should use buttons or buttons plus an open text field. However, the cart should improve confidence by surfacing the chosen variant more explicitly and making the image and variant details reflect that choice.
+      </p>
+    </section>
+
+    <section class="page-break">
+      <h2>7. Detailed UX Decisions and Rationale</h2>
+      <h3>7.1 Why Media must include video</h3>
+      <p>
+        Video is no longer an optional luxury for serious apparel merchandising. It is not as universally important as images, but it is important enough to justify direct support in the primary creation flow. Salsify reports that 37% of shoppers consider product videos extremely or very important when deciding to complete a purchase. Baymard also notes that videos can be shared across variations as long as color-specific cutout and angle images are present.
+      </p>
+      <p>
+        The practical implication is simple: the product creation flow should allow the seller to complete the whole customer-facing media package in one place.
+      </p>
+
+      <h3>7.2 Why specifications should come before labels</h3>
+      <p>
+        Specifications help buyers understand the product. Labels help merchants comply with textile obligations. They overlap occasionally, but they serve different jobs. Putting specifications first means the seller is first describing the product in the language the buyer needs. That is the correct merchandising order.
+      </p>
+
+      <h3>7.3 Why labels should be skippable for draft but not for publish</h3>
+      <p>
+        This is the strongest tradeoff in the redesign. A fully mandatory label step will slow sellers down and suppress listing creation. A fully optional label step creates legal and trust risk for apparel. The correct solution is staged enforcement:
+      </p>
+      <ul>
+        <li>Draft creation can skip labels.</li>
+        <li>Published apparel products cannot.</li>
+      </ul>
+
+      <p>
+        This approach respects the seller’s workflow while keeping the business aligned with FTC and EU textile information requirements.
+      </p>
+
+      <h3>7.4 Why print and barcode verification should leave the wizard</h3>
+      <p>
+        Printing and scanning are warehouse-side confidence checks. They are not buyer-facing listing tasks. Their current placement increases task time, creates confusing failure states, and turns a seller publishing flow into an operations flow. These actions should remain available, but not blocking.
+      </p>
+
+      <h3>7.5 Why the selected variant must be repeated in cart</h3>
+      <p>
+        Buyers often use the cart as a confirmation screen. If the cart does not clearly echo the exact selected size and color, the buyer has to mentally reconstruct the decision they just made. That hesitation is unnecessary friction and increases return-to-PDP loops.
+      </p>
+    </section>
+
+    <section>
+      <h2>8. Recommended Final Product Model</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Domain</th>
+            <th>Recommended model</th>
+            <th>Why it matters</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Product core</td>
+            <td>Title, brand, description, category, subcategory, summary, status</td>
+            <td>Required for search, listing quality, PDP clarity</td>
+          </tr>
+          <tr>
+            <td>Buyer-facing specs</td>
+            <td>Structured key-value specs plus optional long-form notes</td>
+            <td>Supports comparison, understanding, and conversion</td>
+          </tr>
+          <tr>
+            <td>Compliance labels</td>
+            <td>Fiber composition, country of origin, transformation, care, warnings</td>
+            <td>Supports legal readiness and buyer trust</td>
+          </tr>
+          <tr>
+            <td>Variants</td>
+            <td>Color, size, stock, price, SKU, status, media mapping</td>
+            <td>Drives PDP selection, add-to-cart, and cart integrity</td>
+          </tr>
+          <tr>
+            <td>Media</td>
+            <td>General images, variant images, product video, ordering, primary media</td>
+            <td>Supports discovery, conversion, and variant confidence</td>
+          </tr>
+          <tr>
+            <td>Operations</td>
+            <td>Base SKU, variant SKU, barcode print status, print logs</td>
+            <td>Supports inventory and fulfillment without blocking listing creation</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>9. Success Metrics</h2>
+      <p>I recommend measuring the redesign with HEART plus funnel metrics.</p>
+
+      <h3>9.1 Happiness</h3>
+      <ul>
+        <li>Seller satisfaction with product creation</li>
+        <li>Buyer confidence that they selected the right variant</li>
+      </ul>
+
+      <h3>9.2 Engagement</h3>
+      <ul>
+        <li>Media completion rate</li>
+        <li>Specification completion rate</li>
+        <li>Variant selection interactions on PDP</li>
+      </ul>
+
+      <h3>9.3 Adoption</h3>
+      <ul>
+        <li>Percentage of new products created using video</li>
+        <li>Percentage of apparel listings with complete compliance data before publish</li>
+        <li>Percentage of products using variant-specific media correctly</li>
+      </ul>
+
+      <h3>9.4 Retention</h3>
+      <ul>
+        <li>Repeat seller usage of the new creation flow</li>
+        <li>Reduction in seller drop-off between first draft and first published product</li>
+      </ul>
+
+      <h3>9.5 Task Success</h3>
+      <ul>
+        <li>Time to create draft</li>
+        <li>Time to publish-ready product</li>
+        <li>Add-to-cart success rate for variant products</li>
+        <li>Cart-to-checkout progression rate</li>
+        <li>Return rate due to inaccurate content</li>
+      </ul>
+
+      <div class="callout">
+        <div class="kicker">Primary Business KPIs</div>
+        <p>
+          The three KPIs I would put in front of the client are:
+        </p>
+        <ol>
+          <li>Draft-to-publish completion rate</li>
+          <li>Variant-product add-to-cart rate</li>
+          <li>Return rate tied to content accuracy or wrong-variant selection</li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>10. Final Recommendations</h2>
+      <ol>
+        <li>Change <strong>Images</strong> to <strong>Media</strong> and include product video in the primary creation flow.</li>
+        <li>Keep front and back views required, and show all blocking media errors in both toast and inline states.</li>
+        <li>Split the current label step into <strong>Specifications</strong> and <strong>Compliance Labels</strong>.</li>
+        <li>Make specifications the default entry point, not label compliance.</li>
+        <li>Allow sellers to skip compliance labels in draft mode, but require them before publishing apparel products.</li>
+        <li>Keep SKU generation in the flow, but move barcode printing and scan verification out of the wizard.</li>
+        <li>Add visible print actions and print status on the product detail page and products list.</li>
+        <li>Upgrade variants into a stronger merchandising model with clearer media mapping and inventory logic.</li>
+        <li>Make size and color explicit on the PDP using exposed controls, not hidden selectors.</li>
+        <li>Repeat the exact selected variant in add-to-cart confirmation and in cart item display.</li>
+      </ol>
+
+      <div class="summary-box">
+        <div class="kicker">Bottom Line</div>
+        <p>
+          The correct redesign is not a small patch to the current wizard. It is a structural separation of <strong>merchandising</strong>, <strong>compliance</strong>, and <strong>operations</strong>, combined with a stronger buyer path from variant understanding to cart confidence. That is the design that will feel right in real life, not just in a demo.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-break">
+      <h2>11. Sources</h2>
+      <ol>
+        <li><a href="https://www.christenseninstitute.org/theory/jobs-to-be-done/">Christensen Institute: Jobs to Be Done Theory</a></li>
+        <li><a href="https://research.google/pubs/measuring-the-user-experience-on-a-large-scale-user-centered-metrics-for-web-applications/">Google Research: Measuring the User Experience on a Large Scale: User-Centered Metrics for Web Applications</a></li>
+        <li><a href="https://www.interaction-design.org/literature/topics/progressive-disclosure">Interaction Design Foundation: Progressive Disclosure</a></li>
+        <li><a href="https://media.nngroup.com/media/articles/attachments/NNg_Jakob%27s_Usability_Heuristic_Summary.pdf">Nielsen Norman Group: Jakob Nielsen’s Usability Heuristic Summary</a></li>
+        <li><a href="https://www.salsify.com/hubfs/2024/Content/Salsify%20Consumer%20Research%20Report%202024.pdf">Salsify 2024 Consumer Research Report</a></li>
+        <li><a href="https://baymard.com/blog/use-buttons-for-size-selection">Baymard: Always Use Buttons for Size Selection</a></li>
+        <li><a href="https://baymard.com/blog/synchronize-product-data-across-variations">Baymard: Data Should Be Synchronized Across Product Variations</a></li>
+        <li><a href="https://baymard.com/blog/current-state-ecommerce-product-page-ux">Baymard: Current State of Ecommerce Product Page UX</a></li>
+        <li><a href="https://baymard.com/blog/product-images-descriptive-text">Baymard: Include Descriptive Text or Graphics for Some Product Images</a></li>
+        <li><a href="https://baymard.com/blog/structure-descriptions-by-highlights">Baymard: Structuring Product Page Descriptions by Highlights</a></li>
+        <li><a href="https://baymard.com/blog/auto-update-users-quantity-changes">Baymard: Use Buttons or Buttons Plus an Open Text Field for Updating Cart Quantity</a></li>
+        <li><a href="https://baymard.com/blog/ecommerce-checkout-usability-report-and-benchmark">Baymard: Reasons for Cart Abandonment</a></li>
+        <li><a href="https://www.ftc.gov/business-guidance/resources/threading-your-way-through-labeling-requirements-under-textile-wool-acts">FTC: Threading Your Way Through the Labeling Requirements Under the Textile and Wool Acts</a></li>
+        <li><a href="https://www.ftc.gov/business-guidance/resources/clothes-captioning-complying-care-labeling-rule">FTC: Clothes Captioning: Complying with the Care Labeling Rule</a></li>
+        <li><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A62017CJ0339">EUR-Lex: Interpretation of textile fibre composition disclosure before online purchase</a></li>
+        <li><a href="https://eur-lex.europa.eu/LexUriServ/LexUriServ.do?uri=CELEX%3A32011R1007%3Aen%3ANOT">EUR-Lex: Regulation (EU) No 1007/2011</a></li>
+      </ol>
+
+      <div class="footer-note">
+        This report was prepared as a client-facing product strategy document by Arinze Obieze. It is written as a decision report and redesign recommendation package for the product creation and commerce funnel.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

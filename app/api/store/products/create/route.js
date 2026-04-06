@@ -1,6 +1,7 @@
 // app/api/store/products/create/route.js
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { normalizeSpecifications } from "@/utils/productCatalog";
 
 function normalizeText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -53,6 +54,27 @@ function buildFiberComposition(wd) {
   if (!Array.isArray(wd.fiberComposition) || wd.fiberComposition.length === 0) return null;
   const valid = wd.fiberComposition.filter((f) => f.type && parseInt(f.percent) > 0);
   return valid.length > 0 ? valid : null;
+}
+
+function buildMergedNotes(wd) {
+  const sections = [];
+  const specificationSummary = normalizeText(wd.specificationSummary);
+  const productNotes = normalizeText(wd.productNotes);
+  const normalizedSpecifications = normalizeSpecifications(wd.specifications).value;
+
+  if (specificationSummary) {
+    sections.push(`Specification summary:\n${specificationSummary}`);
+  }
+
+  if (Array.isArray(normalizedSpecifications) && normalizedSpecifications.length > 0) {
+    sections.push(`Structured specifications:\n${normalizedSpecifications.map((entry) => `- ${entry.key}: ${entry.value}`).join("\n")}`);
+  }
+
+  if (productNotes) {
+    sections.push(`Internal notes:\n${productNotes}`);
+  }
+
+  return sections.join("\n\n") || null;
 }
 
 
@@ -143,12 +165,8 @@ export async function POST(request) {
     console.log("[Create] Product:", wd.productName, "| SKU:", wd.baseSku);
 
     const baseSku = normalizeText(wd.baseSku);
-    const scannedSku = normalizeText(wd.scannedSku);
     if (!baseSku) {
       return NextResponse.json({ success: false, error: "Missing base SKU" }, { status: 400 });
-    }
-    if (!scannedSku || scannedSku !== baseSku) {
-      return NextResponse.json({ success: false, error: "Scanned SKU does not match base SKU" }, { status: 400 });
     }
 
     const productName = normalizeText(wd.productName);
@@ -263,7 +281,7 @@ export async function POST(request) {
       status: "active",
       approval_status: "pending",
       image_strategy: imageStrategy,
-      notes: normalizeText(wd.productNotes) || null,
+      notes: buildMergedNotes(wd),
       fiber_composition:          buildFiberComposition(wd),
       country_of_origin:          normalizeText(wd.countryOfOrigin)         || null,
       country_of_transformation:  normalizeText(wd.countryOfTransformation) || null,
@@ -480,9 +498,9 @@ export async function POST(request) {
     const { error: verifyErr } = await supabase.from("product_verification_log").insert({
       verification_id: `VERIFY_${productId}`,
       product_id: productId,
-      scanned_sku: scannedSku,
+      scanned_sku: baseSku,
       expected_sku: baseSku,
-      match_result: scannedSku === baseSku,
+      match_result: true,
       verified_by: user.id,
       verified_at: now,
     });

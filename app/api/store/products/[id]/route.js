@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
 import { enforceRateLimit } from '@/utils/rateLimit';
-import { normalizeSpecifications } from '@/utils/productCatalog';
+import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
 import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
-const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls, bulk_discount_tiers';
-const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, image_urls, video_urls';
+const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, bulk_discount_tiers, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
+const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
 const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
 
 function toNumber(value) {
@@ -58,25 +58,11 @@ function normalizeMediaArray(value) {
     .filter(Boolean);
 }
 
-export async function PATCH(request, { params }) {
-  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
-  if (!ctx.ok) return ctx.response;
+function canDeleteProduct(product) {
+  return ['draft', 'rejected', 'archived'].includes(String(product?.moderation_status || '').trim().toLowerCase());
+}
 
-  const rateLimit = await enforceRateLimit({
-    request,
-    scope: 'store_products_write',
-    identifier: ctx.user.id,
-    limit: 60,
-    windowSeconds: 60,
-  });
-
-  if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-  }
-
-  const { id } = await params;
-  const body = await request.json().catch(() => ({}));
-
+async function loadProduct(ctx, id) {
   let { data: product, error: productError } = await ctx.adminClient
     .from('products')
     .select(PRODUCT_DETAIL_SELECT)
@@ -97,6 +83,84 @@ export async function PATCH(request, { params }) {
       : fallbackResult.data;
     productError = fallbackResult.error;
   }
+
+  return { product, productError };
+}
+
+async function buildDuplicateSlug(adminClient, storeId, sourceSlug) {
+  const baseSlug = sanitizeSlug(sourceSlug) || 'product-copy';
+  const copyBase = `${baseSlug}-copy`;
+
+  const { data, error } = await adminClient
+    .from('products')
+    .select('slug')
+    .eq('store_id', storeId)
+    .ilike('slug', `${copyBase}%`);
+
+  if (error) {
+    throw new Error(error.message || 'Failed to prepare duplicate product slug');
+  }
+
+  const usedSlugs = new Set((data || []).map((row) => String(row.slug || '').trim().toLowerCase()));
+  if (!usedSlugs.has(copyBase)) return copyBase;
+
+  let suffix = 2;
+  while (usedSlugs.has(`${copyBase}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${copyBase}-${suffix}`;
+}
+
+export async function GET(request, { params }) {
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
+  if (!ctx.ok) return ctx.response;
+
+  const rateLimit = await enforceRateLimit({
+    request,
+    scope: 'store_products_read',
+    identifier: ctx.user.id,
+    limit: 120,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  const { id } = await params;
+  const { product, productError } = await loadProduct(ctx, id);
+
+  if (productError) {
+    return NextResponse.json({ error: productError.message }, { status: 500 });
+  }
+
+  if (!product) {
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true, data: product });
+}
+
+export async function PATCH(request, { params }) {
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
+  if (!ctx.ok) return ctx.response;
+
+  const rateLimit = await enforceRateLimit({
+    request,
+    scope: 'store_products_write',
+    identifier: ctx.user.id,
+    limit: 60,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  const { id } = await params;
+  const body = await request.json().catch(() => ({}));
+
+  const { product, productError } = await loadProduct(ctx, id);
 
   if (productError) {
     return NextResponse.json({ error: productError.message }, { status: 500 });
@@ -166,18 +230,28 @@ export async function PATCH(request, { params }) {
     updates.bulk_discount_tiers = bulkDiscountResult.value;
   }
 
-  if (Object.keys(updates).length === 0 && !body?.submit_for_review && !body?.archive) {
+  if (Object.keys(updates).length === 0 && !body?.submit_for_review && body?.archive === undefined) {
     return NextResponse.json({ error: 'No valid updates provided' }, { status: 400 });
   }
 
   const nowIso = new Date().toISOString();
 
-  if (body?.archive) {
+  if (body?.archive !== undefined) {
     if (ctx.membership.role === STORE_ROLES.STAFF) {
       return NextResponse.json({ error: 'Staff cannot archive products' }, { status: 403 });
     }
-    updates.moderation_status = 'archived';
-    updates.is_active = false;
+
+    if (body.archive) {
+      updates.moderation_status = 'archived';
+      updates.is_active = false;
+    } else if (product.moderation_status === 'archived') {
+      updates.moderation_status = 'draft';
+      updates.is_active = false;
+      updates.reviewed_at = null;
+      updates.reviewed_by = null;
+      updates.rejection_reason = null;
+      updates.published_at = null;
+    }
   }
 
   if (body?.submit_for_review) {
@@ -186,6 +260,7 @@ export async function PATCH(request, { params }) {
     updates.reviewed_at = null;
     updates.reviewed_by = null;
     updates.rejection_reason = null;
+    updates.published_at = null;
     updates.is_active = false;
   } else if (Object.keys(updates).length > 0 && product.moderation_status === 'approved') {
     // Approved product changed by store should require fresh review.
@@ -194,6 +269,7 @@ export async function PATCH(request, { params }) {
     updates.reviewed_at = null;
     updates.reviewed_by = null;
     updates.rejection_reason = null;
+    updates.published_at = null;
     updates.is_active = false;
   }
 
@@ -226,4 +302,154 @@ export async function PATCH(request, { params }) {
   }
 
   return NextResponse.json({ success: true, data });
+}
+
+export async function POST(request, { params }) {
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
+  if (!ctx.ok) return ctx.response;
+
+  const rateLimit = await enforceRateLimit({
+    request,
+    scope: 'store_products_write',
+    identifier: ctx.user.id,
+    limit: 60,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  const { id } = await params;
+  const body = await request.json().catch(() => ({}));
+  const action = String(body?.action || '').trim().toLowerCase();
+
+  if (action !== 'duplicate') {
+    return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
+  }
+
+  const { product, productError } = await loadProduct(ctx, id);
+
+  if (productError) {
+    return NextResponse.json({ error: productError.message }, { status: 500 });
+  }
+
+  if (!product) {
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  }
+
+  const { data: store, error: storeError } = await ctx.adminClient
+    .from('stores')
+    .select('id, slug, name')
+    .eq('id', ctx.membership.store_id)
+    .maybeSingle();
+
+  if (storeError) {
+    return NextResponse.json({ error: storeError.message }, { status: 500 });
+  }
+
+  if (!store) {
+    return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+  }
+
+  try {
+    const duplicateSlug = await buildDuplicateSlug(ctx.adminClient, ctx.membership.store_id, product.slug);
+    const duplicateName = `${String(product.name || '').trim() || 'Untitled product'} Copy`;
+    const duplicateSku = await generateProductSku(ctx.adminClient, {
+      storeId: ctx.membership.store_id,
+      storeSlug: store.slug,
+      storeName: store.name,
+      productSlug: duplicateSlug,
+      productName: duplicateName,
+    });
+
+    const insertPayload = {
+      store_id: ctx.membership.store_id,
+      name: duplicateName,
+      slug: duplicateSlug,
+      sku: duplicateSku,
+      description: product.description || '',
+      price: product.price,
+      discount_price: product.discount_price,
+      stock_quantity: product.stock_quantity,
+      image_urls: Array.isArray(product.image_urls) ? product.image_urls : [],
+      video_urls: Array.isArray(product.video_urls) ? product.video_urls : [],
+      specifications: product.specifications || null,
+      bulk_discount_tiers: product.bulk_discount_tiers || null,
+      moderation_status: 'draft',
+      is_active: false,
+      submitted_at: null,
+      reviewed_at: null,
+      reviewed_by: null,
+      rejection_reason: null,
+      published_at: null,
+    };
+
+    const { data, error } = await ctx.adminClient
+      .from('products')
+      .insert(insertPayload)
+      .select('id, store_id, name, slug, sku, moderation_status, is_active, submitted_at, reviewed_at, rejection_reason, updated_at')
+      .single();
+
+    if (error) {
+      if (isMissingBulkDiscountColumnError(error)) {
+        return NextResponse.json({ error: BULK_DISCOUNT_MIGRATION_HINT }, { status: 409 });
+      }
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, data }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json({ error: error.message || 'Failed to duplicate product' }, { status: 400 });
+  }
+}
+
+export async function DELETE(request, { params }) {
+  const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
+  if (!ctx.ok) return ctx.response;
+
+  const rateLimit = await enforceRateLimit({
+    request,
+    scope: 'store_products_write',
+    identifier: ctx.user.id,
+    limit: 60,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
+  if (ctx.membership.role === STORE_ROLES.STAFF) {
+    return NextResponse.json({ error: 'Staff cannot delete products' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const { product, productError } = await loadProduct(ctx, id);
+
+  if (productError) {
+    return NextResponse.json({ error: productError.message }, { status: 500 });
+  }
+
+  if (!product) {
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  }
+
+  if (!canDeleteProduct(product)) {
+    return NextResponse.json({
+      error: 'Only draft, rejected, or archived products can be deleted. Archive approved or pending items instead.',
+    }, { status: 400 });
+  }
+
+  const { error } = await ctx.adminClient
+    .from('products')
+    .delete()
+    .eq('id', product.id)
+    .eq('store_id', ctx.membership.store_id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message || 'Failed to delete product' }, { status: 400 });
+  }
+
+  return NextResponse.json({ success: true, data: { id: product.id } });
 }
