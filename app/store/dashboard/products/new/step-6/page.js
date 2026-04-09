@@ -1,4 +1,4 @@
-// app/store/dashboard/products/new/step-5/page.js
+// app/store/dashboard/products/new/step-6/page.js
 "use client";
 import React, { useEffect, useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";

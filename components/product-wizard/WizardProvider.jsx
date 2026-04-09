@@ -61,6 +61,8 @@ function wizardReducer(state, action) {
       return { ...state, scannedSku: action.payload };
     case "SET_VERIFIED":
       return { ...state, isVerified: true };
+    case "SET_LABEL_INFO":
+      return { ...state, ...action.payload };
     case "HYDRATE":
       return { ...INITIAL_WIZARD_STATE, ...action.payload };
     case "SYNC_DRAFT_IMAGES":
@@ -72,16 +74,12 @@ function wizardReducer(state, action) {
           Object.entries(action.payload || {}).map(([key, value]) => [key, value.publicUrl])
         ),
       };
-        case "SET_LABEL_INFO":
-      return { ...state, ...action.payload };ç
     case "RESET":
       return { ...INITIAL_WIZARD_STATE };
     default:
       return state;
   }
 }
-
-
 
 export function WizardProvider({ children, storeData }) {
   const router = useRouter();
@@ -97,8 +95,6 @@ export function WizardProvider({ children, storeData }) {
   const saveTimeoutRef = useRef(null);
   const hasLocalChangesRef = useRef(false);
 
-  // storeData comes from the server layout via requireStorePage()
-  // It's the same store object your StoreShell uses
   const storeContext = useMemo(
     () => storeData
       ? { id: storeData.id, slug: storeData.slug || storeData.name, name: storeData.name }
@@ -106,16 +102,13 @@ export function WizardProvider({ children, storeData }) {
     [storeData]
   );
 
-  const loading = false; // store is already loaded server-side, no async wait
+  const loading = false;
 
-  // Current step from URL
-   const currentStep = (() => {
+  const currentStep = (() => {
     const match = pathname?.match(/step-(\d+)/);
     return match ? parseInt(match[1]) : 1;
   })();
 
-  // Build the base path for wizard routes
-  // Handles both /store/dashboard/products/new and /store/[id]/dashboard/products/new
   const basePath = (() => {
     if (!pathname) return "/store/dashboard/products/new";
     const idx = pathname.indexOf("/products/new");
@@ -138,11 +131,10 @@ export function WizardProvider({ children, storeData }) {
   const goNext = useCallback(() => {
     if (currentStep < 8) goToStep(currentStep + 1);
   }, [currentStep, goToStep]);
- 
+
   const goBack = useCallback(() => {
     if (currentStep > 1) goToStep(currentStep - 1);
   }, [currentStep, goToStep]);
-
 
   const exitWizard = useCallback(() => {
     void fetch("/api/store/products/draft", { method: "DELETE" }).catch(() => {});
@@ -232,9 +224,7 @@ export function WizardProvider({ children, storeData }) {
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [storeContext]);
 
   useEffect(() => {

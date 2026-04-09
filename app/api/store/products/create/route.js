@@ -1,4 +1,5 @@
 // app/api/store/products/create/route.js
+import { randomUUID } from "crypto";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -209,20 +210,15 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // 3. Validate store — try owner_id then user_id then just id (RLS protects)
-    let store = null;
-    for (const col of ["owner_id", "user_id"]) {
-      const { data } = await supabase
-        .from("stores").select("id, slug, name").eq("id", wd.storeId).eq(col, user.id).maybeSingle();
-      if (data) { store = data; break; }
-    }
+    // 3. Validate store — stores.user_id is the owner column (no owner_id column exists)
+    const { data: store } = await supabase
+      .from("stores")
+      .select("id, slug, name")
+      .eq("id", wd.storeId)
+      .eq("user_id", user.id)
+      .maybeSingle();
     if (!store) {
-      const { data } = await supabase
-        .from("stores").select("id, slug, name").eq("id", wd.storeId).maybeSingle();
-      store = data;
-    }
-    if (!store) {
-      return NextResponse.json({ success: false, error: "Store not found" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "Store not found or access denied" }, { status: 403 });
     }
     console.log("[Create] Store:", store.name);
 
@@ -253,7 +249,6 @@ export async function POST(request) {
       description,
       category,
       subcategory,
-      brand: normalizeText(wd.brand) || null,
       material,
       gender: normalizeText(wd.gender) || null,
       age_group: normalizeText(wd.ageGroup) || null,
@@ -311,8 +306,8 @@ export async function POST(request) {
     }
 
     // 8. Upload images to Supabase Storage + save to product_images table
-    let imgCount = 0;
-    const imgErrors = [];
+    const ALLOWED_IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "webp"]);
+    const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
 
     const imageEntries = [];
     for (const [key, manifest] of Object.entries(persistedImages)) {
@@ -324,39 +319,34 @@ export async function POST(request) {
       imageEntries.push({ key, kind: "file", file: val });
     }
 
-    for (const entry of imageEntries) {
-      const { key } = entry;
+    const categorySafe = (wd.category || "general").toLowerCase().replace(/\s/g, "_");
 
-      try {
-        // Parse the field key to determine image type and variant color
-        const parts = key.split("_");
-        let imgType = "front";
-        let imgStrategy = "general";
-        let varColor = null;
+    // Upload all images in parallel
+    const imageResults = await Promise.allSettled(
+      imageEntries.map(async (entry, index) => {
+        const { key } = entry;
 
-        if (key.startsWith("mixed_variant_")) {
-          imgStrategy = "mixed_variant";
-          varColor = parts[2];
-          imgType = parts.slice(3).join("_");
-        } else if (key.startsWith("mixed_general_")) {
-          imgStrategy = "mixed_general";
-          imgType = parts.slice(2).join("_");
-        } else if (key.startsWith("variant_")) {
-          imgStrategy = "variant";
-          varColor = parts[1];
-          imgType = parts.slice(2).join("_");
-        } else if (key.startsWith("general_")) {
-          imgStrategy = "general";
-          imgType = parts.slice(1).join("_");
-        }
-
-        // Build storage path matching R code pattern
-        const categorySafe = (wd.category || "general").toLowerCase().replace(/\s/g, "_");
-        const imageId = `IMG_${Date.now()}_${imgCount}`;
         const ext = entry.kind === "file"
           ? entry.file.name.split(".").pop()?.toLowerCase() || "jpg"
           : entry.manifest.originalFilename?.split(".").pop()?.toLowerCase() || "jpg";
+        if (!ALLOWED_IMAGE_EXTS.has(ext)) throw new Error(`${key}: unsupported file type .${ext}`);
+        if (entry.kind === "file" && entry.file.size > MAX_IMAGE_BYTES) {
+          throw new Error(`${key}: file exceeds 10 MB limit`);
+        }
 
+        const parts = key.split("_");
+        let imgType = "front", imgStrategy = "general", varColor = null;
+        if (key.startsWith("mixed_variant_")) {
+          imgStrategy = "mixed_variant"; varColor = parts[2]; imgType = parts.slice(3).join("_");
+        } else if (key.startsWith("mixed_general_")) {
+          imgStrategy = "mixed_general"; imgType = parts.slice(2).join("_");
+        } else if (key.startsWith("variant_")) {
+          imgStrategy = "variant"; varColor = parts[1]; imgType = parts.slice(2).join("_");
+        } else if (key.startsWith("general_")) {
+          imgStrategy = "general"; imgType = parts.slice(1).join("_");
+        }
+
+        const imageId = `IMG_${randomUUID().replace(/-/g, "").slice(0, 16).toUpperCase()}`;
         let storagePath;
         if (varColor) {
           const colorSafe = varColor.replace(/\s/g, "_");
@@ -365,79 +355,56 @@ export async function POST(request) {
           storagePath = `${store.id}/${categorySafe}/${productId}/general/${imgType}_${imageId}.${ext}`;
         }
 
-        console.log("[Create] Uploading:", key, "→", storagePath);
-
         if (entry.kind === "file") {
-          const arrayBuffer = await entry.file.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-
+          const buffer = Buffer.from(await entry.file.arrayBuffer());
           const { error: upErr } = await supabase.storage
             .from("product-images")
-            .upload(storagePath, buffer, {
-              contentType: entry.file.type || "image/jpeg",
-              upsert: true,
-            });
-
-          if (upErr) {
-            console.error("[Create] Upload failed:", key, upErr.message);
-            imgErrors.push(`${key}: ${upErr.message}`);
-            continue;
-          }
+            .upload(storagePath, buffer, { contentType: entry.file.type || "image/jpeg", upsert: true });
+          if (upErr) throw new Error(`${key}: ${upErr.message}`);
         } else {
           const { error: copyErr } = await supabase.storage
             .from("product-images")
             .copy(entry.manifest.storagePath, storagePath);
-
-          if (copyErr) {
-            console.error("[Create] Draft image copy failed:", key, copyErr.message);
-            imgErrors.push(`${key}: ${copyErr.message}`);
-            continue;
-          }
+          if (copyErr) throw new Error(`${key}: ${copyErr.message}`);
         }
-        uploadedStoragePaths.push(storagePath);
 
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(storagePath);
-        const publicUrl = urlData?.publicUrl || null;
+        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(storagePath);
 
-        console.log("[Create] Uploaded OK:", key);
+        return {
+          storagePath,
+          record: {
+            image_id: imageId,
+            product_id: productId,
+            image_path: storagePath,
+            original_filename: entry.kind === "file" ? entry.file.name : entry.manifest.originalFilename,
+            file_size: entry.kind === "file" ? entry.file.size : entry.manifest.sizeBytes,
+            mime_type: entry.kind === "file" ? (entry.file.type || "image/jpeg") : (entry.manifest.mimeType || "image/jpeg"),
+            image_type: imgType,
+            image_strategy: imgStrategy,
+            variant_color: varColor || null,
+            image_order: index + 1,
+            is_primary: index === 0,
+            supabase_image_id: imageId,
+            supabase_url: urlData?.publicUrl || null,
+            supabase_storage_path: storagePath,
+            supabase_upload_status: "uploaded",
+            supabase_uploaded_at: now,
+            is_active: true,
+            uploaded_at: now,
+          },
+        };
+      })
+    );
 
-        // Save to product_images table — column names from R code
-        const { error: imgDbErr } = await supabase.from("product_images").insert({
-          image_id: imageId,
-          product_id: productId,
-          image_path: storagePath,
-          original_filename: entry.kind === "file" ? entry.file.name : entry.manifest.originalFilename,
-          file_size: entry.kind === "file" ? entry.file.size : entry.manifest.sizeBytes,
-          mime_type: entry.kind === "file" ? (entry.file.type || "image/jpeg") : (entry.manifest.mimeType || "image/jpeg"),
-          image_type: imgType,
-          image_strategy: imgStrategy,
-          variant_color: varColor || null,
-          image_order: imgCount + 1,
-          is_primary: imgCount === 0,
-          supabase_image_id: imageId,
-          supabase_url: publicUrl,
-          supabase_storage_path: storagePath,
-          supabase_upload_status: "uploaded",
-          supabase_uploaded_at: now,
-          is_active: true,
-          uploaded_at: now,
-        });
+    const imgErrors = imageResults
+      .filter(r => r.status === "rejected")
+      .map(r => r.reason?.message || String(r.reason));
+    const imgSuccesses = imageResults
+      .filter(r => r.status === "fulfilled")
+      .map(r => r.value);
 
-        if (imgDbErr) {
-          console.error("[Create] Image DB failed:", key, imgDbErr.message);
-          imgErrors.push(`${key} (db): ${imgDbErr.message}`);
-        } else {
-          imgCount++;
-        }
-      } catch (e) {
-        console.error("[Create] Image error:", key, e.message);
-        imgErrors.push(`${key}: ${e.message}`);
-      }
-    }
-    console.log("[Create] Images:", imgCount, "saved,", imgErrors.length, "errors");
+    uploadedStoragePaths = imgSuccesses.map(r => r.storagePath);
+
     if (imgErrors.length > 0) {
       await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
       productId = null;
@@ -446,6 +413,18 @@ export async function POST(request) {
         error: `Image upload failed: ${imgErrors.join("; ")}`,
       }, { status: 500 });
     }
+
+    // Batch-insert all image records in one round-trip
+    if (imgSuccesses.length > 0) {
+      const { error: imgDbErr } = await supabase.from("product_images").insert(imgSuccesses.map(r => r.record));
+      if (imgDbErr) {
+        console.error("[Create] Image DB batch insert failed:", imgDbErr.message);
+        await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+        productId = null;
+        return NextResponse.json({ success: false, error: `Image records: ${imgDbErr.message}` }, { status: 500 });
+      }
+    }
+    console.log("[Create] Images:", imgSuccesses.length, "saved");
 
     // 9. Variant notes
     if (wd.variantNotes && Object.keys(wd.variantNotes).length > 0) {
@@ -502,7 +481,7 @@ export async function POST(request) {
       success: true,
       product: { id: productId, base_sku: baseSku, name: productName, status: "active" },
       variants_created: varRecs.length,
-      images_uploaded: imgCount,
+      images_uploaded: imgSuccesses.length,
     });
 
   } catch (err) {

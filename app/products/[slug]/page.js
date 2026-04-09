@@ -14,6 +14,7 @@ import RecentlyViewedProducts from '@/components/RecentlyViewedProducts';
 import RelatedProducts from '@/components/RelatedProducts';
 import { DEFAULT_RETURN_POLICY } from '@/utils/returnPolicy';
 import { calculateBulkPricing, getBulkDiscountTiers } from '@/utils/bulkPricing';
+import { logProductEvent } from '@/utils/logProductEvent';
 
 // ─────────────────────────────────────────────────────────────
 // THEME
@@ -519,6 +520,7 @@ export default function ProductPage({ params }) {
   const [cartHov, setCartHov]       = useState(false);
   const [visitHov, setVisitHov]     = useState(false);
   const [backHov, setBackHov]       = useState(false);
+  const hasLoggedView = useRef(false);
 
   const { slug } = React.use(params);
   const supabase = createClient();
@@ -531,6 +533,8 @@ export default function ProductPage({ params }) {
 
   useEffect(() => {
     if (!slug) return;
+
+    
     (async () => {
       try {
         const [pRes, vRes] = await Promise.all([
@@ -545,6 +549,18 @@ export default function ProductPage({ params }) {
         setProduct(pData);
         setReturnPolicy(pData.return_policy || DEFAULT_RETURN_POLICY);
         setVariants(fetchedVariants);
+
+        // Log product view
+  // Guard: only log view once per product per page load
+      if (!hasLoggedView.current) {
+        hasLoggedView.current = true
+        logProductEvent({
+          productId: pData.id,
+          eventType: 'view',
+          source:    'product_page',
+          metadata:  { referrer: document.referrer || null },
+        })
+      }
 
         try {
           const views = JSON.parse(localStorage.getItem('recently_viewed_products')) || [];
@@ -619,20 +635,37 @@ export default function ProductPage({ params }) {
     }
   };
 
-  const handleAddToCart = () => {
-    if (!canAddToCart) return;
-    addToCart({
-      ...product,
-      variant_id:    selectedVariant?.id || null,
-      stock_quantity: effectiveStock,
-      selectedSize:  selectedVariant?.size  || selectedSize,
-      selectedColor: selectedVariant?.color || selectedColor,
-      quantity,
-    });
-    setAddedAnim(true);
-    showToast('Added to cart!');
-    setTimeout(() => setAddedAnim(false), 1800);
-  };
+const handleAddToCart = () => {
+  if (!canAddToCart) return
+
+  // ── Existing cart logic (unchanged) ──
+  addToCart({
+    ...product,
+    variant_id:     selectedVariant?.id || null,
+    stock_quantity: effectiveStock,
+    selectedSize:   selectedVariant?.size  || selectedSize,
+    selectedColor:  selectedVariant?.color || selectedColor,
+    quantity,
+  })
+  setAddedAnim(true)
+  showToast('Added to cart!')
+  setTimeout(() => setAddedAnim(false), 1800)
+
+  // ── Fire event log (non-blocking) ──
+  logProductEvent({
+    productId: product.id,
+    eventType: 'cart_add',
+    source:    'product_page',
+    metadata: {
+      variant_id:    selectedVariant?.id    ?? null,
+      size:          selectedVariant?.size  || selectedSize  || null,
+      color:         selectedVariant?.color || selectedColor || null,
+      quantity:      quantity,
+      unit_price:    currentPrice,
+      has_discount:  !!product.discount_price,
+    },
+  })
+};
 
   const handleReviewAdded = (rev) => {
     setProduct(prev => ({ ...prev, reviews: [rev, ...(prev.reviews || [])] }));

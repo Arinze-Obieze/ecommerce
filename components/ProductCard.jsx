@@ -4,18 +4,16 @@ import Link from 'next/link';
 import { FiShoppingCart, FiTrendingUp, FiAward, FiCheck, FiX } from 'react-icons/fi';
 import { useCart } from '@/contexts/CartContext';
 import { trackAnalyticsEvent } from '@/utils/analytics';
+import { logProductEvent } from '@/utils/logProductEvent';
 
 // ============================================================
-// 🎨 THEME
+// THEME
 // ============================================================
 const THEME = {
-  // Card
   cardBg:           "#FFFFFF",
   cardBorder:       "#EFEFEF",
   cardShadow:       "0 1px 3px rgba(0,0,0,0.06)",
   cardHoverShadow:  "0 4px 16px rgba(0,0,0,0.08)",
-
-  // Text
   categoryText:     "#AAAAAA",
   nameText:         "#111111",
   priceText:        "#111111",
@@ -23,8 +21,6 @@ const THEME = {
   storeText:        "#888888",
   storeHover:       "#444444",
   metaText:         "#999999",
-
-  // Badges
   newBg:            "#111111",
   newText:          "#FFFFFF",
   saleBg:           "#E53935",
@@ -32,29 +28,20 @@ const THEME = {
   trendingBg:       "#FFF7ED",
   trendingText:     "#EA580C",
   trendingBorder:   "#FED7AA",
-
-  // Stats
   statsBg:          "#F8F8F8",
   statsIcon:        "#00B86B",
   rankBg:           "#EDFAF3",
   rankText:         "#0A3D2E",
   rankBorder:       "#A8DFC4",
-
-  // Cart button — ZOVA Green
   cartBg:           "#00B86B",
   cartHoverBg:      "#0F7A4F",
   cartText:         "#FFFFFF",
   cartSuccessBg:    "#0A3D2E",
-
-  // Quick view button (on image)
   quickViewBg:      "#FFFFFF",
   quickViewText:    "#111111",
   quickViewHover:   "#F5F5F5",
-
-  // Skeleton
   skeletonBg:       "#F4F4F4",
 };
-// ============================================================
 
 const QUICK_VIEW_DESCRIPTION_LIMIT = 180;
 
@@ -93,19 +80,29 @@ function TrendingBadge({ velocity }) {
 /**
  * ProductCard
  *
- * Props — existing:
- *   product.name, product.slug, product.price, product.discount_price,
- *   product.image_urls[], product.is_featured, product.categories[],
- *   product.stores { name, slug, id }
+ * Existing props:
+ *   product.id, product.name, product.slug, product.price,
+ *   product.discount_price, product.image_urls[], product.is_featured,
+ *   product.categories[], product.stores { name, slug, id },
+ *   product.description, product.stock_quantity
  *
- * Props — NEW (backend to wire up):
- *   product.is_trending       {boolean}  — is this product trending?
- *   product.trending_velocity {string}   — e.g. "+42% this week"
- *   product.total_sales       {number}   — total units sold
- *   product.category_rank     {number}   — rank within selected category
- *   product.store_is_trending {boolean}  — whether the store is trending
+ * Ranking signal props (from product_scores via API):
+ *   product.is_trending       {boolean}
+ *   product.trending_velocity {string}   e.g. "+42% this week"
+ *   product.total_sales       {number}
+ *   product.category_rank     {number}
+ *   product.store_is_trending {boolean}
+ *
+ * Event tracking props (NEW — passed by the parent section):
+ *   source   {string}  Which surface rendered this card.
+ *                      'homepage' | 'new_arrivals' | 'best_sellers' |
+ *                      'trending' | 'search' | 'category' | 'all_products'
+ *                      Defaults to 'unknown' so it's always safe to omit.
+ *
+ *   position {number}  1-based slot index within the displayed list.
+ *                      Useful for conversion-by-position analysis.
  */
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, source = 'unknown', position = null }) => {
   const { addToCart } = useCart();
   const [cartState, setCartState] = useState('idle');
   const [showQuickView, setShowQuickView] = useState(false);
@@ -116,47 +113,146 @@ const ProductCard = ({ product }) => {
     : null;
 
   const salesFormatted = formatSales(product.total_sales);
-  const description = String(product.description || '').trim();
+  const description    = String(product.description || '').trim();
   const hasLongDescription = description.length > QUICK_VIEW_DESCRIPTION_LIMIT;
   const quickViewDescription = hasLongDescription && !isQuickViewDescriptionExpanded
     ? `${description.slice(0, QUICK_VIEW_DESCRIPTION_LIMIT).trimEnd()}...`
     : description;
 
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(product);
-    setCartState('added');
-    setTimeout(() => setCartState('idle'), 2000);
-  };
+  // ── Shared event metadata ────────────────────────────────────────────────
+  // Built once here so every event from this card instance is consistent.
+  const sharedMeta = {
+    ...(position !== null && { position }),
+    category:     product.categories?.[0]?.slug
+               || product.categories?.[0]?.name
+               || null,
+    price:        Number(product.discount_price || product.price || 0),
+    has_discount: !!product.discount_price,
+    is_trending:  !!product.is_trending,
+    store_id:     product.stores?.id || product.store_id || null,
+  }
 
+  // ── Event handlers ───────────────────────────────────────────────────────
+
+  /**
+   * Card image / product name click
+   * Fires 'click' — user navigated to PDP from this card.
+   * Distinct from 'view' which fires when the PDP itself loads.
+   */
   const handleProductClick = () => {
+    // Keep existing analytics call untouched
     trackAnalyticsEvent('product_card_click', {
-      product_id: product.id,
+      product_id:   product.id,
       product_name: product.name,
-      store_id: product.store_id || null,
-      price: Number(product.discount_price || product.price || 0),
-      category: product.categories?.[0]?.slug || product.categories?.[0]?.name || null,
-    });
-  };
+      store_id:     sharedMeta.store_id,
+      price:        sharedMeta.price,
+      category:     sharedMeta.category,
+    })
 
+    // Ranking engine event — non-blocking, fire and forget
+    logProductEvent({
+      productId: product.id,
+      eventType: 'click',
+      source,
+      metadata:  sharedMeta,
+    })
+  }
+
+  /**
+   * Add to cart — card footer button
+   * This fires from the card on the homepage, new arrivals,
+   * best sellers, all products, etc.
+   */
+  const handleAddToCart = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    // Existing cart logic — untouched
+    addToCart(product)
+    setCartState('added')
+    setTimeout(() => setCartState('idle'), 2000)
+
+    // Ranking engine event
+    logProductEvent({
+      productId: product.id,
+      eventType: 'cart_add',
+      source,                          // e.g. 'new_arrivals', 'homepage', 'all_products'
+      metadata: {
+        ...sharedMeta,
+        quantity:    1,                // card Add button always adds 1
+        via:         'card_button',    // distinguish from PDP add-to-cart
+      },
+    })
+  }
+
+  /**
+   * Add to cart from the Quick View modal CTA button.
+   * Source stays the same (where the card was rendered),
+   * but 'via' changes to 'quick_view' so you can analyse
+   * whether quick view actually converts.
+   */
+  const handleQuickViewAddToCart = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    addToCart(product)
+    setCartState('added')
+    setShowQuickView(false)
+    setTimeout(() => setCartState('idle'), 2000)
+
+    logProductEvent({
+      productId: product.id,
+      eventType: 'cart_add',
+      source,
+      metadata: {
+        ...sharedMeta,
+        quantity: 1,
+        via:      'quick_view',        // came via quick view modal
+      },
+    })
+  }
+
+  /**
+   * Quick View open — fire a 'view' event so the product
+   * gets credit for the impression even if the user doesn't
+   * navigate to the PDP.
+   */
+  const handleOpenQuickView = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsQuickViewDescriptionExpanded(false)
+    setShowQuickView(true)
+
+    logProductEvent({
+      productId: product.id,
+      eventType: 'view',
+      source:    'quick_view',
+      metadata:  sharedMeta,
+    })
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <>
       {/* ── Card ── */}
       <div
         className="group h-full flex flex-col bg-white transition-shadow duration-200"
         style={{
-          border: `1px solid ${THEME.cardBorder}`,
-          boxShadow: THEME.cardShadow,
+          border:       `1px solid ${THEME.cardBorder}`,
+          boxShadow:    THEME.cardShadow,
           borderRadius: '12px',
-          overflow: 'hidden',
+          overflow:     'hidden',
         }}
         onMouseEnter={(e) => (e.currentTarget.style.boxShadow = THEME.cardHoverShadow)}
         onMouseLeave={(e) => (e.currentTarget.style.boxShadow = THEME.cardShadow)}
       >
 
         {/* ── Image ── */}
-        <Link href={`/products/${product.slug}`} className="relative block shrink-0" onClick={handleProductClick}>
+        <Link
+          href={`/products/${product.slug}`}
+          className="relative block shrink-0"
+          onClick={handleProductClick}
+        >
           <div className="aspect-[3/4] overflow-hidden relative" style={{ backgroundColor: THEME.skeletonBg }}>
             <img
               src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
@@ -169,12 +265,7 @@ const ProductCard = ({ product }) => {
             <div className="absolute inset-0 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsQuickViewDescriptionExpanded(false);
-                  setShowQuickView(true);
-                }}
+                onClick={handleOpenQuickView}
                 className="text-xs font-semibold px-5 py-2 rounded-full shadow-lg transition-colors"
                 style={{ backgroundColor: THEME.quickViewBg, color: THEME.quickViewText, border: '1px solid #E8E8E8' }}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.quickViewHover)}
@@ -226,6 +317,7 @@ const ProductCard = ({ product }) => {
             {product.categories?.[0]?.name || 'Collection'}
           </p>
 
+          {/* Product name click — also a 'click' event */}
           <Link href={`/products/${product.slug}`} onClick={handleProductClick}>
             <h3 className="text-sm font-medium leading-snug line-clamp-2 hover:underline" style={{ color: THEME.nameText }}>
               {product.name}
@@ -245,7 +337,7 @@ const ProductCard = ({ product }) => {
 
           {(product.is_trending || product.category_rank) && (
             <div className="flex flex-wrap gap-1">
-              {product.is_trending && <TrendingBadge velocity={product.trending_velocity} />}
+              {product.is_trending  && <TrendingBadge velocity={product.trending_velocity} />}
               {product.category_rank && <RankBadge rank={product.category_rank} />}
             </div>
           )}
@@ -281,7 +373,9 @@ const ProductCard = ({ product }) => {
                   onMouseEnter={(e) => (e.currentTarget.style.color = THEME.storeHover)}
                   onMouseLeave={(e) => (e.currentTarget.style.color = THEME.storeText)}
                 >
-                  {product.store_is_trending && <span className="mr-1" style={{ color: THEME.trendingText }}>●</span>}
+                  {product.store_is_trending && (
+                    <span className="mr-1" style={{ color: THEME.trendingText }}>●</span>
+                  )}
                   {product.stores.name}
                 </span>
               </Link>
@@ -289,6 +383,7 @@ const ProductCard = ({ product }) => {
               <div className="flex-1" />
             )}
 
+            {/* Card Add button — fires cart_add with source + via:'card_button' */}
             <button
               type="button"
               onClick={handleAddToCart}
@@ -297,8 +392,8 @@ const ProductCard = ({ product }) => {
                 backgroundColor: cartState === 'added' ? THEME.cartSuccessBg : THEME.cartBg,
                 color: THEME.cartText,
               }}
-              onMouseEnter={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartHoverBg; }}
-              onMouseLeave={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartBg; }}
+              onMouseEnter={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartHoverBg }}
+              onMouseLeave={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartBg }}
             >
               {cartState === 'added'
                 ? <><FiCheck className="w-3.5 h-3.5" /><span className="hidden sm:inline">Added</span></>
@@ -368,7 +463,10 @@ const ProductCard = ({ product }) => {
                     </span>
                   )}
                   {discountPercent && (
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-sm" style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}>
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-sm"
+                      style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}
+                    >
                       -{discountPercent}%
                     </span>
                   )}
@@ -376,7 +474,7 @@ const ProductCard = ({ product }) => {
 
                 {(product.is_trending || product.category_rank) && (
                   <div className="flex flex-wrap gap-1.5">
-                    {product.is_trending && <TrendingBadge velocity={product.trending_velocity} />}
+                    {product.is_trending   && <TrendingBadge velocity={product.trending_velocity} />}
                     {product.category_rank && <RankBadge rank={product.category_rank} />}
                   </div>
                 )}
@@ -389,7 +487,10 @@ const ProductCard = ({ product }) => {
 
                 {product.stores && (
                   <p className="text-xs" style={{ color: THEME.storeText }}>
-                    Sold by <span className="font-semibold" style={{ color: THEME.nameText }}>{product.stores.name}</span>
+                    Sold by{' '}
+                    <span className="font-semibold" style={{ color: THEME.nameText }}>
+                      {product.stores.name}
+                    </span>
                   </p>
                 )}
 
@@ -404,7 +505,7 @@ const ProductCard = ({ product }) => {
                     {hasLongDescription && (
                       <button
                         type="button"
-                        onClick={() => setIsQuickViewDescriptionExpanded((current) => !current)}
+                        onClick={() => setIsQuickViewDescriptionExpanded((v) => !v)}
                         className="mt-2 text-sm font-semibold"
                         style={{ color: THEME.nameText }}
                       >
@@ -416,11 +517,12 @@ const ProductCard = ({ product }) => {
 
                 <div className="flex-1" />
 
-                {/* CTA buttons */}
+                {/* Quick View CTA buttons */}
                 <div className="flex gap-2 pt-2">
+                  {/* Add to cart from quick view — fires cart_add with via:'quick_view' */}
                   <button
                     type="button"
-                    onClick={(e) => { handleAddToCart(e); setShowQuickView(false); }}
+                    onClick={handleQuickViewAddToCart}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-colors"
                     style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.cartHoverBg)}
@@ -428,9 +530,19 @@ const ProductCard = ({ product }) => {
                   >
                     <FiShoppingCart className="w-4 h-4" /> Add to Cart
                   </button>
+
+                  {/* View Details — also a 'click' event, navigates to PDP */}
                   <Link
                     href={`/products/${product.slug}`}
-                    onClick={() => setShowQuickView(false)}
+                    onClick={() => {
+                      setShowQuickView(false)
+                      logProductEvent({
+                        productId: product.id,
+                        eventType: 'click',
+                        source:    'quick_view',
+                        metadata:  sharedMeta,
+                      })
+                    }}
                     className="px-4 py-3 rounded-xl text-sm font-semibold border transition-colors flex items-center whitespace-nowrap"
                     style={{ borderColor: '#E8E8E8', color: THEME.nameText }}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F5F5F5')}
