@@ -46,45 +46,40 @@ export default function WizardShell({ title, subtitle, children }) {
         </div>
       </div>
       <div className="px-5 py-5 sm:px-6 sm:py-6">
-        {children}
-      </div>
-
-      {pendingDraft && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Resume Saved Draft?</h3>
-            <p className="text-sm text-gray-500 mb-5">
-              We found an unfinished product draft for this store. You can continue where you left off or start fresh.
-            </p>
-            <div className="grid grid-cols-2 gap-2.5 mb-5">
-              <div className="bg-gray-50 rounded-xl p-3 border border-[#dbe7e0]">
-                <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Saved Step</p>
-                <p className="text-sm font-bold text-gray-900">{pendingDraft.currentStep || 1}</p>
+        {pendingDraft ? (
+          <div className="mb-5 rounded-2xl border border-[#cfe1d7] bg-gradient-to-r from-[#f4fbf7] via-white to-[#eef7f1] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2E5C45]">Saved draft found</p>
+                <h3 className="mt-1 text-base font-bold text-gray-900">Resume this product before starting from scratch.</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {pendingDraft.state?.productName || "Untitled draft"} on step {pendingDraft.currentStep || 1}
+                </p>
+                {pendingDraft.updatedAt ? (
+                  <p className="mt-1 text-xs text-gray-400">Last updated {new Date(pendingDraft.updatedAt).toLocaleString()}</p>
+                ) : null}
               </div>
-              <div className="bg-gray-50 rounded-xl p-3 border border-[#dbe7e0]">
-                <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Product</p>
-                <p className="text-sm font-bold text-gray-900 truncate">{pendingDraft.state?.productName || "Untitled draft"}</p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={discardPendingDraft}
+                  className="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200"
+                >
+                  Start Fresh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => applyDraft(pendingDraft)}
+                  className="px-4 py-2.5 rounded-xl bg-[#2E5C45] text-white font-semibold text-sm hover:bg-[#254a38]"
+                >
+                  Resume Draft
+                </button>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={discardPendingDraft}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200"
-              >
-                Start Fresh
-              </button>
-              <button
-                type="button"
-                onClick={() => applyDraft(pendingDraft)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-[#2E5C45] text-white font-semibold text-sm hover:bg-[#254a38]"
-              >
-                Resume Draft
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        ) : null}
+        {children}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { randomBytes } from 'node:crypto';
 import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
 import { writeAdminAuditLog } from '@/utils/adminAudit';
 import { enforceRateLimit } from '@/utils/rateLimit';
@@ -26,14 +25,40 @@ function deriveNameFromEmail(email) {
     .replace(/\b\w/g, (match) => match.toUpperCase()) || 'Store Owner';
 }
 
-function generateTemporaryPassword(length = 14) {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*?';
-  const bytes = randomBytes(length);
-  let password = '';
-  for (let index = 0; index < length; index += 1) {
-    password += alphabet[bytes[index] % alphabet.length];
+function getSiteUrl() {
+  const siteUrl = String(process.env.NEXT_PUBLIC_SITE_URL || '').trim();
+  return siteUrl || 'http://localhost:3000';
+}
+
+function buildOwnerSetupRedirect() {
+  return `${getSiteUrl().replace(/\/$/, '')}/reset-password`;
+}
+
+async function generateOwnerSetupLink(adminClient, email, fullName) {
+  const { data, error } = await adminClient.auth.admin.generateLink({
+    type: 'invite',
+    email,
+    options: {
+      redirectTo: buildOwnerSetupRedirect(),
+      data: {
+        full_name: fullName,
+      },
+    },
+  });
+
+  if (error || !data?.properties?.action_link || !data?.user?.id) {
+    return {
+      ok: false,
+      status: 400,
+      error: error?.message || 'Failed to create secure account setup link',
+    };
   }
-  return password;
+
+  return {
+    ok: true,
+    user: data.user,
+    actionLink: data.properties.action_link,
+  };
 }
 
 async function findAuthUserByEmail(adminClient, email) {
@@ -114,11 +139,11 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
         ok: true,
         targetUser: insertedRows?.[0] || { id: ownerUserId, email: authEmail, full_name: displayName },
         createdAccount: false,
-        temporaryPassword: null,
+        setupLink: null,
       };
     }
 
-    return { ok: true, targetUser: userById, createdAccount: false, temporaryPassword: null };
+    return { ok: true, targetUser: userById, createdAccount: false, setupLink: null };
   }
 
   const normalizedEmail = normalizeEmail(ownerEmail);
@@ -141,7 +166,7 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
 
   if (authUserByEmail?.id) {
     if (existingByEmail?.id === authUserByEmail.id) {
-      return { ok: true, targetUser: existingByEmail, createdAccount: false, temporaryPassword: null };
+      return { ok: true, targetUser: existingByEmail, createdAccount: false, setupLink: null };
     }
 
     const defaultName = authUserByEmail.user_metadata?.full_name || deriveNameFromEmail(normalizedEmail);
@@ -169,7 +194,7 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
       ok: true,
       targetUser: upsertedRows?.[0] || { id: authUserByEmail.id, email: normalizedEmail, full_name: defaultName },
       createdAccount: false,
-      temporaryPassword: null,
+      setupLink: null,
     };
   }
 
@@ -178,30 +203,16 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
     await adminClient.from('users').delete().eq('id', existingByEmail.id);
   }
 
-  const temporaryPassword = generateTemporaryPassword();
   const defaultName = deriveNameFromEmail(normalizedEmail);
-
-  const { data: createdAuthUserData, error: createAuthError } = await adminClient.auth.admin.createUser({
-    email: normalizedEmail,
-    password: temporaryPassword,
-    email_confirm: true,
-    user_metadata: {
-      full_name: defaultName,
-    },
-  });
-
-  if (createAuthError || !createdAuthUserData?.user?.id) {
-    return {
-      ok: false,
-      status: 400,
-      error: createAuthError?.message || 'Failed to create auth user',
-    };
+  const inviteResult = await generateOwnerSetupLink(adminClient, normalizedEmail, defaultName);
+  if (!inviteResult.ok) {
+    return inviteResult;
   }
 
   const { data: insertedUserRows, error: insertUserError } = await adminClient
     .from('users')
     .insert({
-      id: createdAuthUserData.user.id,
+      id: inviteResult.user.id,
       full_name: defaultName,
       email: normalizedEmail,
       state: null,
@@ -212,7 +223,7 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
     .limit(1);
 
   if (insertUserError) {
-    await adminClient.auth.admin.deleteUser(createdAuthUserData.user.id).catch(() => null);
+    await adminClient.auth.admin.deleteUser(inviteResult.user.id).catch(() => null);
     return { ok: false, status: 500, error: insertUserError.message };
   }
 
@@ -225,7 +236,7 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
     ok: true,
     targetUser: insertedUser,
     createdAccount: true,
-    temporaryPassword,
+    setupLink: inviteResult.actionLink,
   };
 }
 
@@ -320,9 +331,9 @@ export async function POST(request, { params }) {
     if (isNewAccount) {
       const credentialsMail = await sendZeptoMail({
         to: recipient,
-        subject: `Your new account and store ownership for ${store.name}`,
-        html: `<p>Hello ${ownerName},</p><p>An account has been created for you and you have been assigned as <strong>owner</strong> of <strong>${store.name}</strong>.</p><p><strong>Email:</strong> ${recipient}<br/><strong>Temporary Password:</strong> ${resolved.temporaryPassword}</p><p>Please sign in and change your password immediately.</p>`,
-        text: `Hello ${ownerName},\n\nAn account has been created for you and you have been assigned as owner of ${store.name}.\n\nEmail: ${recipient}\nTemporary Password: ${resolved.temporaryPassword}\n\nPlease sign in and change your password immediately.`,
+        subject: `Set up your account and store ownership for ${store.name}`,
+        html: `<p>Hello ${ownerName},</p><p>You have been assigned as <strong>owner</strong> of <strong>${store.name}</strong>.</p><p>Use the secure link below to set your password and activate your account:</p><p><a href="${resolved.setupLink}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#00B86B;color:#ffffff;text-decoration:none;font-weight:700;">Set up your account</a></p><p>If the button does not work, open this link directly:</p><p><a href="${resolved.setupLink}">${resolved.setupLink}</a></p><p>This link is single-use and safer than sending passwords over email.</p>`,
+        text: `Hello ${ownerName},\n\nYou have been assigned as owner of ${store.name}.\n\nUse this secure link to set your password and activate your account:\n${resolved.setupLink}\n\nThis link is single-use and safer than sending passwords over email.`,
       });
 
       if (!credentialsMail.ok) {
@@ -434,6 +445,7 @@ export async function POST(request, { params }) {
       },
       metadata: {
         storeStatusBefore: store.status,
+        onboardingMode: resolved.createdAccount ? 'secure_invite_link' : 'existing_account',
       },
     });
 

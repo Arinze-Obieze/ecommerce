@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mobile Product Detail Page UX Redesign Report</title>
+  <style>
+    :root {
+      --ink: #16202a;
+      --muted: #5c6975;
+      --line: #d9e1e7;
+      --bg: #f6f8fa;
+      --accent: #174c65;
+      --accent-soft: #e9f2f6;
+      --green: #0f6a46;
+      --amber: #9a5f00;
+      --red: #9a2d2d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Georgia", "Times New Roman", serif;
+      color: var(--ink);
+      background: white;
+      line-height: 1.55;
+    }
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 48px 56px 72px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      margin: 0 0 14px;
+      color: #10212d;
+    }
+    h1 {
+      font-size: 34px;
+      margin-top: 8px;
+    }
+    h2 {
+      font-size: 24px;
+      margin-top: 36px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 18px;
+      margin-top: 24px;
+    }
+    p {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+    ul, ol {
+      margin: 0 0 14px 22px;
+      padding: 0;
+      font-size: 15px;
+    }
+    li { margin: 0 0 8px; }
+    .cover {
+      min-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+    }
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font: 700 12px/1.4 Arial, Helvetica, sans-serif;
+    }
+    .meta, .small {
+      color: var(--muted);
+      font: 14px/1.6 Arial, Helvetica, sans-serif;
+    }
+    .summary-box, .callout, .principle, .risk, .metric-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 18px 0;
+    }
+    .summary-box {
+      background: linear-gradient(180deg, #f8fbfd, #ffffff);
+    }
+    .callout {
+      background: var(--accent-soft);
+      border-color: #c6dce6;
+    }
+    .principle {
+      background: #f7fbf9;
+      border-color: #d4e8dd;
+    }
+    .risk {
+      background: #fff8ef;
+      border-color: #ead7ba;
+    }
+    .metric-box {
+      background: #fbfbfc;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 18px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f4f7f9;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kicker {
+      color: var(--green);
+      font: 700 13px/1.4 Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .footer-note {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 13px/1.6 Arial, Helvetica, sans-serif;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(23, 76, 101, 0.25);
+    }
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+    @media print {
+      .page {
+        max-width: none;
+        padding: 28px 34px 40px;
+      }
+      a {
+        color: inherit;
+        border-bottom: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="cover">
+      <div class="eyebrow">Commerce UX Report</div>
+      <div class="kicker">Mobile Product Detail Page Redesign</div>
+      <h1>Mobile Product Detail Page UX Redesign Report</h1>
+      <p>
+        A focused research and implementation report covering the mobile product detail page information
+        architecture, CTA priority, section navigation, content disclosure model, and trust presentation.
+      </p>
+      <div class="meta">
+        Prepared by: Arinze Obieze<br />
+        Date: April 6, 2026<br />
+        Scope: Mobile PDP layout, content hierarchy, section navigation, sticky buy behavior, reviews visibility, and implementation
+      </div>
+    </section>
+
+    <section>
+      <h2>Executive Summary</h2>
+      <div class="summary-box">
+        <p>
+          I redesigned the product detail page around a simple mobile-commerce principle: the page should help
+          the buyer decide and act before it asks them to process secondary content. The prior version had a
+          clean visual style, but on mobile it behaved more like a long informational document than a focused
+          buying surface. Too many cards, support blocks, and secondary modules competed with the image,
+          variant selection, and add-to-cart path.
+        </p>
+        <p>
+          The revised model reduces the density of the hero area, keeps the purchase controls dominant,
+          replaces the mobile tab pattern with a sticky section-jump rail plus vertically collapsed content
+          sections, and introduces a sticky mobile buy bar so the primary action remains within reach. On
+          desktop, the page retains a richer tabbed presentation, but the mobile experience is now driven by
+          progressive disclosure and faster access to the sections shoppers care about most.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>1. What I Changed</h2>
+      <ol>
+        <li>Removed the duplicate wishlist and share action cluster so the product header has a single action group.</li>
+        <li>Reduced mobile hero density by removing the early “What buyers need to know” and large seller card stack from the purchase area.</li>
+        <li>Kept the purchase-critical sequence tighter: image, title, price, stock, variants, quantity, add to cart.</li>
+        <li>Introduced a sticky mobile section-jump rail with shortcuts for Overview, Specs, Reviews, and Delivery.</li>
+        <li>Replaced the mobile tabs model with vertically collapsed accordion sections.</li>
+        <li>Converted the desktop tab model from “Description-first” to an “Overview-first” structure.</li>
+        <li>Moved richer seller, trust, and quick-specification content into the Overview section where it is visible but not obstructive.</li>
+        <li>Collapsed the mobile review form behind a dedicated “Write a Review” control instead of exposing the full form immediately.</li>
+        <li>Added a sticky mobile buy bar with price, selected variant summary, and add-to-cart access.</li>
+        <li>Added extra bottom spacing so related content and page termination are not obscured by the sticky mobile CTA.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>2. Core Product Principle</h2>
+      <div class="principle">
+        <p>
+          A mobile PDP should prioritize the buyer’s decision path first and reveal supporting information at
+          the moment it becomes useful, rather than presenting all product content at equal visual weight from
+          the start.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Research That Drove the Redesign</h2>
+      <h3>3.1 Baymard: avoid horizontal tabs for core product content</h3>
+      <p>
+        Baymard’s product-page research argues against relying on horizontal tabs to contain core content
+        because tabs frequently conceal important information and reduce discoverability on product pages. This
+        is especially problematic on mobile, where viewport width is constrained and tab labels compete for
+        space.
+      </p>
+
+      <h3>3.2 Baymard: use vertically collapsed sections instead of subpages</h3>
+      <p>
+        Baymard also recommends vertically collapsed sections over separate subpages for PDP details. This
+        pattern keeps users in one continuous context, preserves orientation, and makes the existence of extra
+        content more visible than a hidden tab or page switch.
+      </p>
+
+      <h3>3.3 Shopify: prioritize key information above the fold and keep CTA access close</h3>
+      <p>
+        Shopify’s 2024 mobile PDP guidance emphasizes two points that map directly to this redesign:
+        purchase-relevant content should be prioritized above the fold, and sticky CTA patterns can reduce
+        friction once the primary buy area scrolls out of view.
+      </p>
+
+      <div class="callout">
+        <p>
+          The design implication is straightforward: the best mobile pattern here is not “top tabs as the main
+          content container.” It is a hybrid model with a dominant buy area, sticky section shortcuts for
+          navigation, and accordion-style disclosure for secondary content.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Current-State Diagnosis</h2>
+      <div class="two-col">
+        <div class="risk">
+          <h3>What was strong</h3>
+          <ul>
+            <li>The page already had a solid visual foundation and strong product image emphasis.</li>
+            <li>Variant selectors were exposed as pills instead of being hidden in dropdowns.</li>
+            <li>Trust, pricing, and reviews were all available in one place.</li>
+          </ul>
+        </div>
+        <div class="risk">
+          <h3>What was hurting mobile UX</h3>
+          <ul>
+            <li>The hero area contained too many blocks at near-equal visual priority.</li>
+            <li>Support, seller, trust, and specs competed too early with the buy decision.</li>
+            <li>The tabs section behaved like a content vault rather than a navigable extension of the PDP.</li>
+            <li>The review form was too heavy for first exposure on a mobile PDP.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>4.1 The old mobile flow asked users to process too much before acting</h3>
+      <p>
+        On a narrow viewport, the buyer had to move through image media, product identity, trust chips,
+        informational cards, variant controls, quantity, CTA, seller card, tabs, reviews, related products,
+        and a full footer. Even when each component was individually reasonable, the aggregate effect was a
+        long and dense path before the buyer felt fully anchored.
+      </p>
+
+      <h3>4.2 Secondary content was not weak, but it was mistimed</h3>
+      <p>
+        The issue was not that seller credibility, specifications, policies, or reviews were unimportant. The
+        issue was their timing and weight. On mobile, those modules belong just after the core buying decision,
+        not before it.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. Redesigned Information Architecture</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>New Role</th>
+            <th>Why It Is Better</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hero</td>
+            <td>Image, title, price, stock, variants, quantity, CTA</td>
+            <td>Keeps the buyer on the main decision path without distraction.</td>
+          </tr>
+          <tr>
+            <td>Sticky section rail</td>
+            <td>Overview, Specs, Reviews, Delivery shortcuts</td>
+            <td>Gives the speed of tabs without hiding content behind a tab system.</td>
+          </tr>
+          <tr>
+            <td>Mobile content sections</td>
+            <td>Accordion-based disclosure</td>
+            <td>Preserves orientation and keeps all section categories visible.</td>
+          </tr>
+          <tr>
+            <td>Desktop content area</td>
+            <td>Overview-first tabs</td>
+            <td>Retains a richer desktop layout while aligning content labels with the new model.</td>
+          </tr>
+          <tr>
+            <td>Sticky mobile buy bar</td>
+            <td>Persistent price and CTA access</td>
+            <td>Reduces the cost of scrolling and helps users act from deeper sections.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>6. Implementation Details</h2>
+      <h3>6.1 Product hero simplification</h3>
+      <p>
+        I removed the duplicate action row, tightened spacing, and pulled the seller and trust information into
+        a lighter inline summary. This keeps the hero visually coherent and makes the variant and CTA block feel
+        more important.
+      </p>
+
+      <h3>6.2 New mobile section model</h3>
+      <p>
+        I introduced a sticky section-jump rail that highlights the active section and scrolls the user to the
+        selected content block. The underlying content model is accordion-based, not tab-hidden, so users can
+        see that Overview, Specifications, Reviews, and Delivery content all exist.
+      </p>
+
+      <h3>6.3 Desktop kept richer, mobile became faster</h3>
+      <p>
+        The desktop version continues to use tabs, but the first tab is now Overview rather than Description,
+        which better matches the new content hierarchy. Mobile uses accordions because that pattern is more
+        discoverable and less cramped on a narrow viewport.
+      </p>
+
+      <h3>6.4 Reviews became lower-friction</h3>
+      <p>
+        The reviews section still supports the full review form, but on mobile the form is now hidden behind a
+        dedicated “Write a Review” trigger. This removes a large and visually heavy input surface from the
+        default mobile scan path.
+      </p>
+
+      <h3>6.5 The buy action remains close at all times</h3>
+      <p>
+        I added a sticky mobile buy bar that keeps price and add-to-cart available below the fold. This is one
+        of the highest-impact improvements because it reduces the interaction cost of exploring details before
+        committing.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Files Updated</h2>
+      <ul>
+        <li><code>app/products/[slug]/page.js</code> for the mobile PDP redesign, section navigation, accordion model, and sticky mobile buy bar.</li>
+        <li><code>documentation/reports/mobile-pdp-redesign-report-arinze-obieze.html</code> for this report artifact.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8. Recommended Success Metrics</h2>
+      <div class="metric-box">
+        <ul>
+          <li>Increase mobile add-to-cart rate from PDP.</li>
+          <li>Reduce time-to-first-cart on mobile PDP visits.</li>
+          <li>Reduce variant-selection failure and hesitation patterns.</li>
+          <li>Increase engagement with reviews and policies without increasing bounce.</li>
+          <li>Track interaction rate on sticky mobile buy bar and section-jump rail.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>9. Sources</h2>
+      <ul>
+        <li><a href="https://baymard.com/blog/avoid-horizontal-tabs">Baymard Institute, Avoid Horizontal Tabs for Core Product Content</a></li>
+        <li><a href="https://baymard.com/blog/avoid-using-subpages">Baymard Institute, Avoid Using Subpages for Product Details; Use Vertically Collapsed Sections</a></li>
+        <li><a href="https://baymard.com/mcommerce-usability/benchmark/mobile-page-types/product-page">Baymard Institute, Mobile Product Page Benchmark</a></li>
+        <li><a href="https://growth-services.shopify.com/blogs/blog/top-3-tips-to-boost-your-mobile-shopping-experience-on-product-pages">Shopify Growth Services, Top 3 Tips to Boost Your Mobile Shopping Experience on Product Pages</a></li>
+      </ul>
+    </section>
+
+    <p class="footer-note">
+      This redesign intentionally favors mobile decision velocity over early content completeness. The model is
+      not about hiding content. It is about sequencing content so that buying intent, product trust, and product
+      understanding reinforce each other instead of competing for the same first-screen attention.
+    </p>
+  </main>
+</body>
+</html>

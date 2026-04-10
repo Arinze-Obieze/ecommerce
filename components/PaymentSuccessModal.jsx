@@ -9,6 +9,9 @@ export default function PaymentSuccessModal({
   reference,
   amount,
   onClose,
+  onPrimaryAction,
+  primaryHref = "/profile?tab=orders",
+  redirectSeconds = 4,
 }) {
   const confettiPieces = React.useMemo(
     () =>
@@ -21,6 +24,25 @@ export default function PaymentSuccessModal({
       })),
     []
   );
+  const [secondsLeft, setSecondsLeft] = React.useState(redirectSeconds);
+
+  React.useEffect(() => {
+    if (!isOpen) return undefined;
+    setSecondsLeft(redirectSeconds);
+
+    const intervalId = window.setInterval(() => {
+      setSecondsLeft((current) => {
+        if (current <= 1) {
+          window.clearInterval(intervalId);
+          onPrimaryAction?.();
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isOpen, onPrimaryAction, redirectSeconds]);
 
   if (!isOpen) return null;
 
@@ -64,12 +86,26 @@ export default function PaymentSuccessModal({
             </p>
           </div>
 
+          <div className="mb-5 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            Redirecting you to your orders in{" "}
+            <span className="font-bold">{secondsLeft}</span>{" "}
+            second{secondsLeft === 1 ? "" : "s"}.
+          </div>
+
           <div className="flex flex-col gap-2">
-            <Link
-              href="/profile?tab=orders"
+            <button
+              type="button"
+              onClick={onPrimaryAction}
               className="w-full rounded-xl bg-[#2E5C45] px-4 py-3 text-sm font-semibold text-white hover:bg-[#254a38]"
             >
-              View order history
+              View my order
+            </button>
+            <Link
+              href={primaryHref}
+              className="hidden"
+              aria-hidden="true"
+            >
+              Orders
             </Link>
             <button
               type="button"

@@ -23,6 +23,8 @@ function pickPersistableState(state = {}) {
     imageStrategy: normalizeText(state.imageStrategy) || "general",
     variantNotes: state.variantNotes && typeof state.variantNotes === "object" ? state.variantNotes : {},
     productNotes: normalizeText(state.productNotes),
+    specificationSummary: normalizeText(state.specificationSummary),
+    specifications: Array.isArray(state.specifications) ? state.specifications : [],
     baseSku: normalizeText(state.baseSku) || null,
     variantSkus: Array.isArray(state.variantSkus) ? state.variantSkus : [],
     printCompleted: Boolean(state.printCompleted),
@@ -152,7 +154,7 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Invalid wizard_data payload" }, { status: 400 });
   }
 
-  const currentStep = Math.min(7, Math.max(1, Number.parseInt(payload?.currentStep, 10) || 1));
+  const currentStep = Math.min(6, Math.max(1, Number.parseInt(payload?.currentStep, 10) || 1));
   const wizardState = pickPersistableState(payload?.state || {});
   const desiredManifest = normalizeManifest(payload?.persistedImages || {});
 

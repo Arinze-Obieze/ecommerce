@@ -53,6 +53,10 @@ function wizardReducer(state, action) {
       return { ...state, variantNotes: { ...state.variantNotes, [action.color]: action.note } };
     case "SET_PRODUCT_NOTES":
       return { ...state, productNotes: action.payload };
+    case "SET_SPECIFICATION_SUMMARY":
+      return { ...state, specificationSummary: action.payload };
+    case "SET_SPECIFICATIONS":
+      return { ...state, specifications: action.payload };
     case "SET_SKU":
       return { ...state, baseSku: action.baseSku, variantSkus: action.variantSkus };
     case "SET_PRINT_STATUS":
@@ -74,6 +78,8 @@ function wizardReducer(state, action) {
           Object.entries(action.payload || {}).map(([key, value]) => [key, value.publicUrl])
         ),
       };
+        case "SET_LABEL_INFO":
+      return { ...state, ...action.payload };ç
     case "RESET":
       return { ...INITIAL_WIZARD_STATE };
     default:
@@ -106,7 +112,8 @@ export function WizardProvider({ children, storeData }) {
 
   const currentStep = (() => {
     const match = pathname?.match(/step-(\d+)/);
-    return match ? parseInt(match[1]) : 1;
+    const parsed = match ? parseInt(match[1], 10) : 1;
+    return Math.min(WIZARD_STEPS.length, Math.max(1, parsed));
   })();
 
   const basePath = (() => {
@@ -129,7 +136,7 @@ export function WizardProvider({ children, storeData }) {
   }, [router, basePath]);
 
   const goNext = useCallback(() => {
-    if (currentStep < 8) goToStep(currentStep + 1);
+    if (currentStep < WIZARD_STEPS.length) goToStep(currentStep + 1);
   }, [currentStep, goToStep]);
 
   const goBack = useCallback(() => {
@@ -172,7 +179,7 @@ export function WizardProvider({ children, storeData }) {
     setDraftUpdatedAt(draft.updatedAt || null);
     setPendingDraft(null);
     hasLocalChangesRef.current = false;
-    const resumeStep = Math.min(7, Math.max(1, Number.parseInt(draft.currentStep, 10) || 1));
+    const resumeStep = Math.min(WIZARD_STEPS.length, Math.max(1, Number.parseInt(draft.currentStep, 10) || 1));
     if (resumeStep !== currentStep) {
       goToStep(resumeStep);
     }

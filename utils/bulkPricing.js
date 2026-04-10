@@ -113,7 +113,11 @@ export function getBaseUnitPrice(product) {
   const discountPrice = toNumber(product?.discount_price);
   const price = toNumber(product?.price);
 
-  if (discountPrice !== null && discountPrice >= 0) {
+  if (
+    discountPrice !== null &&
+    discountPrice > 0 &&
+    (price === null || discountPrice < price)
+  ) {
     return discountPrice;
   }
 

@@ -68,7 +68,8 @@ const OrderRow = ({ order }) => {
   const itemCount = order.order_items?.length || 0;
 
   return (
-    <div
+    <Link
+      href={`/profile/orders/${order.id}`}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
@@ -81,6 +82,7 @@ const OrderRow = ({ order }) => {
         transition: 'background 0.18s',
         gap: 16,
         flexWrap: 'wrap',
+        textDecoration: 'none',
       }}
     >
       {/* Left */}
@@ -111,7 +113,7 @@ const OrderRow = ({ order }) => {
       </div>
 
       {/* Right */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, flexWrap: 'wrap', marginLeft: 'auto' }}>
         <span
           style={{
             display: 'inline-block',
@@ -131,8 +133,25 @@ const OrderRow = ({ order }) => {
         <p style={{ fontSize: 14, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.02em' }}>
           {formatPrice(order.total_amount)}
         </p>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '8px 12px',
+            borderRadius: 999,
+            background: hov ? THEME.greenTint : THEME.softGray,
+            color: hov ? THEME.greenDark : THEME.charcoal,
+            fontSize: 12,
+            fontWeight: 700,
+            transition: 'background 0.18s, color 0.18s',
+          }}
+        >
+          View details
+          <FiArrowRight size={13} />
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 

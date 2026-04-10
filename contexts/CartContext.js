@@ -52,6 +52,11 @@ export function CartProvider({ children }) {
     return Infinity;
   };
 
+  const buildVariantLabel = (item) => {
+    const parts = [item?.selectedColor, item?.selectedSize].filter(Boolean);
+    return parts.length ? parts.join(' / ') : '';
+  };
+
   // Load from local storage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('shophub_cart');
@@ -117,7 +122,8 @@ export function CartProvider({ children }) {
       store_id: product.store_id || null,
     });
 
-    success(`Added ${product.name} to cart`);
+    const variantLabel = buildVariantLabel(product);
+    success(variantLabel ? `Added ${product.name} (${variantLabel}) to cart` : `Added ${product.name} to cart`);
   };
 
   const removeFromCart = (productId, variantId = null) => {
