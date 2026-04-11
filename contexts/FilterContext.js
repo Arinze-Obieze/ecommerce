@@ -22,12 +22,30 @@ const INITIAL_FILTERS = {
   onSale:     false,
 };
 
+function getShopPathCategory(pathname) {
+  const match = pathname?.match(/^\/shop\/([^/]+)\/?$/);
+  if (!match) return '';
+
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function isShopPath(pathname) {
+  return pathname === '/shop' || pathname?.startsWith('/shop/');
+}
+
 // ─── Parse URL → filter state ────────────────────────────────────────────────
-function parseParams(searchParams) {
-  const categoryParam = searchParams.get('category') || '';
+function parseParams(searchParams, pathname = '') {
+  const categoryParam = searchParams.get('category');
+  const pathCategory = getShopPathCategory(pathname);
+  const resolvedCategory = categoryParam ?? pathCategory;
+
   return {
     search:     searchParams.get('search')     || '',
-    category:   categoryParam === 'all' ? '' : categoryParam,
+    category:   resolvedCategory === 'all' ? '' : resolvedCategory || '',
     collection: searchParams.get('collection') || '',
     minPrice:   searchParams.get('minPrice')   ? parseFloat(searchParams.get('minPrice'))  : null,
     maxPrice:   searchParams.get('maxPrice')   ? parseFloat(searchParams.get('maxPrice'))  : null,
@@ -41,10 +59,10 @@ function parseParams(searchParams) {
 }
 
 // ─── Build URL params from filter state ──────────────────────────────────────
-function buildParams(f) {
+function buildParams(f, { includeCategory = true } = {}) {
   const p = new URLSearchParams();
   if (f.search)           p.set('search',     f.search);
-  if (f.category)         p.set('category',   f.category);
+  if (includeCategory && f.category) p.set('category', f.category);
   if (f.collection)       p.set('collection', f.collection);
   if (f.minPrice != null) p.set('minPrice',   String(f.minPrice));
   if (f.maxPrice != null) p.set('maxPrice',   String(f.maxPrice));
@@ -57,6 +75,20 @@ function buildParams(f) {
   return p.toString();
 }
 
+function buildFilterUrl(filters, pathname) {
+  if (!isShopPath(pathname)) {
+    return {
+      pathname,
+      queryString: buildParams(filters),
+    };
+  }
+
+  return {
+    pathname: filters.category ? `/shop/${encodeURIComponent(filters.category)}` : '/shop',
+    queryString: buildParams(filters, { includeCategory: false }),
+  };
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Inner provider — uses useSearchParams (must be inside Suspense)
 // ────────────────────────────────────────────────────────────────────────────
@@ -64,9 +96,11 @@ function FilterProviderContent({ children }) {
   const router       = useRouter();
   const pathname     = usePathname();
   const searchParams = useSearchParams();
+  const queryString  = searchParams.toString();
+  const currentUrl   = `${pathname}${queryString ? `?${queryString}` : ''}`;
 
   // ── Filter state — initialised from URL immediately ──────────────────────
-  const [filters, setFilters]           = useState(() => parseParams(searchParams));
+  const [filters, setFilters]           = useState(() => parseParams(searchParams, pathname));
   const [filtersReady, setFiltersReady] = useState(false);
 
   // ── Metadata ──────────────────────────────────────────────────────────────
@@ -82,22 +116,23 @@ function FilterProviderContent({ children }) {
   // filtersRef: always holds the latest committed filters so mutation
   // callbacks can read current state without stale closures.
   const filtersRef      = useRef(filters);
-  const prevQueryString = useRef(searchParams.toString());
+  const currentUrlRef   = useRef(currentUrl);
+  const prevUrl         = useRef(currentUrl);
 
   // Keep ref in sync — safe to set during render for refs
   filtersRef.current = filters;
+  currentUrlRef.current = currentUrl;
 
   // ── URL → State (external navigation: back/forward, direct links) ────────
   useEffect(() => {
-    const qs = searchParams.toString();
-    if (qs === prevQueryString.current) return; // we pushed this ourselves
+    if (currentUrl === prevUrl.current) return; // we pushed this ourselves
 
-    prevQueryString.current = qs;
-    const parsed = parseParams(searchParams);
+    prevUrl.current = currentUrl;
+    const parsed = parseParams(searchParams, pathname);
     filtersRef.current = parsed;
     setFilters(parsed);
     setFiltersReady(true);
-  }, [searchParams]);
+  }, [currentUrl, pathname, searchParams]);
 
   // Mark ready on first mount
   useEffect(() => {
@@ -151,10 +186,12 @@ function FilterProviderContent({ children }) {
     filtersRef.current = next;
     setFilters(next);
 
-    const qs = buildParams(next);
-    if (qs !== prevQueryString.current) {
-      prevQueryString.current = qs;
-      router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
+    const target = buildFilterUrl(next, pathname);
+    const targetUrl = `${target.pathname}${target.queryString ? `?${target.queryString}` : ''}`;
+
+    if (targetUrl !== currentUrlRef.current) {
+      prevUrl.current = targetUrl;
+      router.replace(targetUrl, { scroll: false });
     }
   }, [pathname, router]);
 

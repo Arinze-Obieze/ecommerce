@@ -36,7 +36,7 @@ const THEME = {
   }
 };
 
-const ALWAYS_OPEN = new Set(['collection', 'category', 'price']);
+const ALWAYS_OPEN = new Set(['category', 'price']);
 
 // ── Loading skeleton ──────────────────────────────────────────
 function FilterSidebarLoading() {
@@ -151,13 +151,140 @@ function RadioItem({ label, isActive, onClick }) {
   );
 }
 
+function findCategoryPath(categories, slug, path = []) {
+  for (const category of categories || []) {
+    const nextPath = [...path, category];
+    if (category.slug === slug) return nextPath;
+
+    const childPath = findCategoryPath(category.children, slug, nextPath);
+    if (childPath) return childPath;
+  }
+
+  return null;
+}
+
+function CategoryTreeItem({ category, depth = 0, activeSlug, onSelect }) {
+  const isActive = activeSlug === category.slug;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(isActive ? '' : category.slug)}
+      className="flex items-center gap-2 w-full rounded-lg text-sm transition-all text-left"
+      style={{
+        padding: depth === 0 ? '8px 10px' : '7px 10px 7px 18px',
+        backgroundColor: isActive ? THEME.colors.greenTint : 'transparent',
+        color: isActive ? THEME.colors.primary : depth === 0 ? THEME.colors.darkCharcoal : THEME.colors.mediumGray,
+        fontWeight: depth === 0 ? 700 : isActive ? 600 : 400,
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) e.currentTarget.style.backgroundColor = THEME.colors.softGray;
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+      }}
+    >
+      {depth > 0 && (
+        <span
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: isActive ? THEME.colors.primary : THEME.colors.border }}
+        />
+      )}
+      <span className="truncate">{category.name}</span>
+    </button>
+  );
+}
+
+function FilterPill({ label, onRemove }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="inline-flex max-w-full items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left text-[11px] font-semibold transition-colors"
+      style={{
+        backgroundColor: THEME.colors.greenTint,
+        color: THEME.colors.deepEmerald,
+        border: `1px solid ${THEME.colors.greenBorder}`,
+      }}
+    >
+      <span className="truncate">{label}</span>
+      <FiX className="h-3 w-3 flex-shrink-0" />
+    </button>
+  );
+}
+
+function AppliedFiltersSummary({
+  filters,
+  categories,
+  collections,
+  activeFilterCount,
+  hasActiveFilters,
+  setSearch,
+  setCategory,
+  setCollection,
+  setPriceRange,
+  toggleSize,
+  toggleColor,
+}) {
+  if (!hasActiveFilters) return null;
+
+  const categoryName = categories.find(cat => cat.slug === filters.category)?.name || filters.category;
+  const collectionName = collections.find(col => col.slug === filters.collection)?.name || filters.collection;
+  const priceLabel = [
+    filters.minPrice != null ? `From ₦${filters.minPrice.toLocaleString()}` : null,
+    filters.maxPrice != null ? `To ₦${filters.maxPrice.toLocaleString()}` : null,
+  ].filter(Boolean).join(' ');
+
+  return (
+    <div className="shrink-0 border-b px-3 py-3" style={{ borderColor: THEME.colors.border }}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p
+          className="text-[10px] font-black uppercase tracking-[0.16em]"
+          style={{ color: THEME.colors.mutedText }}
+        >
+          Applied
+        </p>
+        <span
+          className="rounded-full px-2 py-0.5 text-[10px] font-black"
+          style={{ backgroundColor: THEME.colors.greenTint, color: THEME.colors.primary }}
+        >
+          {activeFilterCount}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {filters.search && (
+          <FilterPill label={`Search: ${filters.search}`} onRemove={() => setSearch('')} />
+        )}
+        {filters.category && (
+          <FilterPill label={`Category: ${categoryName}`} onRemove={() => setCategory('')} />
+        )}
+        {filters.collection && (
+          <FilterPill label={`Collection: ${collectionName}`} onRemove={() => setCollection('')} />
+        )}
+        {(filters.minPrice != null || filters.maxPrice != null) && (
+          <FilterPill label={`Price: ${priceLabel}`} onRemove={() => setPriceRange(null, null)} />
+        )}
+        {filters.sizes.map(size => (
+          <FilterPill key={size} label={`Size: ${size}`} onRemove={() => toggleSize(size)} />
+        ))}
+        {filters.colors.map(color => (
+          <FilterPill key={color} label={`Color: ${color}`} onRemove={() => toggleColor(color)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main content ──────────────────────────────────────────────
 function FilterSidebarContent({ onMobileClose }) {
   const {
     filters,
     categories,
+    hierarchicalCategories,
     collections,
     categoriesLoading,
+    setSearch,
     setCategory,
     setCollection,
     setPriceRange,
@@ -165,11 +292,12 @@ function FilterSidebarContent({ onMobileClose }) {
     toggleColor,
     clearAllFilters,
     hasActiveFilters,
+    activeFilterCount,
   } = useFilters();
 
   // ── State ──────────────────────────────────────────────────
   const [expandedSections, setExpandedSections] = useState({
-    collection: true,
+    collection: false,
     category:   true,
     price:      true,
     sizes:      false,
@@ -210,6 +338,10 @@ function FilterSidebarContent({ onMobileClose }) {
     { name: 'Pink',   hex: '#FF69B4' },
   ];
 
+  const selectedCategoryPath = findCategoryPath(hierarchicalCategories, filters.category) || [];
+  const activeDepartment = selectedCategoryPath[0] || null;
+  const fallbackCategoryList = categories.filter(cat => !cat.parent_id);
+
   // ── Handlers ───────────────────────────────────────────────
   const toggleSection = (section) => {
     if (ALWAYS_OPEN.has(section)) return;
@@ -235,7 +367,7 @@ function FilterSidebarContent({ onMobileClose }) {
 
   return (
     <aside
-      className="rounded-2xl border overflow-hidden"
+      className="h-full rounded-2xl border overflow-hidden flex flex-col"
       style={{ 
         backgroundColor: THEME.colors.white, 
         borderColor: THEME.colors.border, 
@@ -299,8 +431,22 @@ function FilterSidebarContent({ onMobileClose }) {
         </div>
       </div>
 
+      <AppliedFiltersSummary
+        filters={filters}
+        categories={categories}
+        collections={collections}
+        activeFilterCount={activeFilterCount}
+        hasActiveFilters={hasActiveFilters}
+        setSearch={setSearch}
+        setCategory={setCategory}
+        setCollection={setCollection}
+        setPriceRange={setPriceRange}
+        toggleSize={toggleSize}
+        toggleColor={toggleColor}
+      />
+
       {/* ── Sections ── */}
-      <div className="p-3 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
 
         {/* Collections — pinned, scrollable */}
         <FilterSection
@@ -313,12 +459,7 @@ function FilterSidebarContent({ onMobileClose }) {
             <div className="text-xs py-1" style={{ color: THEME.colors.mutedText }}>Loading...</div>
           ) : (
             <div
-              className="space-y-0.5 overflow-y-auto pr-0.5"
-              style={{ 
-                maxHeight: '180px', 
-                scrollbarWidth: 'thin', 
-                scrollbarColor: `${THEME.colors.primary}55 transparent` 
-              }}
+              className="space-y-0.5 pr-0.5"
             >
               <RadioItem
                 label="All Collections"
@@ -339,7 +480,7 @@ function FilterSidebarContent({ onMobileClose }) {
 
         {/* Category — pinned, scrollable */}
         <FilterSection
-          title="Category"
+          title="Categories"
           section="category"
           isExpanded={expandedSections.category}
           onToggle={toggleSection}
@@ -348,26 +489,65 @@ function FilterSidebarContent({ onMobileClose }) {
             <div className="text-xs py-1" style={{ color: THEME.colors.mutedText }}>Loading...</div>
           ) : (
             <div
-              className="space-y-0.5 overflow-y-auto pr-0.5"
-              style={{ 
-                maxHeight: '200px', 
-                scrollbarWidth: 'thin', 
-                scrollbarColor: `${THEME.colors.primary}55 transparent` 
-              }}
+              className="space-y-3 pr-0.5"
             >
               <RadioItem
                 label="All Categories"
                 isActive={filters.category === ''}
                 onClick={() => setCategory('')}
               />
-              {categories.map(cat => (
-                <RadioItem
-                  key={cat.id}
-                  label={cat.name}
-                  isActive={filters.category === cat.slug}
-                  onClick={() => setCategory(cat.slug)}
-                />
-              ))}
+
+              <div className="space-y-1">
+                <p
+                  className="px-1 text-[10px] font-black uppercase tracking-[0.16em]"
+                  style={{ color: THEME.colors.mutedText }}
+                >
+                  Departments
+                </p>
+                {(hierarchicalCategories.length ? hierarchicalCategories : fallbackCategoryList).map(cat => (
+                  <RadioItem
+                    key={cat.id}
+                    label={cat.name}
+                    isActive={filters.category === cat.slug || activeDepartment?.slug === cat.slug}
+                    onClick={() => setCategory(filters.category === cat.slug ? '' : cat.slug)}
+                  />
+                ))}
+              </div>
+
+              {activeDepartment?.children?.length > 0 && (
+                <div className="space-y-2">
+                  <div
+                    className="h-px"
+                    style={{ backgroundColor: THEME.colors.border }}
+                  />
+                  <p
+                    className="px-1 text-[10px] font-black uppercase tracking-[0.16em]"
+                    style={{ color: THEME.colors.mutedText }}
+                  >
+                    Refine {activeDepartment.name}
+                  </p>
+                  <div className="space-y-1">
+                    {activeDepartment.children.map(group => (
+                      <div key={group.id} className="space-y-0.5">
+                        <CategoryTreeItem
+                          category={group}
+                          activeSlug={filters.category}
+                          onSelect={setCategory}
+                        />
+                        {group.children?.map(child => (
+                          <CategoryTreeItem
+                            key={child.id}
+                            category={child}
+                            depth={1}
+                            activeSlug={filters.category}
+                            onSelect={setCategory}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </FilterSection>
