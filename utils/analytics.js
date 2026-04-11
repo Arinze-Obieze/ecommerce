@@ -42,12 +42,20 @@ export async function trackAnalyticsEvent(eventName, properties = {}) {
       properties,
     };
 
-    await fetch('/api/analytics/events', {
+    const response = await fetch('/api/analytics/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
       keepalive: true,
     });
+
+    if (response.status === 429) {
+      const json = await response.json().catch(() => ({}));
+      console.warn(json.error || 'Analytics tracking was rate limited. The user experience is not affected.');
+    } else if (!response.ok) {
+      const json = await response.json().catch(() => ({}));
+      console.warn(json.error || `Analytics tracking failed with status ${response.status}.`);
+    }
   } catch (error) {
     // Do not block UX due to analytics failures.
     console.error('Analytics tracking failed:', error);

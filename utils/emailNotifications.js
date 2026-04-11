@@ -424,3 +424,112 @@ export async function notifyOrderCompletionEmails({ serviceClient, orderId }) {
     sellers: { sent, failed, skipped },
   };
 }
+
+export async function sendStoreInvitationEmail({
+  to,
+  recipientName,
+  storeName,
+  role,
+  invitedByName,
+  setupLink,
+  existingAccount = false,
+  inviteMessage = '',
+}) {
+  const recipient = normalizeEmail(to);
+  if (!recipient) {
+    return { ok: false, status: 400, error: 'Missing recipient email' };
+  }
+
+  const displayName = safeName(recipientName);
+  const actorName = safeName(invitedByName, 'a store administrator');
+  const dashboardUrl = `${resolveSiteUrl()}/store/dashboard`;
+  const inviteNote = String(inviteMessage || '').trim();
+  const messageHtml = inviteNote ? `<p><strong>Message from ${escapeHtml(actorName)}:</strong> ${escapeHtml(inviteNote)}</p>` : '';
+  const messageText = inviteNote ? `\n\nMessage from ${actorName}: ${inviteNote}` : '';
+
+  return sendZeptoMail({
+    to: recipient,
+    subject: `Invitation to join ${storeName || 'a store'} as ${roleLabel(role)}`,
+    html:
+      `<p>Hello ${escapeHtml(displayName)},</p>` +
+      `<p>${escapeHtml(actorName)} invited you to join <strong>${escapeHtml(storeName || 'their store')}</strong> as <strong>${escapeHtml(roleLabel(role))}</strong>.</p>` +
+      messageHtml +
+      (existingAccount
+        ? `<p>Sign in to accept access automatically: <a href="${dashboardUrl}">${dashboardUrl}</a></p>`
+        : `<p>Use this secure link to set up your account and accept the invitation:</p><p><a href="${setupLink}">${setupLink}</a></p>`) +
+      `<p>If you were not expecting this invite, you can ignore this email.</p>`,
+    text:
+      `Hello ${displayName},\n\n` +
+      `${actorName} invited you to join ${storeName || 'their store'} as ${roleLabel(role)}.` +
+      messageText +
+      `\n\n` +
+      (existingAccount
+        ? `Sign in here: ${dashboardUrl}`
+        : `Use this secure setup link to accept: ${setupLink}`),
+  });
+}
+
+export async function sendReturnRequestStatusEmail({
+  to,
+  recipientName,
+  orderId,
+  status,
+  refundStatus,
+  note,
+}) {
+  const recipient = normalizeEmail(to);
+  if (!recipient) {
+    return { ok: false, status: 400, error: 'Missing recipient email' };
+  }
+
+  const displayName = safeName(recipientName);
+  const ordersUrl = `${resolveSiteUrl()}/profile?tab=orders`;
+
+  return sendZeptoMail({
+    to: recipient,
+    subject: `Return update for order ${orderId}`,
+    html:
+      `<p>Hello ${escapeHtml(displayName)},</p>` +
+      `<p>Your return request for <strong>${escapeHtml(orderId)}</strong> was updated.</p>` +
+      `<p><strong>Return status:</strong> ${escapeHtml(String(status || 'pending'))}<br/><strong>Refund status:</strong> ${escapeHtml(String(refundStatus || 'not_requested'))}</p>` +
+      (note ? `<p><strong>Note:</strong> ${escapeHtml(note)}</p>` : '') +
+      `<p>Track the latest details here: <a href="${ordersUrl}">${ordersUrl}</a></p>`,
+    text:
+      `Hello ${displayName},\n\n` +
+      `Your return request for order ${orderId} was updated.\n` +
+      `Return status: ${status || 'pending'}\nRefund status: ${refundStatus || 'not_requested'}` +
+      (note ? `\nNote: ${note}` : '') +
+      `\n\nTrack here: ${ordersUrl}`,
+  });
+}
+
+export async function sendPayoutExceptionEmail({
+  to,
+  recipientName,
+  storeName,
+  summary,
+  category,
+}) {
+  const recipient = normalizeEmail(to);
+  if (!recipient) {
+    return { ok: false, status: 400, error: 'Missing recipient email' };
+  }
+
+  const displayName = safeName(recipientName);
+  const payoutsUrl = `${resolveSiteUrl()}/store/dashboard/payouts`;
+
+  return sendZeptoMail({
+    to: recipient,
+    subject: `Payout exception logged for ${storeName || 'your store'}`,
+    html:
+      `<p>Hello ${escapeHtml(displayName)},</p>` +
+      `<p>A payout operations exception was logged for <strong>${escapeHtml(storeName || 'your store')}</strong>.</p>` +
+      `<p><strong>Category:</strong> ${escapeHtml(category || 'general')}<br/><strong>Summary:</strong> ${escapeHtml(summary || 'An issue needs attention')}</p>` +
+      `<p>Review it here: <a href="${payoutsUrl}">${payoutsUrl}</a></p>`,
+    text:
+      `Hello ${displayName},\n\n` +
+      `A payout exception was logged for ${storeName || 'your store'}.\n` +
+      `Category: ${category || 'general'}\nSummary: ${summary || 'An issue needs attention'}\n\n` +
+      `Review it here: ${payoutsUrl}`,
+  });
+}

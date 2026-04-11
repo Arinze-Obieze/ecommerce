@@ -17,6 +17,13 @@ import {
 } from 'recharts';
 
 const MODERATION_COLORS = ['#2E5C45', '#0ea5e9', '#ef4444', '#f59e0b'];
+const RANGE_OPTIONS = [
+  { value: '7d', label: '7 days' },
+  { value: '30d', label: '30 days' },
+  { value: '90d', label: '90 days' },
+  { value: '1y', label: '1 year' },
+  { value: 'all', label: 'Since opening' },
+];
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(value || 0));
@@ -24,6 +31,11 @@ function formatCurrency(value) {
 
 function shortDay(value) {
   if (!value) return '';
+  if (/^\d{4}-\d{2}$/.test(value)) {
+    const date = new Date(`${value}-01T00:00:00.000Z`);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('en-NG', { month: 'short', year: '2-digit' });
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
@@ -31,6 +43,7 @@ function shortDay(value) {
 
 export default function StoreAnalyticsPage() {
   const [data, setData] = useState(null);
+  const [range, setRange] = useState('30d');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -39,7 +52,8 @@ export default function StoreAnalyticsPage() {
       try {
         setLoading(true);
         setError('');
-        const res = await fetch('/api/store/analytics/overview', { cache: 'no-store' });
+        const params = new URLSearchParams({ range });
+        const res = await fetch(`/api/store/analytics/overview?${params.toString()}`, { cache: 'no-store' });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to load analytics');
         setData(json.data || null);
@@ -50,7 +64,7 @@ export default function StoreAnalyticsPage() {
       }
     };
     run();
-  }, []);
+  }, [range]);
 
   if (loading) return <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 text-sm text-gray-500">Loading analytics...</div>;
   if (error) return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>;
@@ -59,9 +73,11 @@ export default function StoreAnalyticsPage() {
   const cartDemand = data?.cartDemand || {};
   const products = data?.products || {};
   const trends = data?.trends || {};
-  const dailyRevenue = trends.dailyOrdersAndRevenue14d || [];
-  const dailyCart = trends.dailyCartNetUnits7d || [];
-  const topDemandProducts = trends.topDemandProducts7d || [];
+  const meta = data?.meta || {};
+  const activeRangeLabel = meta.range?.label || RANGE_OPTIONS.find((option) => option.value === range)?.label || 'Selected range';
+  const dailyRevenue = trends.ordersRevenue || trends.dailyOrdersAndRevenue14d || [];
+  const dailyCart = trends.cartNetUnits || trends.dailyCartNetUnits7d || [];
+  const topDemandProducts = trends.topDemandProducts || trends.topDemandProducts7d || [];
 
   const moderationPie = [
     { name: 'Pending', value: products.pendingReview || 0 },
@@ -73,26 +89,42 @@ export default function StoreAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">Store Analytics</h2>
-        <p className="text-sm text-gray-500">Live metrics captured from orders, escrow, and cart interactions.</p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Store Analytics</h2>
+            <p className="text-sm text-gray-500">Live metrics captured from orders, escrow, and cart interactions.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setRange(option.value)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${range === option.value ? 'bg-[#2E5C45] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm"><p className="text-xs uppercase text-gray-500">Total Orders</p><p className="mt-2 text-2xl font-bold">{orders.totalOrders || 0}</p></div>
-        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm"><p className="text-xs uppercase text-gray-500">Paid Orders</p><p className="mt-2 text-2xl font-bold">{orders.paidOrders || 0}</p></div>
-        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm"><p className="text-xs uppercase text-gray-500">Gross Sales</p><p className="mt-2 text-2xl font-bold">{formatCurrency(orders.grossSales || 0)}</p></div>
-        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm"><p className="text-xs uppercase text-gray-500">Products in Carts (7d)</p><p className="mt-2 text-2xl font-bold">{cartDemand.productsInCarts7d || 0}</p></div>
-        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm"><p className="text-xs uppercase text-gray-500">Events Captured (7d)</p><p className="mt-2 text-2xl font-bold">{cartDemand.eventsCaptured7d || 0}</p></div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Total Orders</p><p className="mt-2 break-words text-xl font-bold sm:text-2xl">{orders.totalOrders || 0}</p></div>
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Paid Orders</p><p className="mt-2 break-words text-xl font-bold sm:text-2xl">{orders.paidOrders || 0}</p></div>
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Gross Sales</p><p className="mt-2 break-words text-lg font-bold sm:text-2xl">{formatCurrency(orders.grossSales || 0)}</p></div>
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Products in Carts</p><p className="mt-2 break-words text-xl font-bold sm:text-2xl">{cartDemand.productsInCarts || 0}</p></div>
+        <div className="rounded-2xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Events Captured</p><p className="mt-2 break-words text-xl font-bold sm:text-2xl">{cartDemand.eventsCaptured || 0}</p></div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm xl:col-span-2">
-          <h3 className="text-base font-bold text-gray-900">Revenue & Orders (14 days)</h3>
+          <h3 className="text-base font-bold text-gray-900">Revenue & Orders ({activeRangeLabel})</h3>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dailyRevenue}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="day" tickFormatter={shortDay} tick={{ fontSize: 11 }} />
+                <XAxis dataKey="period" tickFormatter={shortDay} tick={{ fontSize: 11 }} />
                 <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
                 <Tooltip
@@ -133,12 +165,12 @@ export default function StoreAnalyticsPage() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm xl:col-span-2">
-          <h3 className="text-base font-bold text-gray-900">Net Cart Units Trend (7 days)</h3>
+          <h3 className="text-base font-bold text-gray-900">Net Cart Units Trend ({activeRangeLabel})</h3>
           <div className="mt-4 h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyCart}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="day" tickFormatter={shortDay} tick={{ fontSize: 11 }} />
+                <XAxis dataKey="period" tickFormatter={shortDay} tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip labelFormatter={(label) => shortDay(label)} />
                 <Bar dataKey="netUnits" fill="#2E5C45" radius={[4, 4, 0, 0]} />
@@ -148,7 +180,7 @@ export default function StoreAnalyticsPage() {
         </div>
 
         <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-          <h3 className="text-base font-bold text-gray-900">Top Demand Products (7 days)</h3>
+          <h3 className="text-base font-bold text-gray-900">Top Demand Products ({activeRangeLabel})</h3>
           <div className="mt-3 space-y-2">
             {topDemandProducts.slice(0, 6).map((row) => (
               <div key={row.productId} className="rounded-xl bg-gray-50 px-3 py-2 text-sm">

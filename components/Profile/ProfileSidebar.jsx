@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
-import { FiGrid, FiShoppingBag, FiHeart, FiMapPin, FiSettings, FiLogOut, FiChevronDown, FiHome, FiCompass } from 'react-icons/fi';
+import { FiGrid, FiShoppingBag, FiHeart, FiMapPin, FiSettings, FiLogOut, FiChevronDown, FiHome, FiCompass, FiBell } from 'react-icons/fi';
 import { useAuth } from '@/components/AuthProvider';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
@@ -22,6 +22,7 @@ const menuItems = [
   { label: 'Overview',   icon: FiGrid,        id: 'overview'   },
   { label: 'Orders',     icon: FiShoppingBag,  id: 'orders'     },
   { label: 'Wishlist',   icon: FiHeart,        id: 'wishlist'   },
+  { label: 'Notifications', icon: FiBell,      id: 'notifications' },
   { label: 'Addresses',  icon: FiMapPin,       id: 'addresses'  },
   { label: 'Settings',   icon: FiSettings,     id: 'settings'   },
 ];

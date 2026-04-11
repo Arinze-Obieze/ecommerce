@@ -486,6 +486,7 @@ CREATE TABLE IF NOT EXISTS public.stores (
   approved_by string(uuid)NULL,
   kyc_status string(text)NOT NULL DEFAULT not_required,
   payout_ready boolean(boolean)NOT NULL DEFAULT false,
+  low_stock_threshold integer(integer)NOT NULL DEFAULT 5,
   user_id string(uuid)NULL,
   banner_url string(text)NULL,
   is_active boolean(boolean)NULL DEFAULT true,

@@ -11,7 +11,7 @@ export default function StoreDashboardOverviewPage() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch('/api/store/analytics/overview', { cache: 'no-store' });
+      const res = await fetch('/api/store/analytics/overview?range=7d', { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load dashboard overview');
       setData(json.data || null);
@@ -36,8 +36,8 @@ export default function StoreDashboardOverviewPage() {
     { label: 'Paid Orders',           value: orders.paidOrders || 0 },
     { label: 'Gross Sales',           value: `₦${Number(orders.grossSales || 0).toLocaleString()}` },
     { label: 'Escrow Held',           value: `₦${Number(escrow.held || 0).toLocaleString()}` },
-    { label: 'Products in Carts (7d)', value: cartDemand.productsInCarts7d || 0 },
-    { label: 'Units in Carts (7d)',   value: cartDemand.unitsInCarts7d || 0 },
+    { label: 'Products in Carts (7d)', value: cartDemand.productsInCarts || cartDemand.productsInCarts7d || 0 },
+    { label: 'Units in Carts (7d)',   value: cartDemand.unitsInCarts || cartDemand.unitsInCarts7d || 0 },
   ];
 
   return (
@@ -74,11 +74,11 @@ export default function StoreDashboardOverviewPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{card.label}</p>
-            <p className="mt-2 text-2xl font-bold text-[#2E5C45]">{card.value}</p>
+          <div key={card.label} className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-3 shadow-sm sm:px-4 sm:py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
+            <p className="mt-1.5 break-words text-lg font-bold leading-tight text-[#2E5C45] sm:text-xl">{card.value}</p>
           </div>
         ))}
       </div>

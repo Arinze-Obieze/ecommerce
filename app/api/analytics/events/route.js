@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/utils/supabase/server';
-import { enforceRateLimit, getRequestIp } from '@/utils/rateLimit';
+import { enforceRateLimit, getRequestIp, rateLimitHeaders, rateLimitPayload } from '@/utils/rateLimit';
 import { writeActivityLog } from '@/utils/serverTelemetry';
 
 const EVENT_NAME_REGEX = /^[a-z0-9_]{2,64}$/i;
@@ -34,13 +34,14 @@ export async function POST(request) {
   } = await authClient.auth.getUser();
 
   const ip = getRequestIp(request);
-  const identifier = user?.id || ip;
+  const body = await request.json().catch(() => null);
+  const identifier = user?.id || body?.session_id || body?.anon_id || ip;
 
   const rateLimit = await enforceRateLimit({
     request,
     scope: 'analytics_events_ingest',
     identifier,
-    limit: 120,
+    limit: 600,
     windowSeconds: 60,
   });
 
@@ -54,12 +55,15 @@ export async function POST(request) {
       statusCode: 429,
       message: 'Analytics event ingestion rate limit exceeded',
       userId: user?.id || null,
+      metadata: { identifierType: user?.id ? 'user' : body?.session_id ? 'session' : body?.anon_id ? 'anonymous' : 'ip' },
       durationMs: Date.now() - startedAt,
     });
-    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    return NextResponse.json(
+      rateLimitPayload('Analytics tracking is temporarily throttled because too many events were sent in a short time. Please wait a moment and try again.', rateLimit),
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    );
   }
 
-  const body = await request.json().catch(() => null);
   const eventName = String(body?.event_name || '').trim();
 
   if (!EVENT_NAME_REGEX.test(eventName)) {

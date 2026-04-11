@@ -4,7 +4,8 @@ import React, { useRef, useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { IMAGE_STRATEGIES, GENERAL_IMAGE_SLOTS, VARIANT_IMAGE_SLOTS, getColorTw } from "@/lib/product-wizard-constants";
+import { IMAGE_STRATEGIES, GENERAL_IMAGE_SLOTS, VARIANT_IMAGE_SLOTS, getColorSwatch } from "@/lib/product-wizard-constants";
+import { isLightHex } from "@/lib/color-utils";
 import { useToast } from "@/contexts/ToastContext";
 
 function MediaSlot({ slotKey, label, required, preview, mimeType, accept, onUpload, onRemove }) {
@@ -46,13 +47,28 @@ function MediaSlot({ slotKey, label, required, preview, mimeType, accept, onUplo
   );
 }
 
+function ColorSwatch({ color, hex }) {
+  const swatch = getColorSwatch(color, hex);
+  const isMulti = color === "Multi";
+  return (
+    <span
+      className={`rounded-full shrink-0 ${isMulti ? "bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400" : ""}`}
+      style={{
+        width: 16,
+        height: 16,
+        ...(isMulti ? {} : { backgroundColor: swatch, border: isLightHex(swatch) ? "1px solid #d1d5db" : "1px solid transparent" }),
+      }}
+    />
+  );
+}
+
 export default function MediaStep() {
   const { state, dispatch, goNext, goBack } = useWizard();
   const { error: showError, info: showInfo } = useToast();
   const [error, setError] = useState(null);
   const [openColors, setOpenColors] = useState({});
 
-  const uniqueColors = [...new Set(state.variants.map((v) => v.color).filter(Boolean))];
+  const uniqueColors = [...new Map(state.variants.filter((v) => v.color).map((v) => [v.color, v])).values()];
 
   const persistedMimeType = (key) => state.persistedImages?.[key]?.mimeType || state.persistedImages?.[key]?.mime_type || "";
 
@@ -85,9 +101,9 @@ export default function MediaStep() {
     if (strategy === "general") {
       if (!hasMedia("general_front") || !hasMedia("general_back")) return "Upload Front and Back views.";
     } else if (strategy === "variant") {
-      for (const color of uniqueColors) {
-        const safe = color.replace(/\s/g, "_");
-        if (!hasMedia(`variant_${safe}_front`) || !hasMedia(`variant_${safe}_back`)) return `Upload Front and Back views for ${color}.`;
+      for (const variantColor of uniqueColors) {
+        const safe = variantColor.color.replace(/\s/g, "_");
+        if (!hasMedia(`variant_${safe}_front`) || !hasMedia(`variant_${safe}_back`)) return `Upload Front and Back views for ${variantColor.color}.`;
       }
     } else if (strategy === "mixed") {
       if (!hasMedia("mixed_general_front") || !hasMedia("mixed_general_back")) return "Upload Front and Back views for the general product media.";
@@ -178,14 +194,15 @@ export default function MediaStep() {
         <div className="space-y-3 mb-5">
           {uniqueColors.length === 0 ? (
             <p className="text-center py-6 text-sm text-gray-400">No color variants found. Go back and add variants first.</p>
-          ) : uniqueColors.map((color) => {
+          ) : uniqueColors.map((variantColor) => {
+            const color = variantColor.color;
             const safe = color.replace(/\s/g, "_");
             const open = openColors[color] !== false;
             const variantSizes = state.variants.filter((v) => v.color === color).map((v) => v.size);
             return (
               <div key={color} className="border border-[#dbe7e0] rounded-xl overflow-hidden">
                 <button type="button" onClick={() => setOpenColors((prev) => ({ ...prev, [color]: !open }))} className="w-full flex items-center gap-2.5 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-left">
-                  <span className={`w-4 h-4 rounded-full ${getColorTw(color)} shrink-0`} />
+                  <ColorSwatch color={color} hex={variantColor.color_hex} />
                   <span className="text-sm font-bold text-gray-900 flex-1">{color}</span>
                   <span className="text-xs text-gray-500">{variantSizes.join(", ")}</span>
                   <span className="text-gray-400">{open ? "▲" : "▼"}</span>
@@ -248,11 +265,12 @@ export default function MediaStep() {
           </div>
           <div>
             <h4 className="text-sm font-bold text-gray-900 mb-2">Color-Specific Media (optional)</h4>
-            {uniqueColors.map((color) => {
+            {uniqueColors.map((variantColor) => {
+              const color = variantColor.color;
               const safe = color.replace(/\s/g, "_");
               return (
                 <div key={color} className="flex items-start gap-2.5 p-3 bg-gray-50 rounded-xl mb-2">
-                  <span className={`w-3.5 h-3.5 rounded-full ${getColorTw(color)} shrink-0 mt-1`} />
+                  <ColorSwatch color={color} hex={variantColor.color_hex} />
                   <div className="flex-1 grid grid-cols-2 gap-2">
                     {VARIANT_IMAGE_SLOTS.slice(0, 2).map((slot) => (
                       <MediaSlot

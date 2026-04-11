@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { buildSkuPrefix, buildVariantSku, getColorTw, getPublishReadiness, requiresComplianceForCategory } from "@/lib/product-wizard-constants";
+import { buildSkuPrefix, buildVariantSku, getColorSwatch, getPublishReadiness, requiresComplianceForCategory } from "@/lib/product-wizard-constants";
+import { isLightHex } from "@/lib/color-utils";
 import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/contexts/ToastContext";
 
@@ -224,7 +225,13 @@ export default function ReviewAndSubmitStep() {
                 {state.variantSkus.map((variant, index) => (
                   <div key={index} className="grid grid-cols-2 sm:grid-cols-[1.5fr_1fr_1fr_1.5fr_2.5fr] gap-1.5 px-3 py-2.5 items-center hover:bg-gray-50/50">
                     <div className="flex items-center gap-1.5">
-                      <span className={`w-3.5 h-3.5 rounded-full ${getColorTw(variant.color)} shrink-0`} />
+                      <span
+                        className={`w-3.5 h-3.5 rounded-full shrink-0 ${variant.color === "Multi" ? "bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400" : ""}`}
+                        style={variant.color === "Multi" ? undefined : {
+                          backgroundColor: getColorSwatch(variant.color, variant.color_hex),
+                          border: isLightHex(getColorSwatch(variant.color, variant.color_hex)) ? "1px solid #d1d5db" : "1px solid transparent",
+                        }}
+                      />
                       <span className="text-sm font-medium">{variant.color}</span>
                     </div>
                     <span className="text-sm text-gray-600">{variant.size}</span>

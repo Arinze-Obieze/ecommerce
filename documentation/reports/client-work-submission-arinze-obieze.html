@@ -57,7 +57,7 @@
 
       .subtitle {
         margin: 14px 0 0;
-        max-width: 620px;
+        max-width: 650px;
         color: var(--muted);
         font-size: 14px;
       }
@@ -134,10 +134,15 @@
         font-size: 14px;
       }
 
-      .note p {
+      .note p,
+      .note ul {
         margin: 0;
         font-size: 13px;
         color: #365545;
+      }
+
+      .note li {
+        font-size: 13px;
       }
 
       @media print {
@@ -160,30 +165,43 @@
         <p class="eyebrow">Project Delivery Summary</p>
         <h1>Client Work Submission</h1>
         <p class="subtitle">
-          This document summarizes the product, checkout, account, and order-management work completed in the current authored delivery set, excluding features or fixes pulled from other commits.
+          This refreshed submission consolidates both earlier completed work that was not fully captured in the prior report draft and the current unpushed local workspace work now present in the repository.
         </p>
       </header>
 
       <section class="grid">
         <article class="card">
           <h2>Prepared For</h2>
-          <p>Client submission and delivery review.</p>
+          <p>Client submission, delivery review, and implementation audit.</p>
         </article>
         <article class="card">
           <h2>Coverage</h2>
-          <p>Authored local work only, focused on user experience, seller tools, checkout, and account flows.</p>
+          <p>Committed authored work plus current local workspace changes, with migration authoring included and SQL execution excluded.</p>
         </article>
+      </section>
+
+      <section class="section">
+        <h3>Marketplace Platform Foundations Previously Completed But Not Fully Recorded</h3>
+        <ul>
+          <li>Implemented the broader store-platform foundation including store moderation, escrow payout groundwork, and media-upload support.</li>
+          <li>Added seller-based store creation and admin/store-management workflow improvements alongside related API refactors.</li>
+          <li>Introduced stronger store shell and seller-dashboard operational layout foundations.</li>
+          <li>Added payout-recipient verification and richer product-draft handling behavior.</li>
+          <li>Shipped recommendation and merchandising support including smarter product recommendations and stronger discovery surfaces.</li>
+          <li>Completed broader platform work that was under-documented in the earlier report, including full branded authentication, legal-page rollout, footer/legal navigation updates, and improved category navigation behavior.</li>
+          <li>Integrated ZeptoMail and related transactional-email infrastructure.</li>
+        </ul>
       </section>
 
       <section class="section">
         <h3>Product Creation And Seller Product Management</h3>
         <ul>
-          <li>Reworked the seller product creation flow into a clearer publish-oriented sequence covering variants, media, specifications, compliance, and final review.</li>
-          <li>Added structured completion checks so sellers can quickly see what is still preventing submission.</li>
-          <li>Expanded wizard state handling for specification summaries, structured entries, and safer draft restoration.</li>
-          <li>Introduced a seller product detail experience for reviewing and editing product data, pricing, stock, media, specifications, and bulk discount tiers.</li>
-          <li>Improved the seller products dashboard with richer list views, selection state, and bulk actions such as duplicate, archive, unarchive, and delete.</li>
-          <li>Extended store product APIs to support richer detail reads, editing, duplication, slug generation, SKU generation, and moderation-aware handling.</li>
+          <li>Reworked the seller product creation flow into a cleaner publish-oriented sequence covering variants, media, specifications, compliance, SKU handling, and final review.</li>
+          <li>Added structured readiness checks and step completion rules so sellers can clearly see what is still blocking submission.</li>
+          <li>Expanded wizard state handling for specification summaries, structured specification entries, and safer draft restoration.</li>
+          <li>Introduced a seller product detail experience for reviewing and editing product data, media, pricing, stock, specifications, and bulk discount tiers.</li>
+          <li>Upgraded the seller products dashboard with richer list views and bulk product actions such as duplicate, archive, unarchive, and delete.</li>
+          <li>Extended store product APIs to support richer detail reads, editing, duplication, slug generation, SKU generation, draft persistence, and moderation-aware product handling.</li>
         </ul>
       </section>
 
@@ -191,8 +209,8 @@
         <h3>Inventory Operations</h3>
         <ul>
           <li>Added a dedicated store inventory API for reads, direct stock adjustments, variant adjustments, and low-stock restocking actions.</li>
-          <li>Introduced inventory summaries for total products, low-stock items, out-of-stock items, and variant-managed products.</li>
-          <li>Logged inventory activity with adjustment metadata, reasons, notes, actor context, and history retrieval.</li>
+          <li>Added inventory summaries for total products, low-stock items, out-of-stock items, and variant-managed products.</li>
+          <li>Logged inventory activity with adjustment metadata, reasons, notes, actor context, and history retrieval for operational traceability.</li>
           <li>Rebuilt the seller inventory dashboard with search, filtering, manual stock controls, quick restock flows, variant inspection, and recent adjustment history.</li>
         </ul>
       </section>
@@ -200,30 +218,26 @@
       <section class="section">
         <h3>Product Detail, Cart, And Mobile Shopping Experience</h3>
         <ul>
-          <li>Redesigned the product detail page with richer mixed media support for both images and videos.</li>
+          <li>Redesigned the product detail page with richer mixed-media support for both images and videos.</li>
           <li>Improved product storytelling through overview content, specifications, return-policy presentation, and mobile-friendly collapsible sections.</li>
-          <li>Refined mobile buying flow with a clearer sticky purchase CTA and stronger selected-variant feedback.</li>
-          <li>Improved cart and product-card behavior to preserve selected size and color context through shopping and add-to-cart interactions.</li>
+          <li>Improved mobile buying flow with a sticky purchase CTA and clearer selected-variant feedback.</li>
+          <li>Strengthened cart and product-card behavior to preserve selected size and color context through shopping and add-to-cart interactions.</li>
           <li>Refined cart quantity controls and responsive layout so product adjustments are easier on smaller screens.</li>
-          <li>Updated bulk-pricing logic so discount pricing only overrides the base price when it is valid.</li>
-          <li>Improved mobile product quick view by reducing oversized imagery, restoring the primary CTAs, and keeping overlays above the sticky header.</li>
-          <li>Added a dedicated fullscreen image viewer with zoom controls and drag support for closer product inspection.</li>
+          <li>Improved mobile quick-view layering, CTA stability, image sizing, and immersive fullscreen image inspection.</li>
         </ul>
       </section>
 
       <section class="section">
-        <h3>Checkout, Delivery, And Order Experience</h3>
+        <h3>Checkout, Delivery, Orders, And Fulfillment</h3>
         <ul>
-          <li>Removed duplicate success messaging on product detail pages so add-to-cart feedback is clearer and less repetitive.</li>
-          <li>Improved payment success feedback with celebratory confirmation, stronger messaging, and a redirect path into order review.</li>
-          <li>Created a dedicated order-details experience showing order metadata, payment reference, status information, product lines, quantities, totals, and variant details where available.</li>
+          <li>Improved add-to-cart and post-payment feedback behavior by removing duplicate success messaging and strengthening payment-success routing into order review.</li>
+          <li>Added a dedicated customer order-details experience showing metadata, payment reference, status information, product lines, quantities, totals, and variant details.</li>
           <li>Connected recent activity and order history entries directly to individual order-detail pages.</li>
-          <li>Introduced clearer order-progress presentation based on status, fulfillment state, escrow state, and order-lifecycle markers.</li>
-          <li>Enforced delivery-address capture before payment for physical-product orders.</li>
-          <li>Supported both saved-address selection and single-use address entry during checkout, with the option to save new addresses for future use.</li>
-          <li>Added order-level delivery-address snapshot support so the exact address used for an order can be preserved and shown later.</li>
-          <li>Reworked checkout into a clearer step-based flow where users review cart contents first, then enter delivery details in a dedicated second-step modal before payment.</li>
-          <li>Improved delivery input quality for Nigeria-only fulfillment with searchable state and city selection, full state coverage including FCT, and a typed city fallback for unlisted locations.</li>
+          <li>Added clearer order-progress presentation based on status, fulfillment state, escrow state, and lifecycle markers.</li>
+          <li>Enforced delivery-address capture before payment and added order-level shipping-address snapshot support.</li>
+          <li>Reworked checkout into a clearer step-based flow with cart review first and delivery details collected in a dedicated second-step modal.</li>
+          <li>Improved Nigeria-only delivery input quality with searchable state/city selection and fallback typed city support.</li>
+          <li>Added seller-side order detail and fulfillment controls, including tracking-reference capture and internal note history.</li>
         </ul>
       </section>
 
@@ -233,19 +247,30 @@
           <li>Updated the header profile trigger to read more clearly as a dropdown with stronger menu affordance.</li>
           <li>Made the customer profile navigation collapsed by default and expandable on demand.</li>
           <li>Added clearer routes back to home and shop from the profile area.</li>
-          <li>Fixed mobile overflow issues in the profile overview and saved-address presentation.</li>
-          <li>Replaced placeholder recent activity behavior with meaningful recent order activity.</li>
+          <li>Fixed profile-overview and saved-address mobile overflow issues.</li>
+          <li>Limited header search visibility to routes where search is relevant instead of showing it globally.</li>
         </ul>
       </section>
 
       <section class="section">
-        <h3>Authentication, Onboarding, And Documentation</h3>
+        <h3>Authentication, Onboarding, And Store Access</h3>
         <ul>
           <li>Added a reset-password page with recovery-session validation, password-strength requirements, confirmation checks, and post-reset redirection.</li>
           <li>Changed store-owner assignment onboarding from temporary passwords to secure invite and setup links.</li>
-          <li>Limited header search visibility to routes where search is relevant.</li>
-          <li>Added updated implementation reports for the product-creation/cart flow and mobile product-detail redesign.</li>
-          <li>Removed outdated documentation artifacts and cleaned up local documentation tracking.</li>
+          <li>Added post-login target handling so store-role users land in the correct operational area after authentication.</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h3>Newly Added Unpushed Local Workspace Work</h3>
+        <ul>
+          <li>Added buyer-facing return-request workflow and seller-side return/refund handling surfaces with refund-status visibility.</li>
+          <li>Hardened reviews with verified-purchase checks, edit/delete support, moderation state, and seller replies.</li>
+          <li>Extended store team management to support non-existing-user invitations, resend/revoke lifecycle, and acceptance-on-login behavior.</li>
+          <li>Added durable in-app notifications with shared notification-center UI for both customer and store contexts.</li>
+          <li>Expanded payout operations with reconciliation logging, payout-exception tracking, and seller-facing resolution flows.</li>
+          <li>Hardened production behavior by disabling the debug route and redirecting duplicate legacy seller creation surfaces back to the active store dashboard flow.</li>
+          <li>Prepared the new marketplace-operations migration file without executing SQL locally.</li>
         </ul>
       </section>
 
@@ -272,8 +297,13 @@
       </section>
 
       <div class="note">
-        <h4>Validation</h4>
-        <p>The current delivery set was checked against the project build flow after the more recent checkout, order, profile, and quick-view updates.</p>
+        <h4>Validation And Reporting Notes</h4>
+        <ul>
+          <li>The project build was previously re-run successfully after the latest local feature pass.</li>
+          <li>Current local workspace changes were detected via git status and explicitly included in this report.</li>
+          <li>Recent git history was inspected to recover earlier delivered work that had not been fully recorded in the prior submission draft.</li>
+          <li>SQL was not executed locally for the new migration work; migration files were authored only.</li>
+        </ul>
       </div>
     </main>
   </body>

@@ -10,6 +10,7 @@ import OrderHistory from '@/components/Profile/OrderHistory';
 import AddressBook from '@/components/Profile/AddressBook';
 import AccountSettings from '@/components/Profile/AccountSettings';
 import ProfileWishlist from '@/components/Profile/ProfileWishlist';
+import ProfileNotifications from '@/components/Profile/ProfileNotifications';
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -40,6 +41,8 @@ export default function ProfilePage() {
         return <AddressBook />;
       case 'settings':
         return <AccountSettings />;
+      case 'notifications':
+        return <ProfileNotifications />;
       default:
         return <ProfileOverview />;
     }
