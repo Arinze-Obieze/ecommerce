@@ -116,16 +116,16 @@ export default function FloatingDashboardCTA() {
     <div className="pointer-events-none fixed bottom-5 right-4 z-[90] sm:bottom-6 sm:right-6">
       <Link
         href={destination.href}
-        className={`pointer-events-auto flex items-center gap-3 rounded-2xl bg-gradient-to-br ${destination.accent} px-4 py-3 text-white shadow-[0_18px_45px_rgba(10,61,46,0.24)] ring-1 ${destination.ring} backdrop-blur transition-transform duration-200 hover:-translate-y-1`}
+        className={`pointer-events-auto flex items-center gap-2 rounded-xl bg-gradient-to-br ${destination.accent} px-3 py-2 text-white shadow-[0_12px_30px_rgba(10,61,46,0.22)] ring-1 ${destination.ring} backdrop-blur transition-transform duration-200 hover:-translate-y-1`}
       >
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/14">
-          <Icon className="h-5 w-5" />
+        <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-white/14">
+          <Icon className="h-3.5 w-3.5" />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-semibold leading-tight">{destination.label}</span>
-          <span className="block text-xs text-white/80">{destination.detail}</span>
+          <span className="block text-xs font-semibold leading-tight">{destination.label}</span>
+          <span className="block text-[10px] text-white/80">{destination.detail}</span>
         </span>
-        <FiArrowUpRight className="h-4 w-4 shrink-0 text-white/85" />
+        <FiArrowUpRight className="h-3 w-3 shrink-0 text-white/85" />
       </Link>
     </div>
   );

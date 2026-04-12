@@ -94,7 +94,7 @@ function getRequiredImageKeys(imageStrategy, colors) {
   return ["general_front", "general_back"];
 }
 
-async function cleanupCreatedRecords(supabase, productId, storagePaths = []) {
+async function cleanupCreatedRecords(supabase, productId, storagePaths = [], marketplaceSku = null) {
   if (!productId) return;
 
   if (storagePaths.length > 0) {
@@ -114,6 +114,12 @@ async function cleanupCreatedRecords(supabase, productId, storagePaths = []) {
   try {
     await supabase.from("products_internal").delete().eq("product_id", productId);
   } catch {}
+
+  if (marketplaceSku) {
+    try {
+      await supabase.from("products").delete().eq("sku", marketplaceSku);
+    } catch {}
+  }
 }
 
 async function cleanupDraftRecord(supabase, draftId, storeId, userId, imageManifest = {}) {
@@ -261,33 +267,34 @@ export async function POST(request) {
     productId = `PROD_${Date.now()}_${Math.floor(Math.random() * 9000 + 1000)}`;
 
     const productRec = {
-      product_id: productId,
-      seller_id: store.id,
-      product_name: productName,
-      description,
-      category,
-      subcategory,
-      material,
-      gender: normalizeText(wd.gender) || null,
-      age_group: normalizeText(wd.ageGroup) || null,
-      base_sku: baseSku,
-      price: basePrice,
-      quantity: totalQty,
-      status: "active",
-      approval_status: "pending",
-      image_strategy: imageStrategy,
-      notes: buildMergedNotes(wd),
-      fiber_composition:          buildFiberComposition(wd),
-      country_of_origin:          normalizeText(wd.countryOfOrigin)         || null,
-      country_of_transformation:  normalizeText(wd.countryOfTransformation) || null,
-      brand:                      normalizeText(wd.labelBrand) || normalizeText(wd.brand) || null,
-      care_instructions:          JSON.stringify(buildCareInstructionsJson(wd)),
-      care_instructions_json:     buildCareInstructionsJson(wd),
-      children_safety_flags:      Array.isArray(wd.childrenSafetyFlags) && wd.childrenSafetyFlags.length > 0
-                                    ? wd.childrenSafetyFlags : null,
-      flammability_class:         Array.isArray(wd.flammabilityFlags) && wd.flammabilityFlags.length > 0
-                                    ? wd.flammabilityFlags.join(",") : null,
-    };
+  product_id: productId,
+  seller_id: store.id,
+  product_name: productName,
+  description,
+  category,
+  subcategory,
+  material,
+  gender: normalizeText(wd.gender) || null,
+  age_group: normalizeText(wd.ageGroup) || null,
+  base_sku: baseSku,
+  price: basePrice,
+  quantity: totalQty,
+  status: "active",
+  approval_status: "pending",
+  image_strategy: imageStrategy,
+  notes: buildMergedNotes(wd),
+  mood_tags: Array.isArray(wd.moodTags) && wd.moodTags.length > 0 ? wd.moodTags : [],  // ← ADD THIS
+  fiber_composition:          buildFiberComposition(wd),
+  country_of_origin:          normalizeText(wd.countryOfOrigin)         || null,
+  country_of_transformation:  normalizeText(wd.countryOfTransformation) || null,
+  brand:                      normalizeText(wd.labelBrand) || normalizeText(wd.brand) || null,
+  care_instructions:          JSON.stringify(buildCareInstructionsJson(wd)),
+  care_instructions_json:     buildCareInstructionsJson(wd),
+  children_safety_flags:      Array.isArray(wd.childrenSafetyFlags) && wd.childrenSafetyFlags.length > 0
+                                ? wd.childrenSafetyFlags : null,
+  flammability_class:         Array.isArray(wd.flammabilityFlags) && wd.flammabilityFlags.length > 0
+                                ? wd.flammabilityFlags.join(",") : null,
+};
 
     console.log("[Create] Inserting product:", productId);
     const { error: prodErr } = await supabase.from("products_internal").insert(productRec);
@@ -485,6 +492,60 @@ export async function POST(request) {
     });
     if (verifyErr) console.warn("[Create] Verify log failed:", verifyErr.message);
 
+    // 12. Insert into the marketplace `products` table so the product appears in the dashboard
+    const publicImageUrls = imgSuccesses.map(r => r.record.supabase_url).filter(Boolean);
+
+    // Generate a unique slug within this store
+    let productSlug = String(productName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || baseSku.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    const { data: slugRows } = await supabase
+      .from("products")
+      .select("slug")
+      .eq("store_id", store.id)
+      .ilike("slug", `${productSlug}%`)
+      .limit(20);
+    const usedSlugs = new Set((slugRows || []).map(r => r.slug));
+    if (usedSlugs.has(productSlug)) {
+      const suffixes = [...usedSlugs].map(s => { const m = s.match(/-(\d+)$/); return m ? parseInt(m[1], 10) : 0; });
+      productSlug = `${productSlug}-${Math.max(0, ...suffixes) + 1}`;
+    }
+
+    const specsForMarketplace = normalizeSpecifications(wd.specifications).value;
+
+    const marketplaceRecord = {
+      store_id: store.id,
+      name: productName,
+      slug: productSlug,
+      sku: baseSku,
+      description,
+      price: basePrice,
+      discount_price: null,
+      stock_quantity: totalQty,
+      is_active: false,
+      image_urls: publicImageUrls,
+      video_urls: [],
+      specifications: specsForMarketplace,
+      moderation_status: "draft",
+      submitted_at: null,
+      reviewed_at: null,
+      reviewed_by: null,
+      rejection_reason: null,
+      published_at: null,
+    };
+
+    const { data: marketplaceProduct, error: marketplaceErr } = await supabase
+      .from("products")
+      .insert(marketplaceRecord)
+      .select("id")
+      .single();
+
+    if (marketplaceErr) {
+      console.error("[Create] Marketplace insert failed:", marketplaceErr.message);
+      await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+      productId = null;
+      return NextResponse.json({ success: false, error: `Failed to publish to marketplace: ${marketplaceErr.message}` }, { status: 500 });
+    }
+    console.log("[Create] Marketplace product:", marketplaceProduct.id);
+
     await cleanupDraftRecord(
       supabase,
       normalizeText(wd.draftId),
@@ -497,7 +558,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      product: { id: productId, base_sku: baseSku, name: productName, status: "active" },
+      product: { id: productId, marketplace_id: marketplaceProduct.id, base_sku: baseSku, name: productName, status: "draft" },
       variants_created: varRecs.length,
       images_uploaded: imgSuccesses.length,
     });

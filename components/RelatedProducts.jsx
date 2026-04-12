@@ -12,13 +12,11 @@ const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
   useEffect(() => {
     const fetchRelated = async () => {
       try {
-        // Try fetching by category first if available
         let queryParams = new URLSearchParams({ limit: '10' });
-        
         if (categorySlug) {
-            queryParams.append('category', categorySlug);
+          queryParams.append('category', categorySlug);
         } else if (storeId) {
-            queryParams.append('storeId', storeId);
+          queryParams.append('storeId', storeId);
         }
 
         const res = await fetch(`/api/products?${queryParams.toString()}`, {
@@ -27,8 +25,9 @@ const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
         const json = await res.json();
 
         if (json.success && json.data) {
-          // Filter out the current product
-          const filtered = json.data.filter(p => p.id !== currentProductId).slice(0, 8);
+          const filtered = json.data
+            .filter(p => p.id !== currentProductId)
+            .slice(0, 8);
           setProducts(filtered);
         }
       } catch (error) {
@@ -39,19 +38,22 @@ const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
     };
 
     if (categorySlug || storeId) {
-       fetchRelated();
+      fetchRelated();
     } else {
-       setLoading(false); // Can't fetch without parameters
+      setLoading(false);
     }
   }, [currentProductId, categorySlug, storeId]);
 
   if (loading) {
     return (
-        <SectionCarousel title="You Might Also Like">
-             {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl h-64 md:h-96 animate-pulse w-full border border-gray-100"></div>
-             ))}
-        </SectionCarousel>
+      <SectionCarousel title="You Might Also Like">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl h-64 md:h-96 animate-pulse w-full border border-gray-100"
+          />
+        ))}
+      </SectionCarousel>
     );
   }
 
@@ -59,17 +61,21 @@ const RelatedProducts = ({ currentProductId, categorySlug, storeId }) => {
 
   return (
     <SectionCarousel title="You Might Also Like">
-        {products.map((product, index) => (
-          <ProductImpressionTracker
-            key={product.id}
+      {products.map((product, index) => (
+        <ProductImpressionTracker
+          key={product.id}
+          product={product}
+          surface="related_products"
+          position={index + 1}
+          metadata={{ sortStrategy: 'smart' }}
+        >
+          <ProductCard
             product={product}
-            surface="related_products"
+            source="related_products"
             position={index + 1}
-            metadata={{ sortStrategy: 'smart' }}
-          >
-            <ProductCard product={product} />
-          </ProductImpressionTracker>
-        ))}
+          />
+        </ProductImpressionTracker>
+      ))}
     </SectionCarousel>
   );
 };
