@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitHeaders, rateLimitPayload } from '@/utils/rateLimit';
 
 function money(value) {
   const numeric = Number(value || 0);
@@ -13,15 +13,80 @@ function utcDayKey(value) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildDaySeries(days) {
+function utcMonthKey(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 7);
+}
+
+function addUtcMonths(date, amount) {
+  const next = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + amount, 1));
+  return next;
+}
+
+function parseRange(value, storeCreatedAt) {
+  const normalized = String(value || '').trim().toLowerCase();
+  const presets = {
+    '7d': { days: 7, label: '7 days' },
+    '30d': { days: 30, label: '30 days' },
+    '90d': { days: 90, label: '90 days' },
+    '1y': { days: 365, label: '1 year' },
+  };
+
+  if (normalized === 'all') {
+    const createdAt = new Date(storeCreatedAt || Date.now());
+    const since = Number.isNaN(createdAt.getTime()) ? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) : createdAt;
+    return {
+      key: 'all',
+      label: 'Since opening',
+      since: since.toISOString(),
+      granularity: (Date.now() - since.getTime()) / (24 * 60 * 60 * 1000) > 120 ? 'month' : 'day',
+    };
+  }
+
+  const preset = presets[normalized] || presets['30d'];
+  return {
+    key: presets[normalized] ? normalized : '30d',
+    label: preset.label,
+    since: new Date(Date.now() - (preset.days - 1) * 24 * 60 * 60 * 1000).toISOString(),
+    granularity: preset.days > 120 ? 'month' : 'day',
+  };
+}
+
+function buildDaySeriesFrom(startIso) {
+  const start = new Date(startIso);
+  const startTime = Number.isNaN(start.getTime()) ? Date.now() : start.getTime();
+  const startDay = new Date(startTime);
+  startDay.setUTCHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
   const list = [];
-  for (let i = days - 1; i >= 0; i -= 1) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-    list.push({
-      day: utcDayKey(date.toISOString()),
-    });
+  for (let cursor = startDay; cursor.getTime() <= today.getTime(); cursor = new Date(cursor.getTime() + 24 * 60 * 60 * 1000)) {
+    list.push({ period: utcDayKey(cursor.toISOString()), label: utcDayKey(cursor.toISOString()) });
   }
   return list;
+}
+
+function buildMonthSeriesFrom(startIso) {
+  const start = new Date(startIso);
+  const safeStart = Number.isNaN(start.getTime()) ? new Date() : start;
+  const startMonth = new Date(Date.UTC(safeStart.getUTCFullYear(), safeStart.getUTCMonth(), 1));
+  const now = new Date();
+  const endMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const list = [];
+  for (let cursor = startMonth; cursor.getTime() <= endMonth.getTime(); cursor = addUtcMonths(cursor, 1)) {
+    list.push({ period: utcMonthKey(cursor.toISOString()), label: utcMonthKey(cursor.toISOString()) });
+  }
+  return list;
+}
+
+function buildRangeSeries(range) {
+  const base = range.granularity === 'month' ? buildMonthSeriesFrom(range.since) : buildDaySeriesFrom(range.since);
+  return base.map((row) => ({ ...row, revenue: 0, orders: 0, netUnits: 0, addUnits: 0, removeUnits: 0 }));
+}
+
+function rangeBucketKey(value, granularity) {
+  return granularity === 'month' ? utcMonthKey(value) : utcDayKey(value);
 }
 
 export async function GET(request) {
@@ -32,17 +97,32 @@ export async function GET(request) {
     request,
     scope: 'store_analytics_read',
     identifier: ctx.user.id,
-    limit: 120,
+    limit: 240,
     windowSeconds: 60,
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(
+      rateLimitPayload('Store analytics is temporarily throttled because the dashboard was refreshed too many times. Please wait a moment and try again.', rateLimit),
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    );
   }
 
   const storeId = ctx.membership.store_id;
-  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const since14d = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: storeRow, error: storeError } = await ctx.adminClient
+    .from('stores')
+    .select('id, created_at')
+    .eq('id', storeId)
+    .maybeSingle();
+
+  if (storeError) {
+    return NextResponse.json({ error: storeError.message || 'Failed to load store analytics settings' }, { status: 500 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const range = parseRange(searchParams.get('range'), storeRow?.created_at);
+  const rangeStartTime = new Date(range.since).getTime();
 
   const productsIdRes = await ctx.adminClient
     .from('products')
@@ -81,7 +161,7 @@ export async function GET(request) {
       .from('cart_events')
       .select('id, event_type, product_id, quantity, created_at')
       .eq('store_id', storeId)
-      .gte('created_at', since14d)
+      .gte('created_at', range.since)
       .limit(10000),
   ]);
 
@@ -145,45 +225,43 @@ export async function GET(request) {
     .filter((row) => row.status === 'released')
     .reduce((sum, row) => sum + money(row.amount), 0);
 
-  const cartEvents7d = cartEvents.filter((row) => new Date(row.created_at).getTime() >= new Date(since7d).getTime());
-  const addEvents7d = cartEvents7d.filter((row) => row.event_type === 'add');
-  const removeEvents7d = cartEvents7d.filter((row) => row.event_type === 'remove');
-  const cartDemandUnits7d = addEvents7d.reduce((sum, row) => sum + Number(row.quantity || 0), 0)
-    - removeEvents7d.reduce((sum, row) => sum + Number(row.quantity || 0), 0);
-  const cartDemandProducts7d = new Set(addEvents7d.map((row) => row.product_id)).size;
+  const rangeCartEvents = cartEvents.filter((row) => new Date(row.created_at).getTime() >= rangeStartTime);
+  const addEvents = rangeCartEvents.filter((row) => row.event_type === 'add');
+  const removeEvents = rangeCartEvents.filter((row) => row.event_type === 'remove' || row.event_type === 'clear');
+  const cartDemandUnits = addEvents.reduce((sum, row) => sum + Number(row.quantity || 0), 0)
+    - removeEvents.reduce((sum, row) => sum + Number(row.quantity || 0), 0);
+  const cartDemandProducts = new Set(addEvents.map((row) => row.product_id)).size;
 
-  const dailyRevenueBase = buildDaySeries(14).map((row) => ({ ...row, revenue: 0, orders: 0 }));
-  const dailyRevenueMap = new Map(dailyRevenueBase.map((row) => [row.day, row]));
+  const rangeSeriesBase = buildRangeSeries(range);
+  const rangeSeriesMap = new Map(rangeSeriesBase.map((row) => [row.period, row]));
 
   for (const order of uniqueStoreOrders) {
-    const key = utcDayKey(order.created_at);
-    if (!key || !dailyRevenueMap.has(key)) continue;
-    const bucket = dailyRevenueMap.get(key);
+    if (new Date(order.created_at).getTime() < rangeStartTime) continue;
+    const key = rangeBucketKey(order.created_at, range.granularity);
+    if (!key || !rangeSeriesMap.has(key)) continue;
+    const bucket = rangeSeriesMap.get(key);
     bucket.orders += 1;
     if (order.status === 'completed') {
       bucket.revenue = money(bucket.revenue + money(orderRevenueById.get(order.id) || 0));
     }
   }
 
-  const dailyCartBase = buildDaySeries(7).map((row) => ({ ...row, netUnits: 0, addUnits: 0, removeUnits: 0 }));
-  const dailyCartMap = new Map(dailyCartBase.map((row) => [row.day, row]));
-
-  for (const row of cartEvents7d) {
-    const key = utcDayKey(row.created_at);
-    if (!key || !dailyCartMap.has(key)) continue;
-    const bucket = dailyCartMap.get(key);
+  for (const row of rangeCartEvents) {
+    const key = rangeBucketKey(row.created_at, range.granularity);
+    if (!key || !rangeSeriesMap.has(key)) continue;
+    const bucket = rangeSeriesMap.get(key);
     const qty = Number(row.quantity || 0);
     if (row.event_type === 'add') {
       bucket.addUnits += qty;
       bucket.netUnits += qty;
-    } else if (row.event_type === 'remove') {
+    } else if (row.event_type === 'remove' || row.event_type === 'clear') {
       bucket.removeUnits += qty;
       bucket.netUnits -= qty;
     }
   }
 
   const demandUnitsByProduct = new Map();
-  for (const row of cartEvents7d) {
+  for (const row of rangeCartEvents) {
     if (row.event_type !== 'add') continue;
     const key = row.product_id;
     if (!key) continue;
@@ -227,18 +305,24 @@ export async function GET(request) {
         releasedPayoutAmount: money(payoutsReleased),
       },
       cartDemand: {
-        productsInCarts7d: cartDemandProducts7d,
-        unitsInCarts7d: Math.max(0, cartDemandUnits7d),
-        eventsCaptured7d: cartEvents7d.length,
+        productsInCarts: cartDemandProducts,
+        unitsInCarts: Math.max(0, cartDemandUnits),
+        eventsCaptured: rangeCartEvents.length,
+        productsInCarts7d: cartDemandProducts,
+        unitsInCarts7d: Math.max(0, cartDemandUnits),
+        eventsCaptured7d: rangeCartEvents.length,
       },
       trends: {
-        dailyOrdersAndRevenue14d: dailyRevenueBase,
-        dailyCartNetUnits7d: dailyCartBase,
+        ordersRevenue: rangeSeriesBase,
+        cartNetUnits: rangeSeriesBase,
+        topDemandProducts,
+        dailyOrdersAndRevenue14d: rangeSeriesBase,
+        dailyCartNetUnits7d: rangeSeriesBase,
         topDemandProducts7d: topDemandProducts,
       },
       meta: {
-        since7d,
-        since14d,
+        range,
+        storeCreatedAt: storeRow?.created_at || null,
         productCountForOrderJoin: productIds.length,
       },
     },

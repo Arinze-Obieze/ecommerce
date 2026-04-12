@@ -76,7 +76,7 @@ export async function GET(request, { params }) {
     // First try slug lookup
     const slugResult = await supabase
       .from('products')
-      .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url), reviews(*)')
+      .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
       .eq('slug', id)
       .eq('is_active', true)
       .single();
@@ -88,7 +88,7 @@ export async function GET(request, { params }) {
     if ((!product || error) && Number.isInteger(Number(id))) {
       const idResult = await supabase
         .from('products')
-        .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url), reviews(*)')
+        .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
         .eq('id', Number(id))
         .eq('is_active', true)
         .single();
@@ -125,9 +125,42 @@ export async function GET(request, { params }) {
           ? normalizeReturnPolicyRecord(returnPolicyRecord)
           : DEFAULT_RETURN_POLICY;
 
+    let reviews = [];
+    const reviewResult = await supabase
+      .from('reviews')
+      .select('id, product_id, user_id, rating, comment, created_at, edited_at, status, is_verified_purchase, seller_reply, seller_replied_at')
+      .eq('product_id', product.id)
+      .eq('status', 'approved')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!reviewResult.error) {
+      const userIds = [...new Set((reviewResult.data || []).map((row) => row.user_id).filter(Boolean))];
+      let usersById = new Map();
+
+      if (userIds.length > 0) {
+        const usersResult = await supabase
+          .from('users')
+          .select('id, full_name')
+          .in('id', userIds);
+
+        if (!usersResult.error) {
+          usersById = new Map((usersResult.data || []).map((row) => [row.id, row]));
+        }
+      }
+
+      reviews = (reviewResult.data || []).map((review) => ({
+        ...review,
+        user: usersById.get(review.user_id) || null,
+      }));
+    }
+
     // Flatten logic matching frontend expectations
     const flattenedProduct = {
         ...product,
+        reviews,
+        reviews_count: reviews.length,
         category: product.product_categories?.[0]?.categories,
         return_policy: returnPolicy,
     };

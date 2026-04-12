@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import ProductReviewsManager from '@/components/Store/ProductReviewsManager';
 import { createClient as createSupabaseClient } from '@/utils/supabase/client';
 
 function createEmptySpecification() {
@@ -797,6 +798,8 @@ export default function StoreProductDetailPage() {
               <p className="mt-1">{images.length} image(s)</p>
             </div>
           </section>
+
+          <ProductReviewsManager productId={productId} />
         </div>
       </div>
     </div>

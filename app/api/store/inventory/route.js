@@ -5,7 +5,9 @@ import { enforceRateLimit } from '@/utils/rateLimit';
 const PRODUCT_SELECT = 'id, store_id, name, slug, sku, stock_quantity, is_active, moderation_status, updated_at';
 const VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';
 const HISTORY_LIMIT = 30;
-const LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_PAGE_SIZE = 25;
+const MAX_PAGE_SIZE = 100;
 
 function toInteger(value) {
   const numeric = Number.parseInt(value, 10);
@@ -14,6 +16,12 @@ function toInteger(value) {
 
 function clampStock(value) {
   return Math.max(0, toInteger(value) || 0);
+}
+
+function normalizeLowStockThreshold(value) {
+  const numeric = toInteger(value);
+  if (numeric === null || numeric < 0) return DEFAULT_LOW_STOCK_THRESHOLD;
+  return Math.min(numeric, 100000);
 }
 
 function normalizeText(value) {
@@ -36,6 +44,12 @@ function normalizeMode(value) {
   return '';
 }
 
+function normalizeInventoryFilter(value) {
+  const normalized = normalizeText(value).toLowerCase();
+  if (['low_stock', 'out_of_stock', 'variant_managed'].includes(normalized)) return normalized;
+  return 'all';
+}
+
 function computeNextStock(currentStock, mode, quantity) {
   if (mode === 'set') return clampStock(quantity);
   if (mode === 'add') return clampStock(currentStock + quantity);
@@ -50,7 +64,36 @@ function buildVariantLabel(variant) {
   return color || size || 'Unnamed variant';
 }
 
-function serializeInventory(products, variants, history) {
+function matchesInventoryFilter(row, filter, lowStockThreshold) {
+  if (filter === 'low_stock') return row.effective_stock_quantity > 0 && row.effective_stock_quantity <= lowStockThreshold;
+  if (filter === 'out_of_stock') return row.effective_stock_quantity <= 0;
+  if (filter === 'variant_managed') return row.has_variants;
+  return true;
+}
+
+function matchesInventorySearch(row, search) {
+  if (!search) return true;
+  const haystack = [
+    row.name,
+    row.slug,
+    row.sku,
+    row.moderation_status,
+    ...(row.variants || []).map((variant) => variant.label),
+  ].filter(Boolean).join(' ').toLowerCase();
+  return haystack.includes(search);
+}
+
+function summarizeRows(rows) {
+  return {
+    total: rows.length,
+    lowStock: rows.filter((row) => row.low_stock && !row.out_of_stock).length,
+    outOfStock: rows.filter((row) => row.out_of_stock).length,
+    variantManaged: rows.filter((row) => row.has_variants).length,
+  };
+}
+
+function serializeInventory(products, variants, history, options = {}) {
+  const lowStockThreshold = normalizeLowStockThreshold(options.lowStockThreshold);
   const variantsByProduct = new Map();
 
   for (const variant of variants) {
@@ -77,24 +120,48 @@ function serializeInventory(products, variants, history) {
         stock_quantity: clampStock(variant.stock_quantity),
         label: buildVariantLabel(variant),
       })),
-      low_stock: effectiveStock <= LOW_STOCK_THRESHOLD,
+      low_stock: effectiveStock <= lowStockThreshold,
       out_of_stock: effectiveStock <= 0,
     };
   });
 
+  const search = normalizeText(options.search).toLowerCase();
+  const filter = normalizeInventoryFilter(options.filter);
+  const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, toInteger(options.pageSize) || DEFAULT_PAGE_SIZE));
+  const page = Math.max(1, toInteger(options.page) || 1);
+  const filteredRows = rows.filter((row) => matchesInventoryFilter(row, filter, lowStockThreshold) && matchesInventorySearch(row, search));
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
+
   return {
-    rows,
+    rows: filteredRows.slice(start, start + pageSize),
     history: history || [],
-    summary: {
-      total: rows.length,
-      lowStock: rows.filter((row) => row.low_stock && !row.out_of_stock).length,
-      outOfStock: rows.filter((row) => row.out_of_stock).length,
-      variantManaged: rows.filter((row) => row.has_variants).length,
+    summary: summarizeRows(rows),
+    filteredSummary: summarizeRows(filteredRows),
+    settings: {
+      low_stock_threshold: lowStockThreshold,
+    },
+    pagination: {
+      page: safePage,
+      pageSize,
+      total: filteredRows.length,
+      totalPages,
     },
   };
 }
 
-async function loadInventoryData(ctx) {
+async function loadInventoryData(ctx, options = {}) {
+  const { data: storeSettings, error: storeSettingsError } = await ctx.adminClient
+    .from('stores')
+    .select('low_stock_threshold')
+    .eq('id', ctx.membership.store_id)
+    .maybeSingle();
+
+  if (storeSettingsError) {
+    throw new Error(storeSettingsError.message || 'Failed to load inventory settings');
+  }
+
   const { data: products, error: productsError } = await ctx.adminClient
     .from('products')
     .select(PRODUCT_SELECT)
@@ -132,7 +199,7 @@ async function loadInventoryData(ctx) {
 
   if (!historyResult.error) {
     history = (historyResult.data || [])
-      .filter((entry) => Number(entry?.metadata?.store_id) === Number(ctx.membership.store_id))
+      .filter((entry) => String(entry?.metadata?.store_id || '') === String(ctx.membership.store_id))
       .slice(0, HISTORY_LIMIT)
       .map((entry) => ({
         id: entry.id,
@@ -143,7 +210,10 @@ async function loadInventoryData(ctx) {
       }));
   }
 
-  return serializeInventory(products || [], variants, history);
+  return serializeInventory(products || [], variants, history, {
+    ...options,
+    lowStockThreshold: storeSettings?.low_stock_threshold,
+  });
 }
 
 async function logInventoryAdjustment(ctx, request, payload) {
@@ -415,7 +485,13 @@ export async function GET(request) {
   }
 
   try {
-    const inventory = await loadInventoryData(ctx);
+    const { searchParams } = new URL(request.url);
+    const inventory = await loadInventoryData(ctx, {
+      page: searchParams.get('page'),
+      pageSize: searchParams.get('pageSize'),
+      search: searchParams.get('search'),
+      filter: searchParams.get('filter'),
+    });
     return NextResponse.json({ success: true, ...inventory });
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Failed to load inventory.' }, { status: 500 });

@@ -123,6 +123,13 @@ export default function ProfileOrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [shippingAddress, setShippingAddress] = useState(null);
+  const [cancellationRequest, setCancellationRequest] = useState(null);
+  const [returnRequest, setReturnRequest] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnDetails, setReturnDetails] = useState('');
+  const [returnBusy, setReturnBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -198,12 +205,26 @@ export default function ProfileOrderDetailPage() {
             variant: variantsById.get(item.variant_id) || null,
           }))
         );
+
+        const cancelRes = await fetch(`/api/account/orders/${orderRow.id}/cancel`, { cache: 'no-store' });
+        const cancelJson = await cancelRes.json();
+        if (cancelRes.ok) {
+          setCancellationRequest(cancelJson.data?.cancellation_request || null);
+        }
+
+        const returnRes = await fetch(`/api/account/orders/${orderRow.id}/return`, { cache: 'no-store' });
+        const returnJson = await returnRes.json();
+        if (returnRes.ok) {
+          setReturnRequest(returnJson.data?.return_request || null);
+        }
       } catch (loadError) {
         console.error(loadError);
         setError(loadError.message || 'Failed to load order details.');
         setOrder(null);
         setShippingAddress(null);
         setItems([]);
+        setCancellationRequest(null);
+        setReturnRequest(null);
       } finally {
         setLoading(false);
       }
@@ -219,6 +240,62 @@ export default function ProfileOrderDetailPage() {
     () => items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0),
     [items]
   );
+  const canRequestCancellation = Boolean(
+    order &&
+    String(order.status || '').toLowerCase() !== 'cancelled' &&
+    !['packed', 'shipped', 'delivered'].includes(String(order.fulfillment_status || '').toLowerCase()) &&
+    String(cancellationRequest?.status || '').toLowerCase() !== 'pending'
+  );
+  const canRequestReturn = Boolean(
+    order &&
+    ['delivered', 'delivered_confirmed'].includes(String(order.fulfillment_status || '').toLowerCase()) &&
+    !['pending', 'approved', 'received', 'processing'].includes(String(returnRequest?.status || '').toLowerCase())
+  );
+
+  const submitCancellationRequest = async () => {
+    try {
+      setCancelBusy(true);
+      setError('');
+      const res = await fetch(`/api/account/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: cancelReason }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to submit cancellation request');
+      setCancellationRequest(json.data || null);
+      setCancelReason('');
+    } catch (requestError) {
+      setError(requestError.message || 'Failed to submit cancellation request');
+    } finally {
+      setCancelBusy(false);
+    }
+  };
+
+  const submitReturnRequest = async () => {
+    try {
+      setReturnBusy(true);
+      setError('');
+      const res = await fetch(`/api/account/orders/${orderId}/return`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: returnReason,
+          details: returnDetails,
+          requested_resolution: 'refund',
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to submit return request');
+      setReturnRequest(json.data || null);
+      setReturnReason('');
+      setReturnDetails('');
+    } catch (requestError) {
+      setError(requestError.message || 'Failed to submit return request');
+    } finally {
+      setReturnBusy(false);
+    }
+  };
 
   if (authLoading || loading) {
     return <div className="min-h-screen flex items-center justify-center text-[#2E5C45]">Loading order details...</div>;
@@ -508,6 +585,176 @@ export default function ProfileOrderDetailPage() {
                       <strong style={{ color: THEME.charcoal, fontSize: 18 }}>{formatMoney(order.total_amount)}</strong>
                     </div>
                   </div>
+                </DetailCard>
+
+                <DetailCard title="Cancellation">
+                  {cancellationRequest ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="inline-flex items-center rounded-full border border-[#E8E8E8] bg-[#F5F5F5] px-3 py-1 font-semibold text-[#111111]">
+                        {String(cancellationRequest.status || 'pending').replace(/_/g, ' ')}
+                      </div>
+                      <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                        Reason: {cancellationRequest.reason}
+                      </p>
+                      {cancellationRequest.resolution_note ? (
+                        <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                          Resolution: {cancellationRequest.resolution_note}
+                        </p>
+                      ) : null}
+                      <p style={{ margin: 0, fontSize: 12, color: THEME.mutedText }}>
+                        Submitted {formatDateTime(cancellationRequest.created_at)}
+                      </p>
+                    </div>
+                  ) : canRequestCancellation ? (
+                    <div className="space-y-3">
+                      <p style={{ margin: 0, fontSize: 13, color: THEME.medGray, lineHeight: 1.7 }}>
+                        Need to stop this order before it moves further? Send a cancellation request and the operations team can review it before dispatch progresses.
+                      </p>
+                      <textarea
+                        value={cancelReason}
+                        onChange={(event) => setCancelReason(event.target.value)}
+                        placeholder="Tell us why you need this order cancelled"
+                        style={{
+                          width: '100%',
+                          minHeight: 110,
+                          borderRadius: 14,
+                          border: `1px solid ${THEME.border}`,
+                          padding: '12px 14px',
+                          fontSize: 13,
+                          color: THEME.charcoal,
+                          resize: 'vertical',
+                          outline: 'none',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={submitCancellationRequest}
+                        disabled={cancelBusy || !cancelReason.trim()}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 999,
+                          border: 'none',
+                          background: THEME.green,
+                          color: THEME.white,
+                          fontSize: 13,
+                          fontWeight: 800,
+                          padding: '11px 16px',
+                          cursor: cancelBusy || !cancelReason.trim() ? 'not-allowed' : 'pointer',
+                          opacity: cancelBusy || !cancelReason.trim() ? 0.6 : 1,
+                        }}
+                      >
+                        {cancelBusy ? 'Submitting...' : 'Request cancellation'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: THEME.medGray, lineHeight: 1.7 }}>
+                      This order is no longer in a stage where a new cancellation request can be submitted.
+                    </p>
+                  )}
+                </DetailCard>
+
+                <DetailCard title="Return & Refund">
+                  {returnRequest ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="flex flex-wrap gap-2">
+                        <div className="inline-flex items-center rounded-full border border-[#E8E8E8] bg-[#F5F5F5] px-3 py-1 font-semibold text-[#111111]">
+                          Return: {String(returnRequest.status || 'pending').replace(/_/g, ' ')}
+                        </div>
+                        <div className="inline-flex items-center rounded-full border border-[#A8DFC4] bg-[#EDFAF3] px-3 py-1 font-semibold text-[#0F7A4F]">
+                          Refund: {String(returnRequest.refund_status || 'not_requested').replace(/_/g, ' ')}
+                        </div>
+                      </div>
+                      <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                        Reason: {returnRequest.reason}
+                      </p>
+                      {returnRequest.details ? (
+                        <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                          Details: {returnRequest.details}
+                        </p>
+                      ) : null}
+                      {returnRequest.seller_note ? (
+                        <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                          Seller note: {returnRequest.seller_note}
+                        </p>
+                      ) : null}
+                      {returnRequest.refund_amount ? (
+                        <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                          Refund amount: {formatMoney(returnRequest.refund_amount)}
+                        </p>
+                      ) : null}
+                      {returnRequest.refund_reference ? (
+                        <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
+                          Refund reference: {returnRequest.refund_reference}
+                        </p>
+                      ) : null}
+                      <p style={{ margin: 0, fontSize: 12, color: THEME.mutedText }}>
+                        Submitted {formatDateTime(returnRequest.created_at)}
+                      </p>
+                    </div>
+                  ) : canRequestReturn ? (
+                    <div className="space-y-3">
+                      <p style={{ margin: 0, fontSize: 13, color: THEME.medGray, lineHeight: 1.7 }}>
+                        If the delivered item needs to come back, submit a return request here and we will keep the refund status visible as it moves through review and payout handling.
+                      </p>
+                      <input
+                        value={returnReason}
+                        onChange={(event) => setReturnReason(event.target.value)}
+                        placeholder="Reason for the return"
+                        style={{
+                          width: '100%',
+                          borderRadius: 14,
+                          border: `1px solid ${THEME.border}`,
+                          padding: '12px 14px',
+                          fontSize: 13,
+                          color: THEME.charcoal,
+                          outline: 'none',
+                        }}
+                      />
+                      <textarea
+                        value={returnDetails}
+                        onChange={(event) => setReturnDetails(event.target.value)}
+                        placeholder="Share any item issue, sizing problem, or quality concern"
+                        style={{
+                          width: '100%',
+                          minHeight: 110,
+                          borderRadius: 14,
+                          border: `1px solid ${THEME.border}`,
+                          padding: '12px 14px',
+                          fontSize: 13,
+                          color: THEME.charcoal,
+                          resize: 'vertical',
+                          outline: 'none',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={submitReturnRequest}
+                        disabled={returnBusy || !returnReason.trim()}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 999,
+                          border: 'none',
+                          background: THEME.green,
+                          color: THEME.white,
+                          fontSize: 13,
+                          fontWeight: 800,
+                          padding: '11px 16px',
+                          cursor: returnBusy || !returnReason.trim() ? 'not-allowed' : 'pointer',
+                          opacity: returnBusy || !returnReason.trim() ? 0.6 : 1,
+                        }}
+                      >
+                        {returnBusy ? 'Submitting...' : 'Request return'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: THEME.medGray, lineHeight: 1.7 }}>
+                      Returns become available after delivery, and active requests will remain visible here until closure.
+                    </p>
+                  )}
                 </DetailCard>
 
                 <DetailCard title="Delivery address">

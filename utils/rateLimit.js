@@ -49,3 +49,19 @@ export async function enforceRateLimit({
     return { allowed: true, remaining: null, retryAfter: null };
   }
 }
+
+export function rateLimitHeaders(rateLimit) {
+  const headers = {};
+  if (rateLimit?.retryAfter) headers['Retry-After'] = String(rateLimit.retryAfter);
+  if (rateLimit?.remaining !== null && rateLimit?.remaining !== undefined) {
+    headers['X-RateLimit-Remaining'] = String(rateLimit.remaining);
+  }
+  return headers;
+}
+
+export function rateLimitPayload(message, rateLimit) {
+  return {
+    error: message || 'Too many requests. Please wait a moment and try again.',
+    retry_after_seconds: rateLimit?.retryAfter || null,
+  };
+}

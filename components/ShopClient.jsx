@@ -235,8 +235,13 @@ function ShopHubContent({ initialCategory }) {
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10">
 
           {/* ── Sidebar ── */}
-          <aside className="hidden lg:block shrink-0 sticky top-24 h-fit" style={{ width: THEME.sidebarWidth }}>
-            <FilterSidebar />
+          <aside className="hidden lg:block shrink-0" style={{ width: THEME.sidebarWidth }}>
+            <div
+              className="sticky top-24 overflow-hidden pb-6 pr-2"
+              style={{ width: THEME.sidebarWidth, height: 'calc(100vh - 6rem)' }}
+            >
+              <FilterSidebar />
+            </div>
           </aside>
 
           {/* ── Main area ── */}
@@ -249,7 +254,7 @@ function ShopHubContent({ initialCategory }) {
               setSearchInput={setSearchInput}
             />
 
-            <div className="mt-3 mb-5">
+            <div className="mt-3 mb-5 lg:hidden">
               <ActiveFilters />
             </div>
 

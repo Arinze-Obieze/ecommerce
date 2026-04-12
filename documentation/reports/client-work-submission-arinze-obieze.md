@@ -1,21 +1,54 @@
 # Client Work Submission
 
-This document tracks the work authored locally for client delivery and can be updated continuously as implementation evolves.
+This document tracks authored delivery work in the local workspace and has been refreshed to include both:
+
+- previously completed work that was present in git history but not fully recorded in the earlier submission draft
+- current unpushed local workspace work that is ready for client delivery once reviewed and committed
 
 ## Scope
 
-This report is based on the current local workspace changes against the latest branch `HEAD`, with the intention of documenting only authored local work and excluding features or fixes that were pulled from other commits.
+- Baseline reference: current `HEAD` plus inspected recent git history on `main`
+- Included: authored implementation work visible in committed history and current local workspace changes
+- Excluded: speculative future work, third-party pulls that were not meaningfully extended locally, and SQL execution status
 
-## Current Delivery Summary
+## Reporting Snapshot
+
+- Report updated from local workspace inspection on 2026-04-10
+- Current branch inspected: `main`
+- Unpushed/local workspace work was detected and has been folded into this report
+- New database work was prepared as migration files only and was not executed locally
+
+## Delivery Summary
+
+### Marketplace Platform Foundations Previously Completed But Not Fully Recorded
+
+- Completed the broader store-platform foundation beyond the older product/cart notes:
+  - implemented store moderation, escrow payout, and media-upload groundwork for store operations
+  - added seller-based store creation/admin flows and refactored related store APIs
+  - introduced a stronger store shell/dashboard layout direction for seller operations
+  - added payout-recipient verification and product-draft handling improvements
+- Landed recommendation and merchandising support that was not explicitly captured in the earlier report:
+  - added smart product recommendations and supporting recommendation-oriented improvements
+  - improved storefront merchandising surfaces such as top stores and related discovery presentation
+- Completed broader customer platform work that was underrepresented in the prior write-up:
+  - shipped the full branded authentication system
+  - improved post-login routing for store-owner experiences
+  - added legal pages and footer/legal navigation coverage
+  - improved category navigation and filtering behavior, including mobile CategoriesModal UX and category-page flicker fixes
+- Added operational infrastructure work that mattered to delivery quality but was only partially reflected before:
+  - integrated ZeptoMail for transactional messaging
+  - improved seller dashboard layout foundations
+  - corrected product-creation routing issues in the seller/dashboard pathing
 
 ### Product Creation And Seller Product Management
 
-- Reworked the seller product creation wizard into a cleaner publish-oriented flow covering variants, media, specifications/compliance, and final review.
-- Added structured readiness checks and step completion rules so sellers can see what is still blocking product submission.
-- Expanded wizard state handling to support specification summaries, structured specification entries, and safer draft step restoration.
-- Introduced a seller product detail page for reviewing and editing product data, media, pricing, stock, specifications, and bulk discount tiers.
+- Reworked the seller product creation flow into a cleaner publish-oriented sequence covering variants, media, specifications, compliance, SKU handling, and final review.
+- Added structured readiness checks and step completion rules so sellers can clearly see what is blocking submission.
+- Expanded wizard state handling for specification summaries, structured specification entries, and safer draft restoration.
+- Introduced a seller product detail experience for reviewing and editing product data, media, pricing, stock, specifications, and bulk discount tiers.
 - Upgraded the seller products dashboard with richer product cards/table views, selection state, and bulk actions for duplicate, archive, unarchive, and delete.
-- Extended store product APIs to support richer detail reads, editing, duplication, slug generation, SKU generation, and tighter moderation-aware product handling.
+- Extended store product APIs to support richer detail reads, editing, duplication, slug generation, SKU generation, draft persistence, and moderation-aware product handling.
+- Added resubmit-for-review and seller-side moderation-aware editing behavior so approved products re-enter review appropriately after material edits.
 
 ### Inventory Operations
 
@@ -24,109 +57,141 @@ This report is based on the current local workspace changes against the latest b
 - Logged inventory activity with adjustment metadata, reasons, notes, actor context, and history retrieval for operational traceability.
 - Rebuilt the seller inventory dashboard with search, filtering, manual stock adjustment controls, quick restock flows, variant inspection, and recent adjustment history.
 
-### Product Detail Page And Cart Experience
+### Product Detail Page, Cart Experience, And Mobile Shopping
 
-- Redesigned the product detail page with a richer mixed media gallery that supports both images and videos.
-- Added better product storytelling through overview content, specification handling, return policy presentation, and mobile-friendly collapsible sections.
+- Redesigned the product detail page with a richer mixed-media gallery supporting both images and videos.
+- Improved product storytelling through overview content, specification handling, return-policy presentation, and mobile-friendly collapsible sections.
 - Improved mobile buying flow with a sticky purchase CTA and clearer selected-variant feedback.
-- Strengthened cart and product card behavior to preserve selected size/color context and show that context in cart interactions and add-to-cart feedback.
+- Strengthened cart and product-card behavior to preserve selected size/color context and show that context in cart interactions and add-to-cart feedback.
 - Refined cart quantity controls and responsive layout so product adjustments are easier on smaller screens.
-- Updated bulk pricing logic so discount pricing only overrides the base price when it is actually valid.
+- Updated bulk-pricing logic so discount pricing only overrides the base price when it is actually valid.
+- Extended quick-view and mobile product browsing behavior with a cleaner preview pattern:
+  - fixed mobile quick-view layering so preview overlays sit above the sticky header
+  - restored and stabilized the main quick-view CTAs
+  - reduced oversized mobile preview imagery so quick view behaves like a preview instead of a full PDP
+  - added a clearer close affordance for quick view on mobile
+  - added a fullscreen image-viewer pattern with zoom controls and drag/pan support
 
-### Authentication And Store Owner Onboarding
+### Checkout, Delivery, Orders, And Fulfillment
 
-- Added a reset password page with recovery-session validation, password strength requirements, confirmation checks, and post-reset redirection.
-- Changed store owner assignment onboarding from emailed temporary passwords to secure invite/setup links for a safer account activation flow.
+- Improved add-to-cart and post-payment feedback behavior by removing duplicate success messaging and strengthening payment-success routing into order review.
+- Added a dedicated customer order-details experience showing metadata, timestamps, product lines, quantities, totals, payment reference, fulfillment state, escrow state, and variant information.
+- Connected order history and recent activity entries to open individual order-detail pages directly.
+- Added clearer order progress/timeline treatment based on confirmed order schema and lifecycle markers.
+- Enforced delivery-address capture before payment for physical-product orders.
+- Supported both saved-address selection and one-time address usage during checkout, with optional saving of new addresses.
+- Added order-level shipping-address snapshot support so the exact fulfillment address used for an order can be preserved and shown later.
+- Reworked cart checkout UX into a clearer stepped flow where users review cart contents first and then complete delivery details in a dedicated second-step modal.
+- Improved Nigeria-only delivery input quality with searchable state selection, dependent city selection, full state coverage including FCT, and typed city fallback.
+- Added seller-side order management foundations:
+  - created seller-facing order detail and action surfaces
+  - added fulfillment status progression controls
+  - added tracking-reference and internal-note history capture
+  - added buyer cancellation-request visibility
 
-### Navigation, Documentation, And Cleanup
+### Account, Navigation, And Profile Improvements
 
-- Limited header search visibility to routes where search is relevant instead of showing it globally.
-- Added updated product creation/cart flow and mobile PDP redesign reports to the documentation reports area.
-- Removed older outdated documentation artifacts and ignored a local documentation working file from version control.
+- Updated the header profile trigger to read more clearly as a dropdown with stronger menu affordance.
+- Made the customer profile navigation collapsed by default and expandable on demand.
+- Added clearer escape routes from the profile area back to home and shop.
+- Fixed profile-overview and saved-address mobile overflow issues.
+- Replaced placeholder recent activity behavior with meaningful recent-order activity.
+- Limited header search visibility to routes where search is actually relevant instead of showing it globally.
+
+### Authentication, Onboarding, And Store Access
+
+- Added a reset-password page with recovery-session validation, password-strength requirements, confirmation checks, and post-reset redirection.
+- Changed store-owner assignment onboarding from emailed temporary passwords to secure invite/setup links.
+- Added post-login target handling so store-role users land in the correct operational area after authentication.
+
+## Newly Added Unpushed Local Workspace Work
+
+### Returns, Refund Visibility, And Seller Operations
+
+- Added buyer-facing return-request workflow with eligibility checks from order detail pages.
+- Added seller-side return and refund handling controls inside store order detail pages.
+- Added refund-status visibility, refund metadata capture, and lifecycle status surfaces for both buyer and seller experiences.
+- Added a new migration file for returns/refund tracking primitives without executing SQL locally.
+
+### Reviews Hardening And Trust Controls
+
+- Hardened review submission to require verified purchase after delivered orders.
+- Added review edit and soft-delete support for buyers.
+- Added review metadata for verified purchase, moderation state, and seller replies.
+- Updated product-detail review rendering to surface verified-purchase badges, edited state, and seller replies.
+- Added seller-side review management so stores can reply publicly and hide reviews when moderation follow-up is required.
+
+### Team Invitation Lifecycle And Account Activation
+
+- Extended store team management so inviting by email works for both existing users and people without accounts yet.
+- Added secure pending-invite lifecycle support including invitation creation, resend, revoke, and acceptance-on-login behavior.
+- Added invitation history visibility and pending-invite audit state on the team-management screen.
+- Added supporting invite utilities and secure invite email handling.
+
+### Durable Notifications And Lifecycle Messaging
+
+- Added durable in-app notifications storage and account notification APIs.
+- Added reusable notification-center UI for both customer account and store dashboard surfaces.
+- Wired lifecycle notifications into new fulfillment updates, return handling, team access changes, invite activity, review replies, and payout-exception events.
+
+### Finance Operations Depth
+
+- Expanded payout operations with reconciliation logging and payout-exception tracking.
+- Added seller-facing payout ops visibility and simple resolve actions directly from the store payouts screen.
+- Added support for exception-triggered messaging so operational payout issues can be surfaced in-app and by email.
+
+### Cleanup And Production Hardening
+
+- Removed the exposed debug route behavior by returning `404`.
+- Consolidated duplicate legacy seller-product surfaces by redirecting old seller paths back to the active store dashboard implementation.
+- Replaced duplicate legacy seller wizard pages with redirect shims to the current store dashboard creation flow.
+
+## Documentation Artifacts Updated
+
+- Refreshed this markdown submission report.
+- The HTML/PDF submission artifacts should match this updated report content for client delivery.
+- Existing feature-gap inspection and migration files were reviewed so the report reflects the actual current workspace state rather than older assumptions.
+
+## Validation And Verification
+
+- Verified the project still builds successfully after the newer returns, notifications, invite lifecycle, review hardening, payout-ops, and cleanup changes.
+- SQL was not executed locally for the new migration work. Migration files were authored only.
 
 ## Notes For Client Submission
 
-- This file is intended to be updated as work progresses.
-- New completed items can be appended under the relevant section.
-- If needed, this can later be split into:
+- The current workspace contains meaningful local uncommitted work and supporting migration files that were not yet reflected in the older report draft.
+- This report now includes both older under-documented delivered work and the current local additions.
+- If a client-facing version is needed later, this can be split into:
   - implementation summary
-  - client-facing impact summary
-  - testing and validation notes
-  - pending follow-up items
-
-## Recent Additions
-
-- Created the initial client work submission document from the current authored local changes.
-- Extended the shop quick-view and mobile product browsing experience with a cleaner preview pattern:
-  - fixed mobile quick-view layering so the preview and delivery-style overlays sit above the sticky header
-  - restored and stabilized the two product quick-view CTAs
-  - reduced oversized mobile preview imagery so quick view behaves like a decision-focused preview rather than a full product page
-  - added a clearer close affordance for quick view on mobile
-  - added a dedicated fullscreen image viewer with zoom controls and drag/pan support for immersive product inspection
-- Refined add-to-cart and product-detail feedback behavior:
-  - removed the duplicate green success toast on product detail pages so users only see a single add-to-cart confirmation
-  - improved post-payment success feedback with confetti, success messaging, and redirect flow into order history/order details
-- Improved header and account navigation clarity:
-  - updated the header profile trigger to read more clearly as a dropdown with stronger menu affordance
-  - made the customer profile navigation collapsed by default and expandable on demand
-  - added clear escape routes from profile back to home and shop
-- Improved profile area mobile responsiveness and account overview quality:
-  - fixed mobile overflow issues in the profile overview layout
-  - fixed saved-address card overflow behavior on smaller screens
-  - replaced placeholder recent activity behavior with meaningful recent order activity
-- Added a dedicated order-details experience for customers:
-  - created a specific order details page for each order
-  - connected order history and recent activity entries to open individual order detail pages
-  - added clearer “view details” affordances while keeping order rows tappable
-  - expanded the order details view to show order metadata, timestamps, product lines, quantities, totals, payment reference, fulfillment state, escrow state, and variant information where available
-  - added a cleaner order progress/timeline treatment based on the confirmed order schema
-- Extended checkout and delivery-address handling for physical-product orders:
-  - enforced delivery-address capture before payment instead of allowing payment without fulfillment details
-  - supported both saved-address selection and one-time address usage during checkout
-  - allowed shoppers to optionally save a newly entered delivery address for future orders
-  - integrated order-level delivery-address snapshot support after checkout so the exact address used for an order can be preserved and later viewed
-  - added and successfully used the `order_shipping_addresses` migration for order-level address storage
-- Reworked the cart checkout UX into a clearer multi-step flow:
-  - changed cart behavior so delivery details are collected in a dedicated second-step modal instead of expanding a long form directly in the order-summary area
-  - kept cart review and quantity adjustment as the first job-to-be-done before opening delivery capture
-  - updated the CTA sequence to guide users from cart review to delivery details and then to payment
-  - ensured the delivery modal stays closed on page load and only opens when the user intentionally continues
-  - fixed delivery modal cancel/close behavior so users can always dismiss the step
-  - reduced modal footer clutter by relying on the top close icon and a single primary save action
-- Improved Nigeria-only delivery input quality:
-  - restricted delivery coverage to Nigeria for the current release
-  - added searchable dropdown-style selection for Nigerian states
-  - added dependent searchable city selection tied to the selected state
-  - included all Nigerian states plus FCT in the state selector
-  - allowed typed city fallback when a shopper’s city is not present in the suggestion list so location entry does not become a blocker
-- Validation and verification:
-  - verified the project still builds successfully after the newer checkout, modal, profile, order-detail, and quick-view changes
+  - business/user impact summary
+  - migrations/deployment notes
+  - validation checklist
 
 ## Research References
 
-- Christensen Institute: Jobs to Be Done Theory
+- Christensen Institute: Jobs to Be Done Theory  
   https://www.christenseninstitute.org/theory/jobs-to-be-done/
-- Interaction Design Foundation: Progressive Disclosure
+- Interaction Design Foundation: Progressive Disclosure  
   https://www.interaction-design.org/literature/topics/progressive-disclosure
-- Nielsen Norman Group: Jakob Nielsen’s Usability Heuristic Summary
+- Nielsen Norman Group: Jakob Nielsen’s Usability Heuristic Summary  
   https://media.nngroup.com/media/articles/attachments/NNg_Jakob%27s_Usability_Heuristic_Summary.pdf
-- Baymard Institute: Current State of Ecommerce Product Page UX
+- Baymard Institute: Current State of Ecommerce Product Page UX  
   https://baymard.com/blog/current-state-ecommerce-product-page-ux
-- Baymard Institute: Always Use Buttons for Size Selection
+- Baymard Institute: Always Use Buttons for Size Selection  
   https://baymard.com/blog/use-buttons-for-size-selection
-- Baymard Institute: Data Should Be Synchronized Across Product Variations
+- Baymard Institute: Data Should Be Synchronized Across Product Variations  
   https://baymard.com/blog/synchronize-product-data-across-variations
-- Baymard Institute: Use Buttons or Buttons Plus an Open Text Field for Updating Cart Quantity
+- Baymard Institute: Use Buttons or Buttons Plus an Open Text Field for Updating Cart Quantity  
   https://baymard.com/blog/auto-update-users-quantity-changes
-- Baymard Institute: Accordion-Style Checkout
+- Baymard Institute: Accordion-Style Checkout  
   https://baymard.com/blog/accordion-style-checkout
-- Baymard Institute: Collapsing Completed Checkout Steps into Summaries
+- Baymard Institute: Collapsing Completed Checkout Steps into Summaries  
   https://baymard.com/blog/accordion-checkout-usability
-- Baymard Institute: Post-Checkout UX Best Practices
+- Baymard Institute: Post-Checkout UX Best Practices  
   https://baymard.com/blog/post-checkout-ux-best-practices
-- Baymard Institute: Avoid Horizontal Tabs for Core Product Content
+- Baymard Institute: Avoid Horizontal Tabs for Core Product Content  
   https://baymard.com/blog/avoid-horizontal-tabs
-- Baymard Institute: Avoid Using Subpages for Product Details
+- Baymard Institute: Avoid Using Subpages for Product Details  
   https://baymard.com/blog/avoid-using-subpages
-- U.S. Web Design System: Accordion Guidance
+- U.S. Web Design System: Accordion Guidance  
   https://designsystem.digital.gov/components/accordion/

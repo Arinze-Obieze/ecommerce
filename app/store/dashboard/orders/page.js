@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function StoreOrdersPage() {
@@ -57,7 +58,11 @@ export default function StoreOrdersPage() {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.id} className="border-b border-gray-50">
-                    <td className="py-2 pr-3 font-mono text-xs">{row.id.slice(0, 8)}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">
+                      <Link href={`/store/dashboard/orders/${row.id}`} className="font-semibold text-[#2E5C45] hover:underline">
+                        {row.id.slice(0, 8)}
+                      </Link>
+                    </td>
                     <td className="py-2 pr-3 capitalize">{row.status}</td>
                     <td className="py-2 pr-3 capitalize">{row.fulfillment_status || 'processing'}</td>
                     <td className="py-2 pr-3 capitalize">{row.escrow_status || 'not_funded'}</td>

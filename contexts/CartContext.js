@@ -77,6 +77,15 @@ export function CartProvider({ children }) {
   const addToCart = (product) => {
     const incomingQuantity = Math.max(1, Number(product.quantity) || 1);
     const maxStock = normalizeMaxStock(product);
+    const incomingVariantId = product.variant_id === undefined ? null : product.variant_id;
+    const existingCartItem = cart.find((p) => {
+      const pVariantId = p.variant_id === undefined ? null : p.variant_id;
+      return p.id === product.id && pVariantId === incomingVariantId;
+    });
+    const effectiveMaxStock = normalizeMaxStock(existingCartItem || product);
+    const addedQuantity = existingCartItem
+      ? Math.max(0, Math.min(effectiveMaxStock, existingCartItem.quantity + incomingQuantity) - existingCartItem.quantity)
+      : Math.min(maxStock, incomingQuantity);
 
     if (maxStock <= 0) {
       error(`${product.name} is out of stock`);
@@ -84,8 +93,6 @@ export function CartProvider({ children }) {
     }
 
     setCart((prevCart) => {
-      const incomingVariantId = product.variant_id === undefined ? null : product.variant_id;
-      
       // Find item with same Product ID AND same Variant ID
       const existing = prevCart.find((p) => {
          const pVariantId = p.variant_id === undefined ? null : p.variant_id;
@@ -111,26 +118,31 @@ export function CartProvider({ children }) {
     trackAnalyticsEvent('add_to_cart', {
       product_id: product.id,
       product_name: product.name,
-      quantity: incomingQuantity,
+      quantity: addedQuantity,
       variant_id: product.variant_id || null,
       unit_price: Number(product.discount_price || product.price || 0),
     });
-    trackCartServerEvent('add', {
-      id: product.id,
-      variant_id: product.variant_id || null,
-      quantity: incomingQuantity,
-      store_id: product.store_id || null,
-    });
+    if (addedQuantity > 0) {
+      trackCartServerEvent('add', {
+        id: product.id,
+        variant_id: product.variant_id || null,
+        quantity: addedQuantity,
+        store_id: product.store_id || null,
+      });
+    }
 
     const variantLabel = buildVariantLabel(product);
     success(variantLabel ? `Added ${product.name} (${variantLabel}) to cart` : `Added ${product.name} to cart`);
   };
 
   const removeFromCart = (productId, variantId = null) => {
+    const targetVariantId = variantId === undefined ? null : variantId;
+    const removedItem = cart.find((item) => {
+      const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
+      return item.id === productId && itemVariantId === targetVariantId;
+    });
+
     setCart((prevCart) => {
-        // Normalize undefined to null for consistent comparison
-        const targetVariantId = variantId === undefined ? null : variantId;
-        
         const newCart = prevCart.filter((p) => {
             const pVariantId = p.variant_id === undefined ? null : p.variant_id;
             // Remove if both ID and Variant ID match
@@ -140,27 +152,42 @@ export function CartProvider({ children }) {
         localStorage.setItem('shophub_cart', JSON.stringify(newCart)); // Fixed key name `shophub_cart`
         return newCart;
     });
-    trackCartServerEvent('remove', {
-      id: productId,
-      variant_id: variantId || null,
-      quantity: 1,
-    });
+    if (removedItem) {
+      trackCartServerEvent('remove', {
+        id: removedItem.id,
+        variant_id: removedItem.variant_id || null,
+        quantity: removedItem.quantity || 1,
+        store_id: removedItem.store_id || null,
+      });
+    }
   };
 
   const updateQuantity = (productId, amount, variantId = null) => {
+    const targetVariantId = variantId === undefined ? null : variantId;
+    const targetItem = cart.find((item) => {
+      const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
+      return item.id === productId && itemVariantId === targetVariantId;
+    });
+    if (targetItem) {
+      const maxStock = normalizeMaxStock(targetItem);
+      const newQuantity = Math.min(maxStock, Math.max(1, targetItem.quantity + amount));
+      const delta = newQuantity - targetItem.quantity;
+      if (delta !== 0) {
+        trackCartServerEvent(delta > 0 ? 'add' : 'remove', {
+          id: targetItem.id,
+          variant_id: targetItem.variant_id || null,
+          quantity: Math.abs(delta),
+          store_id: targetItem.store_id || null,
+        });
+      }
+    }
+
     setCart((prevCart) => {
-        const targetVariantId = variantId === undefined ? null : variantId;
         return prevCart.map(item => {
             const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
             if (item.id === productId && itemVariantId === targetVariantId) {
                 const maxStock = normalizeMaxStock(item);
                 const newQuantity = Math.min(maxStock, Math.max(1, item.quantity + amount));
-                trackCartServerEvent('set_quantity', {
-                  id: item.id,
-                  variant_id: item.variant_id || null,
-                  quantity: newQuantity,
-                  store_id: item.store_id || null,
-                });
                 return { ...item, quantity: newQuantity };
             }
             return item;
@@ -169,19 +196,31 @@ export function CartProvider({ children }) {
   };
 
   const setItemQuantity = (productId, newQuantity, variantId = null) => {
+    const targetVariantId = variantId === undefined ? null : variantId;
+    const targetItem = cart.find((item) => {
+      const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
+      return item.id === productId && itemVariantId === targetVariantId;
+    });
+    if (targetItem) {
+      const maxStock = normalizeMaxStock(targetItem);
+      const boundedQuantity = Math.min(maxStock, Math.max(1, newQuantity));
+      const delta = boundedQuantity - targetItem.quantity;
+      if (delta !== 0) {
+        trackCartServerEvent(delta > 0 ? 'add' : 'remove', {
+          id: targetItem.id,
+          variant_id: targetItem.variant_id || null,
+          quantity: Math.abs(delta),
+          store_id: targetItem.store_id || null,
+        });
+      }
+    }
+
     setCart((prevCart) => {
-        const targetVariantId = variantId === undefined ? null : variantId;
         return prevCart.map(item => {
             const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
             if (item.id === productId && itemVariantId === targetVariantId) {
                 const maxStock = normalizeMaxStock(item);
                 const boundedQuantity = Math.min(maxStock, Math.max(1, newQuantity));
-                trackCartServerEvent('set_quantity', {
-                  id: item.id,
-                  variant_id: item.variant_id || null,
-                  quantity: boundedQuantity,
-                  store_id: item.store_id || null,
-                });
                 return { ...item, quantity: boundedQuantity };
             }
             return item;

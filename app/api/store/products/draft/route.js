@@ -32,6 +32,17 @@ function pickPersistableState(state = {}) {
     printCopies: Math.max(0, Number.parseInt(state.printCopies, 10) || 0),
     scannedSku: normalizeText(state.scannedSku),
     isVerified: Boolean(state.isVerified),
+    fiberComposition: Array.isArray(state.fiberComposition) ? state.fiberComposition : [],
+    countryOfOrigin: normalizeText(state.countryOfOrigin),
+    countryOfTransformation: normalizeText(state.countryOfTransformation),
+    labelBrand: normalizeText(state.labelBrand),
+    careWashing: state.careWashing || null,
+    careBleaching: state.careBleaching || null,
+    careDrying: state.careDrying || null,
+    careIroning: state.careIroning || null,
+    careDryCleaning: state.careDryCleaning || null,
+    childrenSafetyFlags: Array.isArray(state.childrenSafetyFlags) ? state.childrenSafetyFlags : [],
+    flammabilityFlags: Array.isArray(state.flammabilityFlags) ? state.flammabilityFlags : [],
   };
 }
 

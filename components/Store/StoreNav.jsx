@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   FiGrid, FiUsers, FiPackage, FiShoppingBag,
-  FiBarChart2, FiCreditCard, FiSettings
+  FiBarChart2, FiCreditCard, FiSettings, FiBell
 } from 'react-icons/fi';
 
 const groups = [
@@ -26,6 +26,7 @@ const groups = [
   {
     label: 'Account',
     items: [
+      { href: '/store/dashboard/notifications', label: 'Notifications', icon: FiBell },
       { href: '/store/dashboard/settings',   label: 'Settings',   icon: FiSettings },
       { href: '/store/dashboard/team',       label: 'Team',       icon: FiUsers },
     ],

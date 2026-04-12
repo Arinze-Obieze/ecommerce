@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/utils/supabase/server';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitHeaders, rateLimitPayload } from '@/utils/rateLimit';
 
 function normalizeEventType(value) {
   const eventType = String(value || '').trim().toLowerCase();
@@ -16,20 +16,23 @@ export async function POST(request) {
     data: { user },
   } = await authClient.auth.getUser();
 
-  const identifier = user?.id || request.headers.get('x-forwarded-for') || 'anonymous';
+  const body = await request.json().catch(() => ({}));
+  const identifier = user?.id || body?.session_id || request.headers.get('x-forwarded-for') || 'anonymous';
   const rateLimit = await enforceRateLimit({
     request,
     scope: 'cart_event_write',
     identifier,
-    limit: 200,
+    limit: 600,
     windowSeconds: 60,
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many cart events' }, { status: 429 });
+    return NextResponse.json(
+      rateLimitPayload('Cart analytics tracking is temporarily throttled because too many cart events were sent in a short time. Please wait a moment and try again.', rateLimit),
+      { status: 429, headers: rateLimitHeaders(rateLimit) }
+    );
   }
 
-  const body = await request.json().catch(() => ({}));
   const eventType = normalizeEventType(body?.event_type);
   const sessionId = String(body?.session_id || '').trim() || null;
   const item = body?.item || {};

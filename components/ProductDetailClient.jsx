@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fi';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
+import { getColorHex as getCatalogColorHex, isLightHex } from '@/lib/color-utils';
 
 // ============================================================
 // 🎨 THEME
@@ -146,13 +147,8 @@ const COLOR_MAP = {
   'light blue': '#bfdbfe', 'light green': '#bbf7d0',
   'dark blue': '#1e3a8a', 'dark green': '#14532d', 'dark red': '#7f1d1d',
 };
-const LIGHT_COLORS = new Set(['white', '#ffffff', '#fff', 'beige', '#f5f5dc', '#bfdbfe', '#bbf7d0', '#eab308']);
-
-function getColorHex(name) {
-  return COLOR_MAP[name.toLowerCase()] || name.toLowerCase().replace(/\s+/g, '');
-}
-function isLight(hex) {
-  return LIGHT_COLORS.has(hex.toLowerCase());
+function getColorHex(name, hex) {
+  return hex || COLOR_MAP[name.toLowerCase()] || getCatalogColorHex(name);
 }
 
 function StarRow({ rating, size = 'sm' }) {
@@ -371,6 +367,13 @@ export function ProductDetailClient({ id }) {
     { key: 'specifications', label: 'Specifications' },
     { key: 'reviews',        label: `Reviews (${product.reviews?.length || 0})` },
   ];
+  const colorMeta = new Map((variants || [])
+    .filter((variant) => variant?.color)
+    .map((variant) => [variant.color, {
+      color_hex: variant.color_hex || null,
+      color_family: variant.color_family || null,
+      color_source: variant.color_source || null,
+    }]));
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: THEME.pageBg }}>
@@ -624,7 +627,8 @@ export function ProductDetailClient({ id }) {
                 </p>
                 <div className="flex flex-wrap gap-2.5">
                   {product.colors.map(color => {
-                    const hex = getColorHex(color);
+                    const meta = colorMeta.get(color);
+                    const hex = getColorHex(color, meta?.color_hex);
                     const selected = selectedColor === color;
                     return (
                       <button
@@ -639,7 +643,7 @@ export function ProductDetailClient({ id }) {
                         }}
                       >
                         {selected && (
-                          <FiCheck className="w-4 h-4" style={{ color: isLight(hex) ? '#111' : '#fff' }} />
+                          <FiCheck className="w-4 h-4" style={{ color: isLightHex(hex) ? '#111' : '#fff' }} />
                         )}
                       </button>
                     );

@@ -25,6 +25,12 @@ function canEdit(role) {
   return role === STORE_ROLES.OWNER || role === STORE_ROLES.MANAGER;
 }
 
+function normalizeLowStockThreshold(value) {
+  const numeric = Number.parseInt(value, 10);
+  if (!Number.isFinite(numeric) || numeric < 0) return null;
+  return Math.min(numeric, 100000);
+}
+
 function toSettingsRow(row) {
   if (!row) return null;
   return {
@@ -36,6 +42,7 @@ function toSettingsRow(row) {
     status: row.status || '',
     kyc_status: row.kyc_status || '',
     payout_ready: Boolean(row.payout_ready),
+    low_stock_threshold: normalizeLowStockThreshold(row.low_stock_threshold) ?? 5,
     created_at: row.created_at || null,
     approved_at: row.approved_at || null,
   };
@@ -59,7 +66,7 @@ export async function GET(request) {
 
   const { data, error } = await ctx.adminClient
     .from('stores')
-    .select('id, name, slug, description, logo_url, status, kyc_status, payout_ready, created_at, approved_at')
+    .select('id, name, slug, description, logo_url, status, kyc_status, payout_ready, low_stock_threshold, created_at, approved_at')
     .eq('id', ctx.membership.store_id)
     .maybeSingle();
 
@@ -136,6 +143,14 @@ export async function PATCH(request) {
     updates.logo_url = logoUrl;
   }
 
+  if (body?.low_stock_threshold !== undefined) {
+    const threshold = normalizeLowStockThreshold(body.low_stock_threshold);
+    if (threshold === null) {
+      return NextResponse.json({ error: 'Low stock threshold must be zero or higher' }, { status: 400 });
+    }
+    updates.low_stock_threshold = threshold;
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields provided' }, { status: 400 });
   }
@@ -144,7 +159,7 @@ export async function PATCH(request) {
     .from('stores')
     .update(updates)
     .eq('id', ctx.membership.store_id)
-    .select('id, name, slug, description, logo_url, status, kyc_status, payout_ready, created_at, approved_at')
+    .select('id, name, slug, description, logo_url, status, kyc_status, payout_ready, low_stock_threshold, created_at, approved_at')
     .single();
 
   if (error) {
