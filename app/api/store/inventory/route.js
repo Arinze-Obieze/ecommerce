@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 
 const PRODUCT_SELECT = 'id, store_id, name, slug, sku, stock_quantity, is_active, moderation_status, updated_at';
 const VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';
@@ -481,7 +481,7 @@ export async function GET(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   try {
@@ -511,7 +511,7 @@ export async function POST(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const body = await request.json().catch(() => ({}));

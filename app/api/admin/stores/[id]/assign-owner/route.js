@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
 import { writeAdminAuditLog } from '@/utils/adminAudit';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { sendZeptoMail } from '@/utils/email';
 
 function isUuid(value) {
@@ -286,7 +286,7 @@ export async function POST(request, { params }) {
     });
 
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: 'Too many write requests' }, { status: 429 });
+      return NextResponse.json(rateLimitPayload('Too many write requests', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
     const { id } = await params;

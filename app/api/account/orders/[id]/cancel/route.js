@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { writeActivityLog } from '@/utils/serverTelemetry';
 
 const MISSING_TABLE_HINT = 'Database is missing public.order_cancellation_requests. Apply documentation/migrations/2026-04-09_order_cancellation_requests.sql and retry.';
@@ -65,7 +65,7 @@ async function getAuthedUser(request) {
   });
 
   if (!rateLimit.allowed) {
-    return { user: null, response: NextResponse.json({ error: 'Too many requests' }, { status: 429 }) };
+    return { user: null, response: NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) }) };
   }
 
   return { user, response: null };

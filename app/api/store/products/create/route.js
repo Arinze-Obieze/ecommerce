@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { normalizeSpecifications } from "@/utils/productCatalog";
+import { normalizeBulkDiscountTiers } from "@/utils/bulkPricing";
 
 function normalizeText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -62,6 +63,8 @@ function buildMergedNotes(wd) {
   const specificationSummary = normalizeText(wd.specificationSummary);
   const productNotes = normalizeText(wd.productNotes);
   const normalizedSpecifications = normalizeSpecifications(wd.specifications).value;
+  const bulkDiscountResult = normalizeBulkDiscountTiers(wd.bulkDiscountTiers || wd.bulk_discount_tiers);
+  const bulkDiscountTiers = bulkDiscountResult.value || null;
 
   if (specificationSummary) {
     sections.push(`Specification summary:\n${specificationSummary}`);
@@ -73,6 +76,12 @@ function buildMergedNotes(wd) {
 
   if (productNotes) {
     sections.push(`Internal notes:\n${productNotes}`);
+  }
+
+  if (bulkDiscountTiers && bulkDiscountTiers.length > 0) {
+    sections.push(
+      `Bulk discount tiers:\n${bulkDiscountTiers.map((tier) => `- Buy ${tier.minimum_quantity}+ → ${tier.discount_percent}% off`).join("\n")}`
+    );
   }
 
   return sections.join("\n\n") || null;
@@ -194,6 +203,12 @@ export async function POST(request) {
     if (normalizedVariants.some((variant) => !variant.color || !variant.size || variant.quantity <= 0 || variant.price <= 0)) {
       return NextResponse.json({ success: false, error: "Every variant must include color, size, quantity > 0, and price > 0" }, { status: 400 });
     }
+
+    const bulkDiscountResult = normalizeBulkDiscountTiers(wd.bulkDiscountTiers || wd.bulk_discount_tiers);
+    if (bulkDiscountResult.error) {
+      return NextResponse.json({ success: false, error: bulkDiscountResult.error }, { status: 400 });
+    }
+    const bulkDiscountTiers = bulkDiscountResult.value;
 
     const duplicateKeys = new Set();
     const seenVariantKeys = new Set();
@@ -459,7 +474,18 @@ export async function POST(request) {
       }
     }
 
-    // 10. Print log — column names from R code
+    // 10. Best-effort mirror write for storefront discount tiers
+    if (bulkDiscountTiers) {
+      try {
+        await supabase
+          .from("products")
+          .update({ bulk_discount_tiers: bulkDiscountTiers })
+          .eq("store_id", store.id)
+          .eq("sku", baseSku);
+      } catch {}
+    }
+
+    // 11. Print log — column names from R code
     if (wd.printCompleted && wd.printCopies > 0) {
       const { error: printErr } = await supabase.from("barcode_print_log").insert({
         print_id: `PRINT_${productId}_${Date.now()}`,
@@ -473,7 +499,7 @@ export async function POST(request) {
       if (printErr) console.warn("[Create] Print log failed:", printErr.message);
     }
 
-    // 11. Verification log — column names from R code
+    // 12. Verification log — column names from R code
     const { error: verifyErr } = await supabase.from("product_verification_log").insert({
       verification_id: `VERIFY_${productId}`,
       product_id: productId,
@@ -500,6 +526,7 @@ export async function POST(request) {
       product: { id: productId, base_sku: baseSku, name: productName, status: "active" },
       variants_created: varRecs.length,
       images_uploaded: imgSuccesses.length,
+      bulk_discount_tiers_saved: bulkDiscountTiers?.length || 0,
     });
 
   } catch (err) {

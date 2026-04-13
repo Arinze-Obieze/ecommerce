@@ -18,7 +18,7 @@ export async function enforceRateLimit({
   scope,
   identifier = 'anon',
   limit,
-  windowSeconds,
+  windowSeconds = 60,
 }) {
   if (!redis) {
     return { allowed: true, remaining: null, retryAfter: null };
@@ -33,6 +33,13 @@ export async function enforceRateLimit({
     const count = await redis.incr(key);
     if (count === 1) {
       await redis.expire(key, windowSeconds);
+    } else {
+      // Safety latch: if a previous expire failed or was interrupted, the key is eternal.
+      // A TTL of -1 means it exists but has no expiration time.
+      const ttl = await redis.ttl(key);
+      if (ttl === -1) {
+        await redis.expire(key, windowSeconds);
+      }
     }
 
     const remaining = Math.max(0, limit - count);

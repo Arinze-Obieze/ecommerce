@@ -127,7 +127,7 @@ function PaginationControls({ pagination, pageSize, setPage, setPageSize, loadin
   );
 }
 
-function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, submitting, lowStockThreshold }) {
+function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, submitting, lowStockThreshold, onClose }) {
   if (!row) return null;
 
   return (
@@ -139,7 +139,17 @@ function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, submitting,
             {row.has_variants ? 'Variant-managed product. Choose the exact size/color that changed.' : 'Direct-stock product.'}
           </p>
         </div>
-        <StockBadge stock={row.effective_stock_quantity} lowStockThreshold={lowStockThreshold} />
+        <div className="flex gap-2 items-start">
+          <StockBadge stock={row.effective_stock_quantity} lowStockThreshold={lowStockThreshold} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-gray-300 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition"
+            title="Close adjustment form"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -511,6 +521,13 @@ export default function StoreInventoryPage() {
                             >
                               Adjust
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')}
+                              className="rounded-full border border-[#dbe7e0] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-[#2E5C45] hover:text-[#2E5C45]"
+                            >
+                              View details
+                            </button>
                             {row.effective_stock_quantity <= lowStockThreshold ? (
                               <>
                                 <button type="button" disabled={submitting} onClick={() => handleQuickRestock(row, 10)} className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-200 disabled:opacity-50">Set 10</button>
@@ -530,6 +547,7 @@ export default function StoreInventoryPage() {
                               onSubmit={submitAdjustment}
                               submitting={submitting}
                               lowStockThreshold={lowStockThreshold}
+                              onClose={() => setExpandedRowId('')}
                             />
                           </td>
                         </tr>
@@ -554,9 +572,14 @@ export default function StoreInventoryPage() {
                       </span>
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold capitalize text-gray-600">{row.moderation_status}</span>
                     </div>
-                    <button type="button" onClick={() => openAdjustment(row)} className="shrink-0 rounded-full border border-[#2E5C45] px-2.5 py-1 font-semibold text-[#2E5C45]">
-                      Adjust
-                    </button>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => openAdjustment(row)} className="shrink-0 rounded-full border border-[#2E5C45] px-2.5 py-1 font-semibold text-[#2E5C45]">
+                        Adjust
+                      </button>
+                      <button type="button" onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')} className="shrink-0 rounded-full border border-[#2E5C45] px-2.5 py-1 font-semibold text-[#2E5C45]">
+                        View
+                      </button>
+                    </div>
                   </div>
                   {row.effective_stock_quantity <= lowStockThreshold ? (
                     <div className="mt-3 grid grid-cols-2 gap-2">
@@ -573,6 +596,7 @@ export default function StoreInventoryPage() {
                         onSubmit={submitAdjustment}
                         submitting={submitting}
                         lowStockThreshold={lowStockThreshold}
+                        onClose={() => setExpandedRowId('')}
                       />
                     </div>
                   ) : null}

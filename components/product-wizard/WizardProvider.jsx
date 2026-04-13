@@ -13,10 +13,16 @@ function wizardReducer(state, action) {
       return { ...state, category: action.payload, subcategory: null };
     case "SET_SUBCATEGORY":
       return { ...state, subcategory: action.payload };
+    case "SET_HAS_OPTIONS":
+      return { ...state, hasOptions: action.payload };
+    case "SET_OPTIONS":
+      return { ...state, options: action.payload };
     case "SET_BASIC_INFO":
       return { ...state, ...action.payload };
     case "SET_VARIANTS":
       return { ...state, variants: action.payload };
+    case "SET_DISABLED_VARIANT_KEYS":
+      return { ...state, disabledVariantKeys: action.payload };
     case "ADD_VARIANT":
       return { ...state, variants: [...state.variants, action.payload] };
     case "REMOVE_VARIANT":
@@ -78,8 +84,6 @@ function wizardReducer(state, action) {
           Object.entries(action.payload || {}).map(([key, value]) => [key, value.publicUrl])
         ),
       };
-        case "SET_LABEL_INFO":
-      return { ...state, ...action.payload };ç
     case "RESET":
       return { ...INITIAL_WIZARD_STATE };
     default:
@@ -217,7 +221,20 @@ export function WizardProvider({ children, storeData }) {
         setDraftStorageReady(result.storage_ready !== false);
 
         if (result?.data?.state) {
-          setPendingDraft(result.data);
+          suppressAutosaveRef.current = true;
+          dispatch({ type: "HYDRATE", payload: result.data.state });
+          setDraftId(result.data.id || null);
+          setDraftUpdatedAt(result.data.updatedAt || null);
+          hasLocalChangesRef.current = false;
+          setPendingDraft(null);
+
+          const resumeStep = Math.min(
+            WIZARD_STEPS.length,
+            Math.max(1, Number.parseInt(result.data.currentStep, 10) || 1)
+          );
+          if (resumeStep !== currentStep) {
+            goToStep(resumeStep);
+          }
         }
 
         hydratedRef.current = true;
@@ -232,7 +249,7 @@ export function WizardProvider({ children, storeData }) {
     })();
 
     return () => { cancelled = true; };
-  }, [storeContext]);
+  }, [currentStep, goToStep, storeContext]);
 
   useEffect(() => {
     if (!hydratedRef.current) return;

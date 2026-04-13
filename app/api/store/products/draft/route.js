@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireStoreApi, STORE_ROLES } from "@/utils/storeAuth";
-import { enforceRateLimit } from "@/utils/rateLimit";
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 
 const DRAFT_TABLE = "product_creation_drafts";
 const DRAFT_BUCKET = "product-images";
@@ -20,6 +20,7 @@ function pickPersistableState(state = {}) {
     gender: normalizeText(state.gender),
     ageGroup: normalizeText(state.ageGroup),
     variants: Array.isArray(state.variants) ? state.variants : [],
+    bulkDiscountTiers: Array.isArray(state.bulkDiscountTiers) ? state.bulkDiscountTiers : [],
     imageStrategy: normalizeText(state.imageStrategy) || "general",
     variantNotes: state.variantNotes && typeof state.variantNotes === "object" ? state.variantNotes : {},
     productNotes: normalizeText(state.productNotes),
@@ -102,7 +103,7 @@ export async function GET(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { data, error } = await ctx.adminClient
@@ -149,7 +150,7 @@ export async function PUT(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const formData = await request.formData();
@@ -165,7 +166,7 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Invalid wizard_data payload" }, { status: 400 });
   }
 
-  const currentStep = Math.min(6, Math.max(1, Number.parseInt(payload?.currentStep, 10) || 1));
+  const currentStep = Math.min(5, Math.max(1, Number.parseInt(payload?.currentStep, 10) || 1));
   const wizardState = pickPersistableState(payload?.state || {});
   const desiredManifest = normalizeManifest(payload?.persistedImages || {});
 
@@ -297,7 +298,7 @@ export async function DELETE(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { data, error } = await ctx.adminClient

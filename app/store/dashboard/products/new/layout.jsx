@@ -8,7 +8,7 @@ export default async function NewProductLayout({ children }) {
 
   return (
     <WizardProvider storeData={store}>
-      <div className="max-w-3xl mx-auto space-y-0">
+      <div className="w-full space-y-0">
         <WizardStepper />
         {children}
       </div>

@@ -1,18 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { FiChevronLeft, FiChevronRight, FiCheck } from 'react-icons/fi';
 import ProductReviewsManager from '@/components/Store/ProductReviewsManager';
 import { createClient as createSupabaseClient } from '@/utils/supabase/client';
-
-const STEPS = [
-  { id: 1, label: 'Basic Info', description: 'Product name, description, pricing' },
-  { id: 2, label: 'Media', description: 'Images and videos' },
-  { id: 3, label: 'Details', description: 'Specifications and pricing tiers' },
-  { id: 4, label: 'Review', description: 'Summary and actions' },
-];
 
 function createEmptySpecification() {
   return { key: '', value: '' };
@@ -121,41 +113,10 @@ function toneClasses(tone) {
   }
 }
 
-function StepIndicator({ currentStep }) {
-  return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-2">
-      {STEPS.map((step, index) => (
-        <div key={step.id} className="flex items-center gap-2 min-w-max">
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-              step.id < currentStep
-                ? 'bg-[#2E5C45] text-white'
-                : step.id === currentStep
-                ? 'border-2 border-[#2E5C45] bg-white text-[#2E5C45]'
-                : 'border-2 border-gray-200 bg-white text-gray-400'
-            }`}
-          >
-            {step.id < currentStep ? <FiCheck size={16} /> : step.id}
-          </div>
-          <div className="hidden md:block">
-            <p className="text-xs font-semibold text-gray-900">{step.label}</p>
-            <p className="text-[10px] text-gray-500">{step.description}</p>
-          </div>
-          {index < STEPS.length - 1 && (
-            <div className={`h-0.5 w-3 ${step.id < currentStep ? 'bg-[#2E5C45]' : 'bg-gray-200'}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function StoreProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const productId = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const currentStep = Math.max(1, Math.min(4, parseInt(searchParams?.get('step') || '1')));
 
   const [product, setProduct] = useState(null);
   const [form, setForm] = useState(createInitialForm(null));
@@ -167,6 +128,30 @@ export default function StoreProductDetailPage() {
   const [acting, setActing] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+
+  const printProductLabel = () => {
+    if (!product?.sku) {
+      setError('A product SKU is required before printing labels.');
+      return;
+    }
+
+    const label = product.name || 'Product';
+    const w = window.open('', '_blank', 'width=820,height=620');
+    if (!w) return;
+    w.document.write(`<html><head><title>Print Labels</title><style>
+      body{font-family:monospace;margin:0;padding:16px}
+      .g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+      .l{border:1px solid #ccc;padding:14px;text-align:center;page-break-inside:avoid}
+      .l h4{margin:0 0 6px;font-size:10px;color:#666}
+      .l .s{font-size:13px;font-weight:bold;letter-spacing:1.5px}
+      .b{display:flex;justify-content:center;gap:1px;margin:6px 0;height:45px;align-items:flex-end}
+      .br{background:#000;border-radius:.5px}
+    </style></head><body><div class="g"><div class="l"><h4>${label}</h4><div class="b">${
+      product.sku.split("").map((ch) => `<div class="br" style="width:${ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 2}px;height:${55 + (ch.charCodeAt(0) % 40)}%"></div>`).join("")
+    }</div><div class="s">${product.sku}</div></div></div><script>window.onload=()=>window.print()</script></body></html>`);
+    w.document.close();
+    setNotice('Print view opened. Labels can be reprinted from this page any time.');
+  };
 
   const statusMeta = useMemo(
     () => getStatusMeta(product?.moderation_status),
@@ -288,7 +273,7 @@ export default function StoreProductDetailPage() {
         }
         return next;
       });
-      setNotice('Media uploaded. Continue to the next step.');
+      setNotice('Media uploaded. Save changes when you are ready.');
       event.target.value = '';
     } catch (err) {
       setError(err.message || 'Upload failed');
@@ -384,37 +369,21 @@ export default function StoreProductDetailPage() {
     }
   };
 
-  const goToStep = (step) => {
-    router.push(`?step=${step}`, { scroll: false });
-  };
-
-  const printProductLabel = () => {
-    if (!product?.sku) {
-      setError('A product SKU is required.');
-      return;
-    }
-    const label = product.name || 'Product';
-    const w = window.open('', '_blank', 'width=820,height=620');
-    if (!w) return;
-    w.document.write(`<html><head><title>Print Labels</title><style>body{font-family:monospace;margin:0;padding:16px}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.l{border:1px solid #ccc;padding:14px;text-align:center}.l h4{margin:0 0 6px;font-size:10px;color:#666}.l .s{font-size:13px;font-weight:bold;letter-spacing:1.5px}.b{display:flex;justify-content:center;gap:1px;margin:6px 0;height:45px;align-items:flex-end}.br{background:#000;border-radius:.5px}</style></head><body><div class="g"><div class="l"><h4>${label}</h4><div class="b">${product.sku.split("").map((ch) => `<div class="br" style="width:${ch === "-" ? 1 : (ch.charCodeAt(0) % 3) + 2}px;height:${55 + (ch.charCodeAt(0) % 40)}%"></div>`).join("")}</div><div class="s">${product.sku}</div></div></div><script>window.onload=()=>window.print()</script></body></html>`);
-    w.document.close();
-    setNotice('Print view opened.');
-  };
-
   const duplicateProduct = async () => {
     try {
       setActing('duplicate');
       setError('');
+      setNotice('');
       const res = await fetch(`/api/store/products/${productId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'duplicate' }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed');
+      if (!res.ok) throw new Error(json.error || 'Failed to duplicate product');
       router.push(`/store/dashboard/products/${json.data.id}`);
     } catch (err) {
-      setError(err.message || 'Failed to duplicate');
+      setError(err.message || 'Failed to duplicate product');
     } finally {
       setActing('');
     }
@@ -423,16 +392,19 @@ export default function StoreProductDetailPage() {
   const toggleArchive = async (archive) => {
     try {
       setActing(archive ? 'archive' : 'unarchive');
+      setError('');
+      setNotice('');
       const res = await fetch(`/api/store/products/${productId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ archive }),
       });
-      if (!res.ok) throw new Error('Failed');
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to update archive status');
       await loadProduct();
-      setNotice(archive ? 'Archived.' : 'Unarchived.');
+      setNotice(archive ? 'Product archived.' : 'Product moved back to draft.');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to update archive status');
     } finally {
       setActing('');
     }
@@ -441,11 +413,16 @@ export default function StoreProductDetailPage() {
   const deleteProduct = async () => {
     try {
       setActing('delete');
-      const res = await fetch(`/api/store/products/${productId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed');
+      setError('');
+      setNotice('');
+      const res = await fetch(`/api/store/products/${productId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Failed to delete product');
       router.push('/store/dashboard/products');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Failed to delete product');
     } finally {
       setActing('');
     }
@@ -475,389 +452,356 @@ export default function StoreProductDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/store/dashboard/products" className="text-sm font-semibold text-[#2E5C45] hover:text-[#254a38]">
-            ← Back to products
+            Back to products
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-gray-900">{product.name}</h1>
+          <p className="mt-1 text-sm text-gray-500">SKU: {product.sku || 'Generated automatically'}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {publicProductHref && product.moderation_status === 'approved' && (
+          {publicProductHref && product.moderation_status === 'approved' ? (
             <Link
               href={publicProductHref}
               target="_blank"
               className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
-              View live
+              Open listing
             </Link>
-          )}
+          ) : null}
+          <button
+            type="button"
+            onClick={duplicateProduct}
+            disabled={acting === 'duplicate'}
+            className="rounded-xl border border-[#2E5C45] px-4 py-2 text-sm font-semibold text-[#2E5C45] disabled:opacity-50"
+          >
+            {acting === 'duplicate' ? 'Duplicating...' : 'Duplicate'}
+          </button>
           <button
             type="button"
             onClick={printProductLabel}
             className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
-            Print labels
-          </button>
-          <button
-            type="button"
-            onClick={duplicateProduct}
-            disabled={acting}
-            className="rounded-xl border border-[#2E5C45] px-4 py-2 text-sm font-semibold text-[#2E5C45] disabled:opacity-50"
-          >
-            Duplicate
+            Print Labels
           </button>
           {product.moderation_status === 'archived' ? (
             <button
               type="button"
               onClick={() => toggleArchive(false)}
-              disabled={acting}
-              className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700"
+              disabled={acting === 'unarchive'}
+              className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 disabled:opacity-50"
             >
-              Unarchive
+              {acting === 'unarchive' ? 'Unarchiving...' : 'Unarchive'}
             </button>
           ) : (
             <button
               type="button"
               onClick={() => toggleArchive(true)}
-              disabled={acting}
-              className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700"
+              disabled={acting === 'archive'}
+              className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-50"
             >
-              Archive
+              {acting === 'archive' ? 'Archiving...' : 'Archive'}
             </button>
           )}
-          {['draft', 'rejected', 'archived'].includes(product.moderation_status) && (
+          {['draft', 'rejected', 'archived'].includes(product.moderation_status) ? (
             <button
               type="button"
               onClick={deleteProduct}
-              disabled={acting}
-              className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700"
+              disabled={acting === 'delete'}
+              className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-50"
             >
-              Delete
+              {acting === 'delete' ? 'Deleting...' : 'Delete'}
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
-      <div className={`rounded-2xl border p-4 shadow-sm ${toneClasses(statusMeta.tone)}`}>
-        <h2 className="font-bold">{statusMeta.title}</h2>
-        <p className="mt-1 text-sm">{statusMeta.message}</p>
-        {product.rejection_reason && (
-          <p className="mt-2 rounded bg-white/70 px-2 py-1 text-sm font-medium">Rejection: {product.rejection_reason}</p>
-        )}
+      <div className={`rounded-2xl border p-5 shadow-sm ${toneClasses(statusMeta.tone)}`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-70">{product.moderation_status?.replace('_', ' ') || 'draft'}</p>
+            <h2 className="mt-1 text-lg font-bold">{statusMeta.title}</h2>
+            <p className="mt-1 text-sm opacity-80">{statusMeta.message}</p>
+            {product.rejection_reason ? (
+              <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-sm font-medium text-red-800">
+                Rejection reason: {product.rejection_reason}
+              </p>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-xl bg-white/70 px-3 py-2">
+              <p className="text-xs uppercase opacity-70">Submitted</p>
+              <p className="mt-1 font-semibold">{product.submitted_at ? new Date(product.submitted_at).toLocaleString() : 'Not yet'}</p>
+            </div>
+            <div className="rounded-xl bg-white/70 px-3 py-2">
+              <p className="text-xs uppercase opacity-70">Updated</p>
+              <p className="mt-1 font-semibold">{product.updated_at ? new Date(product.updated_at).toLocaleString() : 'Unknown'}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <StepIndicator currentStep={currentStep} />
+      {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+      {notice ? <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{notice}</div> : null}
 
-      {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {notice && <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{notice}</div>}
-
-      {/* Step 1: Basic Info */}
-      {currentStep === 1 && (
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
         <div className="space-y-6">
-          <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900">Basic Information</h2>
-            <p className="mt-1 text-sm text-gray-500">Enter your product's core details</p>
-
-            <div className="mt-6 space-y-4">
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Product name *</span>
+          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Core details</h2>
+              <p className="text-sm text-gray-500">Update the product information buyers and reviewers will see.</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-1">
+                <span className="text-sm font-semibold text-gray-700">Product name</span>
                 <input
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                   value={form.name}
-                  onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))}
+                  onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))}
                 />
               </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Slug *</span>
+              <label className="space-y-1">
+                <span className="text-sm font-semibold text-gray-700">Slug</span>
                 <input
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                   value={form.slug}
-                  onChange={(e) => setForm((c) => ({ ...c, slug: e.target.value }))}
+                  onChange={(e) => setForm((current) => ({ ...current, slug: e.target.value }))}
                 />
               </label>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Description *</span>
+              <label className="space-y-1 md:col-span-2">
+                <span className="text-sm font-semibold text-gray-700">Description</span>
                 <textarea
                   rows={5}
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                   value={form.description}
-                  onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
+                  onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))}
                 />
               </label>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-semibold text-gray-700">Price *</span>
-                  <input
-                    type="number"
-                    min="0"
-                    className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2"
-                    value={form.price}
-                    onChange={(e) => setForm((c) => ({ ...c, price: e.target.value }))}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-semibold text-gray-700">Sale price</span>
-                  <input
-                    type="number"
-                    min="0"
-                    className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2"
-                    value={form.discount_price}
-                    onChange={(e) => setForm((c) => ({ ...c, discount_price: e.target.value }))}
-                  />
-                </label>
-              </div>
-              <label className="block">
-                <span className="text-sm font-semibold text-gray-700">Stock quantity *</span>
+              <label className="space-y-1">
+                <span className="text-sm font-semibold text-gray-700">Price</span>
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                  value={form.price}
+                  onChange={(e) => setForm((current) => ({ ...current, price: e.target.value }))}
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-sm font-semibold text-gray-700">Discount price</span>
                 <input
                   type="number"
                   min="0"
-                  className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-2"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                  value={form.discount_price}
+                  onChange={(e) => setForm((current) => ({ ...current, discount_price: e.target.value }))}
+                />
+              </label>
+              <label className="space-y-1">
+                <span className="text-sm font-semibold text-gray-700">Stock quantity</span>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
                   value={form.stock_quantity}
-                  onChange={(e) => setForm((c) => ({ ...c, stock_quantity: e.target.value }))}
+                  onChange={(e) => setForm((current) => ({ ...current, stock_quantity: e.target.value }))}
                 />
               </label>
             </div>
-          </div>
+          </section>
 
-          <div className="flex gap-3">
-            <button onClick={() => goToStep(2)} className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#2E5C45] px-4 py-3 text-sm font-semibold text-white">
-              Continue <FiChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Media */}
-      {currentStep === 2 && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
+          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Media</h2>
-                <p className="mt-1 text-sm text-gray-500">Upload at least 1 image. Choose your cover image.</p>
+                <p className="text-sm text-gray-500">Keep at least one image and choose which image leads the listing.</p>
               </div>
               <label className="rounded-xl border border-[#2E5C45] px-4 py-2 text-sm font-semibold text-[#2E5C45] cursor-pointer">
-                {uploading ? 'Uploading...' : 'Upload'}
+                {uploading ? 'Uploading...' : 'Add media'}
                 <input type="file" multiple className="hidden" onChange={onFilesSelected} />
               </label>
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="space-y-3">
               {media.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 rounded-xl border border-gray-200 p-3">
-                  <div className="h-16 w-16 overflow-hidden rounded-lg bg-gray-100 shrink-0">
+                <div key={item.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 p-3">
+                  <div className="h-16 w-16 overflow-hidden rounded-xl bg-gray-100">
                     {item.type === 'image' ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={item.public_url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs font-semibold">VIDEO</div>
+                      <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-gray-500">VIDEO</div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{item.public_url}</p>
-                    <p className="text-xs text-gray-500 uppercase">{item.type}</p>
+                    <p className="truncate text-sm font-semibold text-gray-900">{item.public_url}</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">{item.type}</p>
                   </div>
-                  {item.type === 'image' && (
-                    <label className="flex items-center gap-1 px-2 text-xs">
+                  {item.type === 'image' ? (
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
                       <input
                         type="radio"
-                        name="primary"
+                        name="primary-image"
                         checked={primaryImageUrl === item.public_url}
                         onChange={() => setPrimaryImageUrl(item.public_url)}
                       />
-                      Cover
+                      Primary
                     </label>
-                  )}
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => removeMedia(item.id)}
-                    className="rounded-lg border border-red-200 px-3 py-1 text-xs text-red-700"
+                    className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700"
                   >
                     Remove
                   </button>
                 </div>
               ))}
-              {media.length === 0 && (
+              {media.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500">
-                  Upload at least one image to proceed.
+                  Upload at least one image to keep this product publishable.
                 </div>
-              )}
+              ) : null}
             </div>
-          </div>
+          </section>
 
-          <div className="flex gap-3">
-            <button onClick={() => goToStep(1)} className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold">
-              <FiChevronLeft className="inline mr-2" size={16} /> Back
-            </button>
-            <button onClick={() => goToStep(3)} disabled={images.length === 0} className="flex-1 rounded-xl bg-[#2E5C45] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
-              Continue <FiChevronRight className="inline ml-2" size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Step 3: Details */}
-      {currentStep === 3 && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Specifications</h2>
+          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Specifications</h2>
+                <p className="text-sm text-gray-500">Capture details like material, fit, dimensions, or care.</p>
+              </div>
               <button
                 type="button"
-                onClick={() => setForm((c) => ({ ...c, specifications: [...c.specifications, createEmptySpecification()] }))}
+                onClick={() => setForm((current) => ({ ...current, specifications: [...current.specifications, createEmptySpecification()] }))}
                 className="rounded-lg border border-[#2E5C45] px-3 py-2 text-xs font-semibold text-[#2E5C45]"
               >
                 Add spec
               </button>
             </div>
-            <p className="mt-1 text-sm text-gray-500">Material, size, features, etc.</p>
-
-            <div className="mt-6 space-y-3">
+            <div className="space-y-3">
               {form.specifications.map((spec, index) => (
-                <div key={`spec-${index}`} className="flex gap-2 items-end">
+                <div key={`spec-${index}`} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                   <input
-                    placeholder="Label (e.g., Material)"
-                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    placeholder="Label"
                     value={spec.key}
                     onChange={(e) => updateSpecification(index, 'key', e.target.value)}
                   />
                   <input
-                    placeholder="Value (e.g., Cotton)"
-                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    placeholder="Value"
                     value={spec.value}
                     onChange={(e) => updateSpecification(index, 'value', e.target.value)}
                   />
                   <button
                     type="button"
-                    onClick={() => setForm((c) => ({
-                      ...c,
-                      specifications:  c.specifications.filter((_, i) => i !== index) || [createEmptySpecification()],
+                    onClick={() => setForm((current) => ({
+                      ...current,
+                      specifications: current.specifications.length > 1
+                        ? current.specifications.filter((_, specIndex) => specIndex !== index)
+                        : [createEmptySpecification()],
                     }))}
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-600"
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600"
                   >
                     Remove
                   </button>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
+        </div>
 
-          <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Bulk Pricing Tiers</h2>
+        <div className="space-y-6">
+          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Bulk discounts</h2>
+                <p className="text-sm text-gray-500">Offer stronger pricing as order quantities go up.</p>
+              </div>
               <button
                 type="button"
-                onClick={() => setForm((c) => ({ ...c, bulk_discount_tiers: [...c.bulk_discount_tiers, createEmptyBulkTier()] }))}
+                onClick={() => setForm((current) => ({ ...current, bulk_discount_tiers: [...current.bulk_discount_tiers, createEmptyBulkTier()] }))}
                 className="rounded-lg border border-[#2E5C45] px-3 py-2 text-xs font-semibold text-[#2E5C45]"
               >
                 Add tier
               </button>
             </div>
-            <p className="mt-1 text-sm text-gray-500">Offer discounts for higher quantities</p>
-
-            <div className="mt-6 space-y-3">
+            <div className="space-y-3">
               {form.bulk_discount_tiers.map((tier, index) => (
-                <div key={`tier-${index}`} className="flex gap-2 items-end rounded-xl border border-gray-200 p-3">
-                  <input
-                    type="number"
-                    min="2"
-                    placeholder="Min qty"
-                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                    value={tier.minimum_quantity}
-                    onChange={(e) => updateBulkDiscountTier(index, 'minimum_quantity', e.target.value)}
-                  />
-                  <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    placeholder="Discount %"
-                    className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                    value={tier.discount_percent}
-                    onChange={(e) => updateBulkDiscountTier(index, 'discount_percent', e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm((c) => ({
-                      ...c,
-                      bulk_discount_tiers: c.bulk_discount_tiers.filter((_, i) => i !== index) || [createEmptyBulkTier()],
-                    }))}
-                    className="rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-600"
-                  >
-                    Remove
-                  </button>
+                <div key={`tier-${index}`} className="rounded-xl border border-gray-200 p-3">
+                  <div className="grid gap-3">
+                    <input
+                      type="number"
+                      min="2"
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                      placeholder="Minimum quantity"
+                      value={tier.minimum_quantity}
+                      onChange={(e) => updateBulkDiscountTier(index, 'minimum_quantity', e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                      placeholder="Discount percent"
+                      value={tier.discount_percent}
+                      onChange={(e) => updateBulkDiscountTier(index, 'discount_percent', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm((current) => ({
+                        ...current,
+                        bulk_discount_tiers: current.bulk_discount_tiers.length > 1
+                          ? current.bulk_discount_tiers.filter((_, tierIndex) => tierIndex !== index)
+                          : [createEmptyBulkTier()],
+                      }))}
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600"
+                    >
+                      Remove tier
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="flex gap-3">
-            <button onClick={() => goToStep(2)} className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold">
-              <FiChevronLeft className="inline mr-2" size={16} /> Back
-            </button>
-            <button onClick={() => goToStep(4)} className="flex-1 rounded-xl bg-[#2E5C45] px-4 py-3 text-sm font-semibold text-white">
-              Continue <FiChevronRight className="inline ml-2" size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900">Review actions</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Drafts and rejected items can be resubmitted. Approved products automatically go back into review when edited.
+            </p>
 
-      {/* Step 4: Review & Submit */}
-      {currentStep === 4 && (
-        <div className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900">Summary</h2>
-              <div className="mt-4 space-y-3 text-sm">
-                <div>
-                  <p className="text-gray-500">Product name</p>
-                  <p className="font-semibold text-gray-900">{form.name}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Price</p>
-                  <p className="font-semibold text-gray-900">₦{Number(form.price).toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Stock</p>
-                  <p className="font-semibold text-gray-900">{form.stock_quantity} units</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Images</p>
-                  <p className="font-semibold text-gray-900">{images.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900">Actions</h2>
-              <div className="mt-4 space-y-3">
+            <div className="mt-5 space-y-3">
+              <button
+                type="button"
+                onClick={() => saveProduct(false)}
+                disabled={saving}
+                className="w-full rounded-xl border border-[#2E5C45] px-4 py-3 text-sm font-semibold text-[#2E5C45] disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : product.moderation_status === 'approved' ? 'Save changes' : 'Save draft changes'}
+              </button>
+              {product.moderation_status !== 'pending_review' && product.moderation_status !== 'archived' ? (
                 <button
                   type="button"
-                  onClick={() => saveProduct(false)}
+                  onClick={() => saveProduct(true)}
                   disabled={saving}
-                  className="w-full rounded-xl border border-[#2E5C45] px-4 py-3 text-sm font-semibold text-[#2E5C45] disabled:opacity-50"
+                  className="w-full rounded-xl bg-[#2E5C45] px-4 py-3 text-sm font-semibold text-white hover:bg-[#254a38] disabled:opacity-50"
                 >
-                  {saving ? 'Saving...' : 'Save changes'}
+                  {saving ? 'Submitting...' : product.moderation_status === 'rejected' ? 'Resubmit for review' : 'Submit for review'}
                 </button>
-                {product.moderation_status !== 'pending_review' && product.moderation_status !== 'archived' && (
-                  <button
-                    type="button"
-                    onClick={() => saveProduct(true)}
-                    disabled={saving}
-                    className="w-full rounded-xl bg-[#2E5C45] px-4 py-3 text-sm font-semibold text-white hover:bg-[#254a38] disabled:opacity-50"
-                  >
-                    {saving ? 'Submitting...' : 'Submit for review'}
-                  </button>
-                )}
-              </div>
+              ) : null}
             </div>
-          </div>
+
+            <div className="mt-5 rounded-xl bg-[#f6faf7] p-4 text-sm text-gray-600">
+              <p className="font-semibold text-gray-900">Current primary image</p>
+              <p className="mt-1 truncate">{primaryImageUrl || 'Choose one from the media list above.'}</p>
+              <p className="mt-3 font-semibold text-gray-900">Image count</p>
+              <p className="mt-1">{images.length} image(s)</p>
+            </div>
+          </section>
 
           <ProductReviewsManager productId={productId} />
-
-          <div className="flex gap-3">
-            <button onClick={() => goToStep(3)} className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold">
-              <FiChevronLeft className="inline mr-2" size={16} /> Back
-            </button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

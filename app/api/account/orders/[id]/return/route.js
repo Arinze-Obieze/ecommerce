@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { writeActivityLog } from '@/utils/serverTelemetry';
 import { createUserNotification } from '@/utils/notifications';
 
@@ -37,7 +37,7 @@ async function getAuthedContext(request) {
   });
 
   if (!rateLimit.allowed) {
-    return { ok: false, response: NextResponse.json({ error: 'Too many requests' }, { status: 429 }) };
+    return { ok: false, response: NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) }) };
   }
 
   const adminClient = await createAdminClient();

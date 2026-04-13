@@ -1,310 +1,192 @@
-// app/store/dashboard/products/new/step-3/page.js
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { IMAGE_STRATEGIES, GENERAL_IMAGE_SLOTS, VARIANT_IMAGE_SLOTS, getColorSwatch } from "@/lib/product-wizard-constants";
-import { isLightHex } from "@/lib/color-utils";
+import { normalizeBulkDiscountTiers } from "@/utils/bulkPricing";
 import { useToast } from "@/contexts/ToastContext";
 
-function MediaSlot({ slotKey, label, required, preview, mimeType, accept, onUpload, onRemove }) {
-  const ref = useRef(null);
-  const isVideo = mimeType?.startsWith("video/");
-
-  const handle = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    onUpload(slotKey, file, URL.createObjectURL(file));
-    e.target.value = "";
-  };
-
-  return (
-    <div className="flex flex-col">
-      <input ref={ref} type="file" accept={accept} className="hidden" onChange={handle} />
-      {preview ? (
-        <div className="relative group rounded-xl overflow-hidden border-2 border-[#2E5C45]/30 aspect-square bg-gray-50">
-          {isVideo ? (
-            <video src={preview} className="w-full h-full object-cover" muted playsInline />
-          ) : (
-            <img src={preview} alt={label} className="w-full h-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <button type="button" onClick={() => onRemove(slotKey)} className="p-2 rounded-full bg-white/90 text-red-500 hover:bg-white">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-          <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-[#2E5C45] text-white text-[9px] font-bold">{isVideo ? "VIDEO" : "DONE"}</div>
-        </div>
-      ) : (
-        <button type="button" onClick={() => ref.current?.click()} className="rounded-xl border-2 border-dashed border-[#dbe7e0] aspect-square flex flex-col items-center justify-center gap-1.5 hover:border-[#2E5C45]/40 hover:bg-[#2E5C45]/5 transition-all cursor-pointer">
-          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-          <span className="text-[10px] text-gray-500 font-medium">Upload</span>
-        </button>
-      )}
-      <p className="text-[11px] font-semibold text-gray-600 mt-1.5 text-center truncate">{label}{required && <span className="text-red-400"> *</span>}</p>
-    </div>
-  );
+function createEmptyTier() {
+  return { minimum_quantity: "", discount_percent: "" };
 }
 
-function ColorSwatch({ color, hex }) {
-  const swatch = getColorSwatch(color, hex);
-  const isMulti = color === "Multi";
-  return (
-    <span
-      className={`rounded-full shrink-0 ${isMulti ? "bg-gradient-to-br from-purple-500 via-pink-500 to-amber-400" : ""}`}
-      style={{
-        width: 16,
-        height: 16,
-        ...(isMulti ? {} : { backgroundColor: swatch, border: isLightHex(swatch) ? "1px solid #d1d5db" : "1px solid transparent" }),
-      }}
-    />
-  );
+function fmtNaira(value) {
+  return `₦${Number(value || 0).toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
 }
 
-export default function MediaStep() {
-  const { state, dispatch, goNext, goBack } = useWizard();
-  const { error: showError, info: showInfo } = useToast();
-  const [error, setError] = useState(null);
-  const [openColors, setOpenColors] = useState({});
+export default function Step4() {
+  const { state, dispatch, goBack, goNext } = useWizard();
+  const { error: showError } = useToast();
 
-  const uniqueColors = [...new Map(state.variants.filter((v) => v.color).map((v) => [v.color, v])).values()];
-
-  const persistedMimeType = (key) => state.persistedImages?.[key]?.mimeType || state.persistedImages?.[key]?.mime_type || "";
-
-  const uploadMedia = (key, file, preview) => {
-    if (file.size > 15 * 1024 * 1024) {
-      const message = file.type.startsWith("video/") ? "Video files must be 15 MB or smaller." : "Media files must be 15 MB or smaller.";
-      setError(message);
-      showError(message);
-      return;
+  const [tiers, setTiers] = useState(() => {
+    if (Array.isArray(state.bulkDiscountTiers) && state.bulkDiscountTiers.length > 0) {
+      return state.bulkDiscountTiers.map((tier) => ({
+        minimum_quantity: String(tier?.minimum_quantity ?? ""),
+        discount_percent: String(tier?.discount_percent ?? ""),
+      }));
     }
+    return [createEmptyTier()];
+  });
 
-    const isImage = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
-    const isVideo = ["video/mp4", "video/webm", "video/quicktime"].includes(file.type);
-    if (!isImage && !isVideo) {
-      const message = "Upload JPG, PNG, WebP, MP4, WebM, or MOV files only.";
-      setError(message);
-      showError(message);
-      return;
-    }
+  const variantPrices = (state.variants || []).map((variant) => Number(variant.price || 0)).filter((value) => value > 0);
+  const referenceUnitPrice = variantPrices.length > 0 ? Math.min(...variantPrices) : 0;
 
-    dispatch({ type: "SET_IMAGE", key, file, preview });
-    setError(null);
+  const populatedTiers = useMemo(
+    () => tiers.filter((tier) => String(tier?.minimum_quantity || "").trim() || String(tier?.discount_percent || "").trim()),
+    [tiers]
+  );
+
+  const previewResult = useMemo(() => normalizeBulkDiscountTiers(populatedTiers), [populatedTiers]);
+
+  const updateTier = (index, field, value) => {
+    setTiers((current) => current.map((tier, tierIndex) => (tierIndex === index ? { ...tier, [field]: value } : tier)));
   };
 
-  const removeMedia = (key) => dispatch({ type: "REMOVE_IMAGE", key });
+  const addTier = () => {
+    setTiers((current) => [...current, createEmptyTier()]);
+  };
 
-  const validate = () => {
-    const hasMedia = (key) => state.images[key] || state.persistedImages[key];
-    const strategy = state.imageStrategy;
-    if (strategy === "general") {
-      if (!hasMedia("general_front") || !hasMedia("general_back")) return "Upload Front and Back views.";
-    } else if (strategy === "variant") {
-      for (const variantColor of uniqueColors) {
-        const safe = variantColor.color.replace(/\s/g, "_");
-        if (!hasMedia(`variant_${safe}_front`) || !hasMedia(`variant_${safe}_back`)) return `Upload Front and Back views for ${variantColor.color}.`;
-      }
-    } else if (strategy === "mixed") {
-      if (!hasMedia("mixed_general_front") || !hasMedia("mixed_general_back")) return "Upload Front and Back views for the general product media.";
-    }
-    return null;
+  const removeTier = (index) => {
+    setTiers((current) => {
+      const next = current.filter((_, tierIndex) => tierIndex !== index);
+      return next.length > 0 ? next : [createEmptyTier()];
+    });
   };
 
   const handleNext = () => {
-    setError(null);
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      showError(validationError);
+    const hasIncompleteTier = tiers.some((tier) => {
+      const minimum = String(tier?.minimum_quantity || "").trim();
+      const discount = String(tier?.discount_percent || "").trim();
+      return (minimum && !discount) || (!minimum && discount);
+    });
+
+    if (hasIncompleteTier) {
+      showError("Each discount tier must include both minimum quantity and discount percent.");
       return;
     }
+
+    const result = normalizeBulkDiscountTiers(populatedTiers);
+    if (result.error) {
+      showError(result.error);
+      return;
+    }
+
+    dispatch({ type: "SET_BASIC_INFO", payload: { bulkDiscountTiers: result.value || [] } });
     goNext();
   };
 
   return (
     <WizardShell
-      title="Product Media"
-      subtitle="Upload the media buyers will use to understand the product before they add it to cart."
+      title="Bulk Discounts"
+      subtitle="Optional: reward larger orders with automatic quantity-based discounts."
     >
-      {error && <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700 mb-5">{error}</div>}
-
-      <div className="rounded-2xl border border-[#dbe7e0] bg-[#f7fbf8] p-4 mb-6">
-        <p className="text-sm font-bold text-gray-900">Required and recommended media</p>
-        <p className="mt-1 text-sm text-gray-600">Required: Front and Back views. Recommended: side view, detail shot, texture close-up, and one short product video.</p>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-sm font-bold text-gray-900 mb-2.5">Media Strategy</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          {IMAGE_STRATEGIES.map((strategy) => {
-            const selected = state.imageStrategy === strategy.value;
-            return (
-              <button
-                key={strategy.value}
-                type="button"
-                onClick={() => {
-                  dispatch({ type: "SET_IMAGE_STRATEGY", payload: strategy.value });
-                  showInfo("Media strategy updated.");
-                }}
-                className={`p-3.5 rounded-xl border-2 text-left transition-all ${selected ? "border-[#2E5C45] bg-[#2E5C45]/5" : "border-[#dbe7e0] hover:border-[#2E5C45]/30"}`}
-              >
-                <p className={`text-sm font-bold ${selected ? "text-[#2E5C45]" : "text-gray-900"}`}>{strategy.label}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5">{strategy.desc}</p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {state.imageStrategy === "general" && (
-        <div className="mb-5">
-          <p className="text-xs text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mb-3">
-            These media assets apply to all {state.variants.length} variants. Upload Front and Back views to continue.
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-[#dbe7e0] bg-[#f8fbf9] p-4">
+          <p className="text-sm font-bold text-gray-900">How this works</p>
+          <p className="mt-1 text-sm text-gray-600">
+            Buyers automatically get a lower unit price when quantity reaches a tier. Example: buy 10+, get 8% off.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {GENERAL_IMAGE_SLOTS.map((slot) => (
-              <MediaSlot
-                key={slot.key}
-                slotKey={`general_${slot.key}`}
-                label={slot.label}
-                required={slot.required}
-                preview={state.imagePreviews[`general_${slot.key}`]}
-                mimeType={state.images[`general_${slot.key}`]?.type || persistedMimeType(`general_${slot.key}`)}
-                accept="image/jpeg,image/png,image/webp"
-                onUpload={uploadMedia}
-                onRemove={removeMedia}
-              />
-            ))}
-            <MediaSlot
-              slotKey="general_video"
-              label="Product Video"
-              required={false}
-              preview={state.imagePreviews.general_video}
-              mimeType={state.images.general_video?.type || persistedMimeType("general_video")}
-              accept="video/mp4,video/webm,video/quicktime"
-              onUpload={uploadMedia}
-              onRemove={removeMedia}
-            />
-          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Leave all rows empty if you do not want bulk discounts on this product.
+          </p>
         </div>
-      )}
 
-      {state.imageStrategy === "variant" && (
-        <div className="space-y-3 mb-5">
-          {uniqueColors.length === 0 ? (
-            <p className="text-center py-6 text-sm text-gray-400">No color variants found. Go back and add variants first.</p>
-          ) : uniqueColors.map((variantColor) => {
-            const color = variantColor.color;
-            const safe = color.replace(/\s/g, "_");
-            const open = openColors[color] !== false;
-            const variantSizes = state.variants.filter((v) => v.color === color).map((v) => v.size);
-            return (
-              <div key={color} className="border border-[#dbe7e0] rounded-xl overflow-hidden">
-                <button type="button" onClick={() => setOpenColors((prev) => ({ ...prev, [color]: !open }))} className="w-full flex items-center gap-2.5 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-left">
-                  <ColorSwatch color={color} hex={variantColor.color_hex} />
-                  <span className="text-sm font-bold text-gray-900 flex-1">{color}</span>
-                  <span className="text-xs text-gray-500">{variantSizes.join(", ")}</span>
-                  <span className="text-gray-400">{open ? "▲" : "▼"}</span>
-                </button>
-                {open && (
-                  <div className="p-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {VARIANT_IMAGE_SLOTS.map((slot) => (
-                        <MediaSlot
-                          key={slot.key}
-                          slotKey={`variant_${safe}_${slot.key}`}
-                          label={slot.label}
-                          required={slot.required}
-                          preview={state.imagePreviews[`variant_${safe}_${slot.key}`]}
-                          mimeType={state.images[`variant_${safe}_${slot.key}`]?.type || persistedMimeType(`variant_${safe}_${slot.key}`)}
-                          accept="image/jpeg,image/png,image/webp"
-                          onUpload={uploadMedia}
-                          onRemove={removeMedia}
-                        />
-                      ))}
-                    </div>
-                    <textarea rows={2} value={state.variantNotes[color] || ""} onChange={(e) => dispatch({ type: "SET_VARIANT_NOTE", color, note: e.target.value })} placeholder={`Notes about the ${color} variant that can help buyers or merchandising teams...`} className="w-full mt-3 px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none" />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {state.imageStrategy === "mixed" && (
-        <div className="space-y-5 mb-5">
-          <div>
-            <h4 className="text-sm font-bold text-gray-900 mb-2.5">Shared Product Media</h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {GENERAL_IMAGE_SLOTS.slice(0, 4).map((slot) => (
-                <MediaSlot
-                  key={slot.key}
-                  slotKey={`mixed_general_${slot.key}`}
-                  label={slot.label}
-                  required={slot.required}
-                  preview={state.imagePreviews[`mixed_general_${slot.key}`]}
-                  mimeType={state.images[`mixed_general_${slot.key}`]?.type || persistedMimeType(`mixed_general_${slot.key}`)}
-                  accept="image/jpeg,image/png,image/webp"
-                  onUpload={uploadMedia}
-                  onRemove={removeMedia}
-                />
-              ))}
-              <MediaSlot
-                slotKey="mixed_general_video"
-                label="Product Video"
-                required={false}
-                preview={state.imagePreviews.mixed_general_video}
-                mimeType={state.images.mixed_general_video?.type || persistedMimeType("mixed_general_video")}
-                accept="video/mp4,video/webm,video/quicktime"
-                onUpload={uploadMedia}
-                onRemove={removeMedia}
-              />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-3.5 xl:col-span-7">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-gray-900">Discount Tiers</h3>
+              <button
+                type="button"
+                onClick={addTier}
+                className="px-3 py-2 rounded-lg bg-gray-100 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+              >
+                + Add Tier
+              </button>
             </div>
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-gray-900 mb-2">Color-Specific Media (optional)</h4>
-            {uniqueColors.map((variantColor) => {
-              const color = variantColor.color;
-              const safe = color.replace(/\s/g, "_");
-              return (
-                <div key={color} className="flex items-start gap-2.5 p-3 bg-gray-50 rounded-xl mb-2">
-                  <ColorSwatch color={color} hex={variantColor.color_hex} />
-                  <div className="flex-1 grid grid-cols-2 gap-2">
-                    {VARIANT_IMAGE_SLOTS.slice(0, 2).map((slot) => (
-                      <MediaSlot
-                        key={slot.key}
-                        slotKey={`mixed_variant_${safe}_${slot.key}`}
-                        label={`${color} ${slot.label}`}
-                        required={false}
-                        preview={state.imagePreviews[`mixed_variant_${safe}_${slot.key}`]}
-                        mimeType={state.images[`mixed_variant_${safe}_${slot.key}`]?.type || persistedMimeType(`mixed_variant_${safe}_${slot.key}`)}
-                        accept="image/jpeg,image/png,image/webp"
-                        onUpload={uploadMedia}
-                        onRemove={removeMedia}
-                      />
-                    ))}
+
+            <div className="space-y-2">
+              {tiers.map((tier, index) => (
+                <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+                  <div>
+                    <label className="block text-[11px] text-gray-500 font-semibold mb-1">Minimum quantity</label>
+                    <input
+                      type="number"
+                      min="2"
+                      value={tier.minimum_quantity}
+                      onChange={(event) => updateTier(index, "minimum_quantity", event.target.value)}
+                      placeholder="e.g. 10"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    />
                   </div>
+                  <div>
+                    <label className="block text-[11px] text-gray-500 font-semibold mb-1">Discount (%)</label>
+                    <input
+                      type="number"
+                      min="0.01"
+                      max="99.99"
+                      step="0.01"
+                      value={tier.discount_percent}
+                      onChange={(event) => updateTier(index, "discount_percent", event.target.value)}
+                      placeholder="e.g. 5"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeTier(index)}
+                    className="sm:mt-6 px-2.5 py-2 rounded-lg text-xs font-semibold text-gray-500 border border-gray-200 hover:text-red-600 hover:border-red-200"
+                  >
+                    Remove
+                  </button>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {previewResult.error ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {previewResult.error}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm xl:col-span-5">
+            <h3 className="text-sm font-bold text-gray-900 mb-2">Preview</h3>
+            {!previewResult.value || previewResult.value.length === 0 ? (
+              <p className="text-sm text-gray-500">No bulk discounts configured. Buyers pay the normal unit price.</p>
+            ) : (
+              <div className="space-y-2">
+                {previewResult.value.map((tier) => {
+                  const discounted = referenceUnitPrice > 0
+                    ? Math.max(0, referenceUnitPrice * (1 - tier.discount_percent / 100))
+                    : 0;
+
+                  return (
+                    <div key={`${tier.minimum_quantity}-${tier.discount_percent}`} className="rounded-xl border border-[#dbe7e0] px-3 py-2.5 flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-gray-800">Buy {tier.minimum_quantity}+ units</p>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-[#2E5C45]">{tier.discount_percent}% off</p>
+                        {referenceUnitPrice > 0 ? (
+                          <p className="text-xs text-gray-500">Unit: {fmtNaira(referenceUnitPrice)} → {fmtNaira(discounted)}</p>
+                        ) : (
+                          <p className="text-xs text-gray-500">Add variant pricing to see currency preview.</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      )}
-
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <label className="block text-sm font-bold text-gray-900 mb-1.5">Media Notes</label>
-        <textarea
-          rows={3}
-          value={state.productNotes}
-          onChange={(e) => dispatch({ type: "SET_PRODUCT_NOTES", payload: e.target.value })}
-          placeholder="Add merchandising notes, fit notes, or media reminders for the team..."
-          className="w-full px-3 py-2 rounded-lg border border-amber-200 bg-white text-sm resize-none"
-        />
       </div>
 
-      <WizardNav onBack={goBack} onNext={handleNext} nextLabel="Continue to Specifications" />
+      <WizardNav
+        showBack={true}
+        showCancel={false}
+        onBack={goBack}
+        onNext={handleNext}
+        nextLabel="Continue to Review"
+      />
     </WizardShell>
   );
 }
