@@ -12,7 +12,7 @@ function fmtNaira(value) {
 }
 
 export default function Step5() {
-  const { state, storeContext, goBack, productsPath, clearDraft, dispatch } = useWizard();
+  const { state, storeContext, goBack, goToStep, productsPath, clearDraft, dispatch } = useWizard();
   const router = useRouter();
   const { success: showSuccess, error: showError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,6 +25,7 @@ export default function Step5() {
   const maxPrice = prices.length ? Math.max(...prices) : 0;
   const totalStock = variants.reduce((sum, variant) => sum + (Number.parseInt(variant.quantity, 10) || 0), 0);
   const tiers = Array.isArray(state.bulkDiscountTiers) ? state.bulkDiscountTiers : [];
+  const productImageCount = Object.keys({ ...(state.images || {}), ...(state.persistedImages || {}) }).filter((key) => key.startsWith("general_")).length;
   const previewImage =
     state.imagePreviews?.general_front ||
     state.imagePreviews?.mixed_general_front ||
@@ -114,46 +115,101 @@ export default function Step5() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="space-y-4 xl:col-span-8">
           <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200 aspect-square">
-                {previewImage ? (
-                  <img src={previewImage} className="w-full h-full object-cover" alt="Front" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-base font-bold text-gray-900">{state.productName || "Unnamed Product"}</h3>
-                <p className="text-sm text-gray-500">{state.material || "Material"} • {state.category || "Category"} / {state.subcategory || "Subcategory"}</p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-[#2E5C45]/10 text-[#2E5C45] uppercase tracking-wide">
-                    {variants.length} Variant{variants.length !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-xs font-semibold text-gray-600 font-mono">{state.baseSku || "N/A"}</span>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="h-14 w-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200 aspect-square">
+                  {previewImage ? (
+                    <img src={previewImage} className="w-full h-full object-cover" alt="Front" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-gray-900">{state.productName || "Unnamed Product"}</h3>
+                  <p className="text-sm text-gray-500">{state.category || "Category"} / {state.subcategory || "Subcategory"}</p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => goToStep(1)}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Edit
+              </button>
             </div>
-
-            {prices.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-gray-50 px-3 py-2.5 border border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Price Range</p>
-                  <p className="text-sm font-bold text-gray-900">
-                    {minPrice === maxPrice ? fmtNaira(minPrice) : `${fmtNaira(minPrice)} – ${fmtNaira(maxPrice)}`}
-                  </p>
-                </div>
-                <div className="rounded-xl bg-gray-50 px-3 py-2.5 border border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Total Stock</p>
-                  <p className="text-sm font-bold text-gray-900">{totalStock} units</p>
-                </div>
-              </div>
-            )}
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
+              <p>Gender: <span className="font-semibold text-gray-800">{state.gender || "—"}</span></p>
+              <p>Age Group: <span className="font-semibold text-gray-800">{state.ageGroup || "—"}</span></p>
+              <p>Brand: <span className="font-semibold text-gray-800">{state.brand || "—"}</span></p>
+              <p>Description: <span className="font-semibold text-gray-800">{state.description ? `${state.description.slice(0, 80)}${state.description.length > 80 ? "..." : ""}` : "—"}</span></p>
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <h4 className="text-sm font-bold text-gray-900 mb-2">Bulk Discount Rules</h4>
+            <div className="flex items-start justify-between gap-3">
+              <h4 className="text-sm font-bold text-gray-900">Step 2: Variants, Pricing & Media</h4>
+              <button
+                type="button"
+                onClick={() => goToStep(2)}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Edit
+              </button>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-gray-50 px-3 py-2.5 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Variants</p>
+                <p className="text-sm font-bold text-gray-900">{variants.length}</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 px-3 py-2.5 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Base SKU</p>
+                <p className="text-sm font-bold text-gray-900 font-mono">{state.baseSku || "N/A"}</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 px-3 py-2.5 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Price Range</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {prices.length ? (minPrice === maxPrice ? fmtNaira(minPrice) : `${fmtNaira(minPrice)} – ${fmtNaira(maxPrice)}`) : "—"}
+                </p>
+              </div>
+              <div className="rounded-xl bg-gray-50 px-3 py-2.5 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Total Stock</p>
+                <p className="text-sm font-bold text-gray-900">{totalStock} units</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-gray-600">Product media uploaded: <span className="font-semibold text-gray-800">{productImageCount}</span> (minimum 2 required)</p>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <h4 className="text-sm font-bold text-gray-900">Step 3: Compliance & Care (Optional)</h4>
+              <button
+                type="button"
+                onClick={() => goToStep(3)}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Edit
+              </button>
+            </div>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-600">
+              <p>Country of Origin: <span className="font-semibold text-gray-800">{state.countryOfOrigin || "—"}</span></p>
+              <p>Country of Transformation: <span className="font-semibold text-gray-800">{state.countryOfTransformation || "—"}</span></p>
+              <p>Care (Wash/Bleach/Dry/Iron): <span className="font-semibold text-gray-800">{[state.careWashing, state.careBleaching, state.careDrying, state.careIroning].filter(Boolean).length ? "Configured" : "—"}</span></p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <h4 className="text-sm font-bold text-gray-900">Step 4: Bulk Discounts</h4>
+              <button
+                type="button"
+                onClick={() => goToStep(4)}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Edit
+              </button>
+            </div>
             {tiers.length > 0 ? (
-              <ul className="space-y-1 text-sm text-gray-700">
+              <ul className="mt-2 space-y-1 text-sm text-gray-700">
                 {tiers.map((tier) => (
                   <li key={`${tier.minimum_quantity}-${tier.discount_percent}`}>
                     Buy <span className="font-semibold">{tier.minimum_quantity}+</span> → <span className="font-semibold text-[#2E5C45]">{tier.discount_percent}% off</span>
@@ -161,7 +217,7 @@ export default function Step5() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-gray-500">No bulk discount configured for this product.</p>
+              <p className="mt-2 text-sm text-gray-500">No bulk discount configured for this product.</p>
             )}
           </div>
         </div>

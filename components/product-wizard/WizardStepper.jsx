@@ -1,19 +1,15 @@
 // components/product-wizard/WizardStepper.jsx
 "use client";
 import React from "react";
-import { WIZARD_STEPS, isWizardStepComplete } from "@/lib/product-wizard-constants";
+import { WIZARD_STEPS, getWizardStepUiState } from "@/lib/product-wizard-constants";
 import { useWizard } from "./WizardProvider";
 
 export default function WizardStepper() {
   const { currentStep, goToStep, state } = useWizard();
-  let furthestCompletedStep = 0;
-  for (const step of WIZARD_STEPS) {
-    if (!isWizardStepComplete(step.num, state)) break;
-    furthestCompletedStep = step.num;
-  }
-
-  const progressBaseStep = Math.max(currentStep - 1, furthestCompletedStep);
-  const progress = (progressBaseStep / (WIZARD_STEPS.length - 1)) * 100;
+  const { steps, filledCount } = getWizardStepUiState(state, currentStep);
+  const progressByCurrentStep = (currentStep / WIZARD_STEPS.length) * 100;
+  const progressByFilledSteps = (filledCount / WIZARD_STEPS.length) * 100;
+  const progress = Math.max(progressByCurrentStep, progressByFilledSteps);
 
   return (
     <>
@@ -30,14 +26,14 @@ export default function WizardStepper() {
         <div className="h-1.5 bg-[#dbe7e0] rounded-full overflow-hidden">
           <div
             className="h-full bg-[#2E5C45] rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${(currentStep / WIZARD_STEPS.length) * 100}%` }}
+            style={{ width: `${progress}%` }}
           />
         </div>
         <div className="flex justify-center gap-1.5 mt-2.5">
-          {WIZARD_STEPS.map((s) => (
+          {steps.map((s) => (
             <div key={s.num} className={`h-1.5 rounded-full transition-all duration-300 ${
               s.num === currentStep ? "w-5 bg-[#2E5C45]"
-                : s.num <= furthestCompletedStep ? "w-1.5 bg-[#2E5C45]/50"
+                : s.filled ? "w-1.5 bg-[#2E5C45]/50"
                 : "w-1.5 bg-[#dbe7e0]"
             }`} />
           ))}
@@ -54,11 +50,10 @@ export default function WizardStepper() {
             style={{ width: `${progress * 0.88}%` }}
           />
           <div className="relative flex justify-between">
-            {WIZARD_STEPS.map((s) => {
-              const active = s.num === currentStep;
-              const complete = isWizardStepComplete(s.num, state);
-              const done = s.num <= furthestCompletedStep && complete;
-              const canGoToStep = s.num !== currentStep && s.num <= furthestCompletedStep && complete;
+            {steps.map((s) => {
+              const active = s.active;
+              const done = s.filled;
+              const canGoToStep = s.clickable;
               return (
                 <div key={s.num} className="flex flex-col items-center gap-1.5 z-10">
                   <button

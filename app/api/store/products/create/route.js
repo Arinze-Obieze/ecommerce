@@ -4,13 +4,41 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { normalizeSpecifications } from "@/utils/productCatalog";
 import { normalizeBulkDiscountTiers } from "@/utils/bulkPricing";
+import { getGenderValidationError, normalizeGenderForCategory } from "@/lib/category-gender-rules";
+import {
+  WASHING_OPTIONS,
+  BLEACHING_OPTIONS,
+  DRYING_OPTIONS,
+  IRONING_OPTIONS,
+  DRY_CLEANING_OPTIONS,
+} from "@/lib/product-wizard-constants";
 
 function normalizeText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+const WASHING_VALUES = new Set(WASHING_OPTIONS.map((option) => option.value));
+const BLEACHING_VALUES = new Set(BLEACHING_OPTIONS.map((option) => option.value));
+const DRYING_VALUES = new Set(DRYING_OPTIONS.map((option) => option.value));
+const IRONING_VALUES = new Set(IRONING_OPTIONS.map((option) => option.value));
+const DRY_CLEANING_VALUES = new Set(DRY_CLEANING_OPTIONS.map((option) => option.value));
+
+function sanitizeCareValue(value, allowedValues) {
+  const normalized = normalizeText(value);
+  return allowedValues.has(normalized) ? normalized : null;
+}
+
 function normalizeVariantKey(color, size) {
   return `${normalizeText(color).toLowerCase()}__${normalizeText(size).toLowerCase()}`;
+}
+
+function sanitizeSlug(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function buildVariantSku(baseSku, color, size) {
@@ -42,11 +70,11 @@ function normalizeManifest(manifest = {}) {
 }
 function buildCareInstructionsJson(wd) {
   return {
-    washing:         wd.careWashing      || null,
-    bleaching:       wd.careBleaching    || null,
-    drying:          wd.careDrying       || null,
-    ironing:         wd.careIroning      || null,
-    dry_cleaning:    wd.careDryCleaning  || null,
+    washing:         sanitizeCareValue(wd.careWashing, WASHING_VALUES),
+    bleaching:       sanitizeCareValue(wd.careBleaching, BLEACHING_VALUES),
+    drying:          sanitizeCareValue(wd.careDrying, DRYING_VALUES),
+    ironing:         sanitizeCareValue(wd.careIroning, IRONING_VALUES),
+    dry_cleaning:    sanitizeCareValue(wd.careDryCleaning, DRY_CLEANING_VALUES),
     children_safety: Array.isArray(wd.childrenSafetyFlags) ? wd.childrenSafetyFlags : [],
     flammability:    Array.isArray(wd.flammabilityFlags)   ? wd.flammabilityFlags   : [],
   };
@@ -88,19 +116,40 @@ function buildMergedNotes(wd) {
 }
 
 
-function getRequiredImageKeys(imageStrategy, colors) {
-  if (imageStrategy === "variant") {
-    return colors.flatMap((color) => {
-      const safe = color.replace(/\s/g, "_");
-      return [`variant_${safe}_front`, `variant_${safe}_back`];
-    });
+function hasMinimumProductImages(uploadedImageKeys, persistedImages, minimum = 2) {
+  const persistedKeys = Object.keys(persistedImages || {});
+  const allKeys = new Set([...(uploadedImageKeys || []), ...persistedKeys]);
+  const productImageCount = [...allKeys].filter((key) => key.startsWith("general_")).length;
+  return productImageCount >= minimum;
+}
+
+async function filterExistingPersistedImages(supabase, manifest = {}) {
+  const entries = Object.entries(manifest || {});
+  if (entries.length === 0) {
+    return { existing: {}, missingKeys: [] };
   }
 
-  if (imageStrategy === "mixed") {
-    return ["mixed_general_front", "mixed_general_back"];
-  }
+  const checks = await Promise.all(
+    entries.map(async ([key, value]) => {
+      const storagePath = normalizeText(value?.storagePath);
+      if (!storagePath) return { key, exists: false };
 
-  return ["general_front", "general_back"];
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .createSignedUrl(storagePath, 60);
+
+      return { key, exists: !error && Boolean(data?.signedUrl) };
+    })
+  );
+
+  const existing = {};
+  const missingKeys = [];
+  checks.forEach((check) => {
+    if (check.exists) existing[check.key] = manifest[check.key];
+    else missingKeys.push(check.key);
+  });
+
+  return { existing, missingKeys };
 }
 
 async function cleanupCreatedRecords(supabase, productId, storagePaths = []) {
@@ -184,9 +233,15 @@ export async function POST(request) {
     const material = normalizeText(wd.material);
     const category = normalizeText(wd.category);
     const subcategory = normalizeText(wd.subcategory);
-    if (!productName || !description || !material || !category || !subcategory) {
+    if (!productName || !description || !category || !subcategory) {
       return NextResponse.json({ success: false, error: "Missing required product fields" }, { status: 400 });
     }
+    const genderError = getGenderValidationError(category, wd.gender);
+    if (genderError) {
+      return NextResponse.json({ success: false, error: genderError }, { status: 400 });
+    }
+    const normalizedGender = normalizeGenderForCategory(category, wd.gender);
+    const normalizedAgeGroup = category === "kids" ? normalizeText(wd.ageGroup) : "";
 
     const rawVariants = Array.isArray(wd.variants) ? wd.variants : [];
     const normalizedVariants = rawVariants.map((variant) => ({
@@ -229,17 +284,19 @@ export async function POST(request) {
 
     const uploadedImageKeys = new Set();
     const persistedImages = normalizeManifest(wd.persistedImages || {});
+    const { existing: existingPersistedImages, missingKeys: missingPersistedKeys } =
+      await filterExistingPersistedImages(supabase, persistedImages);
     for (const [key, val] of formData.entries()) {
       if (key === "wizard_data") continue;
       if (val instanceof File && val.size > 0) uploadedImageKeys.add(key);
     }
 
-    const missingRequiredImages = getRequiredImageKeys(imageStrategy, uniqueColors)
-      .filter((key) => !uploadedImageKeys.has(key) && !persistedImages[key]);
-    if (missingRequiredImages.length > 0) {
+    if (!hasMinimumProductImages(uploadedImageKeys, existingPersistedImages, 2)) {
       return NextResponse.json({
         success: false,
-        error: `Missing required images: ${missingRequiredImages.join(", ")}`,
+        error: missingPersistedKeys.length
+          ? "Some previously uploaded images are no longer available. Please re-upload at least 2 product images."
+          : "Upload at least 2 product images.",
       }, { status: 400 });
     }
 
@@ -283,8 +340,8 @@ export async function POST(request) {
       category,
       subcategory,
       material,
-      gender: normalizeText(wd.gender) || null,
-      age_group: normalizeText(wd.ageGroup) || null,
+      gender: normalizedGender || null,
+      age_group: normalizedAgeGroup || null,
       base_sku: baseSku,
       price: basePrice,
       quantity: totalQty,
@@ -343,7 +400,7 @@ export async function POST(request) {
     const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
 
     const imageEntries = [];
-    for (const [key, manifest] of Object.entries(persistedImages)) {
+    for (const [key, manifest] of Object.entries(existingPersistedImages)) {
       imageEntries.push({ key, kind: "persisted", manifest });
     }
     for (const [key, val] of formData.entries()) {
@@ -474,15 +531,53 @@ export async function POST(request) {
       }
     }
 
-    // 10. Best-effort mirror write for storefront discount tiers
-    if (bulkDiscountTiers) {
-      try {
+    // 10. Mirror into storefront catalog table so it appears in /store/dashboard/products
+    try {
+      const imageUrls = imgSuccesses
+        .map((entry) => entry.record?.supabase_url)
+        .filter(Boolean);
+      const storefrontSpecifications = normalizeSpecifications(wd.specifications).value || null;
+      const slug = sanitizeSlug(`${wd.slug || productName || "product"}-${baseSku}`);
+      const storefrontPayload = {
+        store_id: store.id,
+        name: productName,
+        slug: slug || baseSku.toLowerCase(),
+        sku: baseSku,
+        description,
+        price: basePrice,
+        discount_price: null,
+        bulk_discount_tiers: bulkDiscountTiers,
+        stock_quantity: totalQty,
+        is_active: false,
+        image_urls: imageUrls,
+        video_urls: [],
+        specifications: storefrontSpecifications,
+        moderation_status: "pending_review",
+        submitted_at: now,
+        reviewed_at: null,
+        reviewed_by: null,
+        rejection_reason: null,
+        published_at: null,
+      };
+
+      const { data: existingStorefront } = await supabase
+        .from("products")
+        .select("id")
+        .eq("store_id", store.id)
+        .eq("sku", baseSku)
+        .maybeSingle();
+
+      if (existingStorefront?.id) {
         await supabase
           .from("products")
-          .update({ bulk_discount_tiers: bulkDiscountTiers })
-          .eq("store_id", store.id)
-          .eq("sku", baseSku);
-      } catch {}
+          .update(storefrontPayload)
+          .eq("id", existingStorefront.id)
+          .eq("store_id", store.id);
+      } else {
+        await supabase.from("products").insert(storefrontPayload);
+      }
+    } catch (mirrorErr) {
+      console.warn("[Create] Storefront mirror failed:", mirrorErr?.message || mirrorErr);
     }
 
     // 11. Print log — column names from R code
@@ -516,7 +611,7 @@ export async function POST(request) {
       normalizeText(wd.draftId),
       store.id,
       user.id,
-      persistedImages
+      existingPersistedImages
     );
 
     console.log("[Create] ✅ DONE:", productId);

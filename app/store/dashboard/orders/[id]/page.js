@@ -40,6 +40,12 @@ function buildVariantLabel(variant) {
   return [variant.color, variant.size].filter(Boolean).join(' / ');
 }
 
+function getReceiptUrl(orderId, download = false) {
+  if (!orderId) return '#';
+  const query = download ? '?download=1' : '';
+  return `/api/store/orders/${orderId}/receipt${query}`;
+}
+
 export default function StoreOrderDetailPage() {
   const params = useParams();
   const orderId = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -100,6 +106,8 @@ export default function StoreOrderDetailPage() {
   const updates = data?.fulfillmentUpdates || [];
   const cancellationRequest = data?.cancellationRequest || null;
   const returnRequest = data?.returnRequest || null;
+  const receiptUrl = getReceiptUrl(order?.id);
+  const receiptDownloadUrl = getReceiptUrl(order?.id, true);
   const itemCount = useMemo(
     () => items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
     [items]
@@ -175,8 +183,26 @@ export default function StoreOrderDetailPage() {
               Manage fulfillment state, dispatch details, and internal handling notes for this store order.
             </p>
           </div>
-          <div className="rounded-xl bg-[#eef4f0] px-3 py-2 text-sm font-semibold text-[#2E5C45]">
-            {prettify(order.fulfillment_status || 'processing')}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <a
+              href={receiptUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl border border-[#2E5C45] bg-[#eef4f0] px-3 py-2 text-sm font-semibold text-[#2E5C45] transition hover:bg-[#e2eee8]"
+            >
+              Preview Zova PDF
+            </a>
+            <a
+              href={receiptDownloadUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl border border-[#d0d7de] px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            >
+              Download receipt
+            </a>
+            <div className="rounded-xl bg-[#eef4f0] px-3 py-2 text-sm font-semibold text-[#2E5C45]">
+              {prettify(order.fulfillment_status || 'processing')}
+            </div>
           </div>
         </div>
       </div>
@@ -297,7 +323,7 @@ export default function StoreOrderDetailPage() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+          <section id="fulfillment-update" className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
             <h3 className="text-base font-bold text-gray-900">Update fulfillment</h3>
             <p className="mt-1 text-sm text-gray-500">
               Move the order forward as operations progress. Shipping requires a tracking reference. Issue requires an internal note.
@@ -345,6 +371,48 @@ export default function StoreOrderDetailPage() {
                 {saving ? 'Saving...' : 'Save fulfillment update'}
               </button>
             </form>
+          </section>
+
+          <section className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+            <h3 className="text-base font-bold text-gray-900">Zova receipt (PDF)</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Generate and share a branded order receipt PDF for operations, customer support, or dispatch records.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <a
+                href={receiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl border border-[#2E5C45] bg-[#eef4f0] px-4 py-2 text-sm font-semibold text-[#2E5C45] transition hover:bg-[#e2eee8]"
+              >
+                Preview Zova PDF
+              </a>
+              <a
+                href={receiptDownloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl border border-[#d0d7de] px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Download receipt
+              </a>
+            </div>
+            <div className="mt-4 md:hidden">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Mobile preview</p>
+              <object
+                data={receiptUrl}
+                type="application/pdf"
+                className="h-[60vh] w-full rounded-xl border border-[#dbe7e0]"
+              >
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex rounded-lg border border-[#2E5C45] px-3 py-2 text-xs font-semibold text-[#2E5C45]"
+                >
+                  Open receipt preview
+                </a>
+              </object>
+            </div>
           </section>
 
           {returnRequest ? (

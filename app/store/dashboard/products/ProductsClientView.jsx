@@ -11,6 +11,7 @@ import {
   FiEdit3,
   FiEye,
   FiLayers,
+  FiMoreVertical,
   FiRefreshCw,
   FiSearch,
   FiSend,
@@ -137,6 +138,7 @@ export default function ProductsClientView({
   const [bulkActing, setBulkActing] = useState("");
   const [mobileViewMode, setMobileViewMode] = useState("line");
   const [page, setPage] = useState(1);
+  const [openActionMenuId, setOpenActionMenuId] = useState("");
   const limit = 20;
   const abortControllerRef = useRef(null);
   const isFirstRender = useRef(true);
@@ -236,7 +238,19 @@ export default function ProductsClientView({
   useEffect(() => {
     const rowIds = new Set(rows.map((row) => row.id));
     setSelectedIds((current) => current.filter((id) => rowIds.has(id)));
+    setOpenActionMenuId((current) => (rowIds.has(current) ? current : ""));
   }, [rows]);
+
+  useEffect(() => {
+    const onDocumentClick = (event) => {
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest("[data-row-actions-menu]")) {
+        setOpenActionMenuId("");
+      }
+    };
+    document.addEventListener("mousedown", onDocumentClick);
+    return () => document.removeEventListener("mousedown", onDocumentClick);
+  }, []);
 
   const counts = useMemo(() => summary || {}, [summary]);
   const draftRows = useMemo(
@@ -491,6 +505,96 @@ export default function ProductsClientView({
         >
           <FiTrash2 size={iconSize} />
         </ActionIconButton>
+      </div>
+    );
+  };
+
+  const getRowActionItems = (row) => {
+    const actionBusy = actingId === row.id;
+    const items = [
+      {
+        label: "View",
+        onClick: () => router.push(`/store/dashboard/products/${row.id}`),
+        tone: "text-gray-700 hover:bg-gray-50",
+      },
+      {
+        label: "Edit",
+        onClick: () => router.push(`/store/dashboard/products/${row.id}?mode=edit`),
+        tone: "text-[#2E5C45] hover:bg-[#f3f8f5]",
+      },
+    ];
+
+    if (row.moderation_status === "archived") {
+      items.push({
+        label: actionBusy && actingType === "unarchive" ? "Unarchiving..." : "Unarchive",
+        onClick: () => handleRowAction(row, "unarchive"),
+        disabled: actionBusy,
+        tone: "text-gray-700 hover:bg-gray-50",
+      });
+    } else {
+      items.push({
+        label: actionBusy && actingType === "archive" ? "Archiving..." : "Archive",
+        onClick: () => handleRowAction(row, "archive"),
+        disabled: actionBusy,
+        tone: "text-amber-700 hover:bg-amber-50",
+      });
+    }
+
+    if (row.moderation_status === "draft" || row.moderation_status === "rejected") {
+      items.push({
+        label: actionBusy && actingType === "resubmit" ? "Submitting..." : "Submit for review",
+        onClick: () => handleRowAction(row, "resubmit"),
+        disabled: actionBusy,
+        tone: "text-[#2E5C45] hover:bg-[#f3f8f5]",
+      });
+    }
+
+    items.push({
+      label: actionBusy && actingType === "delete" ? "Deleting..." : "Delete",
+      onClick: () => confirmDelete(row),
+      disabled: actionBusy,
+      tone: "text-red-700 hover:bg-red-50",
+    });
+
+    return items;
+  };
+
+  const renderRowActionsMenu = (row) => {
+    const isOpen = openActionMenuId === row.id;
+    const items = getRowActionItems(row);
+
+    return (
+      <div className="relative" data-row-actions-menu>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenActionMenuId((current) => (current === row.id ? "" : row.id));
+          }}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+          aria-label="Open actions"
+        >
+          <FiMoreVertical size={16} />
+        </button>
+        {isOpen ? (
+          <div className="absolute right-0 top-10 z-30 min-w-[170px] rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
+            {items.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                disabled={item.disabled}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenActionMenuId("");
+                  item.onClick?.();
+                }}
+                className={`w-full rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${item.tone || "text-gray-700 hover:bg-gray-50"} disabled:opacity-50`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   };
@@ -957,22 +1061,8 @@ export default function ProductsClientView({
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-col items-center gap-2 pl-1">
-                          <button 
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); router.push(`/store/dashboard/products/${row.id}?mode=edit`); }} 
-                            className="p-1.5 text-gray-400 hover:text-[#2E5C45]"
-                          >
-                            <FiEdit3 size={16} />
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); confirmDelete(row); }} 
-                            disabled={actingId === row.id}
-                            className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-50"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
+                        <div className="pl-1">
+                          {renderRowActionsMenu(row)}
                         </div>
                       </div>
                     </div>
@@ -1061,7 +1151,7 @@ export default function ProductsClientView({
                             <p className="min-w-0 truncate text-xs text-gray-500">
                               {summarizeBulkDiscounts(row.bulk_discount_tiers)}
                             </p>
-                            {renderRowActions(row, true)}
+                            {renderRowActionsMenu(row)}
                           </div>
 
                           {row.rejection_reason ? (
@@ -1169,7 +1259,10 @@ export default function ProductsClientView({
                         <td className="py-3 pr-3">
                           {compactDate(row.submitted_at)}
                         </td>
-                        <td className="py-3 pr-3">{renderRowActions(row)}</td>
+                        <td className="py-3 pr-3">
+                          <div className="hidden xl:block">{renderRowActions(row)}</div>
+                          <div className="xl:hidden">{renderRowActionsMenu(row)}</div>
+                        </td>
                       </tr>
                     );
                   })}

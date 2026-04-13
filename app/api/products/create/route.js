@@ -1,6 +1,7 @@
 // app/api/seller/products/create/route.js
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { getGenderValidationError, normalizeGenderForCategory } from "@/lib/category-gender-rules";
 
 function slugify(text) {
   return (text || "")
@@ -38,6 +39,15 @@ export async function POST(request) {
     }
 
     const wd = JSON.parse(wizardDataStr);
+    const genderError = getGenderValidationError(wd.category, wd.gender);
+    if (genderError) {
+      return NextResponse.json(
+        { success: false, error: genderError },
+        { status: 400 }
+      );
+    }
+    const normalizedGender = normalizeGenderForCategory(wd.category, wd.gender);
+    const normalizedAgeGroup = String(wd.category || "").trim().toLowerCase() === "kids" ? (wd.ageGroup || null) : null;
 
     // ── 3. Validate store ownership ──────────────────────────
     const { data: store, error: storeError } = await supabase
@@ -89,8 +99,8 @@ export async function POST(request) {
       subcategory: wd.subcategory,
       brand: wd.brand || null,
       material: wd.material,
-      gender: wd.gender || null,
-      age_group: wd.ageGroup || null,
+      gender: normalizedGender || null,
+      age_group: normalizedAgeGroup,
       base_sku: wd.baseSku,
       base_price: basePrice,
       total_quantity: totalQuantity,

@@ -421,6 +421,51 @@ export default function StoreInventoryPage() {
       {notice ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div> : null}
 
       <section className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm sm:p-5">
+        <button
+          type="button"
+          onClick={() => setShowHistory((current) => !current)}
+          className="flex w-full items-center justify-between gap-3 text-left"
+        >
+          <div>
+            <h3 className="text-base font-bold text-gray-900">Adjustment history</h3>
+            <p className="text-sm text-gray-500">Collapsed by default so recent logs do not compete with the stock workspace.</p>
+          </div>
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{showHistory ? 'Hide' : 'Show'}</span>
+        </button>
+
+        {showHistory ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {history.map((entry) => (
+              <div key={entry.id} className="rounded-2xl border border-[#eef4ef] bg-[#fbfdfb] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-900">{entry.product_name}</p>
+                    <p className="text-xs text-gray-500">
+                      {entry.variant_label ? `${entry.variant_label} · ` : ''}{entry.reason || 'correction'} · {entry.mode}
+                    </p>
+                  </div>
+                  <p className="text-right text-xs text-gray-500">{formatTimestamp(entry.created_at)}</p>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                  <p className="text-gray-700">{entry.message}</p>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    {entry.previous_quantity} {'->'} {entry.next_quantity}
+                  </span>
+                </div>
+                {entry.note ? <p className="mt-2 text-xs text-gray-500">Note: {entry.note}</p> : null}
+              </div>
+            ))}
+
+            {history.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[#dbe7e0] bg-[#fbfdfb] p-5 text-sm text-gray-500">
+                Inventory adjustments will appear here once your team starts using the workflow.
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
+      <section className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Stock workspace</h3>
@@ -617,50 +662,6 @@ export default function StoreInventoryPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm sm:p-5">
-        <button
-          type="button"
-          onClick={() => setShowHistory((current) => !current)}
-          className="flex w-full items-center justify-between gap-3 text-left"
-        >
-          <div>
-            <h3 className="text-base font-bold text-gray-900">Adjustment history</h3>
-            <p className="text-sm text-gray-500">Collapsed by default so recent logs do not compete with the stock workspace.</p>
-          </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{showHistory ? 'Hide' : 'Show'}</span>
-        </button>
-
-        {showHistory ? (
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {history.map((entry) => (
-              <div key={entry.id} className="rounded-2xl border border-[#eef4ef] bg-[#fbfdfb] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-900">{entry.product_name}</p>
-                    <p className="text-xs text-gray-500">
-                      {entry.variant_label ? `${entry.variant_label} · ` : ''}{entry.reason || 'correction'} · {entry.mode}
-                    </p>
-                  </div>
-                  <p className="text-right text-xs text-gray-500">{formatTimestamp(entry.created_at)}</p>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                  <p className="text-gray-700">{entry.message}</p>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                    {entry.previous_quantity} {'->'} {entry.next_quantity}
-                  </span>
-                </div>
-                {entry.note ? <p className="mt-2 text-xs text-gray-500">Note: {entry.note}</p> : null}
-              </div>
-            ))}
-
-            {history.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#dbe7e0] bg-[#fbfdfb] p-5 text-sm text-gray-500">
-                Inventory adjustments will appear here once your team starts using the workflow.
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
     </div>
   );
 }
