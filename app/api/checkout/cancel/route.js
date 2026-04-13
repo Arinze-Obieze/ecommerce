@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 
 function createServiceClient() {
   return createClient(
@@ -53,7 +53,7 @@ export async function POST(request) {
     });
 
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+      return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
     const serviceClient = createServiceClient();

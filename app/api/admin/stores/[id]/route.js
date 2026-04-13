@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
 import { writeAdminAuditLog } from '@/utils/adminAudit';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { id } = await params;
@@ -125,7 +125,7 @@ export async function PATCH(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { id } = await params;
@@ -204,7 +204,7 @@ export async function DELETE(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { id } = await params;

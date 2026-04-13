@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
 import { notifyOrderCompletionEmails } from '@/utils/emailNotifications';
 import { ensureEscrowFundedForOrder } from '@/utils/escrow';
@@ -205,7 +205,7 @@ export async function POST(request) {
         message:    'Webhook rate limited',
         durationMs: Date.now() - startedAt,
       })
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+      return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) })
     }
 
     const paystackSecret = process.env.PAYSTACK_SECRET_KEY || process.env.PAYSTACK_TEST_SECRET_KEY

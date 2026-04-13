@@ -46,7 +46,7 @@ function inventoryTone(stock, lowStockThreshold = DEFAULT_LOW_STOCK_THRESHOLD) {
   return 'border-emerald-200 bg-emerald-50 text-emerald-700';
 }
 
-function StatCard({ label, value, tone = 'emerald' }) {
+function StatCard({ label, value, tone = 'emerald', loading = false }) {
   const tones = {
     emerald: 'text-[#2E5C45]',
     amber: 'text-amber-700',
@@ -60,7 +60,9 @@ function StatCard({ label, value, tone = 'emerald' }) {
       className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-3 text-left shadow-sm transition hover:border-[#b8d0c4]"
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className={`mt-1 text-xl font-bold leading-tight ${tones[tone]}`}>{value}</p>
+      <p className={`mt-1 text-xl font-bold leading-tight ${tones[tone]}`}>
+        {loading ? <span className="block h-7 w-16 animate-pulse rounded-md bg-gray-200" aria-hidden="true" /> : value}
+      </p>
     </button>
   );
 }
@@ -127,7 +129,7 @@ function PaginationControls({ pagination, pageSize, setPage, setPageSize, loadin
   );
 }
 
-function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, submitting, lowStockThreshold }) {
+function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, submitting, lowStockThreshold, onClose }) {
   if (!row) return null;
 
   return (
@@ -139,7 +141,17 @@ function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, submitting,
             {row.has_variants ? 'Variant-managed product. Choose the exact size/color that changed.' : 'Direct-stock product.'}
           </p>
         </div>
-        <StockBadge stock={row.effective_stock_quantity} lowStockThreshold={lowStockThreshold} />
+        <div className="flex gap-2 items-start">
+          <StockBadge stock={row.effective_stock_quantity} lowStockThreshold={lowStockThreshold} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-gray-300 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 transition"
+            title="Close adjustment form"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -400,15 +412,60 @@ export default function StoreInventoryPage() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard label="All SKUs" value={summary.total} />
-          <StatCard label="Low stock" value={summary.lowStock} tone="amber" />
-          <StatCard label="Out of stock" value={summary.outOfStock} tone="red" />
-          <StatCard label="Variant managed" value={summary.variantManaged} tone="slate" />
+          <StatCard label="All SKUs" value={summary.total} loading={loading} />
+          <StatCard label="Low stock" value={summary.lowStock} tone="amber" loading={loading} />
+          <StatCard label="Out of stock" value={summary.outOfStock} tone="red" loading={loading} />
+          <StatCard label="Variant managed" value={summary.variantManaged} tone="slate" loading={loading} />
         </div>
       </section>
 
       {error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
       {notice ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div> : null}
+
+      <section className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm sm:p-5">
+        <button
+          type="button"
+          onClick={() => setShowHistory((current) => !current)}
+          className="flex w-full items-center justify-between gap-3 text-left"
+        >
+          <div>
+            <h3 className="text-base font-bold text-gray-900">Adjustment history</h3>
+            <p className="text-sm text-gray-500">Collapsed by default so recent logs do not compete with the stock workspace.</p>
+          </div>
+          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{showHistory ? 'Hide' : 'Show'}</span>
+        </button>
+
+        {showHistory ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {history.map((entry) => (
+              <div key={entry.id} className="rounded-2xl border border-[#eef4ef] bg-[#fbfdfb] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-gray-900">{entry.product_name}</p>
+                    <p className="text-xs text-gray-500">
+                      {entry.variant_label ? `${entry.variant_label} · ` : ''}{entry.reason || 'correction'} · {entry.mode}
+                    </p>
+                  </div>
+                  <p className="text-right text-xs text-gray-500">{formatTimestamp(entry.created_at)}</p>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                  <p className="text-gray-700">{entry.message}</p>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                    {entry.previous_quantity} {'->'} {entry.next_quantity}
+                  </span>
+                </div>
+                {entry.note ? <p className="mt-2 text-xs text-gray-500">Note: {entry.note}</p> : null}
+              </div>
+            ))}
+
+            {history.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-[#dbe7e0] bg-[#fbfdfb] p-5 text-sm text-gray-500">
+                Inventory adjustments will appear here once your team starts using the workflow.
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
 
       <section className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
@@ -511,6 +568,13 @@ export default function StoreInventoryPage() {
                             >
                               Adjust
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')}
+                              className="rounded-full border border-[#dbe7e0] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-[#2E5C45] hover:text-[#2E5C45]"
+                            >
+                              View details
+                            </button>
                             {row.effective_stock_quantity <= lowStockThreshold ? (
                               <>
                                 <button type="button" disabled={submitting} onClick={() => handleQuickRestock(row, 10)} className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-200 disabled:opacity-50">Set 10</button>
@@ -530,6 +594,7 @@ export default function StoreInventoryPage() {
                               onSubmit={submitAdjustment}
                               submitting={submitting}
                               lowStockThreshold={lowStockThreshold}
+                              onClose={() => setExpandedRowId('')}
                             />
                           </td>
                         </tr>
@@ -554,9 +619,14 @@ export default function StoreInventoryPage() {
                       </span>
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold capitalize text-gray-600">{row.moderation_status}</span>
                     </div>
-                    <button type="button" onClick={() => openAdjustment(row)} className="shrink-0 rounded-full border border-[#2E5C45] px-2.5 py-1 font-semibold text-[#2E5C45]">
-                      Adjust
-                    </button>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => openAdjustment(row)} className="shrink-0 rounded-full border border-[#2E5C45] px-2.5 py-1 font-semibold text-[#2E5C45]">
+                        Adjust
+                      </button>
+                      <button type="button" onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')} className="shrink-0 rounded-full border border-[#2E5C45] px-2.5 py-1 font-semibold text-[#2E5C45]">
+                        View
+                      </button>
+                    </div>
                   </div>
                   {row.effective_stock_quantity <= lowStockThreshold ? (
                     <div className="mt-3 grid grid-cols-2 gap-2">
@@ -573,6 +643,7 @@ export default function StoreInventoryPage() {
                         onSubmit={submitAdjustment}
                         submitting={submitting}
                         lowStockThreshold={lowStockThreshold}
+                        onClose={() => setExpandedRowId('')}
                       />
                     </div>
                   ) : null}
@@ -593,50 +664,6 @@ export default function StoreInventoryPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm sm:p-5">
-        <button
-          type="button"
-          onClick={() => setShowHistory((current) => !current)}
-          className="flex w-full items-center justify-between gap-3 text-left"
-        >
-          <div>
-            <h3 className="text-base font-bold text-gray-900">Adjustment history</h3>
-            <p className="text-sm text-gray-500">Collapsed by default so recent logs do not compete with the stock workspace.</p>
-          </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{showHistory ? 'Hide' : 'Show'}</span>
-        </button>
-
-        {showHistory ? (
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {history.map((entry) => (
-              <div key={entry.id} className="rounded-2xl border border-[#eef4ef] bg-[#fbfdfb] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-gray-900">{entry.product_name}</p>
-                    <p className="text-xs text-gray-500">
-                      {entry.variant_label ? `${entry.variant_label} · ` : ''}{entry.reason || 'correction'} · {entry.mode}
-                    </p>
-                  </div>
-                  <p className="text-right text-xs text-gray-500">{formatTimestamp(entry.created_at)}</p>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                  <p className="text-gray-700">{entry.message}</p>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                    {entry.previous_quantity} {'->'} {entry.next_quantity}
-                  </span>
-                </div>
-                {entry.note ? <p className="mt-2 text-xs text-gray-500">Note: {entry.note}</p> : null}
-              </div>
-            ))}
-
-            {history.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#dbe7e0] bg-[#fbfdfb] p-5 text-sm text-gray-500">
-                Inventory adjustments will appear here once your team starts using the workflow.
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </section>
     </div>
   );
 }

@@ -1,12 +1,30 @@
 import { NextResponse } from "next/server";
 import { requireStoreApi, STORE_ROLES } from "@/utils/storeAuth";
-import { enforceRateLimit } from "@/utils/rateLimit";
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import {
+  WASHING_OPTIONS,
+  BLEACHING_OPTIONS,
+  DRYING_OPTIONS,
+  IRONING_OPTIONS,
+  DRY_CLEANING_OPTIONS,
+} from "@/lib/product-wizard-constants";
 
 const DRAFT_TABLE = "product_creation_drafts";
 const DRAFT_BUCKET = "product-images";
 
 function normalizeText(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+const WASHING_VALUES = new Set(WASHING_OPTIONS.map((option) => option.value));
+const BLEACHING_VALUES = new Set(BLEACHING_OPTIONS.map((option) => option.value));
+const DRYING_VALUES = new Set(DRYING_OPTIONS.map((option) => option.value));
+const IRONING_VALUES = new Set(IRONING_OPTIONS.map((option) => option.value));
+const DRY_CLEANING_VALUES = new Set(DRY_CLEANING_OPTIONS.map((option) => option.value));
+
+function sanitizeCareValue(value, allowedValues) {
+  const normalized = normalizeText(value);
+  return allowedValues.has(normalized) ? normalized : null;
 }
 
 function pickPersistableState(state = {}) {
@@ -20,6 +38,7 @@ function pickPersistableState(state = {}) {
     gender: normalizeText(state.gender),
     ageGroup: normalizeText(state.ageGroup),
     variants: Array.isArray(state.variants) ? state.variants : [],
+    bulkDiscountTiers: Array.isArray(state.bulkDiscountTiers) ? state.bulkDiscountTiers : [],
     imageStrategy: normalizeText(state.imageStrategy) || "general",
     variantNotes: state.variantNotes && typeof state.variantNotes === "object" ? state.variantNotes : {},
     productNotes: normalizeText(state.productNotes),
@@ -36,11 +55,11 @@ function pickPersistableState(state = {}) {
     countryOfOrigin: normalizeText(state.countryOfOrigin),
     countryOfTransformation: normalizeText(state.countryOfTransformation),
     labelBrand: normalizeText(state.labelBrand),
-    careWashing: state.careWashing || null,
-    careBleaching: state.careBleaching || null,
-    careDrying: state.careDrying || null,
-    careIroning: state.careIroning || null,
-    careDryCleaning: state.careDryCleaning || null,
+    careWashing: sanitizeCareValue(state.careWashing, WASHING_VALUES),
+    careBleaching: sanitizeCareValue(state.careBleaching, BLEACHING_VALUES),
+    careDrying: sanitizeCareValue(state.careDrying, DRYING_VALUES),
+    careIroning: sanitizeCareValue(state.careIroning, IRONING_VALUES),
+    careDryCleaning: sanitizeCareValue(state.careDryCleaning, DRY_CLEANING_VALUES),
     childrenSafetyFlags: Array.isArray(state.childrenSafetyFlags) ? state.childrenSafetyFlags : [],
     flammabilityFlags: Array.isArray(state.flammabilityFlags) ? state.flammabilityFlags : [],
   };
@@ -102,7 +121,7 @@ export async function GET(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { data, error } = await ctx.adminClient
@@ -149,7 +168,7 @@ export async function PUT(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const formData = await request.formData();
@@ -165,7 +184,7 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Invalid wizard_data payload" }, { status: 400 });
   }
 
-  const currentStep = Math.min(6, Math.max(1, Number.parseInt(payload?.currentStep, 10) || 1));
+  const currentStep = Math.min(5, Math.max(1, Number.parseInt(payload?.currentStep, 10) || 1));
   const wizardState = pickPersistableState(payload?.state || {});
   const desiredManifest = normalizeManifest(payload?.persistedImages || {});
 
@@ -297,7 +316,7 @@ export async function DELETE(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { data, error } = await ctx.adminClient

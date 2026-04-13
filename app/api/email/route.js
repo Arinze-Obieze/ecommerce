@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { sendZeptoMail } from '@/utils/email';
 
 export async function POST(request) {
@@ -16,7 +16,7 @@ export async function POST(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many email requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many email requests', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const body = await request.json().catch(() => ({}));

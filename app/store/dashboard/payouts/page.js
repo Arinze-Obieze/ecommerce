@@ -50,6 +50,13 @@ function prettifyStatus(status) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function StatValue({ loading, children }) {
+  if (loading) {
+    return <span className="mt-1 block h-7 w-24 animate-pulse rounded-md bg-gray-200" aria-hidden="true" />;
+  }
+  return <>{children}</>;
+}
+
 export default function StorePayoutsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -291,7 +298,7 @@ export default function StorePayoutsPage() {
         {cards.map((card) => (
           <div key={card.label} className="rounded-xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
-            <p className="mt-1 break-words text-lg font-bold text-[#2E5C45] sm:text-2xl">{card.value}</p>
+            <p className="mt-1 break-words text-lg font-bold text-[#2E5C45] sm:text-2xl"><StatValue loading={loading}>{card.value}</StatValue></p>
           </div>
         ))}
       </div>
@@ -377,7 +384,9 @@ export default function StorePayoutsPage() {
             <h3 className="text-base font-bold text-gray-900">Escrow Items</h3>
             <p className="text-sm text-gray-500">Held funds become releasable after delivery confirmation and admin approval.</p>
           </div>
-          <div className="text-sm text-gray-500">{summary.pendingEscrowItems || 0} active escrow items</div>
+          <div className="text-sm text-gray-500">
+            {loading ? <span className="inline-block h-4 w-28 animate-pulse rounded bg-gray-200" aria-hidden="true" /> : `${summary.pendingEscrowItems || 0} active escrow items`}
+          </div>
         </div>
 
         {loading ? (

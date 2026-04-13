@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
 import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
@@ -111,19 +111,22 @@ export async function GET(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { searchParams } = new URL(request.url);
   const moderationStatus = normalizeModerationFilter(searchParams.get('moderationStatus'));
   const search = String(searchParams.get('search') || '').trim();
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '500', 10)));
+  const offset = (page - 1) * limit;
 
   let query = ctx.adminClient
     .from('products')
     .select(PRODUCT_LIST_SELECT)
     .eq('store_id', ctx.membership.store_id)
     .order('created_at', { ascending: false })
-    .limit(500);
+    .range(offset, offset + limit - 1);
 
   if (moderationStatus) {
     query = query.eq('moderation_status', moderationStatus);
@@ -141,7 +144,7 @@ export async function GET(request) {
       .select(PRODUCT_LIST_SELECT_FALLBACK)
       .eq('store_id', ctx.membership.store_id)
       .order('created_at', { ascending: false })
-      .limit(500);
+      .range(offset, offset + limit - 1);
 
     if (moderationStatus) {
       fallbackQuery = fallbackQuery.eq('moderation_status', moderationStatus);
@@ -165,13 +168,19 @@ export async function GET(request) {
 
   const products = data || [];
 
+  const { data: summaryData } = await ctx.adminClient
+    .from('products')
+    .select('moderation_status')
+    .eq('store_id', ctx.membership.store_id);
+
+  const stats = summaryData || [];
   const summary = {
-    total: products.length,
-    draft: products.filter((p) => p.moderation_status === 'draft').length,
-    pending_review: products.filter((p) => p.moderation_status === 'pending_review').length,
-    approved: products.filter((p) => p.moderation_status === 'approved').length,
-    rejected: products.filter((p) => p.moderation_status === 'rejected').length,
-    archived: products.filter((p) => p.moderation_status === 'archived').length,
+    total: stats.length,
+    draft: stats.filter((p) => p.moderation_status === 'draft').length,
+    pending_review: stats.filter((p) => p.moderation_status === 'pending_review').length,
+    approved: stats.filter((p) => p.moderation_status === 'approved').length,
+    rejected: stats.filter((p) => p.moderation_status === 'rejected').length,
+    archived: stats.filter((p) => p.moderation_status === 'archived').length,
   };
 
   return NextResponse.json({ success: true, data: products, summary });
@@ -190,7 +199,7 @@ export async function POST(request) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const body = await request.json().catch(() => ({}));

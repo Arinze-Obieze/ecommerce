@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
 import { calculateBulkPricing } from '@/utils/bulkPricing';
 
@@ -217,10 +217,7 @@ export async function POST(request) {
         userId: user.id,
         durationMs: Date.now() - startedAt,
       });
-      return NextResponse.json(
-        { error: 'Too many checkout attempts. Please try again shortly.' },
-        { status: 429 }
-      );
+      return NextResponse.json(rateLimitPayload('Too many checkout attempts. Please try again shortly.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
     const serviceClient = createServiceClient();

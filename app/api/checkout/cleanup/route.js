@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 
 function createServiceClient() {
   return createClient(
@@ -54,7 +54,7 @@ export async function POST(request) {
     });
 
     if (!rateLimit.allowed) {
-      return NextResponse.json({ error: 'Too many cleanup requests' }, { status: 429 });
+      return NextResponse.json(rateLimitPayload('Too many cleanup requests', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
     const ttlMinutes = Number.parseInt(process.env.CHECKOUT_RESERVATION_TTL_MINUTES || '30', 10);

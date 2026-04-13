@@ -566,8 +566,17 @@ export default function CartPage() {
       />
 
       {authUser && deliveryStepOpen ? (
-        <div className="fixed inset-0 z-[140] flex items-end justify-center bg-[#0f1720]/45 pt-24 sm:items-center sm:p-6">
-          <div className="w-full max-w-2xl overflow-hidden rounded-t-[28px] bg-white shadow-[0_24px_80px_rgba(15,23,32,0.18)] sm:rounded-[32px]">
+        <div
+          className="fixed inset-0 z-[140] flex items-end justify-center bg-[#0f1720]/45 pt-24 sm:items-center sm:p-6"
+          onClick={() => {
+            setDeliveryStepOpen(false);
+            setCheckoutError('');
+          }}
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-t-[28px] bg-white shadow-[0_24px_80px_rgba(15,23,32,0.18)] sm:rounded-[32px]"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-5 sm:px-7">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#2E5C45]">Step 2</p>

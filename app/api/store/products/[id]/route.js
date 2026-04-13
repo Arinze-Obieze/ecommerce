@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
 import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
 const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, bulk_discount_tiers, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
 const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
+const PRODUCT_VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';
 const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
 
 function toNumber(value) {
@@ -124,7 +125,7 @@ export async function GET(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { id } = await params;
@@ -138,7 +139,17 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ success: true, data: product });
+  const { data: variants, error: variantsError } = await ctx.adminClient
+    .from('product_variants')
+    .select(PRODUCT_VARIANT_SELECT)
+    .eq('product_id', product.id)
+    .order('created_at', { ascending: true });
+
+  if (variantsError) {
+    return NextResponse.json({ error: variantsError.message || 'Failed to load variants' }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, data: { ...product, variants: variants || [] } });
 }
 
 export async function PATCH(request, { params }) {
@@ -154,7 +165,7 @@ export async function PATCH(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { id } = await params;
@@ -317,7 +328,7 @@ export async function POST(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   const { id } = await params;
@@ -417,7 +428,7 @@ export async function DELETE(request, { params }) {
   });
 
   if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
   }
 
   if (ctx.membership.role === STORE_ROLES.STAFF) {
