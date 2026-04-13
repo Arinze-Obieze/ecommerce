@@ -2,6 +2,13 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+function StatValue({ loading, children }) {
+  if (loading) {
+    return <span className="mt-1.5 block h-7 w-20 animate-pulse rounded-md bg-gray-200" aria-hidden="true" />;
+  }
+  return <>{children}</>;
+}
+
 export default function StoreDashboardOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,7 +85,9 @@ export default function StoreDashboardOverviewPage() {
         {cards.map((card) => (
           <div key={card.label} className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-3 shadow-sm sm:px-4 sm:py-4">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
-            <p className="mt-1.5 break-words text-lg font-bold leading-tight text-[#2E5C45] sm:text-xl">{card.value}</p>
+            <p className="mt-1.5 break-words text-lg font-bold leading-tight text-[#2E5C45] sm:text-xl">
+              <StatValue loading={loading}>{card.value}</StatValue>
+            </p>
           </div>
         ))}
       </div>

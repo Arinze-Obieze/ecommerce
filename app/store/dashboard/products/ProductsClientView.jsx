@@ -121,6 +121,17 @@ export default function ProductsClientView({
   initialSummary = null,
   initialDraft = null,
 }) {
+  const getBaseUrl = () => {
+    const configured = String(process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+    if (configured) {
+      const normalized = configured.replace(/\/+$/, "");
+      if (/^https?:\/\//i.test(normalized)) return normalized;
+      return `https://${normalized}`;
+    }
+    if (typeof window !== "undefined") return window.location.origin;
+    return "";
+  };
+
   const router = useRouter();
   const [rows, setRows] = useState(initialProducts);
   const [summary, setSummary] = useState(initialSummary);
@@ -146,6 +157,8 @@ export default function ProductsClientView({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrProduct, setQrProduct] = useState(null);
 
   const confirmDelete = (row) => {
     setProductToDelete(row);
@@ -166,6 +179,79 @@ export default function ProductsClientView({
   const executeBulkDelete = async () => {
     setBulkDeleteModalOpen(false);
     await handleBulkAction("bulk_delete");
+  };
+
+  const getQrValueForProduct = (row) => {
+    if (!row) return "";
+    const target = row.slug || row.id;
+    const baseUrl = getBaseUrl();
+    return baseUrl
+      ? `${baseUrl}/qr/p/${encodeURIComponent(target)}`
+      : `/qr/p/${encodeURIComponent(target)}`;
+  };
+
+  const getQrImageUrl = (value, size = 320) => {
+    if (!value) return "";
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&format=png&margin=12&data=${encodeURIComponent(value)}`;
+  };
+
+  const qrValue = qrProduct ? getQrValueForProduct(qrProduct) : "";
+  const qrImageUrl = getQrImageUrl(qrValue, 320);
+
+  const openQrModal = (row) => {
+    setQrProduct(row);
+    setQrModalOpen(true);
+  };
+
+  const copyQrValue = async () => {
+    if (!qrValue) return;
+    try {
+      await navigator.clipboard.writeText(qrValue);
+      setNotice("QR value copied.");
+    } catch {
+      setError("Could not copy QR value.");
+    }
+  };
+
+  const openQrImage = () => {
+    if (!qrImageUrl) return;
+    window.open(qrImageUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const downloadQrImage = async () => {
+    if (!qrImageUrl || !qrProduct) return;
+    try {
+      const response = await fetch(qrImageUrl);
+      if (!response.ok) throw new Error("Failed to download QR image");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeSku = (qrProduct.sku || qrProduct.slug || qrProduct.id || "product")
+        .toString()
+        .replace(/[^a-zA-Z0-9_-]+/g, "-");
+      link.href = objectUrl;
+      link.download = `${safeSku}-qr.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setNotice("QR image downloaded.");
+    } catch {
+      setError("Could not download QR image.");
+    }
+  };
+
+  const printQr = () => {
+    if (!qrImageUrl || !qrProduct) return;
+    const w = window.open("", "_blank", "noopener,noreferrer,width=420,height=560");
+    if (!w) return;
+    const name = (qrProduct.name || "Product").replace(/</g, "&lt;");
+    const sku = (qrProduct.sku || "No SKU").replace(/</g, "&lt;");
+    const value = qrValue.replace(/</g, "&lt;");
+    w.document.write(
+      `<html><head><title>Print QR</title><style>body{font-family:Arial,sans-serif;margin:0;padding:24px;text-align:center;color:#111}.card{border:1px solid #ddd;border-radius:12px;padding:16px;max-width:340px;margin:0 auto}img{width:240px;height:240px;display:block;margin:0 auto 12px}h2{font-size:16px;margin:0 0 8px}p{margin:4px 0;font-size:12px;color:#555;word-break:break-all}</style></head><body><div class="card"><img src="${qrImageUrl}" alt="Product QR"/><h2>${name}</h2><p>SKU: ${sku}</p><p>${value}</p></div><script>window.onload=()=>window.print()</script></body></html>`
+    );
+    w.document.close();
   };
 
   const load = async () => {
@@ -494,6 +580,12 @@ export default function ProductsClientView({
           </ActionIconButton>
         ) : null}
         <ActionIconButton
+          label="Open QR code"
+          onClick={() => openQrModal(row)}
+        >
+          <span className="text-[11px] font-bold leading-none">QR</span>
+        </ActionIconButton>
+        <ActionIconButton
           label={
             actionBusy && actingType === "delete"
               ? "Deleting product"
@@ -548,6 +640,12 @@ export default function ProductsClientView({
         tone: "text-[#2E5C45] hover:bg-[#f3f8f5]",
       });
     }
+
+    items.push({
+      label: "QR code",
+      onClick: () => openQrModal(row),
+      tone: "text-gray-700 hover:bg-gray-50",
+    });
 
     items.push({
       label: actionBusy && actingType === "delete" ? "Deleting..." : "Delete",
@@ -650,6 +748,70 @@ export default function ProductsClientView({
                 className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition"
               >
                 Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {qrModalOpen && qrProduct ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-gray-900">Product QR Code</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {qrProduct.name}
+              {qrProduct.sku ? ` • ${qrProduct.sku}` : ""}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              One QR for all contexts: staff from this store open scan tools, others open public product page.
+            </p>
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-[#fafcfa] p-4">
+              <img
+                src={qrImageUrl}
+                alt={`QR for ${qrProduct.name}`}
+                className="mx-auto h-56 w-56 rounded-xl border border-gray-200 bg-white p-2"
+              />
+              <p className="mt-3 break-all text-xs text-gray-500">{qrValue}</p>
+            </div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={copyQrValue}
+                className="inline-flex items-center gap-1 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                <FiCopy size={14} />
+                Copy value
+              </button>
+              <button
+                type="button"
+                onClick={openQrImage}
+                className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Open PNG
+              </button>
+              <button
+                type="button"
+                onClick={downloadQrImage}
+                className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Download PNG
+              </button>
+              <button
+                type="button"
+                onClick={printQr}
+                className="rounded-xl border border-[#2E5C45] px-3 py-2 text-sm font-semibold text-[#2E5C45] hover:bg-[#f3f8f5]"
+              >
+                Print
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setQrModalOpen(false);
+                  setQrProduct(null);
+                }}
+                className="rounded-xl bg-[#2E5C45] px-3 py-2 text-sm font-semibold text-white hover:bg-[#254a38]"
+              >
+                Close
               </button>
             </div>
           </div>

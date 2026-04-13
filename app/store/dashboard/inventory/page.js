@@ -46,7 +46,7 @@ function inventoryTone(stock, lowStockThreshold = DEFAULT_LOW_STOCK_THRESHOLD) {
   return 'border-emerald-200 bg-emerald-50 text-emerald-700';
 }
 
-function StatCard({ label, value, tone = 'emerald' }) {
+function StatCard({ label, value, tone = 'emerald', loading = false }) {
   const tones = {
     emerald: 'text-[#2E5C45]',
     amber: 'text-amber-700',
@@ -60,7 +60,9 @@ function StatCard({ label, value, tone = 'emerald' }) {
       className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-3 text-left shadow-sm transition hover:border-[#b8d0c4]"
     >
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className={`mt-1 text-xl font-bold leading-tight ${tones[tone]}`}>{value}</p>
+      <p className={`mt-1 text-xl font-bold leading-tight ${tones[tone]}`}>
+        {loading ? <span className="block h-7 w-16 animate-pulse rounded-md bg-gray-200" aria-hidden="true" /> : value}
+      </p>
     </button>
   );
 }
@@ -410,10 +412,10 @@ export default function StoreInventoryPage() {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <StatCard label="All SKUs" value={summary.total} />
-          <StatCard label="Low stock" value={summary.lowStock} tone="amber" />
-          <StatCard label="Out of stock" value={summary.outOfStock} tone="red" />
-          <StatCard label="Variant managed" value={summary.variantManaged} tone="slate" />
+          <StatCard label="All SKUs" value={summary.total} loading={loading} />
+          <StatCard label="Low stock" value={summary.lowStock} tone="amber" loading={loading} />
+          <StatCard label="Out of stock" value={summary.outOfStock} tone="red" loading={loading} />
+          <StatCard label="Variant managed" value={summary.variantManaged} tone="slate" loading={loading} />
         </div>
       </section>
 

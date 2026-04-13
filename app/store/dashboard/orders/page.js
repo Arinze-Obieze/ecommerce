@@ -49,6 +49,13 @@ function getReceiptUrl(orderId, download = false) {
   return `/api/store/orders/${orderId}/receipt${query}`;
 }
 
+function StatValue({ loading, children }) {
+  if (loading) {
+    return <span className="mt-1 block h-6 w-16 animate-pulse rounded-md bg-gray-200" aria-hidden="true" />;
+  }
+  return <>{children}</>;
+}
+
 function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onDownloadReceipt }) {
   if (!orderId) return null;
 
@@ -247,23 +254,23 @@ export default function StoreOrdersPage() {
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
         <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Total Orders</p>
-          <p className="mt-1 text-base font-semibold text-gray-900">{stats.totalOrders}</p>
+          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.totalOrders}</StatValue></p>
         </div>
         <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Processing</p>
-          <p className="mt-1 text-base font-semibold text-gray-900">{stats.processingOrders}</p>
+          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.processingOrders}</StatValue></p>
         </div>
         <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Shipped</p>
-          <p className="mt-1 text-base font-semibold text-gray-900">{stats.shippedOrders}</p>
+          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.shippedOrders}</StatValue></p>
         </div>
         <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Delivered</p>
-          <p className="mt-1 text-base font-semibold text-gray-900">{stats.deliveredOrders}</p>
+          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.deliveredOrders}</StatValue></p>
         </div>
         <div className="col-span-2 rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm xl:col-span-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Store Revenue (Filtered)</p>
-          <p className="mt-1 text-base font-semibold text-gray-900">{formatMoney(stats.totalValue)}</p>
+          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{formatMoney(stats.totalValue)}</StatValue></p>
         </div>
       </div>
 

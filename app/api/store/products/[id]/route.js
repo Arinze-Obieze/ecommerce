@@ -6,6 +6,7 @@ import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
 
 const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, bulk_discount_tiers, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
 const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
+const PRODUCT_VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';
 const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
 
 function toNumber(value) {
@@ -138,7 +139,17 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ success: true, data: product });
+  const { data: variants, error: variantsError } = await ctx.adminClient
+    .from('product_variants')
+    .select(PRODUCT_VARIANT_SELECT)
+    .eq('product_id', product.id)
+    .order('created_at', { ascending: true });
+
+  if (variantsError) {
+    return NextResponse.json({ error: variantsError.message || 'Failed to load variants' }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, data: { ...product, variants: variants || [] } });
 }
 
 export async function PATCH(request, { params }) {

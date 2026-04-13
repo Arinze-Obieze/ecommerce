@@ -57,6 +57,72 @@ function computeNextStock(currentStock, mode, quantity) {
   return currentStock;
 }
 
+async function updateStockWithOptimisticLock({
+  table,
+  idColumn,
+  idValue,
+  ownershipColumn = null,
+  ownershipValue = null,
+  mode,
+  quantity,
+  currentStock,
+  adminClient,
+  maxAttempts = 4,
+}) {
+  let attempts = 0;
+  let latestCurrent = clampStock(currentStock);
+
+  while (attempts < maxAttempts) {
+    const nextStock = computeNextStock(latestCurrent, mode, quantity);
+    if (mode === 'subtract' && latestCurrent < quantity) {
+      return { ok: false, reason: 'insufficient_stock', current: latestCurrent };
+    }
+
+    let query = adminClient
+      .from(table)
+      .update({ stock_quantity: nextStock })
+      .eq(idColumn, idValue)
+      .eq('stock_quantity', latestCurrent)
+      .select('stock_quantity')
+      .maybeSingle();
+
+    if (ownershipColumn && ownershipValue !== null) {
+      query = query.eq(ownershipColumn, ownershipValue);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      return { ok: false, reason: 'update_failed', error };
+    }
+
+    if (data) {
+      return {
+        ok: true,
+        previous: latestCurrent,
+        next: nextStock,
+      };
+    }
+
+    let reloadQuery = adminClient
+      .from(table)
+      .select('stock_quantity')
+      .eq(idColumn, idValue)
+      .maybeSingle();
+    if (ownershipColumn && ownershipValue !== null) {
+      reloadQuery = reloadQuery.eq(ownershipColumn, ownershipValue);
+    }
+    const { data: refreshed, error: refreshError } = await reloadQuery;
+    if (refreshError || !refreshed) {
+      return { ok: false, reason: 'not_found' };
+    }
+
+    latestCurrent = clampStock(refreshed.stock_quantity);
+    attempts += 1;
+  }
+
+  return { ok: false, reason: 'conflict' };
+}
+
 function buildVariantLabel(variant) {
   const color = normalizeText(variant?.color);
   const size = normalizeText(variant?.size);
@@ -284,18 +350,35 @@ async function adjustProductStock(ctx, request, body) {
     }, { status: 400 });
   }
 
-  const previousQuantity = clampStock(product.stock_quantity);
-  const nextQuantity = computeNextStock(previousQuantity, mode, quantity);
+  const productStockUpdate = await updateStockWithOptimisticLock({
+    table: 'products',
+    idColumn: 'id',
+    idValue: product.id,
+    ownershipColumn: 'store_id',
+    ownershipValue: ctx.membership.store_id,
+    mode,
+    quantity,
+    currentStock: product.stock_quantity,
+    adminClient: ctx.adminClient,
+  });
 
-  const { error: updateError } = await ctx.adminClient
-    .from('products')
-    .update({ stock_quantity: nextQuantity })
-    .eq('id', product.id)
-    .eq('store_id', ctx.membership.store_id);
-
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message || 'Failed to update stock.' }, { status: 400 });
+  if (!productStockUpdate.ok) {
+    if (productStockUpdate.reason === 'insufficient_stock') {
+      return NextResponse.json({ error: 'Insufficient stock for this sale quantity.' }, { status: 400 });
+    }
+    if (productStockUpdate.reason === 'not_found') {
+      return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
+    }
+    if (productStockUpdate.reason === 'conflict') {
+      return NextResponse.json({ error: 'Stock changed during update. Please retry.' }, { status: 409 });
+    }
+    return NextResponse.json({
+      error: productStockUpdate.error?.message || 'Failed to update stock.',
+    }, { status: 400 });
   }
+
+  const previousQuantity = productStockUpdate.previous;
+  const nextQuantity = productStockUpdate.next;
 
   await logInventoryAdjustment(ctx, request, {
     target_type: 'product',
@@ -361,17 +444,33 @@ async function adjustVariantStock(ctx, request, body) {
     return NextResponse.json({ error: 'Variant does not belong to this store.' }, { status: 404 });
   }
 
-  const previousQuantity = clampStock(variant.stock_quantity);
-  const nextQuantity = computeNextStock(previousQuantity, mode, quantity);
+  const variantStockUpdate = await updateStockWithOptimisticLock({
+    table: 'product_variants',
+    idColumn: 'id',
+    idValue: variant.id,
+    mode,
+    quantity,
+    currentStock: variant.stock_quantity,
+    adminClient: ctx.adminClient,
+  });
 
-  const { error: updateVariantError } = await ctx.adminClient
-    .from('product_variants')
-    .update({ stock_quantity: nextQuantity })
-    .eq('id', variant.id);
-
-  if (updateVariantError) {
-    return NextResponse.json({ error: updateVariantError.message || 'Failed to update variant stock.' }, { status: 400 });
+  if (!variantStockUpdate.ok) {
+    if (variantStockUpdate.reason === 'insufficient_stock') {
+      return NextResponse.json({ error: 'Insufficient stock for this sale quantity.' }, { status: 400 });
+    }
+    if (variantStockUpdate.reason === 'not_found') {
+      return NextResponse.json({ error: 'Variant not found.' }, { status: 404 });
+    }
+    if (variantStockUpdate.reason === 'conflict') {
+      return NextResponse.json({ error: 'Variant stock changed during update. Please retry.' }, { status: 409 });
+    }
+    return NextResponse.json({
+      error: variantStockUpdate.error?.message || 'Failed to update variant stock.',
+    }, { status: 400 });
   }
+
+  const previousQuantity = variantStockUpdate.previous;
+  const nextQuantity = variantStockUpdate.next;
 
   const { data: siblingVariants, error: siblingError } = await ctx.adminClient
     .from('product_variants')

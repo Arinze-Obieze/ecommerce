@@ -32,6 +32,66 @@ export default function Step5() {
     Object.entries(state.imagePreviews || {}).find(([key]) => key.startsWith("variant_"))?.[1] ||
     Object.entries(state.imagePreviews || {}).find(([key]) => key.startsWith("mixed_variant_"))?.[1] ||
     null;
+  const getBaseUrl = () => {
+    const configured = String(process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+    if (configured) {
+      const normalized = configured.replace(/\/+$/, "");
+      if (/^https?:\/\//i.test(normalized)) return normalized;
+      return `https://${normalized}`;
+    }
+    if (typeof window !== "undefined") return window.location.origin;
+    return "";
+  };
+  const inventoryQrValue = useMemo(
+    () => {
+      const code = String(state.baseSku || "").trim();
+      if (!code) return "";
+      const baseUrl = getBaseUrl();
+      return baseUrl
+        ? `${baseUrl}/qr/p/${encodeURIComponent(code)}`
+        : `/qr/p/${encodeURIComponent(code)}`;
+    },
+    [state.baseSku],
+  );
+  const inventoryQrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&format=png&margin=12&data=${encodeURIComponent(inventoryQrValue)}`;
+
+  const openInventoryQrPng = () => {
+    window.open(inventoryQrImageUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const downloadInventoryQrPng = async () => {
+    try {
+      const response = await fetch(inventoryQrImageUrl);
+      if (!response.ok) throw new Error("Failed to download QR image");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeSku = (state.baseSku || state.productName || "product")
+        .toString()
+        .replace(/[^a-zA-Z0-9_-]+/g, "-");
+      link.href = objectUrl;
+      link.download = `${safeSku}-inventory-qr.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      showSuccess("QR image downloaded.");
+    } catch {
+      showError("Could not download QR image.");
+    }
+  };
+
+  const printInventoryQr = () => {
+    const w = window.open("", "_blank", "noopener,noreferrer,width=420,height=560");
+    if (!w) return;
+    const name = (state.productName || "Product").replace(/</g, "&lt;");
+    const sku = (state.baseSku || "No SKU").replace(/</g, "&lt;");
+    const value = inventoryQrValue.replace(/</g, "&lt;");
+    w.document.write(
+      `<html><head><title>Print Inventory QR</title><style>body{font-family:Arial,sans-serif;margin:0;padding:24px;text-align:center;color:#111}.card{border:1px solid #ddd;border-radius:12px;padding:16px;max-width:340px;margin:0 auto}img{width:240px;height:240px;display:block;margin:0 auto 12px}h2{font-size:16px;margin:0 0 8px}p{margin:4px 0;font-size:12px;color:#555;word-break:break-all}</style></head><body><div class="card"><img src="${inventoryQrImageUrl}" alt="Inventory QR"/><h2>${name}</h2><p>SKU: ${sku}</p><p>${value}</p></div><script>window.onload=()=>window.print()</script></body></html>`
+    );
+    w.document.close();
+  };
 
   const handleSubmit = async () => {
     if (!readiness.ready) {
@@ -245,6 +305,41 @@ export default function Step5() {
               <li>{tiers.length > 0 ? `${tiers.length} discount tier${tiers.length > 1 ? "s" : ""}` : "No discount tiers"}</li>
               <li>{prices.length > 0 ? "Pricing included" : "Missing variant pricing"}</li>
             </ul>
+          </div>
+          <div className="mt-3 rounded-xl border border-[#dbe7e0] bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Inventory QR Preview</p>
+            <p className="mt-1 text-xs text-gray-600">
+              Encodes a URL resolver so scanner apps open a link instead of raw text.
+            </p>
+            <img
+              src={inventoryQrImageUrl}
+              alt="Inventory QR preview"
+              className="mt-3 h-36 w-36 rounded-lg border border-gray-200 bg-white p-1"
+            />
+            <p className="mt-2 break-all text-[11px] text-gray-500">{inventoryQrValue}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={openInventoryQrPng}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Open PNG
+              </button>
+              <button
+                type="button"
+                onClick={downloadInventoryQrPng}
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Download PNG
+              </button>
+              <button
+                type="button"
+                onClick={printInventoryQr}
+                className="rounded-lg border border-[#2E5C45] px-3 py-1.5 text-xs font-semibold text-[#2E5C45] hover:bg-[#f3f8f5]"
+              >
+                Print
+              </button>
+            </div>
           </div>
         </div>
       </div>

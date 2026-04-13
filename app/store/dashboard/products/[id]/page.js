@@ -71,6 +71,13 @@ function createMediaFromProduct(product) {
   return [...images, ...videos];
 }
 
+function buildVariantLabel(variant) {
+  const color = String(variant?.color || '').trim();
+  const size = String(variant?.size || '').trim();
+  if (color && size) return `${color} / ${size}`;
+  return color || size || 'Unnamed variant';
+}
+
 function getStatusMeta(status) {
   switch (status) {
     case 'approved':
@@ -155,7 +162,12 @@ export default function StoreProductDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const currentStep = Math.max(1, Math.min(4, parseInt(searchParams?.get('step') || '1')));
+  const mode = String(searchParams?.get('mode') || '').trim().toLowerCase();
+  const isScanMode = mode === 'scan';
+  const currentStep = Math.max(
+    1,
+    Math.min(4, Number.parseInt(searchParams?.get('step') || (isScanMode ? '4' : '1'), 10) || 1)
+  );
 
   const [product, setProduct] = useState(null);
   const [form, setForm] = useState(createInitialForm(null));
@@ -164,6 +176,10 @@ export default function StoreProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [quickSelling, setQuickSelling] = useState(false);
+  const [sellQuantity, setSellQuantity] = useState(1);
+  const [sellQuantityInput, setSellQuantityInput] = useState('1');
+  const [selectedScanVariantId, setSelectedScanVariantId] = useState('');
   const [acting, setActing] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -180,7 +196,18 @@ export default function StoreProductDetailPage() {
     setMedia(nextMedia);
     const firstImage = nextMedia.find((item) => item.type === 'image');
     setPrimaryImageUrl(nextProduct?.image_urls?.[0] || firstImage?.public_url || '');
+      const nextVariants = Array.isArray(nextProduct?.variants) ? nextProduct.variants : [];
+    if (nextVariants.length > 0) {
+      const firstInStock = nextVariants.find((variant) => (Number.parseInt(variant?.stock_quantity, 10) || 0) > 0);
+      setSelectedScanVariantId(String(firstInStock?.id || nextVariants[0]?.id || ''));
+    } else {
+      setSelectedScanVariantId('');
+    }
   };
+
+  useEffect(() => {
+    setSellQuantityInput(String(sellQuantity));
+  }, [sellQuantity]);
 
   const loadProduct = async ({ preserveNotice = true } = {}) => {
     try {
@@ -438,6 +465,80 @@ export default function StoreProductDetailPage() {
     }
   };
 
+  const sellOneViaScan = async () => {
+    if (!product?.id) return;
+    const parsedQty = Number.parseInt(String(sellQuantityInput || '').trim(), 10);
+    const normalizedQty = Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1;
+    if (normalizedQty !== sellQuantity) {
+      setSellQuantity(normalizedQty);
+    }
+    const productVariants = Array.isArray(product?.variants) ? product.variants : [];
+    const hasVariants = productVariants.length > 0;
+    const selectedVariant = hasVariants
+      ? productVariants.find((variant) => String(variant.id) === String(selectedScanVariantId))
+      : null;
+
+    try {
+      setQuickSelling(true);
+      setError('');
+      setNotice('');
+
+      let res;
+      if (hasVariants) {
+        if (!selectedVariant?.id) {
+          throw new Error('Select a variant before selling.');
+        }
+        if ((Number.parseInt(selectedVariant?.stock_quantity, 10) || 0) < normalizedQty) {
+          throw new Error(`Selected variant has less than ${normalizedQty} in stock.`);
+        }
+
+        res = await fetch('/api/store/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'adjust_variant',
+            variantId: String(selectedVariant.id),
+            mode: 'subtract',
+            quantity: normalizedQty,
+            reason: 'count',
+            note: 'POS quick sale via QR scan',
+          }),
+        });
+      } else {
+        if ((Number.parseInt(product.stock_quantity, 10) || 0) < normalizedQty) {
+          throw new Error(`Stock is less than ${normalizedQty}.`);
+        }
+
+        res = await fetch('/api/store/inventory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'adjust_product',
+            productId: Number.parseInt(product.id, 10),
+            mode: 'subtract',
+            quantity: normalizedQty,
+            reason: 'count',
+            note: 'POS quick sale via QR scan',
+          }),
+        });
+      }
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || 'Failed to reduce inventory');
+
+      await loadProduct({ preserveNotice: false });
+      if (hasVariants && selectedVariant) {
+        setNotice(`Sold ${normalizedQty} unit(s) (${buildVariantLabel(selectedVariant)}). Inventory updated.`);
+      } else {
+        setNotice(`Sold ${normalizedQty} unit(s). Inventory updated.`);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to reduce inventory');
+    } finally {
+      setQuickSelling(false);
+    }
+  };
+
   const deleteProduct = async () => {
     try {
       setActing('delete');
@@ -469,6 +570,166 @@ export default function StoreProductDetailPage() {
 
   const images = media.filter((item) => item.type === 'image');
   const publicProductHref = product.slug ? `/products/${product.slug}` : '';
+  const displayPrice = product.discount_price ?? product.price;
+  const scanVariants = Array.isArray(product?.variants) ? product.variants : [];
+  const hasScanVariants = scanVariants.length > 0;
+  const selectedScanVariant = hasScanVariants
+    ? scanVariants.find((variant) => String(variant.id) === String(selectedScanVariantId))
+    : null;
+  const selectedScanVariantStock = Number.parseInt(selectedScanVariant?.stock_quantity, 10) || 0;
+  const effectiveScanStock = hasScanVariants
+    ? selectedScanVariantStock
+    : (Number.parseInt(product.stock_quantity, 10) || 0);
+  const parsedInputQty = Number.parseInt(String(sellQuantityInput || '').trim(), 10);
+  const activeSellQuantity = Number.isFinite(parsedInputQty) && parsedInputQty > 0 ? parsedInputQty : 1;
+  const quickSellDisabled = hasScanVariants
+    ? quickSelling || !selectedScanVariant?.id || selectedScanVariantStock < activeSellQuantity
+    : quickSelling || (Number.parseInt(product.stock_quantity, 10) || 0) < activeSellQuantity;
+  const primaryProductImageUrl = product?.image_urls?.[0] || '';
+
+  if (isScanMode) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-[#cfe1d7] bg-[#f6faf7] p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2E5C45]">Scan Mode</p>
+          <h1 className="mt-1 text-xl font-bold text-gray-900">{product.name}</h1>
+          <p className="mt-1 text-xs text-gray-500">Keep checkout fast. Scan, confirm quantity, sell.</p>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-[180px_minmax(0,1fr)]">
+            <div className="overflow-hidden rounded-xl border border-[#dbe7e0] bg-white">
+              {primaryProductImageUrl ? (
+                <img src={primaryProductImageUrl} alt={product.name} className="h-40 w-full object-cover" />
+              ) : (
+                <div className="flex h-40 items-center justify-center text-xs font-semibold text-gray-400">
+                  No image
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">Price</p>
+                  <p className="mt-1 text-base font-bold text-gray-900">₦{Number(displayPrice || 0).toLocaleString()}</p>
+                </div>
+                <div className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">Stock</p>
+                  <p className="mt-1 text-base font-bold text-gray-900">
+                    {effectiveScanStock} - {activeSellQuantity}
+                  </p>
+                  <p className="text-[11px] text-gray-500">
+                    After sell: {Math.max(0, effectiveScanStock - activeSellQuantity)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">SKU</p>
+                  <p className="mt-1 truncate text-base font-bold text-gray-900">{product.sku || 'N/A'}</p>
+                </div>
+              </div>
+
+              {hasScanVariants && (
+                <div className="rounded-xl border border-[#dbe7e0] bg-white p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Variant</p>
+                  <select
+                    value={selectedScanVariantId}
+                    onChange={(event) => setSelectedScanVariantId(event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                  >
+                    {scanVariants.map((variant) => (
+                      <option key={variant.id} value={variant.id}>
+                        {buildVariantLabel(variant)} (stock: {Number.parseInt(variant.stock_quantity, 10) || 0})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-[#dbe7e0] bg-white p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Sell Quantity</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {[1, 2, 5].map((qty) => (
+                    <button
+                      key={qty}
+                      type="button"
+                      onClick={() => {
+                        setSellQuantity(qty);
+                        setSellQuantityInput(String(qty));
+                      }}
+                      className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                        activeSellQuantity === qty
+                          ? 'border-[#2E5C45] bg-[#2E5C45]/10 text-[#2E5C45]'
+                          : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {qty}
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min="1"
+                    value={sellQuantityInput}
+                    onChange={(event) => setSellQuantityInput(event.target.value)}
+                    onBlur={() => {
+                      const parsed = Number.parseInt(String(sellQuantityInput || '').trim(), 10);
+                      const normalized = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                      setSellQuantity(normalized);
+                      setSellQuantityInput(String(normalized));
+                    }}
+                    className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={sellOneViaScan}
+                  disabled={quickSellDisabled}
+                  className="rounded-xl bg-[#2E5C45] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#254a38] disabled:opacity-50"
+                >
+                  {quickSelling ? 'Processing...' : `Sell ${activeSellQuantity}`}
+                </button>
+                {publicProductHref && (
+                  <Link
+                    href={publicProductHref}
+                    target="_blank"
+                    className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Open public page
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className={`rounded-2xl border p-4 shadow-sm ${toneClasses(statusMeta.tone)}`}>
+          <h2 className="font-bold">{statusMeta.title}</h2>
+          <p className="mt-1 text-sm">{statusMeta.message}</p>
+        </div>
+
+        {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+        {notice && <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{notice}</div>}
+
+        <details className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900">Summary (collapsed)</summary>
+          <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-700 sm:grid-cols-2">
+            <p>Product: <span className="font-semibold">{product.name}</span></p>
+            <p>Price: <span className="font-semibold">₦{Number(displayPrice || 0).toLocaleString()}</span></p>
+            <p>Stock: <span className="font-semibold">{Number.parseInt(product.stock_quantity, 10) || 0}</span></p>
+            <p>SKU: <span className="font-semibold">{product.sku || 'N/A'}</span></p>
+          </div>
+        </details>
+
+        <details className="rounded-2xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
+          <summary className="cursor-pointer text-sm font-bold text-gray-900">Buyer Reviews (collapsed)</summary>
+          <div className="mt-3">
+            <ProductReviewsManager productId={productId} />
+          </div>
+        </details>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -543,6 +804,67 @@ export default function StoreProductDetailPage() {
           <p className="mt-2 rounded bg-white/70 px-2 py-1 text-sm font-medium">Rejection: {product.rejection_reason}</p>
         )}
       </div>
+
+      {isScanMode && (
+        <div className="rounded-2xl border border-[#cfe1d7] bg-[#f6faf7] p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#2E5C45]">Scan Mode</p>
+          <h2 className="mt-1 text-lg font-bold text-gray-900">Quick POS Action</h2>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-2">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500">Price</p>
+              <p className="mt-1 text-sm font-bold text-gray-900">₦{Number(displayPrice || 0).toLocaleString()}</p>
+            </div>
+            <div className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-2">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500">Stock</p>
+              <p className="mt-1 text-sm font-bold text-gray-900">{Number.parseInt(product.stock_quantity, 10) || 0}</p>
+            </div>
+            <div className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-2">
+              <p className="text-[11px] uppercase tracking-wide text-gray-500">SKU</p>
+              <p className="mt-1 truncate text-sm font-bold text-gray-900">{product.sku || 'N/A'}</p>
+            </div>
+          </div>
+          {hasScanVariants && (
+            <div className="mt-3 rounded-xl border border-[#dbe7e0] bg-white p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Variant</p>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <select
+                  value={selectedScanVariantId}
+                  onChange={(event) => setSelectedScanVariantId(event.target.value)}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
+                >
+                  {scanVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {buildVariantLabel(variant)} (stock: {Number.parseInt(variant.stock_quantity, 10) || 0})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500">
+                  Selected stock: <span className="font-semibold text-gray-700">{selectedScanVariantStock}</span>
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={sellOneViaScan}
+              disabled={quickSellDisabled}
+              className="rounded-xl bg-[#2E5C45] px-4 py-2 text-sm font-semibold text-white hover:bg-[#254a38] disabled:opacity-50"
+            >
+              {quickSelling ? 'Processing...' : hasScanVariants ? 'Sell One Variant (-1)' : 'Sell One (-1)'}
+            </button>
+            {publicProductHref && (
+              <Link
+                href={publicProductHref}
+                target="_blank"
+                className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Open public page
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <StepIndicator currentStep={currentStep} />
 
