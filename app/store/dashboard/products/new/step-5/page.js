@@ -119,6 +119,7 @@ export default function Step5() {
         description: state.description,
         gender: state.gender,
         ageGroup: state.ageGroup,
+        moodTags: state.moodTags || [],
         variants: state.variants,
         imageStrategy: state.imageStrategy,
         variantNotes: state.variantNotes,
