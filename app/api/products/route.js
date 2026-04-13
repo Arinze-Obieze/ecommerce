@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { resolveAdminMembership } from '@/utils/adminAuth';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
+import { attachPromotionsToProducts } from '@/utils/getProductPromotions';
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
@@ -690,43 +691,22 @@ export async function GET(request) {
     }
 
     if (collection) {
-      if (collection === 'new-arrivals') {
-        // ── New Arrivals logic ────────────────────────────────────────────────
-        // We use `reviewed_at` (not `created_at`) as the anchor date because:
-        //   • `created_at` is when the seller uploaded the product — it may sit
-        //     in moderation for days before shoppers can see it.
-        //   • `reviewed_at` is stamped when a moderator approves the listing,
-        //     meaning it's the exact moment the product became publicly visible.
-        // We only include products approved within the last 14 days, and we
-        // explicitly guard on moderation_status = 'approved' because reviewed_at
-        // is also set on rejected products (to record when they were reviewed).
-        // Pair with sortBy=reviewed_at to surface the most recently approved first.
-        // ─────────────────────────────────────────────────────────────────────
-        const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
-        query = query
-          .eq('moderation_status', 'approved')
-          .not('reviewed_at', 'is', null)
-          .gte('reviewed_at', cutoff);
+      const { data: collectionData } = await supabase
+        .from('collections')
+        .select('id')
+        .eq('slug', collection)
+        .single();
+
+      if (collectionData) {
+        const { data: productIds } = await supabase
+          .from('product_collections')
+          .select('product_id')
+          .eq('collection_id', collectionData.id);
+
+        const ids = productIds?.map((item) => item.product_id) || [];
+        query = ids.length > 0 ? query.in('id', ids) : query.eq('id', -1);
       } else {
-        // All other collections are curated manually via the collections +
-        // product_collections join tables, looked up by slug.
-        const { data: collectionData } = await supabase
-          .from('collections')
-          .select('id')
-          .eq('slug', collection)
-          .single();
-
-        if (collectionData) {
-          const { data: productIds } = await supabase
-            .from('product_collections')
-            .select('product_id')
-            .eq('collection_id', collectionData.id);
-
-          const ids = productIds?.map((item) => item.product_id) || [];
-          query = ids.length > 0 ? query.in('id', ids) : query.eq('id', -1);
-        } else {
-          query = query.eq('id', -1);
-        }
+        query = query.eq('id', -1);
       }
     }
 
@@ -807,10 +787,6 @@ export async function GET(request) {
           break;
         case 'name':
           query = query.order('name', { ascending: true });
-          break;
-        case 'reviewed_at':
-          // Most recently approved products first; nulls (unreviewed) go last.
-          query = query.order('reviewed_at', { ascending: false, nullsFirst: false });
           break;
         default:
           query = query.order('created_at', { ascending: false });
@@ -978,9 +954,11 @@ export async function GET(request) {
     const baseUrl = `${url.origin}${url.pathname}`;
     const links = generatePageLinks(baseUrl, searchParams, page, totalPages, limit);
 
-    const pageData = useSmartRanking && !idsParam
+    let pageData = useSmartRanking && !idsParam
       ? rankedData.slice(offset, offset + limit)
       : rankedData;
+
+    pageData = await attachPromotionsToProducts(supabase, pageData);
 
     if (search && search.trim()) {
       await writeAnalyticsEvent({

@@ -546,6 +546,19 @@ export async function POST(request) {
     }
     console.log("[Create] Marketplace product:", marketplaceProduct.id);
 
+    // 13. Insert mood tags
+    if (Array.isArray(wd.moodTags) && wd.moodTags.length > 0) {
+      const moodRecs = wd.moodTags.map(key => ({
+        product_id: marketplaceProduct.id,
+        mood_key: key,
+        mood_fit_score: 0.7,
+        is_active: true,
+      }));
+      const { error: moodErr } = await supabase.from("product_mood_tags").insert(moodRecs);
+      if (moodErr) console.warn("[Create] Mood tags failed:", moodErr.message);
+      else console.log("[Create] Mood tags:", wd.moodTags.length, "saved");
+    }
+
     await cleanupDraftRecord(
       supabase,
       normalizeText(wd.draftId),

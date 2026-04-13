@@ -4,122 +4,89 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import {
   FiChevronLeft, FiShoppingCart, FiHeart, FiShare2, FiCheck,
-  FiStar, FiPackage, FiShield, FiRefreshCw, FiTruck, FiChevronRight
+  FiStar, FiShield, FiRefreshCw, FiTruck, FiChevronRight
 } from 'react-icons/fi';
 import Link from 'next/link';
 import { useCart } from '@/contexts/CartContext';
 import { getColorHex as getCatalogColorHex, isLightHex } from '@/lib/color-utils';
+import { computeSavingsLabel } from '@/utils/getProductPromotions';
 
 // ============================================================
-// 🎨 THEME
+// THEME
 // ============================================================
 const THEME = {
   pageBg:           "#F9FAFB",
   white:            "#FFFFFF",
-
-  // Nav bar
   navBg:            "#FFFFFF",
   navBorder:        "#F0F0F0",
   navBack:          "#111111",
   navBackHover:     "#00B86B",
-
-  // Text
   headingText:      "#111111",
   bodyText:         "#555555",
   mutedText:        "#999999",
   labelText:        "#444444",
-
-  // Price
   priceBg:          "#F9FAFB",
   priceBorder:      "#F0F0F0",
   priceText:        "#111111",
   originalPrice:    "#CCCCCC",
   discountBg:       "#E53935",
   discountText:     "#FFFFFF",
-
-  // Stock
   inStockDot:       "#00B86B",
   inStockText:      "#0A3D2E",
   outStockDot:      "#E53935",
   outStockText:     "#7F1D1D",
-
-  // Categories
   catBg:            "#EDFAF3",
   catText:          "#0A3D2E",
   catBorder:        "#A8DFC4",
   catHover:         "#D5F5E8",
-
-  // Store link
   storeText:        "#888888",
   storeName:        "#111111",
   storeHover:       "#00B86B",
-
-  // Size chips
   sizeDefault:      "#FFFFFF",
   sizeBorder:       "#E0E0E0",
   sizeText:         "#333333",
   sizeSelected:     "#111111",
   sizeSelectedText: "#FFFFFF",
   sizeHover:        "#F5F5F5",
-
-  // Color chip ring
   colorSelected:    "#00B86B",
   colorUnselected:  "#E0E0E0",
-
-  // Qty stepper
   qtyBorder:        "#E0E0E0",
   qtyBg:            "#FFFFFF",
   qtyText:          "#111111",
   qtyBtnHover:      "#F5F5F5",
-
-  // Add to cart button
   cartBg:           "#00B86B",
   cartHover:        "#0F7A4F",
   cartText:         "#FFFFFF",
   cartSuccessBg:    "#0A3D2E",
   cartDisabled:     "#E0E0E0",
   cartDisabledText: "#AAAAAA",
-
-  // Wishlist button
   wishBorder:       "#E0E0E0",
   wishBg:           "#FFFFFF",
   wishHover:        "#FFF5F5",
   wishActive:       "#FF3B3B",
-
-  // Error / success banners
   errorBg:          "#FFF5F5",
   errorBorder:      "#FFC5C5",
   errorText:        "#CC0000",
   successBg:        "#EDFAF3",
   successBorder:    "#A8DFC4",
   successText:      "#0A3D2E",
-
-  // Info strip
   infoBg:           "#F9FAFB",
   infoBorder:       "#F0F0F0",
   infoIcon:         "#00B86B",
   infoLabel:        "#888888",
   infoValue:        "#333333",
-
-  // Thumbnails
   thumbBorder:      "#E0E0E0",
   thumbSelected:    "#111111",
-
-  // Tabs
   tabText:          "#888888",
   tabActive:        "#111111",
   tabActiveBar:     "#00B86B",
   tabBorder:        "#F0F0F0",
   tabHover:         "#F5F5F5",
-
-  // Reviews
   reviewDivider:    "#F5F5F5",
   avatarBg:         "#F0F0F0",
   avatarText:       "#999999",
   starFill:         "#F59E0B",
   starEmpty:        "#E5E7EB",
-
-  // Review form
   formBg:           "#F9FAFB",
   formBorder:       "#F0F0F0",
   inputBorder:      "#E0E0E0",
@@ -127,16 +94,13 @@ const THEME = {
   submitBg:         "#111111",
   submitHover:      "#333333",
   submitText:       "#FFFFFF",
-
-  // Related section
   relatedBorder:    "#F0F0F0",
   relatedBtn:       "#111111",
   relatedBtnText:   "#FFFFFF",
   relatedBtnHover:  "#333333",
 };
-// ============================================================
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 const COLOR_MAP = {
   'navy blue': '#1e3a8a', 'green': '#166534', 'red': '#991b1b',
@@ -147,8 +111,9 @@ const COLOR_MAP = {
   'light blue': '#bfdbfe', 'light green': '#bbf7d0',
   'dark blue': '#1e3a8a', 'dark green': '#14532d', 'dark red': '#7f1d1d',
 };
+
 function getColorHex(name, hex) {
-  return hex || COLOR_MAP[name.toLowerCase()] || getCatalogColorHex(name);
+  return hex || COLOR_MAP[name?.toLowerCase()] || getCatalogColorHex(name);
 }
 
 function StarRow({ rating, size = 'sm' }) {
@@ -166,7 +131,96 @@ function StarRow({ rating, size = 'sm' }) {
   );
 }
 
-// ── Loading state ─────────────────────────────────────────────
+// ── Promotion Tags ─────────────────────────────────────────────────────────────
+// Renders the promotion banner strip on the product detail page.
+// Matches the visual style from the reference image (pink background, savings pill).
+
+function PromotionBanner({ promotions, productPrice }) {
+  if (!promotions?.length) return null;
+
+  // Zova promo takes primary slot; seller promo is secondary
+  const zovaPromo   = promotions.find(p => p.owner_type === 'zova')   || null;
+  const sellerPromo = promotions.find(p => p.owner_type === 'seller') || null;
+  const primaryPromo   = zovaPromo || sellerPromo;
+  const secondaryPromo = zovaPromo && sellerPromo ? sellerPromo : null;
+
+  if (!primaryPromo) return null;
+
+  return (
+    <div className="space-y-2">
+      <PromoBannerRow promo={primaryPromo}   price={productPrice} />
+      {secondaryPromo && (
+        <PromoBannerRow promo={secondaryPromo} price={productPrice} />
+      )}
+    </div>
+  );
+}
+
+function PromoBannerRow({ promo, price }) {
+  const savingsLabel = computeSavingsLabel(promo, price);
+
+  return (
+    <div
+      className="flex items-center justify-between gap-3 rounded-xl px-4 py-3"
+      style={{
+        backgroundColor: promo.badge_bg_color || '#111111',
+        border: `1px solid ${promo.badge_bg_color || '#111111'}`,
+      }}
+    >
+      {/* Left side: promo name + optional context tag */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className="text-sm font-black tracking-wide"
+          style={{ color: promo.badge_text_color || '#FFFFFF' }}
+        >
+          {promo.display_name}
+        </span>
+
+        {promo.display_tag && (
+          <span
+            className="text-xs font-semibold px-2.5 py-0.5 rounded-full"
+            style={{
+              backgroundColor: promo.tag_bg_color  || '#F472B6',
+              color:           promo.tag_text_color || '#FFFFFF',
+            }}
+          >
+            {promo.display_tag}
+          </span>
+        )}
+
+        {/* Seller indicator */}
+        {promo.owner_type === 'seller' && (
+          <span
+            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              color: promo.badge_text_color || '#FFFFFF',
+            }}
+          >
+            Store offer
+          </span>
+        )}
+      </div>
+
+      {/* Right side: savings pill */}
+      {savingsLabel && (
+        <span
+          className="text-sm font-black whitespace-nowrap px-3 py-1 rounded-full flex-shrink-0"
+          style={{
+            backgroundColor: '#EDFAF3',
+            color:           '#0A3D2E',
+            border:          '1px solid #A8DFC4',
+          }}
+        >
+          {savingsLabel}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ── Loading skeleton ───────────────────────────────────────────────────────────
+
 function LoadingSkeleton() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: THEME.pageBg }}>
@@ -192,7 +246,8 @@ function LoadingSkeleton() {
   );
 }
 
-// ── Error state ───────────────────────────────────────────────
+// ── Error state ────────────────────────────────────────────────────────────────
+
 function ErrorState({ message }) {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: THEME.pageBg }}>
@@ -212,7 +267,8 @@ function ErrorState({ message }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────────────────
+
 export function ProductDetailClient({ id }) {
   const [product, setProduct]             = useState(null);
   const [loading, setLoading]             = useState(true);
@@ -228,11 +284,11 @@ export function ProductDetailClient({ id }) {
   const [user, setUser]                   = useState(null);
   const [variants, setVariants]           = useState([]);
 
-  const [reviewRating, setReviewRating]         = useState(5);
-  const [reviewComment, setReviewComment]       = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-  const [reviewError, setReviewError]           = useState('');
-  const [submitSuccess, setSubmitSuccess]       = useState(false);
+  const [reviewRating, setReviewRating]               = useState(5);
+  const [reviewComment, setReviewComment]             = useState('');
+  const [isSubmittingReview, setIsSubmittingReview]   = useState(false);
+  const [reviewError, setReviewError]                 = useState('');
+  const [submitSuccess, setSubmitSuccess]             = useState(false);
 
   const { addToCart } = useCart();
   const supabase = createClient();
@@ -356,33 +412,35 @@ export function ProductDetailClient({ id }) {
   if (loading) return <LoadingSkeleton />;
   if (error || !product) return <ErrorState message={error} />;
 
-  const displayPrice  = (product.discount_price || product.price) / 100;
-  const originalPrice = product.price / 100;
+  // Price is stored in full naira (not pence) — no /100 division
+  const displayPrice  = Number(product.discount_price || product.price);
+  const originalPrice = Number(product.price);
   const discount      = product.discount_price
-    ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
     : 0;
+
+  // Promotions from the API (populated by attachPromotionsToProducts)
+  const promotions = Array.isArray(product.promotions) ? product.promotions : [];
 
   const TABS = [
     { key: 'description',    label: 'Description' },
     { key: 'specifications', label: 'Specifications' },
     { key: 'reviews',        label: `Reviews (${product.reviews?.length || 0})` },
   ];
+
   const colorMeta = new Map((variants || [])
-    .filter((variant) => variant?.color)
-    .map((variant) => [variant.color, {
-      color_hex: variant.color_hex || null,
-      color_family: variant.color_family || null,
-      color_source: variant.color_source || null,
+    .filter(v => v?.color)
+    .map(v => [v.color, {
+      color_hex:    v.color_hex    || null,
+      color_family: v.color_family || null,
+      color_source: v.color_source || null,
     }]));
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: THEME.pageBg }}>
 
       {/* ── Sticky nav bar ── */}
-      <div
-        className="sticky top-0 z-20"
-        style={{ backgroundColor: THEME.navBg, borderBottom: `1px solid ${THEME.navBorder}` }}
-      >
+      <div className="sticky top-0 z-20" style={{ backgroundColor: THEME.navBg, borderBottom: `1px solid ${THEME.navBorder}` }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link
             href="/shop"
@@ -395,7 +453,6 @@ export function ProductDetailClient({ id }) {
             Back to Shop
           </Link>
 
-          {/* Breadcrumb on desktop */}
           {product.categories?.[0] && (
             <div className="hidden sm:flex items-center gap-1.5 text-xs" style={{ color: THEME.mutedText }}>
               <Link href="/shop" className="hover:underline">Shop</Link>
@@ -415,19 +472,13 @@ export function ProductDetailClient({ id }) {
 
           {/* ── Left: image gallery ── */}
           <div className="space-y-3">
-
-            {/* Main image */}
-            <div
-              className="relative overflow-hidden rounded-2xl"
-              style={{ backgroundColor: '#F5F5F5', aspectRatio: '1/1' }}
-            >
+            <div className="relative overflow-hidden rounded-2xl" style={{ backgroundColor: '#F5F5F5', aspectRatio: '1/1' }}>
               <img
                 src={product.image_urls?.[selectedImage] || 'https://placehold.co/800x800?text=No+Image'}
                 alt={product.name}
                 className="w-full h-full object-cover transition-opacity duration-200"
               />
 
-              {/* Discount badge */}
               {discount > 0 && (
                 <span
                   className="absolute top-4 left-4 text-xs font-black px-2.5 py-1 rounded-md"
@@ -437,23 +488,16 @@ export function ProductDetailClient({ id }) {
                 </span>
               )}
 
-              {/* Action buttons — top right */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => setIsFavorite(f => !f)}
                   className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm transition-colors"
-                  style={{
-                    backgroundColor: THEME.wishBg,
-                    border: `1px solid ${THEME.wishBorder}`,
-                  }}
+                  style={{ backgroundColor: THEME.wishBg, border: `1px solid ${THEME.wishBorder}` }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.wishHover)}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.wishBg)}
                 >
-                  <FiHeart
-                    className="w-4 h-4"
-                    style={{ color: isFavorite ? THEME.wishActive : '#888', fill: isFavorite ? THEME.wishActive : 'none' }}
-                  />
+                  <FiHeart className="w-4 h-4" style={{ color: isFavorite ? THEME.wishActive : '#888', fill: isFavorite ? THEME.wishActive : 'none' }} />
                 </button>
                 <button
                   type="button"
@@ -467,7 +511,6 @@ export function ProductDetailClient({ id }) {
                 </button>
               </div>
 
-              {/* Image counter dot nav */}
               {product.image_urls?.length > 1 && (
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
                   {product.image_urls.map((_, i) => (
@@ -487,7 +530,6 @@ export function ProductDetailClient({ id }) {
               )}
             </div>
 
-            {/* Thumbnails */}
             {product.image_urls?.length > 1 && (
               <div className="grid grid-cols-5 gap-2">
                 {product.image_urls.map((url, idx) => (
@@ -496,9 +538,7 @@ export function ProductDetailClient({ id }) {
                     type="button"
                     onClick={() => setSelectedImage(idx)}
                     className="aspect-square rounded-xl overflow-hidden transition-all"
-                    style={{
-                      border: `2px solid ${selectedImage === idx ? THEME.thumbSelected : THEME.thumbBorder}`,
-                    }}
+                    style={{ border: `2px solid ${selectedImage === idx ? THEME.thumbSelected : THEME.thumbBorder}` }}
                   >
                     <img src={url} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
                   </button>
@@ -506,7 +546,6 @@ export function ProductDetailClient({ id }) {
               </div>
             )}
 
-            {/* Video */}
             {product.video_urls?.[0] && (
               <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${THEME.navBorder}` }}>
                 <video src={product.video_urls[0]} controls className="w-full bg-black" />
@@ -517,7 +556,7 @@ export function ProductDetailClient({ id }) {
           {/* ── Right: product info ── */}
           <div className="flex flex-col gap-5">
 
-            {/* Category chips + store */}
+            {/* Category chips */}
             <div className="flex flex-wrap items-center gap-2">
               {product.categories?.map(cat => (
                 <Link
@@ -559,18 +598,25 @@ export function ProductDetailClient({ id }) {
               </p>
             )}
 
+            {/* ── PROMOTION BANNER ── */}
+            {promotions.length > 0 && (
+              <PromotionBanner promotions={promotions} productPrice={originalPrice} />
+            )}
+
             {/* Price + stock */}
-            <div
-              className="rounded-2xl p-4"
-              style={{ backgroundColor: THEME.priceBg, border: `1px solid ${THEME.priceBorder}` }}
-            >
+            <div className="rounded-2xl p-4" style={{ backgroundColor: THEME.priceBg, border: `1px solid ${THEME.priceBorder}` }}>
               <div className="flex items-baseline gap-3 mb-2.5">
                 <span className="text-3xl font-black" style={{ color: THEME.priceText }}>
-                  ₦{displayPrice.toLocaleString()}
+                  ₦{displayPrice.toLocaleString('en-NG')}
                 </span>
                 {product.discount_price && (
                   <span className="text-base line-through" style={{ color: THEME.originalPrice }}>
-                    ₦{originalPrice.toLocaleString()}
+                    ₦{originalPrice.toLocaleString('en-NG')}
+                  </span>
+                )}
+                {discount > 0 && (
+                  <span className="text-xs font-black px-2 py-0.5 rounded-md" style={{ backgroundColor: THEME.discountBg, color: THEME.discountText }}>
+                    -{discount}%
                   </span>
                 )}
               </div>
@@ -579,10 +625,7 @@ export function ProductDetailClient({ id }) {
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: currentStock > 0 ? THEME.inStockDot : THEME.outStockDot }}
                 />
-                <span
-                  className="text-xs font-semibold"
-                  style={{ color: currentStock > 0 ? THEME.inStockText : THEME.outStockText }}
-                >
+                <span className="text-xs font-semibold" style={{ color: currentStock > 0 ? THEME.inStockText : THEME.outStockText }}>
                   {currentStock > 0 ? `${currentStock} in stock` : 'Out of stock'}
                 </span>
               </div>
@@ -628,7 +671,7 @@ export function ProductDetailClient({ id }) {
                 <div className="flex flex-wrap gap-2.5">
                   {product.colors.map(color => {
                     const meta = colorMeta.get(color);
-                    const hex = getColorHex(color, meta?.color_hex);
+                    const hex  = getColorHex(color, meta?.color_hex);
                     const selected = selectedColor === color;
                     return (
                       <button
@@ -639,12 +682,12 @@ export function ProductDetailClient({ id }) {
                         className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
                         style={{
                           backgroundColor: hex,
-                          boxShadow: selected ? `0 0 0 2px white, 0 0 0 3.5px ${THEME.colorSelected}` : `0 0 0 1px ${THEME.colorUnselected}`,
+                          boxShadow: selected
+                            ? `0 0 0 2px white, 0 0 0 3.5px ${THEME.colorSelected}`
+                            : `0 0 0 1px ${THEME.colorUnselected}`,
                         }}
                       >
-                        {selected && (
-                          <FiCheck className="w-4 h-4" style={{ color: isLightHex(hex) ? '#111' : '#fff' }} />
-                        )}
+                        {selected && <FiCheck className="w-4 h-4" style={{ color: isLightHex(hex) ? '#111' : '#fff' }} />}
                       </button>
                     );
                   })}
@@ -689,12 +732,8 @@ export function ProductDetailClient({ id }) {
               </div>
             </div>
 
-            {/* Error message */}
             {actionError && (
-              <div
-                className="text-sm px-4 py-2.5 rounded-xl"
-                style={{ backgroundColor: THEME.errorBg, border: `1px solid ${THEME.errorBorder}`, color: THEME.errorText }}
-              >
+              <div className="text-sm px-4 py-2.5 rounded-xl" style={{ backgroundColor: THEME.errorBg, border: `1px solid ${THEME.errorBorder}`, color: THEME.errorText }}>
                 {actionError}
               </div>
             )}
@@ -713,22 +752,21 @@ export function ProductDetailClient({ id }) {
               onMouseEnter={(e) => { if (currentStock > 0 && !addedToCart) e.currentTarget.style.backgroundColor = THEME.cartHover; }}
               onMouseLeave={(e) => { if (currentStock > 0 && !addedToCart) e.currentTarget.style.backgroundColor = THEME.cartBg; }}
             >
-              {addedToCart ? (
-                <><FiCheck className="w-5 h-5" /> Added to Cart</>
-              ) : (
-                <><FiShoppingCart className="w-5 h-5" /> Add to Cart</>
-              )}
+              {addedToCart
+                ? <><FiCheck className="w-5 h-5" /> Added to Cart</>
+                : <><FiShoppingCart className="w-5 h-5" /> Add to Cart</>
+              }
             </button>
 
             {/* Info strip */}
             <div
               className="grid grid-cols-3 divide-x rounded-2xl overflow-hidden text-center text-xs"
-              style={{ backgroundColor: THEME.infoBg, border: `1px solid ${THEME.infoBorder}`, borderColor: THEME.infoBorder }}
+              style={{ backgroundColor: THEME.infoBg, border: `1px solid ${THEME.infoBorder}` }}
             >
               {[
-                { icon: FiTruck,     label: 'Shipping',  value: 'Free over ₦50k' },
-                { icon: FiRefreshCw, label: 'Returns',   value: '30 days' },
-                { icon: FiShield,    label: 'Secure',    value: '100% Safe' },
+                { icon: FiTruck,     label: 'Shipping', value: 'Free over ₦50k' },
+                { icon: FiRefreshCw, label: 'Returns',  value: '30 days'        },
+                { icon: FiShield,    label: 'Secure',   value: '100% Safe'      },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="py-3 px-2 flex flex-col items-center gap-1">
                   <Icon className="w-4 h-4" style={{ color: THEME.infoIcon }} />
@@ -737,16 +775,11 @@ export function ProductDetailClient({ id }) {
                 </div>
               ))}
             </div>
-
           </div>
         </div>
 
-        {/* ── Tabs (full width) ── */}
-        <div
-          className="mt-14 rounded-2xl overflow-hidden"
-          style={{ backgroundColor: THEME.white, border: `1px solid ${THEME.tabBorder}` }}
-        >
-          {/* Tab headers */}
+        {/* ── Tabs ── */}
+        <div className="mt-14 rounded-2xl overflow-hidden" style={{ backgroundColor: THEME.white, border: `1px solid ${THEME.tabBorder}` }}>
           <div className="flex overflow-x-auto" style={{ borderBottom: `1px solid ${THEME.tabBorder}` }}>
             {TABS.map(tab => (
               <button
@@ -760,32 +793,23 @@ export function ProductDetailClient({ id }) {
               >
                 {tab.label}
                 {activeTab === tab.key && (
-                  <span
-                    className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
-                    style={{ backgroundColor: THEME.tabActiveBar }}
-                  />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full" style={{ backgroundColor: THEME.tabActiveBar }} />
                 )}
               </button>
             ))}
           </div>
 
-          {/* Tab content */}
           <div className="p-6 sm:p-8">
 
-            {/* Description */}
             {activeTab === 'description' && (
               <div className="max-w-2xl">
-                {product.description ? (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: THEME.bodyText }}>
-                    {product.description}
-                  </p>
-                ) : (
-                  <p className="text-sm italic" style={{ color: THEME.mutedText }}>No description available.</p>
-                )}
+                {product.description
+                  ? <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: THEME.bodyText }}>{product.description}</p>
+                  : <p className="text-sm italic" style={{ color: THEME.mutedText }}>No description available.</p>
+                }
               </div>
             )}
 
-            {/* Specifications */}
             {activeTab === 'specifications' && (
               <div>
                 {product.specifications ? (
@@ -808,18 +832,13 @@ export function ProductDetailClient({ id }) {
               </div>
             )}
 
-            {/* Reviews */}
             {activeTab === 'reviews' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-
-                {/* Review list */}
                 <div className="md:col-span-2">
                   <h3 className="text-base font-black mb-5" style={{ color: THEME.headingText }}>
                     Customer Reviews
                     {product.reviews?.length > 0 && (
-                      <span className="ml-2 text-sm font-normal" style={{ color: THEME.mutedText }}>
-                        ({product.reviews.length})
-                      </span>
+                      <span className="ml-2 text-sm font-normal" style={{ color: THEME.mutedText }}>({product.reviews.length})</span>
                     )}
                   </h3>
 
@@ -828,10 +847,7 @@ export function ProductDetailClient({ id }) {
                       {product.reviews.map(review => (
                         <div key={review.id} className="pb-6" style={{ borderBottom: `1px solid ${THEME.reviewDivider}` }}>
                           <div className="flex items-center gap-3 mb-2.5">
-                            <div
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                              style={{ backgroundColor: THEME.avatarBg, color: THEME.avatarText }}
-                            >
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0" style={{ backgroundColor: THEME.avatarBg, color: THEME.avatarText }}>
                               👤
                             </div>
                             <div>
@@ -854,52 +870,33 @@ export function ProductDetailClient({ id }) {
                   )}
                 </div>
 
-                {/* Write a review */}
                 <div className="md:col-span-1">
-                  <div
-                    className="rounded-2xl p-5 sticky top-20"
-                    style={{ backgroundColor: THEME.formBg, border: `1px solid ${THEME.formBorder}` }}
-                  >
+                  <div className="rounded-2xl p-5 sticky top-20" style={{ backgroundColor: THEME.formBg, border: `1px solid ${THEME.formBorder}` }}>
                     <h4 className="text-sm font-black mb-4" style={{ color: THEME.headingText }}>Write a Review</h4>
 
                     {!user ? (
                       <div className="text-center py-6">
                         <p className="text-xs mb-4" style={{ color: THEME.mutedText }}>Sign in to share your experience</p>
-                        <Link
-                          href="/signin"
-                          className="inline-block px-5 py-2.5 rounded-full text-sm font-bold"
-                          style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}
-                        >
+                        <Link href="/signin" className="inline-block px-5 py-2.5 rounded-full text-sm font-bold" style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}>
                           Sign In
                         </Link>
                       </div>
                     ) : (
                       <form onSubmit={submitReview} className="space-y-4">
-
-                        {/* Star picker */}
                         <div>
                           <p className="text-xs font-bold mb-2" style={{ color: THEME.labelText }}>Rating</p>
                           <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map(star => (
-                              <button
-                                key={star}
-                                type="button"
-                                onClick={() => setReviewRating(star)}
-                                className="transition-transform hover:scale-110"
-                              >
+                              <button key={star} type="button" onClick={() => setReviewRating(star)} className="transition-transform hover:scale-110">
                                 <FiStar
                                   className="w-6 h-6"
-                                  style={{
-                                    color: star <= reviewRating ? THEME.starFill : THEME.starEmpty,
-                                    fill: star <= reviewRating ? THEME.starFill : 'none',
-                                  }}
+                                  style={{ color: star <= reviewRating ? THEME.starFill : THEME.starEmpty, fill: star <= reviewRating ? THEME.starFill : 'none' }}
                                 />
                               </button>
                             ))}
                           </div>
                         </div>
 
-                        {/* Comment */}
                         <div>
                           <p className="text-xs font-bold mb-2" style={{ color: THEME.labelText }}>Your Review</p>
                           <textarea
@@ -908,11 +905,7 @@ export function ProductDetailClient({ id }) {
                             onChange={(e) => setReviewComment(e.target.value)}
                             placeholder="What did you think? Help other shoppers decide…"
                             className="w-full px-3 py-2.5 rounded-xl text-xs resize-y outline-none transition-all"
-                            style={{
-                              border: `1.5px solid ${THEME.inputBorder}`,
-                              color: THEME.bodyText,
-                              backgroundColor: THEME.white,
-                            }}
+                            style={{ border: `1.5px solid ${THEME.inputBorder}`, color: THEME.bodyText, backgroundColor: THEME.white }}
                             onFocus={(e) => (e.target.style.borderColor = THEME.inputFocus)}
                             onBlur={(e) => (e.target.style.borderColor = THEME.inputBorder)}
                             required
@@ -968,7 +961,6 @@ export function ProductDetailClient({ id }) {
             </div>
           </div>
         )}
-
       </main>
     </div>
   );

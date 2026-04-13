@@ -1,9 +1,11 @@
+//StoreNav.jsx
+
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   FiGrid, FiUsers, FiPackage, FiShoppingBag,
-  FiBarChart2, FiCreditCard, FiSettings, FiBell
+  FiBarChart2, FiCreditCard, FiSettings, FiBell, FiTag
 } from 'react-icons/fi';
 
 const groups = [
@@ -14,6 +16,7 @@ const groups = [
       { href: '/store/dashboard/products',   label: 'Products',   icon: FiPackage },
       { href: '/store/dashboard/orders',     label: 'Orders',     icon: FiShoppingBag },
       { href: '/store/dashboard/inventory',  label: 'Inventory',  icon: FiPackage },
+      { href: '/store/dashboard/promotions', label: 'Promotions', icon: FiTag },
     ],
   },
   {

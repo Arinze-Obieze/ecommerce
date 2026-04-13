@@ -312,12 +312,12 @@ export default function MoodPage() {
 
       const { data: tags, error: tagsErr } = await supabase
         .from("product_mood_tags")
-        .select(`mood_fit_score, products ( id, name, slug, price, discount_price, image_urls, rating, sizes, colors, stock_quantity, created_at, product_categories ( is_primary, categories ( id, name, slug, parent_id ) ) )`)
+        .select(`mood_fit_score, products ( id, name, slug, price, discount_price, image_urls, rating, sizes, colors, stock_quantity, is_active, created_at, product_categories ( is_primary, categories ( id, name, slug, parent_id ) ) )`)
         .eq("mood_key", slug).eq("is_active", true).order("mood_fit_score", { ascending: false });
 
       if (tagsErr) { setError("Failed to load products."); setLoading(false); return; }
 
-      setAllProducts((tags || []).filter(t => t.products).map(t => {
+      setAllProducts((tags || []).filter(t => t.products?.is_active === true).map(t => {
         const p = t.products;
         const cat = p.product_categories?.find(pc => pc.is_primary)?.categories;
         return { ...p, mood_fit_score: t.mood_fit_score, category_name: cat?.name || null, category_slug: cat?.slug || null };
