@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { FiPlus, FiEdit3, FiTrash2, FiTag } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiTag, FiZap, FiInfo } from 'react-icons/fi';
 
 function statusPill(promo) {
   const now = new Date();
@@ -49,6 +49,7 @@ export default function PromotionList({ storeId, onCreate }) {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
+  const [activating, setActivating] = useState(null);
 
   const load = async () => {
     if (!storeId) return;
@@ -56,7 +57,7 @@ export default function PromotionList({ storeId, onCreate }) {
     const supabase = createClient();
     const { data } = await supabase
       .from('promotions')
-      .select('*, promotion_types(key, label, icon)')
+      .select('*, auto_activated, promotion_types(key, label, icon)')
       .eq('store_id', storeId)
       .eq('owner_type', 'seller')
       .order('created_at', { ascending: false });
@@ -65,6 +66,14 @@ export default function PromotionList({ storeId, onCreate }) {
   };
 
   useEffect(() => { load(); }, [storeId]);
+
+  const handleActivate = async (id) => {
+    setActivating(id);
+    const supabase = createClient();
+    await supabase.from('promotions').update({ is_active: true }).eq('id', id);
+    setPromotions(prev => prev.map(p => p.id === id ? { ...p, is_active: true } : p));
+    setActivating(null);
+  };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this promotion? This cannot be undone.')) return;
@@ -122,9 +131,26 @@ export default function PromotionList({ storeId, onCreate }) {
               <p className="text-[11px] text-gray-400 mt-0.5">
                 {fmt(promo.starts_at)}{promo.ends_at ? ` – ${fmt(promo.ends_at)}` : ' · No end date'}
               </p>
+              {promo.auto_activated && (
+                <div className="flex items-center gap-1.5 mt-1.5 text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 w-fit">
+                  <FiInfo className="w-3 h-3 flex-shrink-0" />
+                  Start time passed — this promotion was auto-activated
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-1 flex-shrink-0">
+              {promo.approved_by_zova && !promo.is_active && (
+                <button
+                  onClick={() => handleActivate(promo.id)}
+                  disabled={activating === promo.id}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2E5C45] text-white text-xs font-bold hover:bg-[#254a38] transition-colors disabled:opacity-40"
+                  title="Activate promotion"
+                >
+                  <FiZap className="w-3.5 h-3.5" />
+                  {activating === promo.id ? 'Activating…' : 'Activate'}
+                </button>
+              )}
               <button
                 onClick={() => handleDelete(promo.id)}
                 disabled={deleting === promo.id}

@@ -1,113 +1,49 @@
 "use client";
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import {
-  FiX, FiChevronRight, FiUser, FiBox,
-  FiBriefcase, FiStar, FiArrowRight, FiGrid,
-} from 'react-icons/fi';
+import { FiX, FiChevronRight, FiArrowRight } from 'react-icons/fi';
 import { useFilters } from '@/contexts/FilterContext';
 
 // ============================================================
-// 🎨 THEME — edit here only
+// 🎨 ZOVA BRAND TOKENS — zova.ng brand guidelines 2026
 // ============================================================
 const THEME = {
-  // Backdrop
-  overlay:              "rgba(10,61,46,0.45)",
-
-  // Modal shell
-  modalBg:              "#FFFFFF",
-  modalBorder:          "#E8E8E8",
-  modalShadow:          "0 20px 60px rgba(10,61,46,0.18)",
-
-  // Top bar
-  topBarBg:             "#FFFFFF",
-  topBarBorder:         "#F0F0F0",
-  topBarLabel:          "#666666",
-  topBarLabelIcon:      "#00B86B",
-
-  // Close button
-  closeBg:              "#F5F5F5",
-  closeBorder:          "#E8E8E8",
-  closeText:            "#666666",
-  closeHoverBg:         "#FFEEEE",
-  closeHoverText:       "#ef4444",
-  closeHoverBorder:     "#fecdd3",
-
-  // Left sidebar
-  sidebarBg:            "#F9FAFB",
-  sidebarBorder:        "#F0F0F0",
-  sidebarText:          "#666666",
-  sidebarHoverBg:       "#EDFAF3",
-  sidebarHoverText:     "#0A3D2E",
-  sidebarActiveBg:      "#FFFFFF",
-  sidebarActiveBar:     "#00B86B",
-  sidebarActiveText:    "#0A3D2E",
-  sidebarIconBg:        "#F0F0F0",
-  sidebarIconActiveBg:  "#EDFAF3",
-  sidebarIconActiveColor:"#00B86B",
-
-  // Right panel
-  panelBg:              "#FFFFFF",
-  panelHeading:         "#111111",
-  panelSubText:         "#666666",
-  groupLabel:           "#666666",
-  groupLabelHover:      "#00B86B",
-  itemText:             "#333333",
-  itemHover:            "#00B86B",
-  accentDivider:        "#00B86B",
-
-  // Badges
-  badgeBg:              "#EDFAF3",
-  badgeText:            "#0A3D2E",
-  badgeBorder:          "#A8DFC4",
-
-  // CTA
-  ctaBg:                "#00B86B",
-  ctaHoverBg:           "#0F7A4F",
-  ctaText:              "#FFFFFF",
-  ctaGhostText:         "#00B86B",
-  ctaGhostHover:        "#0F7A4F",
-
-  // Banner strip
-  bannerBg:             "#F0FBF5",
-  bannerBorder:         "#A8DFC4",
-
-  // States
-  spinner:              "#00B86B",
-  emptyText:            "#999999",
+  forest:           "#2E6417",   // Zova Forest — primary
+  forestDark:       "#1e4410",   // darker hover
+  forestLight:      "#e8f0e3",   // tinted bg
+  forestBorder:     "#c2d9b4",
+  gold:             "#EC9C00",   // Gold Harvest — accent
+  goldLight:        "#fef6e0",
+  goldDark:         "#b87800",
+  goldBadgeBorder:  "#f5d06e",
+  linen:            "#F5F1EA",   // Soft Linen — background
+  linenDark:        "#EDE8DF",   // borders / dividers
+  onyx:             "#191B19",   // Onyx Black — headings
+  onyxMid:          "#3d403d",
+  onyxMuted:        "#7a7d7a",
+  white:            "#FFFFFF",
+  overlay:          "rgba(25,27,25,0.55)",
+  modalShadow:      "0 20px 60px rgba(25,27,25,0.22)",
 };
 // ============================================================
-
-const iconMap = (slug) => {
-  if (slug?.includes('women'))       return FiUser;
-  if (slug?.includes('men'))         return FiUser;
-  if (slug?.includes('accessories')) return FiBriefcase;
-  if (slug?.includes('new') || slug?.includes('featured')) return FiStar;
-  return FiBox;
-};
 
 const CategoriesModal = ({ onClose }) => {
   const { hierarchicalCategories, categoriesLoading } = useFilters();
   const [activeCategory, setActiveCategory] = React.useState(0);
   const [mounted, setMounted] = useState(false);
+  const [closeBtnHover, setCloseBtnHover] = useState(false);
 
-  // Must wait for client mount before using createPortal
   useEffect(() => { setMounted(true); }, []);
 
-  // Stable close handler
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [onClose]);
+  const handleClose = useCallback(() => { onClose?.(); }, [onClose]);
 
-  // Keyboard escape
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') handleClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [handleClose]);
 
-  // Lock body scroll
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -115,379 +51,295 @@ const CategoriesModal = ({ onClose }) => {
 
   const activeCat = hierarchicalCategories?.[activeCategory];
 
-  // ── Actual modal markup ──
   const modal = (
     <>
-      {/* Backdrop — rendered at body level, fully isolated */}
+      {/* Backdrop */}
       <div
         aria-hidden="true"
         onClick={handleClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 9998,
-          backgroundColor: THEME.overlay,
-        }}
+        style={{ position: 'fixed', inset: 0, zIndex: 9998, backgroundColor: THEME.overlay }}
       />
 
       {/* Modal panel */}
       <div
         role="dialog"
         aria-modal="true"
+        aria-label="Browse categories"
+        onClick={(e) => e.stopPropagation()}
         style={{
           position: 'fixed',
-          top: 64,              // ← match your header height in px
+          top: 64,
           left: 0,
           right: 0,
           zIndex: 9999,
-          backgroundColor: THEME.modalBg,
-          borderBottom: `1px solid ${THEME.modalBorder}`,
+          backgroundColor: THEME.white,
+          borderBottom: `1px solid ${THEME.linenDark}`,
           boxShadow: THEME.modalShadow,
           maxHeight: 'calc(100vh - 64px)',
           overflowY: 'auto',
+          fontFamily: "'Nunito', sans-serif",
         }}
-        // IMPORTANT: stop clicks inside the panel from hitting the backdrop
-        onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+        <div style={{ maxWidth: 1600, margin: '0 auto' }}>
 
           {/* ── Top Bar ── */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '12px 24px',
-              backgroundColor: THEME.topBarBg,
-              borderBottom: `1px solid ${THEME.topBarBorder}`,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <FiGrid style={{ width: 14, height: 14, color: THEME.topBarLabelIcon }} />
-              <span style={{
-                fontSize: 11,
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.18em',
-                color: THEME.topBarLabel,
-              }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 24px',
+            backgroundColor: THEME.linen,
+            borderBottom: `1px solid ${THEME.linenDark}`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              {/* Gold Harvest stripe — from brand identity */}
+              <span style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: THEME.gold, display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: THEME.onyxMuted }}>
                 Browse Categories
               </span>
             </div>
 
-            {/* ── Close button — direct onClick, no nesting issues ── */}
             <button
               type="button"
               onClick={handleClose}
+              onMouseEnter={() => setCloseBtnHover(true)}
+              onMouseLeave={() => setCloseBtnHover(false)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '7px 14px',
-                borderRadius: 8,
-                border: `1px solid ${THEME.closeBorder}`,
-                backgroundColor: THEME.closeBg,
-                color: THEME.closeText,
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = THEME.closeHoverBg;
-                e.currentTarget.style.color = THEME.closeHoverText;
-                e.currentTarget.style.borderColor = THEME.closeHoverBorder;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = THEME.closeBg;
-                e.currentTarget.style.color = THEME.closeText;
-                e.currentTarget.style.borderColor = THEME.closeBorder;
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 13px', borderRadius: 6,
+                border: `1px solid ${closeBtnHover ? '#f5c6c6' : THEME.linenDark}`,
+                backgroundColor: closeBtnHover ? '#ffecec' : THEME.white,
+                color: closeBtnHover ? '#c0392b' : THEME.onyxMuted,
+                fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                transition: 'all 0.14s', fontFamily: "'Nunito', sans-serif",
               }}
             >
-              <FiX style={{ width: 13, height: 13 }} />
+              <FiX style={{ width: 12, height: 12 }} />
               Close
             </button>
           </div>
 
           {/* ── Body ── */}
           {categoriesLoading ? (
-            <div className="flex justify-center py-20">
-              <div
-                className="w-7 h-7 rounded-full border-2 animate-spin"
-                style={{ borderColor: THEME.spinner, borderTopColor: 'transparent' }}
-              />
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: '50%',
+                border: `2px solid ${THEME.forest}`,
+                borderTopColor: 'transparent',
+                animation: 'zova-spin 0.7s linear infinite',
+              }} />
             </div>
 
           ) : !hierarchicalCategories?.length ? (
-            <div className="flex flex-col items-center gap-2 py-20">
-              <FiBox className="w-8 h-8" style={{ color: THEME.emptyText }} />
-              <p className="text-sm" style={{ color: THEME.emptyText }}>No categories found.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '80px 0' }}>
+              <p style={{ fontSize: 13, color: THEME.onyxMuted }}>No categories found.</p>
             </div>
 
           ) : (
-            <div className="flex flex-col md:flex-row" style={{ minHeight: 440 }}>
+            <div style={{ display: 'flex', minHeight: 440 }}>
 
-              {/* ── Left Sidebar (Accordion on Mobile, Sidebar on Desktop) ── */}
-              <div
-                className="flex flex-col py-3 md:w-[240px] w-full shrink-0"
-                style={{
-                  backgroundColor: THEME.sidebarBg,
-                  borderRight: `1px solid ${THEME.sidebarBorder}`,
-                }}
-              >
-                <p
-                  className="px-5 pb-3 text-[10px] font-black uppercase tracking-[0.2em]"
-                  style={{ color: THEME.groupLabel }}
-                >
+              {/* ── Sidebar ── */}
+              <div style={{
+                width: 206, flexShrink: 0,
+                backgroundColor: THEME.linen,
+                borderRight: `1px solid ${THEME.linenDark}`,
+                display: 'flex', flexDirection: 'column',
+              }}>
+                <p style={{
+                  padding: '13px 16px 7px', margin: 0,
+                  fontSize: 9, fontWeight: 700,
+                  textTransform: 'uppercase', letterSpacing: '0.22em',
+                  color: THEME.onyxMuted,
+                }}>
                   Departments
                 </p>
 
-                <div className="flex-1 overflow-y-auto">
+                <div style={{ flex: 1, overflowY: 'auto' }}>
                   {hierarchicalCategories.map((cat, idx) => {
-                    const Icon = iconMap(cat.slug);
                     const isActive = idx === activeCategory;
                     return (
                       <React.Fragment key={cat.id || idx}>
-                        <button
-                          type="button"
-                        onClick={() => setActiveCategory(idx)}
-                        className="relative flex items-center gap-3 px-4 py-3 text-left w-full transition-all duration-150"
-                        style={{
-                          backgroundColor: isActive ? THEME.sidebarActiveBg : 'transparent',
-                          color: isActive ? THEME.sidebarActiveText : THEME.sidebarText,
-                          border: 'none',
-                          cursor: 'pointer',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.backgroundColor = THEME.sidebarHoverBg;
-                            e.currentTarget.style.color = THEME.sidebarHoverText;
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isActive) {
-                            e.currentTarget.style.backgroundColor = 'transparent';
-                            e.currentTarget.style.color = THEME.sidebarText;
-                          }
-                        }}
-                      >
-                        {isActive && (
-                          <span
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-8 rounded-r-full"
-                            style={{ backgroundColor: THEME.sidebarActiveBar }}
-                          />
-                        )}
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: isActive ? THEME.sidebarIconActiveBg : THEME.sidebarIconBg }}
-                        >
-                          <Icon
-                            className="w-4 h-4"
-                            style={{ color: isActive ? THEME.sidebarIconActiveColor : THEME.sidebarText }}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="block text-sm font-semibold truncate">{cat.name}</span>
-                          {cat.children?.length > 0 && (
-                            <span className="text-[10px] opacity-50">{cat.children.length} groups</span>
-                          )}
-                        </div>
-                        <FiChevronRight
-                          className="w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200"
-                          style={{
-                            color: isActive ? THEME.sidebarActiveBar : THEME.sidebarText,
-                            opacity: isActive ? 1 : 0.25,
-                            transform: isActive ? 'rotate(90deg)' : 'rotate(0deg)',
-                          }}
+                        <SidebarItem
+                          cat={cat}
+                          isActive={isActive}
+                          onClick={() => setActiveCategory(idx)}
+                          theme={THEME}
                         />
-                      </button>
 
-                      {/* ── Mobile Accordion Content ── */}
-                      {isActive && (
-                        <div className="md:hidden px-4 pb-4 bg-white/50">
-                          <div className="pt-2">
-                            <Link
-                              href={`/shop/${cat.slug}`}
-                              onClick={handleClose}
-                              className="inline-flex items-center gap-1 text-xs font-bold mb-4 transition-colors"
-                              style={{ color: THEME.ctaGhostText }}
-                            >
-                              View All {cat.name} <FiArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-
-                            <div className="space-y-6">
-                              {cat.children?.map((group, groupIdx) => (
-                                <div key={group.id || groupIdx}>
-                                  <Link
-                                    href={`/shop/${group.slug}`}
-                                    onClick={handleClose}
-                                    className="block text-[11px] font-black uppercase tracking-[0.15em] mb-2 transition-colors"
-                                    style={{ color: THEME.groupLabel }}
-                                  >
-                                    {group.name}
-                                  </Link>
-                                  <div
-                                    className="w-5 h-[2px] mb-2 rounded-full"
-                                    style={{ backgroundColor: THEME.accentDivider, opacity: 0.4 }}
-                                  />
-                                  <ul className="grid grid-cols-2 gap-y-2 gap-x-4">
-                                    {group.children?.map((item, itemIdx) => (
-                                      <li key={item.id || itemIdx}>
-                                        <Link
-                                          href={`/shop/${item.slug}`}
-                                          onClick={handleClose}
-                                          className="text-sm inline-flex items-center gap-1.5 transition-all"
-                                          style={{ color: THEME.itemText }}
-                                        >
-                                          <span className="truncate">{item.name}</span>
-                                          {item.is_new && (
-                                            <span
-                                              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
-                                              style={{
-                                                backgroundColor: THEME.badgeBg,
-                                                color: THEME.badgeText,
-                                                border: `1px solid ${THEME.badgeBorder}`,
-                                              }}
-                                            >
-                                              NEW
-                                            </span>
-                                          )}
-                                        </Link>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                            
-                            {/* Mobile Banner strip */}
-                            <div
-                              className="mt-6 rounded-xl p-4 flex flex-col gap-3"
-                              style={{ backgroundColor: THEME.bannerBg, border: `1px solid ${THEME.bannerBorder}` }}
-                            >
-                              <div>
-                                <p className="text-sm font-bold" style={{ color: THEME.panelHeading }}>
-                                  New Arrivals
-                                </p>
-                                <p className="text-xs mt-0.5" style={{ color: THEME.panelSubText }}>
-                                  Fresh styles in {cat.name}
-                                </p>
-                              </div>
+                        {/* ── Mobile accordion — hidden on md+ ── */}
+                        {isActive && (
+                          <div className="md:hidden" style={{ backgroundColor: THEME.white, borderBottom: `1px solid ${THEME.linenDark}` }}>
+                            <div style={{ padding: '12px 16px 16px' }}>
                               <Link
-                                href={`/shop/${cat.slug}?filter=new`}
+                                href={`/shop/${cat.slug}`}
                                 onClick={handleClose}
-                                className="w-full justify-center py-2.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
-                                style={{ backgroundColor: THEME.ctaBg, color: THEME.ctaText }}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                                  fontSize: 11, fontWeight: 700, color: THEME.forest,
+                                  textDecoration: 'none', marginBottom: 14,
+                                }}
                               >
-                                Shop Now <FiArrowRight className="w-3.5 h-3.5" />
+                                View All {cat.name} <FiArrowRight style={{ width: 12, height: 12 }} />
                               </Link>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                                {cat.children?.map((group, groupIdx) => (
+                                  <div key={group.id || groupIdx}>
+                                    <Link
+                                      href={`/shop/${group.slug}`}
+                                      onClick={handleClose}
+                                      style={{
+                                        display: 'block', fontSize: 9, fontWeight: 700,
+                                        textTransform: 'uppercase', letterSpacing: '0.18em',
+                                        color: THEME.onyxMuted, marginBottom: 8, textDecoration: 'none',
+                                      }}
+                                    >
+                                      {group.name}
+                                    </Link>
+                                    <div style={{ width: 16, height: 2, backgroundColor: THEME.gold, opacity: 0.6, borderRadius: 2, marginBottom: 8 }} />
+                                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+                                      {group.children?.map((item, itemIdx) => (
+                                        <li key={item.id || itemIdx}>
+                                          <Link
+                                            href={`/shop/${item.slug}`}
+                                            onClick={handleClose}
+                                            style={{
+                                              display: 'inline-flex', alignItems: 'center', gap: 5,
+                                              fontSize: 12, color: THEME.onyxMid, textDecoration: 'none',
+                                            }}
+                                          >
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
+                                            {item.is_new && (
+                                              <span style={{
+                                                fontSize: 8, fontWeight: 800,
+                                                padding: '2px 5px', borderRadius: 20, flexShrink: 0,
+                                                backgroundColor: THEME.goldLight, color: THEME.goldDark,
+                                                border: `1px solid ${THEME.goldBadgeBorder}`,
+                                                textTransform: 'uppercase', letterSpacing: '0.06em',
+                                              }}>New</span>
+                                            )}
+                                          </Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div style={{
+                                marginTop: 18, borderRadius: 10, padding: '12px 14px',
+                                display: 'flex', flexDirection: 'column', gap: 10,
+                                backgroundColor: THEME.forestLight, border: `1px solid ${THEME.forestBorder}`,
+                              }}>
+                                <div>
+                                  <p style={{ fontSize: 13, fontWeight: 700, color: THEME.forest, margin: 0 }}>New Arrivals</p>
+                                  <p style={{ fontSize: 11, color: THEME.onyxMuted, marginTop: 2 }}>Fresh styles in {cat.name}</p>
+                                </div>
+                                <Link
+                                  href={`/shop/${cat.slug}?filter=new`}
+                                  onClick={handleClose}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                                    padding: '9px', borderRadius: 8,
+                                    backgroundColor: THEME.forest, color: THEME.white,
+                                    fontSize: 11, fontWeight: 700, textDecoration: 'none',
+                                  }}
+                                >
+                                  Shop Now <FiArrowRight style={{ width: 12, height: 12 }} />
+                                </Link>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
 
-                {/* Sidebar CTA */}
-                <div
-                  className="px-4 pt-3 pb-4 shrink-0 mt-auto"
-                  style={{ borderTop: `1px solid ${THEME.sidebarBorder}` }}
-                >
+                <div style={{ padding: '10px', borderTop: `1px solid ${THEME.linenDark}`, flexShrink: 0 }}>
                   <Link
                     href="/shop"
                     onClick={handleClose}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold transition-colors"
-                    style={{ backgroundColor: THEME.ctaBg, color: THEME.ctaText }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.ctaHoverBg)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.ctaBg)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      padding: '9px', borderRadius: 8,
+                      backgroundColor: THEME.forest, color: THEME.white,
+                      fontSize: 11, fontWeight: 700, textDecoration: 'none',
+                      transition: 'background 0.14s', letterSpacing: '0.03em',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.forestDark)}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.forest)}
                   >
-                    All Products <FiArrowRight className="w-3.5 h-3.5" />
+                    All Products <FiArrowRight style={{ width: 12, height: 12 }} />
                   </Link>
                 </div>
               </div>
 
-              {/* ── Right Panel (Desktop Only) ── */}
-              <div
-                className="hidden md:block flex-1 overflow-y-auto"
-                style={{ backgroundColor: THEME.panelBg, maxHeight: 520 }}
-              >
+              {/* ── Right Panel ── */}
+              <div style={{ flex: 1, overflowY: 'auto', backgroundColor: THEME.white, maxHeight: 520 }}>
                 {activeCat && (
-                  <div className="py-8 px-8">
+                  <div style={{ padding: '22px 28px' }}>
 
-                    {/* Panel header */}
-                    <div className="flex items-start justify-between mb-7">
+                    {/* Header */}
+                    <div style={{
+                      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                      marginBottom: 20, paddingBottom: 16,
+                      borderBottom: `1px solid ${THEME.linenDark}`,
+                    }}>
                       <div>
-                        <h2 className="text-2xl font-black" style={{ color: THEME.panelHeading }}>
+                        <h2 style={{
+                          fontSize: 24, fontWeight: 800, color: THEME.forest,
+                          letterSpacing: '-0.01em', lineHeight: 1.1, margin: 0,
+                          fontFamily: "'Nunito', sans-serif",
+                        }}>
                           {activeCat.name}
                         </h2>
-                        <p className="text-xs mt-1" style={{ color: THEME.panelSubText }}>
-                          {activeCat.children?.reduce((acc, g) => acc + (g.children?.length || 0), 0)} styles across{' '}
-                          {activeCat.children?.length} groups
+                        <p style={{ fontSize: 11, color: THEME.onyxMuted, marginTop: 4 }}>
+                          {activeCat.children?.reduce((acc, g) => acc + (g.children?.length || 0), 0)} styles
+                          across {activeCat.children?.length} groups
                         </p>
                       </div>
+
                       <Link
                         href={`/shop/${activeCat.slug}`}
                         onClick={handleClose}
-                        className="flex items-center gap-1 text-xs font-bold mt-1 transition-colors"
-                        style={{ color: THEME.ctaGhostText }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = THEME.ctaGhostHover)}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = THEME.ctaGhostText)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4,
+                          fontSize: 11, fontWeight: 700, color: THEME.forest,
+                          textDecoration: 'none', marginTop: 3, flexShrink: 0,
+                          transition: 'color 0.12s',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = THEME.goldDark)}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = THEME.forest)}
                       >
-                        View All <FiArrowRight className="w-3.5 h-3.5" />
+                        View All <FiArrowRight style={{ width: 12, height: 12 }} />
                       </Link>
                     </div>
 
                     {/* Groups grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-8">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '18px 24px' }}>
                       {activeCat.children?.map((group, groupIdx) => (
                         <div key={group.id || groupIdx}>
                           <Link
                             href={`/shop/${group.slug}`}
                             onClick={handleClose}
-                            className="block text-[11px] font-black uppercase tracking-[0.15em] mb-3 transition-colors"
-                            style={{ color: THEME.groupLabel }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = THEME.groupLabelHover)}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = THEME.groupLabel)}
+                            style={{
+                              display: 'block', fontSize: 10, fontWeight: 700,
+                              textTransform: 'uppercase', letterSpacing: '0.17em',
+                              color: THEME.onyxMuted, marginBottom: 8, textDecoration: 'none',
+                              transition: 'color 0.12s',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = THEME.forest)}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = THEME.onyxMuted)}
                           >
                             {group.name}
                           </Link>
-                          <div
-                            className="w-5 h-[2px] mb-3 rounded-full"
-                            style={{ backgroundColor: THEME.accentDivider, opacity: 0.4 }}
-                          />
-                          <ul className="space-y-2.5">
+
+                          {/* Gold Harvest divider */}
+                          <div style={{ width: 18, height: 2, backgroundColor: THEME.gold, opacity: 0.6, borderRadius: 2, marginBottom: 9 }} />
+
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                             {group.children?.map((item, itemIdx) => (
-                              <li key={item.id || itemIdx}>
-                                <Link
-                                  href={`/shop/${item.slug}`}
-                                  onClick={handleClose}
-                                  className="text-sm inline-flex items-center gap-2 transition-all"
-                                  style={{ color: THEME.itemText }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.color = THEME.itemHover;
-                                    e.currentTarget.style.paddingLeft = '4px';
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.color = THEME.itemText;
-                                    e.currentTarget.style.paddingLeft = '0';
-                                  }}
-                                >
-                                  {item.name}
-                                  {item.is_new && (
-                                    <span
-                                      className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                                      style={{
-                                        backgroundColor: THEME.badgeBg,
-                                        color: THEME.badgeText,
-                                        border: `1px solid ${THEME.badgeBorder}`,
-                                      }}
-                                    >
-                                      NEW
-                                    </span>
-                                  )}
-                                </Link>
+                              <li key={item.id || itemIdx} style={{ marginBottom: 6 }}>
+                                <GroupLink item={item} group={group} handleClose={handleClose} theme={THEME} />
                               </li>
                             ))}
                           </ul>
@@ -495,28 +347,33 @@ const CategoriesModal = ({ onClose }) => {
                       ))}
                     </div>
 
-                    {/* Banner strip */}
-                    <div
-                      className="mt-10 rounded-2xl p-5 flex items-center justify-between"
-                      style={{ backgroundColor: THEME.bannerBg, border: `1px solid ${THEME.bannerBorder}` }}
-                    >
+                    {/* Banner */}
+                    <div style={{
+                      marginTop: 22, borderRadius: 10, padding: '13px 18px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      backgroundColor: THEME.forestLight,
+                      border: `1px solid ${THEME.forestBorder}`,
+                    }}>
                       <div>
-                        <p className="text-sm font-bold" style={{ color: THEME.panelHeading }}>
-                          New Season Arrivals
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: THEME.panelSubText }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: THEME.forest, margin: 0 }}>New Season Arrivals</p>
+                        <p style={{ fontSize: 11, color: THEME.onyxMuted, marginTop: 2 }}>
                           Fresh styles just landed in {activeCat.name}
                         </p>
                       </div>
                       <Link
                         href={`/shop/${activeCat.slug}?filter=new`}
                         onClick={handleClose}
-                        className="px-5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 flex-shrink-0"
-                        style={{ backgroundColor: THEME.ctaBg, color: THEME.ctaText }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.ctaHoverBg)}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.ctaBg)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '8px 16px', borderRadius: 7,
+                          backgroundColor: THEME.forest, color: THEME.white,
+                          fontSize: 11, fontWeight: 700, textDecoration: 'none',
+                          flexShrink: 0, transition: 'background 0.14s', letterSpacing: '0.02em',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.forestDark)}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.forest)}
                       >
-                        Shop Now <FiArrowRight className="w-3.5 h-3.5" />
+                        Shop Now <FiArrowRight style={{ width: 12, height: 12 }} />
                       </Link>
                     </div>
 
@@ -527,13 +384,104 @@ const CategoriesModal = ({ onClose }) => {
             </div>
           )}
         </div>
+
+        <style>{`
+          @keyframes zova-spin { to { transform: rotate(360deg); } }
+          @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+        `}</style>
       </div>
     </>
   );
 
-  // Only render portal on client
   if (!mounted) return null;
   return createPortal(modal, document.body);
+};
+
+// ── Sub-components ──────────────────────────────────────────
+
+const SidebarItem = ({ cat, isActive, onClick, theme }) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'relative',
+        display: 'flex', alignItems: 'center',
+        padding: '11px 14px 11px 16px',
+        width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+        backgroundColor: isActive ? theme.white : hovered ? theme.forestLight : 'transparent',
+        transition: 'background 0.12s',
+        fontFamily: "'Nunito', sans-serif",
+      }}
+    >
+      {isActive && (
+        <span style={{
+          position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+          width: 3, height: 26, backgroundColor: theme.gold,
+          borderRadius: '0 3px 3px 0',
+        }} />
+      )}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{
+          display: 'block', fontSize: 12.5,
+          fontWeight: isActive ? 700 : 500,
+          color: isActive || hovered ? theme.forest : theme.onyx,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          transition: 'color 0.12s',
+        }}>
+          {cat.name}
+        </span>
+        {cat.children?.length > 0 && (
+          <span style={{ fontSize: 10, color: theme.onyxMuted, marginTop: 1, display: 'block', opacity: 0.7 }}>
+            {cat.children.length} groups
+          </span>
+        )}
+      </div>
+      <FiChevronRight style={{
+        width: 13, height: 13, flexShrink: 0,
+        color: isActive ? theme.gold : theme.onyxMuted,
+        opacity: isActive ? 1 : 0.25,
+        transform: isActive ? 'rotate(90deg)' : 'rotate(0deg)',
+        transition: 'transform 0.18s, opacity 0.14s, color 0.14s',
+      }} />
+    </button>
+  );
+};
+
+const GroupLink = ({ item, group, handleClose, theme }) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Link
+      href={`/shop/${item.slug}`}
+      onClick={handleClose}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        fontSize: 12.5,
+        color: hovered ? theme.forest : theme.onyxMid,
+        paddingLeft: hovered ? 3 : 0,
+        textDecoration: 'none',
+        transition: 'color 0.12s, padding-left 0.12s',
+      }}
+    >
+      {item.name}
+      {item.is_new && (
+        <span style={{
+          fontSize: 8, fontWeight: 800,
+          padding: '2px 5px', borderRadius: 20,
+          backgroundColor: theme.goldLight, color: theme.goldDark,
+          border: `1px solid ${theme.goldBadgeBorder}`,
+          textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0,
+        }}>
+          New
+        </span>
+      )}
+    </Link>
+  );
 };
 
 export default CategoriesModal;

@@ -4,57 +4,56 @@ import Link from 'next/link';
 import { FiStar, FiUsers, FiCheckCircle, FiTrendingUp, FiPackage, FiArrowRight } from 'react-icons/fi';
 import SectionCarousel from './SectionCarousel';
 
-// ============================================================
-// 🎨 THEME
-// ============================================================
+// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
 const THEME = {
   // Card
-  cardBg:           "#FFFFFF",
-  cardBorder:       "#F0F0F0",
-  cardShadow:       "0 1px 4px rgba(0,0,0,0.05)",
-  cardHoverShadow:  "0 8px 24px rgba(0,0,0,0.09)",
-  cardHoverBorder:  "#E0E0E0",
+  cardBg:          "#FFFFFF",
+  cardBorder:      "#E8E4DC",
+  cardShadow:      "0 1px 4px rgba(46,100,23,0.05)",
+  cardHoverShadow: "0 8px 24px rgba(46,100,23,0.10)",
+  cardHoverBorder: "#B8D4A0",
 
   // Logo placeholder
-  logoBg:           "#F5F5F5",
-  logoBorder:       "#EFEFEF",
-  logoText:         "#AAAAAA",
+  logoBg:          "#EDF5E6",
+  logoBorder:      "#B8D4A0",
+  logoText:        "#2E6417",
 
   // Text
-  nameText:         "#111111",
-  nameHover:        "#00B86B",
-  descText:         "#888888",
-  metaText:         "#999999",
+  nameText:        "#191B19",   // Onyx Black
+  nameHover:       "#2E6417",   // Zova Forest
+  descText:        "#6B6B6B",
+  metaText:        "#999999",
 
   // Verified badge
-  verifiedColor:    "#00B86B",
+  verifiedColor:   "#2E6417",
 
   // Stats
-  statsBorder:      "#F5F5F5",
-  ratingBg:         "#FFFBEB",
-  ratingIcon:       "#F59E0B",
-  ratingText:       "#111111",
-  followerIcon:     "#AAAAAA",
-  followerText:     "#111111",
-  productsBg:       "#EDFAF3",
-  productsText:     "#0A3D2E",
-  productsIcon:     "#00B86B",
+  statsBorder:     "#F0EDE6",
+  ratingBg:        "#FEF6E4",   // warm gold tint
+  ratingIcon:      "#EC9C00",   // Gold Harvest
+  ratingText:      "#191B19",
+  followerBg:      "#F5F1EA",   // Soft Linen
+  followerIcon:    "#999999",
+  followerText:    "#191B19",
+  productsBg:      "#EDF5E6",   // green tint
+  productsText:    "#2E6417",
+  productsIcon:    "#2E6417",
 
   // Visit button
-  btnBg:            "#00B86B",
-  btnHover:         "#0F7A4F",
-  btnText:          "#FFFFFF",
+  btnBg:           "#2E6417",   // Zova Forest
+  btnHover:        "#245213",
+  btnText:         "#FFFFFF",
 
-  // Trending store
-  trendingBg:       "#FFF7ED",
-  trendingText:     "#EA580C",
-  trendingBorder:   "#FED7AA",
+  // Trending badge
+  trendingBg:      "#FEF6E4",
+  trendingText:    "#B87800",
+  trendingBorder:  "#F5D88A",
 
   // Skeleton
-  skeletonBg:       "#F5F5F5",
-  skeletonShine:    "#FAFAFA",
+  skeletonBg:      "#EDE9E0",
+  skeletonShine:   "#F5F1EA",
 };
-// ============================================================
+// ─────────────────────────────────────────────────────────────────────────────
 
 function formatCount(n) {
   if (!n && n !== 0) return '0';
@@ -137,7 +136,6 @@ function StoreCard({ store }) {
               )}
             </div>
 
-            {/* Trending badge — shown if store is trending */}
             {store.is_trending && (
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full mb-1"
@@ -176,13 +174,13 @@ function StoreCard({ store }) {
           {/* Followers */}
           <div
             className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
-            style={{ backgroundColor: THEME.statsBorder }}
+            style={{ backgroundColor: THEME.followerBg }}
           >
             <FiUsers className="w-3 h-3" style={{ color: THEME.followerIcon }} />
             <span style={{ color: THEME.followerText }}>{formatCount(store.followers)}</span>
           </div>
 
-          {/* Product count — new field, backend to wire up */}
+          {/* Product count */}
           {store.product_count != null && (
             <div
               className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
@@ -203,7 +201,7 @@ function StoreCard({ store }) {
             {store.location || 'Nigeria'}
           </span>
           <span
-            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200"
             style={{
               backgroundColor: hovered ? THEME.btnBg : 'transparent',
               color: hovered ? THEME.btnText : THEME.nameHover,
@@ -221,13 +219,13 @@ function StoreCard({ store }) {
 
 // ── Main component ────────────────────────────────────────────
 const TopStoresCarousel = () => {
-  const [stores, setStores] = useState([]);
+  const [stores, setStores]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTopStores = async () => {
+    (async () => {
       try {
-        const res = await fetch('/api/stores/top?limit=8');
+        const res  = await fetch('/api/stores/top?limit=8');
         const json = await res.json();
         if (json.success) setStores(json.data);
       } catch (error) {
@@ -235,8 +233,7 @@ const TopStoresCarousel = () => {
       } finally {
         setLoading(false);
       }
-    };
-    fetchTopStores();
+    })();
   }, []);
 
   if (loading) {

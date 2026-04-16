@@ -10,50 +10,52 @@ import {
 import { FiArrowUp } from 'react-icons/fi';
 import { usePathname } from 'next/navigation';
 
+// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
 const THEME = {
-  footerBg:           "#FFFFFF",
-  sectionAltBg:       "#F5F5F5",
-  divider:            "#E8E8E8",
-  logoAccent:         "#00B86B",
-  logoText:           "#111111",
-  taglineText:        "#666666",
-  bodyText:           "#666666",
-  navHeading:         "#111111",
-  navLink:            "#666666",
-  navLinkHover:       "#00B86B",
-  socialBg:           "#F5F5F5",
-  socialBorder:       "#E8E8E8",
-  socialIcon:         "#666666",
-  socialHoverBg:      "#00B86B",
-  socialHoverIcon:    "#FFFFFF",
-  appBg:              "#111111",
-  appHoverBg:         "#00B86B",
-  appText:            "#FFFFFF",
-  paymentBg:          "#F5F5F5",
-  paymentBorder:      "#E8E8E8",
-  paymentIcon:        "#666666",
-  trustBg:            "#F0FBF5",
-  trustBorder:        "#D4EAE0",
-  trustText:          "#0A3D2E",
-  trustIcon:          "#00B86B",
-  bottomBg:           "#111111",
-  bottomText:         "#999999",
-  bottomLinkHover:    "#00B86B",
-  copyrightText:      "#666666",
-  backTopBg:          "#00B86B",
-  backTopHover:       "#0F7A4F",
-  backTopText:        "#FFFFFF",
+  footerBg:        "#FFFFFF",
+  sectionAltBg:    "#F5F1EA",   // Soft Linen
+  divider:         "#E8E4DC",
+  logoAccent:      "#2E6417",   // Zova Forest
+  logoText:        "#191B19",   // Onyx Black
+  taglineText:     "#2E6417",
+  bodyText:        "#6B6B6B",
+  navHeading:      "#191B19",
+  navLink:         "#6B6B6B",
+  navLinkHover:    "#2E6417",
+  socialBg:        "#F5F1EA",
+  socialBorder:    "#E8E4DC",
+  socialIcon:      "#6B6B6B",
+  socialHoverBg:   "#2E6417",
+  socialHoverIcon: "#FFFFFF",
+  appBg:           "#191B19",   // Onyx Black
+  appHoverBg:      "#2E6417",   // Zova Forest
+  appText:         "#FFFFFF",
+  paymentBg:       "#F5F1EA",
+  paymentBorder:   "#E8E4DC",
+  paymentIcon:     "#6B6B6B",
+  trustBg:         "#EDF5E6",   // light green tint
+  trustBorder:     "#B8D4A0",
+  trustText:       "#2E6417",
+  trustIcon:       "#2E6417",
+  bottomBg:        "#191B19",   // Onyx Black
+  bottomText:      "#888888",
+  bottomLinkHover: "#EC9C00",   // Gold Harvest
+  copyrightText:   "#888888",
+  backTopBg:       "#EC9C00",   // Gold Harvest
+  backTopHover:    "#d48c00",
+  backTopText:     "#FFFFFF",
+  headingUnderline:"#EC9C00",   // Gold Harvest accent under section headings
 };
 
 const NAV_SECTIONS = [
   {
     title: "Company",
     links: [
-      { label: "About Us",              href: "/about"               },
-      { label: "Fashion Blogger",       href: "/fashion-blogger"     },
-      { label: "Social Responsibility", href: "/social-responsibility"},
-      { label: "Careers",               href: "/careers"             },
-      { label: "Student Discount",      href: "/student-discount"    },
+      { label: "About Us",              href: "/about"                },
+      { label: "Fashion Blogger",       href: "/fashion-blogger"      },
+      { label: "Social Responsibility", href: "/social-responsibility" },
+      { label: "Careers",               href: "/careers"              },
+      { label: "Student Discount",      href: "/student-discount"     },
     ],
   },
   {
@@ -70,11 +72,11 @@ const NAV_SECTIONS = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy",     href: "/privacy-policy"      },
-      { label: "Cookie Policy",      href: "/cookie-policy"       },
-      { label: "Terms & Conditions", href: "/terms-and-conditions" },
-      { label: "IP Notice",          href: "/ip-notice"           },
-      { label: "Ad Choice",          href: "/ad-choice"           },
+      { label: "Privacy Policy",     href: "/privacy-policy"       },
+      { label: "Cookie Policy",      href: "/cookie-policy"        },
+      { label: "Terms & Conditions", href: "/terms-and-conditions"  },
+      { label: "IP Notice",          href: "/ip-notice"            },
+      { label: "Ad Choice",          href: "/ad-choice"            },
     ],
   },
 ];
@@ -99,11 +101,11 @@ const TRUST_BADGES = [
 ];
 
 const BOTTOM_LINKS = [
-  { label: "Privacy Center",     href: "/privacy-policy"      },
-  { label: "Cookie Policy",      href: "/cookie-policy"       },
-  { label: "Terms & Conditions", href: "/terms-and-conditions" },
-  { label: "IP Notice",          href: "/ip-notice"           },
-  { label: "Ad Choice",          href: "/ad-choice"           },
+  { label: "Privacy Center",     href: "/privacy-policy"       },
+  { label: "Cookie Policy",      href: "/cookie-policy"        },
+  { label: "Terms & Conditions", href: "/terms-and-conditions"  },
+  { label: "IP Notice",          href: "/ip-notice"            },
+  { label: "Ad Choice",          href: "/ad-choice"            },
 ];
 
 export default function Footer() {
@@ -138,8 +140,8 @@ export default function Footer() {
                 <p className="text-2xl font-black tracking-tight" style={{ color: THEME.logoText }}>
                   ZO<span style={{ color: THEME.logoAccent }}>VA</span>
                 </p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] mt-0.5" style={{ color: THEME.logoAccent }}>
-                  Verified Quality. Zero Surprises.
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] mt-0.5" style={{ color: THEME.taglineText }}>
+                  Where Trust Meets the Market.
                 </p>
                 <p className="text-sm mt-3 leading-relaxed" style={{ color: THEME.bodyText, maxWidth: 220 }}>
                   Premium fashion for those who move with intention. Quality you feel, style you keep.
@@ -188,7 +190,7 @@ export default function Footer() {
               <div key={section.title} className="col-span-1">
                 <p
                   className="text-[10px] font-black uppercase tracking-[0.18em] mb-4 pb-3"
-                  style={{ color: THEME.navHeading, borderBottom: `2px solid ${THEME.logoAccent}`, display: 'inline-block' }}
+                  style={{ color: THEME.navHeading, borderBottom: `2px solid ${THEME.headingUnderline}`, display: 'inline-block' }}
                 >
                   {section.title}
                 </p>
@@ -214,7 +216,7 @@ export default function Footer() {
             <div className="col-span-1">
               <p
                 className="text-[10px] font-black uppercase tracking-[0.18em] mb-4 pb-3"
-                style={{ color: THEME.navHeading, borderBottom: `2px solid ${THEME.logoAccent}`, display: 'inline-block' }}
+                style={{ color: THEME.navHeading, borderBottom: `2px solid ${THEME.headingUnderline}`, display: 'inline-block' }}
               >
                 We Accept
               </p>

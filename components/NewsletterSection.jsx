@@ -3,54 +3,57 @@ import React, { useState } from 'react';
 import { FiMail, FiArrowRight, FiX, FiGift, FiChevronLeft, FiShield, FiCheckCircle } from 'react-icons/fi';
 import { useToast } from '@/contexts/ToastContext';
 
-// ============================================================
-// 🎨 THEME CONFIG
-// ============================================================
+// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
 const THEME = {
-  tabBg:            "#00B86B",
+  tabBg:            "#2E6417",   // Zova Forest
   tabText:          "#FFFFFF",
 
   panelBg:          "#FFFFFF",
-  panelBorder:      "#E8E8E8",
-  shadow:           "0 25px 60px rgba(10,61,46,0.18)",
+  panelBorder:      "#E8E4DC",
+  shadow:           "0 25px 60px rgba(46,100,23,0.16)",
 
-  // Header — lighter now, white with green accent strip
   headingBg:        "#FFFFFF",
-  headingText:      "#111111",
-  headingSubText:   "#666666",
+  headingText:      "#191B19",   // Onyx Black
+  headingSubText:   "#6B6B6B",
 
-  badgeBg:          "#EDFAF3",
-  badgeBorder:      "#A8DFC4",
-  badgeText:        "#0A3D2E",
+  badgeBg:          "#EDF5E6",   // green tint
+  badgeBorder:      "#B8D4A0",
+  badgeText:        "#2E6417",
 
-  highlight:        "#00B86B",
+  highlight:        "#2E6417",   // Zova Forest
   highlightText:    "#FFFFFF",
 
-  inputBorder:      "#E0E0E0",
-  inputFocus:       "#00B86B",
-  inputText:        "#111111",
+  accentBg:         "#EC9C00",   // Gold Harvest (for key highlight word)
+  accentText:       "#FFFFFF",
+
+  acronymBg:        "#F5F1EA",   // Soft Linen
+  acronymBorder:    "#E8E4DC",
+
+  inputBorder:      "#E8E4DC",
+  inputFocus:       "#2E6417",
+  inputText:        "#191B19",
   inputPlaceholder: "#999999",
 
-  btnBg:            "#00B86B",
-  btnHover:         "#0F7A4F",
+  btnBg:            "#2E6417",   // Zova Forest
+  btnHover:         "#245213",
   btnText:          "#FFFFFF",
 
-  closeBtn:         "#F5F5F5",
-  closeBtnHover:    "#E8E8E8",
+  closeBtn:         "#F5F1EA",
+  closeBtnHover:    "#E8E4DC",
 
-  checkColor:       "#00B86B",
+  checkColor:       "#2E6417",
   legalText:        "#999999",
-  successBg:        "#EDFAF3",
-  successBorder:    "#A8DFC4",
-  successText:      "#0A3D2E",
+  successBg:        "#EDF5E6",
+  successBorder:    "#B8D4A0",
+  successText:      "#2E6417",
 };
-// ============================================================
+// ─────────────────────────────────────────────────────────────────────────────
 
 const NewsletterSidebar = () => {
-  const [isOpen, setIsOpen]   = useState(false);
-  const [email, setEmail]     = useState('');
-  const [status, setStatus]   = useState('');
-  const [btnHov, setBtnHov]   = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [email, setEmail]   = useState('');
+  const [status, setStatus] = useState('');
+  const [btnHov, setBtnHov] = useState(false);
   const { success } = useToast();
 
   const handleSubmit = (e) => {
@@ -112,7 +115,7 @@ const NewsletterSidebar = () => {
           className="relative px-7 pt-6 pb-6"
           style={{ backgroundColor: THEME.headingBg, borderBottom: `1px solid ${THEME.panelBorder}` }}
         >
-          {/* Close button */}
+          {/* Close */}
           <button
             type="button"
             onClick={() => setIsOpen(false)}
@@ -137,12 +140,15 @@ const NewsletterSidebar = () => {
             ZOVA VERIFIED
           </span>
 
-          {/* Headline */}
-          <h2 className="text-[26px] font-black leading-[1.15] mb-2" style={{ color: THEME.headingText, letterSpacing: '-0.025em' }}>
+          {/* Headline — "Only verified" highlighted in Gold */}
+          <h2
+            className="text-[26px] font-black leading-[1.15] mb-2"
+            style={{ color: THEME.headingText, letterSpacing: '-0.025em' }}
+          >
             No hype.{' '}
             <span
               className="px-1.5 py-0.5 rounded"
-              style={{ backgroundColor: THEME.highlight, color: THEME.highlightText }}
+              style={{ backgroundColor: THEME.accentBg, color: THEME.accentText }}
             >
               Only verified
             </span>
@@ -157,18 +163,18 @@ const NewsletterSidebar = () => {
           {/* ZOVA Acronym strip */}
           <div
             className="grid grid-cols-4 gap-2 mt-5 p-3 rounded-xl"
-            style={{ background: '#F9FAFB', border: `1px solid ${THEME.panelBorder}` }}
+            style={{ background: THEME.acronymBg, border: `1px solid ${THEME.acronymBorder}` }}
           >
             {[
-              { letter: 'Z', word: 'Zero' },
-              { letter: 'O', word: 'Overpromises' },
-              { letter: 'V', word: 'Verified' },
-              { letter: 'A', word: 'Apparel' },
+              { letter: 'Z', word: 'Zero'         },
+              { letter: 'O', word: 'Overpromises'  },
+              { letter: 'V', word: 'Verified'      },
+              { letter: 'A', word: 'Apparel'       },
             ].map((item, i) => (
               <div key={i} className="text-center">
                 <div
                   className="text-base font-black"
-                  style={{ color: i === 2 ? THEME.highlight : THEME.headingText }}
+                  style={{ color: i === 2 ? THEME.accentBg : THEME.headingText }}
                 >
                   {item.letter}
                 </div>
@@ -186,9 +192,9 @@ const NewsletterSidebar = () => {
           {/* Trust perks */}
           <div className="space-y-2.5 mb-6">
             {[
-              { text: 'Every seller is vetted & verified',  highlight: 'verified' },
-              { text: 'Real reviews from real buyers',       highlight: 'Real' },
-              { text: 'Authenticity guaranteed',             highlight: 'guaranteed' },
+              { text: 'Every seller is vetted & verified',  highlight: 'verified'    },
+              { text: 'Real reviews from real buyers',       highlight: 'Real'        },
+              { text: 'Authenticity guaranteed',             highlight: 'guaranteed'  },
             ].map((perk, i) => (
               <div key={i} className="flex items-center gap-2.5">
                 <span
@@ -275,7 +281,11 @@ const NewsletterSidebar = () => {
                 type="submit"
                 disabled={status === 'loading'}
                 className="w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-70"
-                style={{ backgroundColor: btnHov ? THEME.btnHover : THEME.btnBg, color: THEME.btnText, transition: 'background 0.2s' }}
+                style={{
+                  backgroundColor: btnHov ? THEME.btnHover : THEME.btnBg,
+                  color: THEME.btnText,
+                  transition: 'background 0.2s',
+                }}
                 onMouseEnter={() => setBtnHov(true)}
                 onMouseLeave={() => setBtnHov(false)}
               >

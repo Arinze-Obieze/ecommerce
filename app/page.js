@@ -1,30 +1,26 @@
 import Hero from "@/components/Hero";
-import TrustBar from "@/components/TrustBar";
-import FeaturedCategories from "@/components/FeaturedCategories";
+// import TrustBar from "@/components/TrustBar";
+// import FeaturedCategories from "@/components/FeaturedCategories";
 import NewArrivals from "@/components/NewArrivals";
 import BestSellers from "@/components/BestSellers";
-import PromotionalBanners from "@/components/PromotionalBanners";
-import TopStoresCarousel from "@/components/TopStoresCarousel";
+// import PromotionalBanners from "@/components/PromotionalBanners";
 import RecommendedForYou from "@/components/RecommendedForYou";
+import TopStoresCarousel from "@/components/TopStoresCarousel";
 import ExploreProducts from "@/components/ExploreProducts";
 import RecentlyViewedProducts from "@/components/RecentlyViewedProducts";
-import Testimonials from "@/components/Testimonials";
 import NewsletterSection from "@/components/NewsletterSection";
 
 export default function Home() {
   return (
     <main>
-      <Hero />                    {/* 1. Hook — big visual, CTA */}
-      {/* <TrustBar /> */}        {/* 2. Credibility — disabled */}
-      <FeaturedCategories />      {/* 3. Navigate — help them find their world */}
-      <NewArrivals />             {/* 4. Freshness — show the store is alive */}
-      <BestSellers />             {/* 5. Social proof — what others are buying */}
-      <PromotionalBanners />      {/* 6. Urgency — deals after desire is built */}
-      <TopStoresCarousel />       {/* 7. Marketplace — surface trusted sellers */}
-      <RecommendedForYou />       {/* 8. Personalization — smart picks by context/session */}
-      <ExploreProducts />         {/* 8. Depth — broad catalogue browse */}
-      <RecentlyViewedProducts />  {/* 9. Re-engagement — personal reminder */}
-      <NewsletterSection />       {/* 11. Capture — last thing before they leave */}
+      <Hero />                    {/* 1. Hook — mood cards + banner, sets the vibe */}
+      <NewArrivals />             {/* 2. Freshness — "what just dropped", keeps them curious */}
+      <BestSellers />             {/* 3. Social proof — "others are buying this", builds confidence */}
+      <RecommendedForYou />       {/* 4. Personalization — relevant picks while interest is high */}
+      <TopStoresCarousel />       {/* 5. Trust — verified sellers, deepens platform credibility */}
+      <ExploreProducts />         {/* 6. Depth — broad browse for those still exploring */}
+      <RecentlyViewedProducts />  {/* 7. Re-engagement — reminds them what caught their eye */}
+      <NewsletterSection />       {/* 8. Capture — last touchpoint before they leave */}
     </main>
   );
 }
