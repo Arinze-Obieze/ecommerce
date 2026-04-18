@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { useWishlist } from '@/contexts/WishlistContext';
 import Link from 'next/link';
 import { FiPackage, FiHeart, FiMapPin, FiClock, FiArrowRight, FiShoppingBag } from 'react-icons/fi';

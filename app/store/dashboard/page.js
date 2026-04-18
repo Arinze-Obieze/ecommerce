@@ -1,13 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-
-function StatValue({ loading, children }) {
-  if (loading) {
-    return <span className="mt-1.5 block h-7 w-20 animate-pulse rounded-md bg-gray-200" aria-hidden="true" />;
-  }
-  return <>{children}</>;
-}
+import DashboardPageHeader from '@/components/Store/dashboard/DashboardPageHeader';
+import StatCard from '@/components/Store/dashboard/StatCard';
+import AlertBanner from '@/components/Store/dashboard/AlertBanner';
 
 export default function StoreDashboardOverviewPage() {
   const [loading, setLoading] = useState(true);
@@ -37,14 +33,14 @@ export default function StoreDashboardOverviewPage() {
   const cartDemand = data?.cartDemand || {};
 
   const cards = [
-    { label: 'Total Products',        value: products.total || 0 },
-    { label: 'Pending Review',        value: products.pendingReview || 0 },
-    { label: 'Out of Stock',          value: products.outOfStock || 0 },
-    { label: 'Paid Orders',           value: orders.paidOrders || 0 },
-    { label: 'Gross Sales',           value: `₦${Number(orders.grossSales || 0).toLocaleString()}` },
-    { label: 'Escrow Held',           value: `₦${Number(escrow.held || 0).toLocaleString()}` },
+    { label: 'Total Products',         value: products.total || 0 },
+    { label: 'Pending Review',         value: products.pendingReview || 0 },
+    { label: 'Out of Stock',           value: products.outOfStock || 0 },
+    { label: 'Paid Orders',            value: orders.paidOrders || 0 },
+    { label: 'Gross Sales',            value: `₦${Number(orders.grossSales || 0).toLocaleString()}` },
+    { label: 'Escrow Held',            value: `₦${Number(escrow.held || 0).toLocaleString()}` },
     { label: 'Products in Carts (7d)', value: cartDemand.productsInCarts || cartDemand.productsInCarts7d || 0 },
-    { label: 'Units in Carts (7d)',   value: cartDemand.unitsInCarts || cartDemand.unitsInCarts7d || 0 },
+    { label: 'Units in Carts (7d)',    value: cartDemand.unitsInCarts || cartDemand.unitsInCarts7d || 0 },
   ];
 
   return (
@@ -66,29 +62,20 @@ export default function StoreDashboardOverviewPage() {
         </div>
       </div>
 
-      {error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>
-      ) : null}
+      <AlertBanner type="error" message={error} />
 
       {loading ? (
         <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 text-sm text-gray-500">Loading store overview...</div>
       ) : null}
 
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">Store Operations Overview</h2>
-        <p className="text-sm text-gray-500">
-          Real-time snapshot of catalog moderation, escrow balances, and buyer demand signals.
-        </p>
-      </div>
+      <DashboardPageHeader
+        title="Store Operations Overview"
+        subtitle="Real-time snapshot of catalog moderation, escrow balances, and buyer demand signals."
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-[#dbe7e0] bg-white px-3 py-3 shadow-sm sm:px-4 sm:py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
-            <p className="mt-1.5 break-words text-lg font-bold leading-tight text-[#2E5C45] sm:text-xl">
-              <StatValue loading={loading}>{card.value}</StatValue>
-            </p>
-          </div>
+          <StatCard key={card.label} label={card.label} value={card.value} loading={loading} />
         ))}
       </div>
 

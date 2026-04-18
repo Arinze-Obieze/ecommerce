@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FiPackage, FiArrowRight, FiShoppingBag } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {

@@ -1,0 +1,300 @@
+RESTRUCTURE IMPLEMENTATION PLAN
+Date: 2026-04-16
+Owner: Architecture Refactor Initiative
+Scope: Entire Next.js App Router codebase (app, components, lib, utils)
+
+====================================================================
+1) STRATEGIC GOALS
+====================================================================
+1. Establish clear domain boundaries:
+   - stores = seller-facing multi-role operations (owner, manager, staff)
+   - shop = buyer-facing browsing and purchase journeys
+2. Enforce separation of concerns:
+   - Route entry concerns in page/layout files
+   - Data/business concerns in feature services/hooks/lib
+   - UI concerns in domain components
+3. Eliminate dead/legacy files and stale routes safely.
+4. Standardize naming and folder conventions for long-term maintainability.
+5. Reduce client-heavy first-load fetching; prefer server-first rendering for initial data.
+
+====================================================================
+2) TARGET DOMAIN MODEL
+====================================================================
+A. Seller Domain (stores)
+- A store is an operational entity with many roles.
+- Seller experiences belong under stores domain.
+
+B. Buyer Domain (shop)
+- Buyer browsing/discovery/checkout belongs under shop domain.
+
+C. Admin Domain
+- Platform governance, moderation, logs, analytics.
+
+D. Shared Domain
+- Auth/session, telemetry, utility abstractions, design primitives.
+
+====================================================================
+3) TARGET ROUTE STRUCTURE (APP ROUTER)
+====================================================================
+app/
+  (shop)/
+    shop/
+      page.js
+      [category]/page.js
+    products/[slug]/page.js
+    cart/page.js
+    checkout/... (if applicable)
+    profile/... (buyer profile area)
+
+  (stores)/
+    stores/
+      page.js                          # seller store chooser/listing
+      dashboard/
+        layout.js                      # seller auth + membership + store context
+        page.js
+        analytics/page.js
+        inventory/
+          page.js
+          _components/
+          _hooks/
+          _lib/
+        orders/
+          page.js
+          [id]/page.js
+          _components/
+          _hooks/
+          _lib/
+        products/
+          page.js
+          [id]/page.js
+          new/
+            layout.jsx
+            page.js
+            step-1/page.js
+            step-2/page.js
+            ...
+            _components/
+            _hooks/
+            _lib/
+
+  (auth)/
+    login/page.js
+    signup/page.js
+    forgot-password/page.js
+    account/page.js
+
+  admin/
+    ...
+
+  api/
+    ...route.js only (NO page/layout files)
+
+Notes:
+- Keep temporary redirects from old paths to new route groups for one release cycle.
+- Remove old paths after observability confirms migration completion.
+
+====================================================================
+4) TARGET COMPONENT STRUCTURE
+====================================================================
+components/
+  auth/
+    ...
+  shop/
+    ...
+  stores/
+    shell/
+    dashboard/
+    products/
+    orders/
+    inventory/
+  admin/
+    ...
+  shared/
+    ui/
+    feedback/
+    layout/
+
+Rules:
+1. Domain-first component placement (not by arbitrary size or chronology).
+2. Avoid catch-all dumping grounds like generic top-level component files.
+3. Move role-specific and route-specific components close to their feature routes when practical.
+
+====================================================================
+5) NAMING CONVENTIONS
+====================================================================
+Folders:
+- lowercase, plural for domain nouns: stores, products, orders, reviews
+- route groups in parentheses: (shop), (stores), (auth)
+
+Files:
+- Components: PascalCase.jsx
+- Hooks: useXxx.js
+- Utility modules: xxx-utils.js OR xxx.server.js for server-only modules
+- Legacy files: xxx.legacy.js (temporary only)
+
+APIs:
+- app/api/**/route.js only
+- No UI pages/layouts under app/api
+
+Behavior naming:
+- Use domain verbs for handlers: createProductDraft, publishProduct, adjustInventory
+- Avoid ambiguous names like handleData, processItem without domain context.
+
+====================================================================
+6) RENDERING & DATA FETCHING POLICY
+====================================================================
+Default policy:
+1. Server-first for initial page data in App Router pages/layouts.
+2. Client components for interaction only:
+   - local form state
+   - optimistic updates
+   - transient UI controls
+3. Avoid initial client mount fetch when server can provide first render payload.
+4. Use route handlers or server actions for mutations (with consistent validation).
+
+Cache policy:
+1. Define explicit cache strategy per feature:
+   - no-store for private operational dashboards
+   - controlled revalidate for buyer catalog where appropriate
+2. Standardize invalidation paths/tags after mutations.
+
+====================================================================
+7) UNUSED FILE REMOVAL PLAN (SAFE DELETE PROTOCOL)
+====================================================================
+Step A: Build usage inventory
+1. Generate reference map of imports + route usage.
+2. Classify files:
+   - Active
+   - Legacy (redirect-only)
+   - Dead (unreferenced)
+
+Step B: Remove in batches
+1. Batch size: 5-20 files per PR.
+2. After each batch:
+   - run build
+   - run smoke test flows
+   - monitor route access logs for misses
+
+Step C: High-confidence immediate candidates
+1. Legacy route artifacts and deprecated alternates (example: page-old style files).
+2. Unreferenced components confirmed by code search + runtime checks.
+
+Step D: Retirement window
+1. For risky removals, move to temporary /legacy folder (time-boxed).
+2. Hard delete after one sprint if no references/alerts.
+
+====================================================================
+8) API LAYER CONSOLIDATION
+====================================================================
+Current risk:
+- duplicated/overlapping product creation and normalization logic across endpoints.
+
+Plan:
+1. Define canonical service modules in features layer:
+   - products/domain/validation
+   - products/domain/normalization
+   - products/services/create-product
+   - products/services/draft-service
+2. Route handlers become thin orchestration adapters.
+3. Single source of truth for ownership checks and role authorization.
+4. Standardize schema-column usage for store ownership (one authoritative column).
+
+====================================================================
+9) FILE SPLIT PRIORITY (LARGE MONOLITHS)
+====================================================================
+Priority 1:
+- app/store/dashboard/products/ProductsClientView.jsx
+- app/store/dashboard/products/new/step-2/page.js
+- app/store/dashboard/products/[id]/page.js
+- app/store/dashboard/orders/page.js
+
+Split template per feature:
+- page.js (thin route wrapper)
+- _components/*
+- _hooks/useFeatureWorkspace.js
+- _lib/constants.js
+- _lib/feature-utils.js
+- _lib/validators.js
+
+====================================================================
+10) MIGRATION PHASES
+====================================================================
+Phase 0: Freeze + Guardrails (Day 0-1)
+1. Add architecture policy doc in repo.
+2. Add lint/check scripts:
+   - fail if app/api contains page/layout files
+   - warn on oversized files above threshold
+
+Phase 1: Routing Domain Cutover (Day 1-3)
+1. Introduce (stores) and (shop) route groups.
+2. Add redirects from old routes.
+3. Remove app/api UI routes and stale wizard path artifacts.
+
+Phase 2: Component Rehoming (Day 3-6)
+1. Move components into domain folders: components/auth, components/stores, components/shop, components/admin, components/shared.
+2. Rename inconsistent files to convention-compliant names.
+
+Phase 3: Monolith Decomposition (Day 6-12)
+1. Decompose top 4-6 largest files using split template.
+2. Keep behavior unchanged while reducing coupling.
+
+Phase 4: API Service Consolidation (Day 12-16)
+1. Extract duplicated business logic into canonical feature services.
+2. Align auth/ownership checks and payload validation.
+
+Phase 5: Dead Code Purge (Day 16-18)
+1. Remove dead files in validated batches.
+2. Delete temporary legacy files and redirects after metrics confirmation.
+
+====================================================================
+11) QUALITY GATES (DONE CRITERIA)
+====================================================================
+A change is complete only when:
+1. Build passes.
+2. Critical flows smoke-tested:
+   - seller product create/publish
+   - inventory adjust
+   - order management
+   - buyer browse/product detail/cart/checkout path
+3. No UI files in app/api.
+4. No broken redirects or non-existent targets.
+5. Feature files follow naming and folder conventions.
+
+====================================================================
+12) RISK MANAGEMENT
+====================================================================
+Main risks:
+1. Route breakage during path migration.
+2. Hidden runtime references to “unused” files.
+3. Behavior drift during file splits.
+
+Mitigations:
+1. Redirect-first migration strategy.
+2. Batch deletions with telemetry checks.
+3. Golden-path smoke tests after each phase.
+4. No large “big-bang” refactor merge; use phased, reversible PRs.
+
+====================================================================
+13) RECOMMENDED EXECUTION MODEL
+====================================================================
+1. Create a migration board with phases and checklists.
+2. Use one branch per phase (or per feature cluster).
+3. Merge behind stable checkpoints, not all at once.
+4. Maintain a migration log documenting moved/renamed/deleted files.
+
+====================================================================
+14) FIRST CONCRETE WORK ITEMS
+====================================================================
+1. Route cleanup:
+   - remove/relocate app/api/seller/products/new UI pages/layout
+   - fix/retire invalid step redirects
+2. Domain grouping:
+   - introduce (stores) and (shop) route groups
+3. Component taxonomy:
+   - create components/auth, components/stores, components/shop, components/admin, components/shared
+4. Monolith split kickoff:
+   - split ProductsClientView.jsx using established inventory pattern
+5. Dead file pass #1:
+   - remove confirmed unreferenced legacy files/components
+
+End of plan.

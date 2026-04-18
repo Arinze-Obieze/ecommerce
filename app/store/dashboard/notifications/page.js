@@ -1,6 +1,6 @@
 'use client';
 
-import NotificationsPanel from '@/components/NotificationsPanel';
+import NotificationsPanel from '@/components/notifications/NotificationsPanel';
 
 export default function StoreDashboardNotificationsPage() {
   return (

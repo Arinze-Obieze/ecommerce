@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FiGrid, FiShoppingBag, FiHeart, FiMapPin, FiSettings, FiLogOut, FiChevronDown, FiHome, FiCompass, FiBell } from 'react-icons/fi';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const THEME = {

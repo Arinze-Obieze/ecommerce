@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { FiSave, FiUser, FiLock } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/contexts/ToastContext';

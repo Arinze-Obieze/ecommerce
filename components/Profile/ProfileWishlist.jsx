@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useWishlist } from '@/contexts/WishlistContext';
-import ProductCard from '@/components/ProductCard';
-import ProductImpressionTracker from '@/components/ProductImpressionTracker';
+import ProductCard from '@/components/catalog/ProductCard';
+import ProductImpressionTracker from '@/components/catalog/ProductImpressionTracker';
 import Link from 'next/link';
 import { FiHeart, FiArrowRight } from 'react-icons/fi';
 import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';

@@ -2,10 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import DashboardPageHeader from '@/components/Store/dashboard/DashboardPageHeader';
+import StatCard from '@/components/Store/dashboard/StatCard';
+import AlertBanner from '@/components/Store/dashboard/AlertBanner';
 
-const PAYMENT_FILTERS = ['all', 'pending', 'paid', 'failed', 'refunded'];
+const PAYMENT_FILTERS     = ['all', 'pending', 'paid', 'failed', 'refunded'];
 const FULFILLMENT_FILTERS = ['all', 'processing', 'packed', 'shipped', 'delivered', 'issue'];
-const ESCROW_FILTERS = ['all', 'not_funded', 'funded', 'released'];
+const ESCROW_FILTERS      = ['all', 'not_funded', 'funded', 'released'];
 
 function prettify(value) {
   return String(value || '')
@@ -23,37 +26,18 @@ function formatMoney(value) {
 
 function formatDateTime(value) {
   if (!value) return '-';
-  try {
-    return new Date(value).toLocaleString();
-  } catch {
-    return value;
-  }
+  try { return new Date(value).toLocaleString(); } catch { return value; }
 }
 
 function buildOrderSearchText(row) {
-  return [
-    row.id,
-    row.payment_reference,
-    row.status,
-    row.fulfillment_status,
-    row.escrow_status,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+  return [row.id, row.payment_reference, row.status, row.fulfillment_status, row.escrow_status]
+    .filter(Boolean).join(' ').toLowerCase();
 }
 
 function getReceiptUrl(orderId, download = false) {
   if (!orderId) return '#';
   const query = download ? '?download=1' : '';
   return `/api/store/orders/${orderId}/receipt${query}`;
-}
-
-function StatValue({ loading, children }) {
-  if (loading) {
-    return <span className="mt-1 block h-6 w-16 animate-pulse rounded-md bg-gray-200" aria-hidden="true" />;
-  }
-  return <>{children}</>;
 }
 
 function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onDownloadReceipt }) {
@@ -63,10 +47,7 @@ function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onD
     <div className="relative" onClick={(event) => event.stopPropagation()}>
       <button
         type="button"
-        onClick={(event) => {
-          event.preventDefault();
-          onToggle();
-        }}
+        onClick={(event) => { event.preventDefault(); onToggle(); }}
         className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#d0d7de] text-gray-600 transition hover:bg-gray-100"
         aria-label="Open quick actions"
         aria-haspopup="menu"
@@ -77,38 +58,16 @@ function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onD
 
       {open ? (
         <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-[#dbe7e0] bg-white p-2 shadow-lg" role="menu">
-          <Link
-            href={`/store/dashboard/orders/${orderId}`}
-            className="block rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-[#f2f7f4]"
-            onClick={onClose}
-          >
+          <Link href={`/store/dashboard/orders/${orderId}`} className="block rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-[#f2f7f4]" onClick={onClose}>
             Open full order
           </Link>
-          <Link
-            href={`/store/dashboard/orders/${orderId}#fulfillment-update`}
-            className="mt-1 block rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-[#f2f7f4]"
-            onClick={onClose}
-          >
+          <Link href={`/store/dashboard/orders/${orderId}#fulfillment-update`} className="mt-1 block rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-[#f2f7f4]" onClick={onClose}>
             Update fulfillment status
           </Link>
-          <button
-            type="button"
-            onClick={() => {
-              onOpenReceipt(orderId);
-              onClose();
-            }}
-            className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-[#f2f7f4]"
-          >
+          <button type="button" onClick={() => { onOpenReceipt(orderId); onClose(); }} className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-[#f2f7f4]">
             Preview Zova receipt (PDF)
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              onDownloadReceipt(orderId);
-              onClose();
-            }}
-            className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-[#f2f7f4]"
-          >
+          <button type="button" onClick={() => { onDownloadReceipt(orderId); onClose(); }} className="mt-1 block w-full rounded-lg px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-[#f2f7f4]">
             Download Zova receipt
           </button>
         </div>
@@ -170,15 +129,8 @@ export default function StoreOrdersPage() {
     }
   };
 
-  useEffect(() => {
-    void loadOrders();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedOrderId) return;
-    void loadOrderDetail(selectedOrderId);
-  }, [selectedOrderId]);
-
+  useEffect(() => { void loadOrders(); }, []);
+  useEffect(() => { if (!selectedOrderId) return; void loadOrderDetail(selectedOrderId); }, [selectedOrderId]);
   useEffect(() => {
     const closeMenu = () => setMenuOpenForOrderId('');
     window.addEventListener('click', closeMenu);
@@ -197,15 +149,9 @@ export default function StoreOrdersPage() {
   }, [rows, query, paymentFilter, fulfillmentFilter, escrowFilter]);
 
   useEffect(() => {
-    if (!filteredRows.length) {
-      setSelectedOrderId('');
-      setDetail(null);
-      return;
-    }
+    if (!filteredRows.length) { setSelectedOrderId(''); setDetail(null); return; }
     const hasSelected = filteredRows.some((row) => row.id === selectedOrderId);
-    if (!hasSelected) {
-      setSelectedOrderId(filteredRows[0].id);
-    }
+    if (!hasSelected) setSelectedOrderId(filteredRows[0].id);
   }, [filteredRows, selectedOrderId]);
 
   const stats = useMemo(() => {
@@ -214,63 +160,34 @@ export default function StoreOrdersPage() {
     const shippedOrders = filteredRows.filter((row) => row.fulfillment_status === 'shipped').length;
     const deliveredOrders = filteredRows.filter((row) => row.fulfillment_status === 'delivered').length;
     const totalValue = filteredRows.reduce((sum, row) => sum + Number(row.store_subtotal || 0), 0);
-
-    return {
-      totalOrders,
-      processingOrders,
-      shippedOrders,
-      deliveredOrders,
-      totalValue,
-    };
+    return { totalOrders, processingOrders, shippedOrders, deliveredOrders, totalValue };
   }, [filteredRows]);
 
-  const detailOrder = detail?.order || null;
-  const detailItems = detail?.items || [];
+  const detailOrder   = detail?.order || null;
+  const detailItems   = detail?.items || [];
   const detailCustomer = detail?.customer || null;
   const detailAddress = detail?.shippingAddress || null;
   const detailUpdates = detail?.fulfillmentUpdates || [];
 
-  const openReceipt = (orderId) => {
-    if (!orderId) return;
-    window.open(getReceiptUrl(orderId), '_blank', 'noopener,noreferrer');
-  };
-
-  const downloadReceipt = (orderId) => {
-    if (!orderId) return;
-    window.open(getReceiptUrl(orderId, true), '_blank', 'noopener,noreferrer');
-  };
+  const openReceipt     = (orderId) => { if (!orderId) return; window.open(getReceiptUrl(orderId), '_blank', 'noopener,noreferrer'); };
+  const downloadReceipt = (orderId) => { if (!orderId) return; window.open(getReceiptUrl(orderId, true), '_blank', 'noopener,noreferrer'); };
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">Store Orders</h2>
-        <p className="text-sm text-gray-500">Search, filter, and inspect order details quickly from one workspace.</p>
-      </div>
+      <DashboardPageHeader
+        title="Store Orders"
+        subtitle="Search, filter, and inspect order details quickly from one workspace."
+      />
 
-      {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-      ) : null}
+      <AlertBanner type="error" message={error} />
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
-        <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Total Orders</p>
-          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.totalOrders}</StatValue></p>
-        </div>
-        <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Processing</p>
-          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.processingOrders}</StatValue></p>
-        </div>
-        <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Shipped</p>
-          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.shippedOrders}</StatValue></p>
-        </div>
-        <div className="rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Delivered</p>
-          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{stats.deliveredOrders}</StatValue></p>
-        </div>
-        <div className="col-span-2 rounded-xl border border-[#dbe7e0] bg-white p-4 shadow-sm xl:col-span-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Store Revenue (Filtered)</p>
-          <p className="mt-1 text-base font-semibold text-gray-900"><StatValue loading={loading}>{formatMoney(stats.totalValue)}</StatValue></p>
+        <StatCard label="Total Orders"            value={stats.totalOrders}       loading={loading} tone="default" />
+        <StatCard label="Processing"              value={stats.processingOrders}  loading={loading} tone="default" />
+        <StatCard label="Shipped"                 value={stats.shippedOrders}     loading={loading} tone="default" />
+        <StatCard label="Delivered"               value={stats.deliveredOrders}   loading={loading} tone="default" />
+        <div className="col-span-2 xl:col-span-1">
+          <StatCard label="Store Revenue (Filtered)" value={formatMoney(stats.totalValue)} loading={loading} tone="default" />
         </div>
       </div>
 
@@ -284,47 +201,16 @@ export default function StoreOrdersPage() {
                 placeholder="Search order ID, payment ref, status"
                 className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20 md:col-span-2 xl:col-span-2"
               />
-
-              <select
-                value={paymentFilter}
-                onChange={(event) => setPaymentFilter(event.target.value)}
-                className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20"
-              >
-                {PAYMENT_FILTERS.map((value) => (
-                  <option key={value} value={value}>{value === 'all' ? 'All payment' : prettify(value)}</option>
-                ))}
+              <select value={paymentFilter} onChange={(event) => setPaymentFilter(event.target.value)} className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20">
+                {PAYMENT_FILTERS.map((value) => <option key={value} value={value}>{value === 'all' ? 'All payment' : prettify(value)}</option>)}
               </select>
-
-              <select
-                value={fulfillmentFilter}
-                onChange={(event) => setFulfillmentFilter(event.target.value)}
-                className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20"
-              >
-                {FULFILLMENT_FILTERS.map((value) => (
-                  <option key={value} value={value}>{value === 'all' ? 'All fulfillment' : prettify(value)}</option>
-                ))}
+              <select value={fulfillmentFilter} onChange={(event) => setFulfillmentFilter(event.target.value)} className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20">
+                {FULFILLMENT_FILTERS.map((value) => <option key={value} value={value}>{value === 'all' ? 'All fulfillment' : prettify(value)}</option>)}
               </select>
-
-              <select
-                value={escrowFilter}
-                onChange={(event) => setEscrowFilter(event.target.value)}
-                className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20"
-              >
-                {ESCROW_FILTERS.map((value) => (
-                  <option key={value} value={value}>{value === 'all' ? 'All escrow' : prettify(value)}</option>
-                ))}
+              <select value={escrowFilter} onChange={(event) => setEscrowFilter(event.target.value)} className="rounded-xl border border-[#d0d7de] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-[#2E5C45] focus:ring-2 focus:ring-[#2E5C45]/20">
+                {ESCROW_FILTERS.map((value) => <option key={value} value={value}>{value === 'all' ? 'All escrow' : prettify(value)}</option>)}
               </select>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery('');
-                  setPaymentFilter('all');
-                  setFulfillmentFilter('all');
-                  setEscrowFilter('all');
-                }}
-                className="rounded-xl border border-[#d0d7de] px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-              >
+              <button type="button" onClick={() => { setQuery(''); setPaymentFilter('all'); setFulfillmentFilter('all'); setEscrowFilter('all'); }} className="rounded-xl border border-[#d0d7de] px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                 Reset
               </button>
             </div>
@@ -353,11 +239,7 @@ export default function StoreOrdersPage() {
                       {filteredRows.map((row) => {
                         const active = selectedOrderId === row.id;
                         return (
-                          <tr
-                            key={row.id}
-                            className={`cursor-pointer border-b border-gray-50 transition ${active ? 'bg-[#f2f7f4]' : 'hover:bg-gray-50'}`}
-                            onClick={() => setSelectedOrderId(row.id)}
-                          >
+                          <tr key={row.id} className={`cursor-pointer border-b border-gray-50 transition ${active ? 'bg-[#f2f7f4]' : 'hover:bg-gray-50'}`} onClick={() => setSelectedOrderId(row.id)}>
                             <td className="py-2 pr-3 font-mono text-xs font-semibold text-[#2E5C45]">{row.id.slice(0, 8)}</td>
                             <td className="py-2 pr-3 capitalize">{prettify(row.status || 'pending')}</td>
                             <td className="py-2 pr-3 capitalize">{prettify(row.fulfillment_status || 'processing')}</td>
@@ -366,22 +248,13 @@ export default function StoreOrdersPage() {
                             <td className="py-2 pr-3">{formatMoney(row.store_subtotal || 0)}</td>
                             <td className="py-2 pr-3 whitespace-nowrap">{formatDateTime(row.created_at)}</td>
                             <td className="py-2 pr-0">
-                              <QuickActionsMenu
-                                orderId={row.id}
-                                open={menuOpenForOrderId === row.id}
-                                onToggle={() => setMenuOpenForOrderId((current) => (current === row.id ? '' : row.id))}
-                                onClose={() => setMenuOpenForOrderId('')}
-                                onOpenReceipt={openReceipt}
-                                onDownloadReceipt={downloadReceipt}
-                              />
+                              <QuickActionsMenu orderId={row.id} open={menuOpenForOrderId === row.id} onToggle={() => setMenuOpenForOrderId((current) => (current === row.id ? '' : row.id))} onClose={() => setMenuOpenForOrderId('')} onOpenReceipt={openReceipt} onDownloadReceipt={downloadReceipt} />
                             </td>
                           </tr>
                         );
                       })}
                       {filteredRows.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="py-6 text-center text-gray-500">No orders match your current filters.</td>
-                        </tr>
+                        <tr><td colSpan={8} className="py-6 text-center text-gray-500">No orders match your current filters.</td></tr>
                       ) : null}
                     </tbody>
                   </table>
@@ -391,31 +264,12 @@ export default function StoreOrdersPage() {
                   {filteredRows.map((row) => {
                     const active = selectedOrderId === row.id;
                     return (
-                      <div
-                        key={row.id}
-                        onClick={() => setSelectedOrderId(row.id)}
-                        className={`w-full cursor-pointer rounded-xl border p-3 text-left shadow-sm transition ${active ? 'border-[#2E5C45] bg-[#f2f7f4]' : 'border-[#dbe7e0] bg-white hover:bg-gray-50'}`}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            setSelectedOrderId(row.id);
-                          }
-                        }}
-                      >
+                      <div key={row.id} onClick={() => setSelectedOrderId(row.id)} className={`w-full cursor-pointer rounded-xl border p-3 text-left shadow-sm transition ${active ? 'border-[#2E5C45] bg-[#f2f7f4]' : 'border-[#dbe7e0] bg-white hover:bg-gray-50'}`} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedOrderId(row.id); } }}>
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-mono text-xs font-semibold text-[#2E5C45]">{row.id.slice(0, 8)}</p>
                           <div className="flex items-center gap-2">
                             <p className="text-xs text-gray-500">{formatDateTime(row.created_at)}</p>
-                            <QuickActionsMenu
-                              orderId={row.id}
-                              open={menuOpenForOrderId === row.id}
-                              onToggle={() => setMenuOpenForOrderId((current) => (current === row.id ? '' : row.id))}
-                              onClose={() => setMenuOpenForOrderId('')}
-                              onOpenReceipt={openReceipt}
-                              onDownloadReceipt={downloadReceipt}
-                            />
+                            <QuickActionsMenu orderId={row.id} open={menuOpenForOrderId === row.id} onToggle={() => setMenuOpenForOrderId((current) => (current === row.id ? '' : row.id))} onClose={() => setMenuOpenForOrderId('')} onOpenReceipt={openReceipt} onDownloadReceipt={downloadReceipt} />
                           </div>
                         </div>
                         <p className="mt-1 text-sm font-semibold text-gray-900">{prettify(row.fulfillment_status || 'processing')}</p>
@@ -429,7 +283,6 @@ export default function StoreOrdersPage() {
               </>
             )}
           </div>
-
         </div>
 
         <aside className="hidden xl:block">
@@ -437,9 +290,7 @@ export default function StoreOrdersPage() {
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="text-sm font-bold text-gray-900">Order Details</h3>
               {selectedOrderId ? (
-                <Link href={`/store/dashboard/orders/${selectedOrderId}`} className="text-xs font-semibold text-[#2E5C45] hover:underline">
-                  Open full page
-                </Link>
+                <Link href={`/store/dashboard/orders/${selectedOrderId}`} className="text-xs font-semibold text-[#2E5C45] hover:underline">Open full page</Link>
               ) : null}
             </div>
 
@@ -456,40 +307,15 @@ export default function StoreOrdersPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-lg border border-[#e4ece7] p-2">
-                    <p className="text-[10px] uppercase tracking-wide text-gray-500">Payment</p>
-                    <p className="mt-1 text-xs font-semibold text-gray-900">{prettify(detailOrder.status || 'pending')}</p>
-                  </div>
-                  <div className="rounded-lg border border-[#e4ece7] p-2">
-                    <p className="text-[10px] uppercase tracking-wide text-gray-500">Fulfillment</p>
-                    <p className="mt-1 text-xs font-semibold text-gray-900">{prettify(detailOrder.fulfillment_status || 'processing')}</p>
-                  </div>
-                  <div className="rounded-lg border border-[#e4ece7] p-2">
-                    <p className="text-[10px] uppercase tracking-wide text-gray-500">Escrow</p>
-                    <p className="mt-1 text-xs font-semibold text-gray-900">{prettify(detailOrder.escrow_status || 'not_funded')}</p>
-                  </div>
-                  <div className="rounded-lg border border-[#e4ece7] p-2">
-                    <p className="text-[10px] uppercase tracking-wide text-gray-500">Store subtotal</p>
-                    <p className="mt-1 text-xs font-semibold text-gray-900">
-                      {formatMoney(detailItems.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0))}
-                    </p>
-                  </div>
+                  <div className="rounded-lg border border-[#e4ece7] p-2"><p className="text-[10px] uppercase tracking-wide text-gray-500">Payment</p><p className="mt-1 text-xs font-semibold text-gray-900">{prettify(detailOrder.status || 'pending')}</p></div>
+                  <div className="rounded-lg border border-[#e4ece7] p-2"><p className="text-[10px] uppercase tracking-wide text-gray-500">Fulfillment</p><p className="mt-1 text-xs font-semibold text-gray-900">{prettify(detailOrder.fulfillment_status || 'processing')}</p></div>
+                  <div className="rounded-lg border border-[#e4ece7] p-2"><p className="text-[10px] uppercase tracking-wide text-gray-500">Escrow</p><p className="mt-1 text-xs font-semibold text-gray-900">{prettify(detailOrder.escrow_status || 'not_funded')}</p></div>
+                  <div className="rounded-lg border border-[#e4ece7] p-2"><p className="text-[10px] uppercase tracking-wide text-gray-500">Store subtotal</p><p className="mt-1 text-xs font-semibold text-gray-900">{formatMoney(detailItems.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0))}</p></div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/store/dashboard/orders/${selectedOrderId}#fulfillment-update`}
-                    className="rounded-lg border border-[#d0d7de] px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
-                  >
-                    Update fulfillment
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => openReceipt(selectedOrderId)}
-                    className="rounded-lg border border-[#2E5C45] bg-[#eef4f0] px-3 py-2 text-xs font-semibold text-[#2E5C45] transition hover:bg-[#e2eee8]"
-                  >
-                    Preview Zova PDF
-                  </button>
+                  <Link href={`/store/dashboard/orders/${selectedOrderId}#fulfillment-update`} className="rounded-lg border border-[#d0d7de] px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">Update fulfillment</Link>
+                  <button type="button" onClick={() => openReceipt(selectedOrderId)} className="rounded-lg border border-[#2E5C45] bg-[#eef4f0] px-3 py-2 text-xs font-semibold text-[#2E5C45] transition hover:bg-[#e2eee8]">Preview Zova PDF</button>
                 </div>
 
                 <div>
@@ -500,9 +326,7 @@ export default function StoreOrdersPage() {
                       <p>{detailCustomer.email || '-'}</p>
                       <p>{detailCustomer.phone || '-'}</p>
                     </div>
-                  ) : (
-                    <p className="mt-1 text-xs text-gray-500">No customer profile details found.</p>
-                  )}
+                  ) : <p className="mt-1 text-xs text-gray-500">No customer profile details found.</p>}
                 </div>
 
                 <div>
@@ -528,9 +352,7 @@ export default function StoreOrdersPage() {
                       <p>{[detailAddress.city, detailAddress.state, detailAddress.country].filter(Boolean).join(', ') || '-'}</p>
                       <p>{detailAddress.phone || '-'}</p>
                     </div>
-                  ) : (
-                    <p className="mt-1 text-xs text-gray-500">No shipping address found.</p>
-                  )}
+                  ) : <p className="mt-1 text-xs text-gray-500">No shipping address found.</p>}
                 </div>
 
                 <div>

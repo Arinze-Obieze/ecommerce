@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import DashboardPageHeader from '@/components/Store/dashboard/DashboardPageHeader';
+import StatCard from '@/components/Store/dashboard/StatCard';
+import AlertBanner from '@/components/Store/dashboard/AlertBanner';
 
 const initialForm = {
   account_name: '',
@@ -50,12 +53,8 @@ function prettifyStatus(status) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function StatValue({ loading, children }) {
-  if (loading) {
-    return <span className="mt-1 block h-7 w-24 animate-pulse rounded-md bg-gray-200" aria-hidden="true" />;
-  }
-  return <>{children}</>;
-}
+// StatValue replaced by shared StatCard
+
 
 export default function StorePayoutsPage() {
   const [data, setData] = useState(null);
@@ -296,10 +295,7 @@ export default function StorePayoutsPage() {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
-            <p className="mt-1 break-words text-lg font-bold text-[#2E5C45] sm:text-2xl"><StatValue loading={loading}>{card.value}</StatValue></p>
-          </div>
+          <StatCard key={card.label} label={card.label} value={card.value} loading={loading} />
         ))}
       </div>
 
@@ -353,13 +349,9 @@ export default function StorePayoutsPage() {
           </div>
         </dl>
 
-        {payoutAccount?.verification_error ? (
-          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {payoutAccount.verification_error}
-          </div>
-        ) : null}
-        {error ? <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-        {notice ? <div className="mt-4 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</div> : null}
+        <AlertBanner type="error"  message={payoutAccount?.verification_error} />
+        <AlertBanner type="error"  message={error} />
+        <AlertBanner type="notice" message={notice} />
       </div>
 
       <div className="flex gap-2 overflow-x-auto rounded-2xl border border-[#dbe7e0] bg-white p-2 shadow-sm">

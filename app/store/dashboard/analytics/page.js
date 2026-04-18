@@ -15,13 +15,15 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import DashboardPageHeader from '@/components/Store/dashboard/DashboardPageHeader';
+import AlertBanner from '@/components/Store/dashboard/AlertBanner';
 
 const MODERATION_COLORS = ['#2E5C45', '#0ea5e9', '#ef4444', '#f59e0b'];
 const RANGE_OPTIONS = [
-  { value: '7d', label: '7 days' },
+  { value: '7d',  label: '7 days' },
   { value: '30d', label: '30 days' },
   { value: '90d', label: '90 days' },
-  { value: '1y', label: '1 year' },
+  { value: '1y',  label: '1 year' },
   { value: 'all', label: 'Since opening' },
 ];
 
@@ -67,7 +69,21 @@ export default function StoreAnalyticsPage() {
   }, [range]);
 
   if (loading) return <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6 text-sm text-gray-500">Loading analytics...</div>;
-  if (error) return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">{error}</div>;
+
+  const RangePicker = (
+    <div className="flex flex-wrap gap-2">
+      {RANGE_OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => setRange(option.value)}
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${range === option.value ? 'bg-[#2E5C45] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
 
   const orders = data?.orders || {};
   const cartDemand = data?.cartDemand || {};
@@ -80,34 +96,22 @@ export default function StoreAnalyticsPage() {
   const topDemandProducts = trends.topDemandProducts || trends.topDemandProducts7d || [];
 
   const moderationPie = [
-    { name: 'Pending', value: products.pendingReview || 0 },
-    { name: 'Approved', value: products.active || 0 },
-    { name: 'Rejected', value: products.rejected || 0 },
+    { name: 'Pending',      value: products.pendingReview || 0 },
+    { name: 'Approved',     value: products.active || 0 },
+    { name: 'Rejected',     value: products.rejected || 0 },
     { name: 'Out of Stock', value: products.outOfStock || 0 },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">Store Analytics</h2>
-            <p className="text-sm text-gray-500">Live metrics captured from orders, escrow, and cart interactions.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {RANGE_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setRange(option.value)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${range === option.value ? 'bg-[#2E5C45] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <DashboardPageHeader
+        title="Store Analytics"
+        subtitle="Live metrics captured from orders, escrow, and cart interactions."
+      >
+        {RangePicker}
+      </DashboardPageHeader>
+
+      <AlertBanner type="error" message={error} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-[#dbe7e0] bg-white p-3 shadow-sm sm:p-4"><p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">Total Orders</p><p className="mt-2 break-words text-xl font-bold sm:text-2xl">{orders.totalOrders || 0}</p></div>
