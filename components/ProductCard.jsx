@@ -327,7 +327,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
             <img
               src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
               loading="lazy"
             />
 

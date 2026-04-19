@@ -1,6 +1,6 @@
 "use client";
-import ProductCard from "@/components/catalog/ProductCard";
-import ProductImpressionTracker from "@/components/catalog/ProductImpressionTracker";
+import ProductCard from "../ProductCard";
+import ProductImpressionTracker from "../ProductImpressionTracker";
 import { useFilters } from "@/contexts/FilterContext";
 import { FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 

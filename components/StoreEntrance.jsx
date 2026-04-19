@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Premium color palette ──
+// ── Zova brand palette (zova.ng 2026) ──
 const C = {
-  emerald: "#00D47E",
-  emeraldDeep: "#00A65E",
-  emeraldDark: "#065F46",
-  noir: "#0A0A0A",
-  gold: "#F5B731",
-  goldDark: "#C48B18",
-  warmWhite: "#FFF8ED",
-  cream: "#FFFDF7",
+  emerald:     "#2E6417",   // Zova Forest — primary green
+  emeraldDeep: "#1e4410",   // Forest deep — hover / darker accent
+  emeraldDark: "#0d2a08",   // Forest darkest — gate gradient base
+  noir:        "#191B19",   // Onyx Black — backgrounds & text
+  gold:        "#EC9C00",   // Gold Harvest — accent
+  goldDark:    "#b87800",   // Gold dark — handles, shadows
+  warmWhite:   "#F5F1EA",   // Soft Linen — card & surface bg
+  cream:       "#FDFAF5",   // Near-white linen — subtle highlights
 };
 
 // ── Real product images (Unsplash) ──

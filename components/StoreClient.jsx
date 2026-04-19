@@ -11,30 +11,36 @@ import { getRecommendationRequestHeaders } from "@/utils/recommendationRequest";
 // THEME
 // ─────────────────────────────────────────────────────────────
 const T = {
-  green:          "#00B86B",
-  greenDark:      "#0F7A4F",
-  greenDeep:      "#0A3D2E",
-  greenTint:      "#EDFAF3",
-  greenBorder:    "#A8DFC4",
+  // ── Brand greens (Zova Forest #2E6417) ──
+  green:          "#2E6417",   // Zova Forest — was mint #00B86B
+  greenDark:      "#1e4410",   // Forest deep — hover states
+  greenDeep:      "#0d2a08",   // Forest darkest — deep backgrounds
+  greenTint:      "#e8f0e3",   // Forest tint — pill/badge bg
+  greenBorder:    "#c2d9b4",   // Forest border — badge outlines
+
+  // ── Neutrals (Onyx + Soft Linen) ──
   white:          "#FFFFFF",
-  pageBg:         "#F4F6F4",
-  charcoal:       "#0E0E0E",
+  pageBg:         "#F5F1EA",   // Soft Linen — was cool gray #F4F6F4
+  charcoal:       "#191B19",   // Onyx Black — was #0E0E0E
   medGray:        "#5A5A5A",
   mutedText:      "#9A9A9A",
-  border:         "#E4E8E4",
-  softGray:       "#F0F2F0",
+  border:         "#EDE8DF",   // Linen-warm border — was cool #E4E8E4
+  softGray:       "#F5F1EA",   // Soft Linen — was #F0F2F0
+
+  // ── Semantic (unchanged — these are universal) ──
   starYellow:     "#F59E0B",
   starBg:         "#FFFBEB",
   trendingText:   "#EA580C",
   trendingBg:     "#FFF7ED",
   trendingBorder: "#FED7AA",
-  // entrance palette
-  E_bg:           "#050C07",
-  E_bgMid:        "#08140A",
-  E_panelL:       "#0A1C10",
-  E_panelR:       "#091A0E",
-  E_border:       "rgba(0,184,107,0.16)",
-  E_borderHi:     "rgba(0,184,107,0.42)",
+
+  // ── Entrance overlay (deep forest tones) ──
+  E_bg:           "#040806",   // near-black with green cast
+  E_bgMid:        "#07100A",
+  E_panelL:       "#091508",
+  E_panelR:       "#081407",
+  E_border:       "rgba(46,100,23,0.2)",    // Zova Forest tinted
+  E_borderHi:     "rgba(46,100,23,0.52)",
   E_white:        "#F0F7F2",
   E_dim:          "rgba(240,247,242,0.32)",
 };
