@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiX, FiSliders, FiTrash2 } from 'react-icons/fi';
-import FilterSidebar from "@/components/shop/FilterSidebar";
+import FilterSidebar from "../FilterSidebar";
 import { useFilters } from "@/contexts/FilterContext";
 
 const THEME = {
