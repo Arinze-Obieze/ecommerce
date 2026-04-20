@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { writeAdminAuditLog } from '@/utils/adminAudit';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { sendZeptoMail } from '@/utils/email';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { writeAdminAuditLog } from '@/utils/admin/audit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { sendZeptoMail } from '@/utils/messaging/email';
 
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
@@ -332,7 +332,7 @@ export async function POST(request, { params }) {
       const credentialsMail = await sendZeptoMail({
         to: recipient,
         subject: `Set up your account and store ownership for ${store.name}`,
-        html: `<p>Hello ${ownerName},</p><p>You have been assigned as <strong>owner</strong> of <strong>${store.name}</strong>.</p><p>Use the secure link below to set your password and activate your account:</p><p><a href="${resolved.setupLink}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#00B86B;color:#ffffff;text-decoration:none;font-weight:700;">Set up your account</a></p><p>If the button does not work, open this link directly:</p><p><a href="${resolved.setupLink}">${resolved.setupLink}</a></p><p>This link is single-use and safer than sending passwords over email.</p>`,
+        html: `<p>Hello ${ownerName},</p><p>You have been assigned as <strong>owner</strong> of <strong>${store.name}</strong>.</p><p>Use the secure link below to set your password and activate your account:</p><p><a href="${resolved.setupLink}" style="display:inline-block;padding:12px 18px;border-radius:10px;background:#2E6417;color:#ffffff;text-decoration:none;font-weight:700;">Set up your account</a></p><p>If the button does not work, open this link directly:</p><p><a href="${resolved.setupLink}">${resolved.setupLink}</a></p><p>This link is single-use and safer than sending passwords over email.</p>`,
         text: `Hello ${ownerName},\n\nYou have been assigned as owner of ${store.name}.\n\nUse this secure link to set your password and activate your account:\n${resolved.setupLink}\n\nThis link is single-use and safer than sending passwords over email.`,
       });
 

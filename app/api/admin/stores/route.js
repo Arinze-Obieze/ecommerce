@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { writeAdminAuditLog } from '@/utils/adminAudit';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { sendStoreAccessGrantedEmail } from '@/utils/emailNotifications';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { writeAdminAuditLog } from '@/utils/admin/audit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { sendStoreAccessGrantedEmail } from '@/utils/messaging/email-notifications';
 
 function sanitizeSlug(value) {
   return String(value || '')

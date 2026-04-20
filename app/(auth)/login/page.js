@@ -12,7 +12,7 @@ import { createClient } from '@/utils/supabase/client';
 const T = {
   green:        '#2E6417',   // Zova Forest
   greenDark:    '#245213',
-  greenDeep:    '#1e4a0a',
+  greenDeep:    '#245213',
   greenTint:    '#EDF5E6',
   greenBorder:  '#B8D4A0',
   gold:         '#EC9C00',   // Gold Harvest
@@ -252,7 +252,7 @@ export default function LoginPage() {
                 overflow: 'hidden',
               }}>
                 {!logoError ? (
-                  <Image src="/icon_only.png" alt="ZOVA" width={100} height={100} className="object-contain" onError={() => setLogoError(true)} />
+                  <Image src="/brand/icon-only.png" alt="ZOVA" width={100} height={100} className="object-contain" onError={() => setLogoError(true)} />
                 ) : (
                   <span style={{ fontSize: 16, fontWeight: 800, color: T.green, fontFamily: 'Outfit,sans-serif' }}>Z</span>
                 )}
@@ -529,7 +529,7 @@ export default function LoginPage() {
               border: '1px solid rgba(255,255,255,0.2)', overflow: 'hidden',
             }}>
               {!logoError ? (
-                <Image src="/icon_only.png" alt="ZOVA" width={50} height={50} className="object-contain" onError={() => setLogoError(true)} />
+                <Image src="/brand/icon-only.png" alt="ZOVA" width={50} height={50} className="object-contain" onError={() => setLogoError(true)} />
               ) : (
                 <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Z</span>
               )}

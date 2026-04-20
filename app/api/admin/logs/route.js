@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireAdminApi } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(value, 10);

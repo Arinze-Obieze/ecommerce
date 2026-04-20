@@ -12,7 +12,7 @@ export default function BadgePreview({ displayName, displayTag, discountType, di
   const finalPrice = Math.max(0, examplePrice - savings);
 
   return (
-    <div className="rounded-2xl border border-[#dbe7e0] bg-[#f9fafb] p-5">
+    <div className="rounded-2xl border border-[#E8E4DC] bg-[#f9fafb] p-5">
       <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-4">Badge Preview</p>
 
       {/* Mock product card */}

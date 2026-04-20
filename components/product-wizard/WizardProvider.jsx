@@ -2,7 +2,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { WIZARD_STEPS, INITIAL_WIZARD_STATE } from "@/lib/product-wizard-constants";
+import { WIZARD_STEPS, INITIAL_WIZARD_STATE } from "@/features/product-wizard/lib/constants";
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const WizardContext = createContext(null);

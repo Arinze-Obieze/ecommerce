@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import {
   isMissingNotificationsTableError,
   NOTIFICATIONS_MIGRATION_HINT,
-} from '@/utils/notifications';
+} from '@/utils/messaging/notifications';
 
 async function getAuthedContext(request) {
   const authClient = await createClient();

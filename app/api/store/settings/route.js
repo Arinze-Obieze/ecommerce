@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 function sanitizeSlug(value) {
   return String(value || '')

@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
 import {
   sendStoreAccessGrantedEmail,
   sendStoreInvitationEmail,
-} from '@/utils/emailNotifications';
+} from '@/utils/messaging/email-notifications';
 import {
   ensureUserProfile,
   findAuthUserByEmail,
   generateStoreInviteLink,
   getStoreInvitationsMigrationHint,
   isMissingStoreInvitationsTableError,
-} from '@/utils/storeInvitations';
-import { createUserNotification } from '@/utils/notifications';
+} from '@/utils/store/invitations';
+import { createUserNotification } from '@/utils/messaging/notifications';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();

@@ -53,13 +53,13 @@ export default function Step3Type({ state, dispatch }) {
               type="button"
               onClick={() => selectType(t)}
               className={`text-left p-4 rounded-2xl border-2 transition-all ${
-                selected ? 'border-[#2E5C45] bg-[#2E5C45]/5' : 'border-[#dbe7e0] bg-white hover:border-[#2E5C45]/40'
+                selected ? 'border-[#2E6417] bg-[#2E6417]/5' : 'border-[#E8E4DC] bg-white hover:border-[#2E6417]/40'
               }`}
             >
               <div className="flex items-start gap-3">
                 <span className="text-2xl">{t.icon}</span>
                 <div>
-                  <p className={`text-sm font-semibold ${selected ? 'text-[#2E5C45]' : 'text-gray-900'}`}>{t.label}</p>
+                  <p className={`text-sm font-semibold ${selected ? 'text-[#2E6417]' : 'text-gray-900'}`}>{t.label}</p>
                   <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{t.description}</p>
                 </div>
               </div>
@@ -82,7 +82,7 @@ export default function Step3Type({ state, dispatch }) {
             dispatch({ type: 'SET_DISPLAY_NAME', name: e.target.value || (types.find(t => t.id === promotionTypeId)?.label || '') });
           }}
           placeholder="e.g. Eid Special, Birthday Blowout..."
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
         />
         <p className="text-xs text-gray-400 mt-1.5">
           This name shows as the badge on your product cards. Keep it short ({displayName?.length || 0}/30).

@@ -1,4 +1,5 @@
-import { createClient } from '@/utils/supabase/server'
+import { errorJson, publicJson } from '@/utils/platform/api-response'
+import { createPublicClient } from '@/utils/supabase/public'
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ async function resolveCategoryBranchIds(supabase, categorySlug) {
 
 export async function GET(request) {
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const collection = searchParams.get('collection')
@@ -104,7 +105,7 @@ export async function GET(request) {
     if (productIds !== null) {
       if (productIds.length === 0) {
         // Return empty stats immediately
-         return Response.json({
+         return publicJson({
             success: true,
             data: { sizes: [], colors: [], brands: [], priceRange: { min: 0, max: 1000 } }
          });
@@ -153,16 +154,13 @@ export async function GET(request) {
       }
     }
 
-    return Response.json({
+    return publicJson({
       success: true,
       data: payload
     })
 
   } catch (error) {
     console.error('Filters API Error:', error)
-    return Response.json({
-      success: false,
-      error: error.message
-    }, { status: 500 })
+    return errorJson('Failed to fetch product filters')
   }
 }

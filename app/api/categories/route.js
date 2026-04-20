@@ -1,10 +1,12 @@
 // app/api/categories/route.js
-import { createClient } from '@/utils/supabase/server';
+import { errorJson, publicJson } from '@/utils/platform/api-response';
+import { createPublicClient } from '@/utils/supabase/public';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    const supabase = await createClient();
-    const { searchParams } = new URL(request.url);
+    const supabase = createPublicClient();
     
     // Get all active categories with product counts
     const { data: categories, error } = await supabase
@@ -41,7 +43,7 @@ export async function GET(request) {
     // Optionally build hierarchy
     const hierarchical = buildCategoryHierarchy(transformedCategories);
 
-    return Response.json({
+    return publicJson({
       success: true,
       data: transformedCategories,
       hierarchical,
@@ -51,14 +53,7 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('Categories API Error:', error);
-    return Response.json(
-      {
-        success: false,
-        error: error.message,
-        code: error.code,
-      },
-      { status: 500 }
-    );
+    return errorJson('Failed to fetch categories');
   }
 }
 

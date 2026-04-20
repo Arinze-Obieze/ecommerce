@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/utils/supabase/server';
-import { enforceRateLimit, getRequestIp, rateLimitHeaders, rateLimitPayload } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
+import { enforceRateLimit, getRequestIp, rateLimitHeaders, rateLimitPayload } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
 
 const EVENT_NAME_REGEX = /^[a-z0-9_]{2,64}$/i;
 

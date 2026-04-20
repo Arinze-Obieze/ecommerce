@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import ProductCard from './ProductCard';
-import ProductImpressionTracker from './ProductImpressionTracker';
-import SectionCarousel from '@/components/shop/SectionCarousel';
-import { getRecommendationRequestHeaders } from '@/utils/recommendationRequest';
+import ProductCard from '@/components/catalog/ProductCard';
+import ProductImpressionTracker from '@/components/catalog/ProductImpressionTracker';
+import SectionCarousel from '@/components/shared/SectionCarousel';
+import { getProductsByIds } from '@/features/catalog/api/client';
 
 const RecentlyViewedProducts = ({ currentProductId = null }) => {
   const [products, setProducts] = useState([]);
@@ -24,11 +24,7 @@ const RecentlyViewedProducts = ({ currentProductId = null }) => {
           return;
         }
 
-        const res = await fetch(`/api/products?ids=${idsToFetch.join(',')}&limit=10`, {
-          headers: getRecommendationRequestHeaders('recently_viewed'),
-        });
-        const json = await res.json();
-
+        const json = await getProductsByIds(idsToFetch, 10);
         if (json.success && json.data.length > 0) {
           // Sort fetched products to match the recency order in storedViews
           const sorted = [...json.data].sort((a, b) => {

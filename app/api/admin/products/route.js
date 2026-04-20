@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireAdminApi } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 export async function GET(request) {
   const admin = await requireAdminApi();

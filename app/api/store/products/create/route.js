@@ -2,16 +2,16 @@
 import { randomUUID } from "crypto";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
-import { normalizeSpecifications } from "@/utils/productCatalog";
-import { normalizeBulkDiscountTiers } from "@/utils/bulkPricing";
-import { getGenderValidationError, normalizeGenderForCategory } from "@/lib/category-gender-rules";
+import { normalizeSpecifications } from "@/utils/catalog/product-catalog";
+import { normalizeBulkDiscountTiers } from "@/utils/catalog/bulk-pricing";
+import { getGenderValidationError, normalizeGenderForCategory } from "@/features/product-wizard/lib/category-gender-rules";
 import {
   WASHING_OPTIONS,
   BLEACHING_OPTIONS,
   DRYING_OPTIONS,
   IRONING_OPTIONS,
   DRY_CLEANING_OPTIONS,
-} from "@/lib/product-wizard-constants";
+} from "@/features/product-wizard/lib/constants";
 
 function normalizeText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -227,8 +227,6 @@ export async function POST(request) {
     } catch {
       return NextResponse.json({ success: false, error: "Invalid wizard_data payload" }, { status: 400 });
     }
-    console.log("[Create] Product:", wd.productName, "| SKU:", wd.baseSku);
-
     const baseSku = normalizeText(wd.baseSku);
     if (!baseSku) {
       return NextResponse.json({ success: false, error: "Missing base SKU" }, { status: 400 });
@@ -316,8 +314,6 @@ export async function POST(request) {
     if (!store) {
       return NextResponse.json({ success: false, error: "Store not found or access denied" }, { status: 403 });
     }
-    console.log("[Create] Store:", store.name);
-
     // 4. SKU uniqueness
     const { data: dup } = await supabase
       .from("products_internal").select("product_id").eq("base_sku", baseSku).limit(1);
@@ -336,7 +332,7 @@ export async function POST(request) {
     const now = new Date().toISOString();
 
     // 6. Insert product — column names from R code's products_internal table
-    productId = `PROD_${Date.now()}_${Math.floor(Math.random() * 9000 + 1000)}`;
+    productId = `PROD_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
 
     const productRec = {
       product_id: productId,
@@ -367,14 +363,11 @@ export async function POST(request) {
                                     ? wd.flammabilityFlags.join(",") : null,
     };
 
-    console.log("[Create] Inserting product:", productId);
     const { error: prodErr } = await supabase.from("products_internal").insert(productRec);
     if (prodErr) {
       console.error("[Create] Product insert failed:", prodErr.message);
       return NextResponse.json({ success: false, error: `Product: ${prodErr.message}` }, { status: 500 });
     }
-    console.log("[Create] Product inserted OK");
-
     // 7. Insert variants — column names from R code's product_variants_internal table
     const varRecs = validVariants.map((v, i) => ({
       variant_id: `VAR_${productId}_${i + 1}`,
@@ -388,7 +381,6 @@ export async function POST(request) {
     }));
 
     if (varRecs.length > 0) {
-      console.log("[Create] Inserting", varRecs.length, "variants");
       const { error: varErr } = await supabase.from("product_variants_internal").insert(varRecs);
       if (varErr) {
         console.error("[Create] Variant insert failed:", varErr.message);
@@ -396,9 +388,6 @@ export async function POST(request) {
         productId = null;
         return NextResponse.json({ success: false, error: `Variants: ${varErr.message}` }, { status: 500 });
       }
-      console.log("[Create] Variants inserted OK");
-    } else {
-      console.log("[Create] No valid variants to insert");
     }
 
     // 8. Upload images to Supabase Storage + save to product_images table
@@ -520,8 +509,6 @@ export async function POST(request) {
         return NextResponse.json({ success: false, error: `Image records: ${imgDbErr.message}` }, { status: 500 });
       }
     }
-    console.log("[Create] Images:", imgSuccesses.length, "saved");
-
     // 9. Variant notes
     if (wd.variantNotes && Object.keys(wd.variantNotes).length > 0) {
       const noteRecs = Object.entries(wd.variantNotes)
@@ -664,8 +651,6 @@ export async function POST(request) {
       productId = null;
       return NextResponse.json({ success: false, error: `Failed to publish to marketplace: ${marketplaceErr.message}` }, { status: 500 });
     }
-    console.log("[Create] Marketplace product:", marketplaceProduct.id);
-
     // 13. Insert mood tags
     if (Array.isArray(wd.moodTags) && wd.moodTags.length > 0) {
       const moodRecs = wd.moodTags.map(key => ({
@@ -676,7 +661,6 @@ export async function POST(request) {
       }));
       const { error: moodErr } = await supabase.from("product_mood_tags").insert(moodRecs);
       if (moodErr) console.warn("[Create] Mood tags failed:", moodErr.message);
-      else console.log("[Create] Mood tags:", wd.moodTags.length, "saved");
     }
 
     await cleanupDraftRecord(
@@ -686,8 +670,6 @@ export async function POST(request) {
       user.id,
       existingPersistedImages
     );
-
-    console.log("[Create] ✅ DONE:", productId);
 
     return NextResponse.json({
       success: true,

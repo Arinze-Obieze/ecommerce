@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { sendZeptoMail } from '@/utils/email';
+import { requireAdminApi } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { sendZeptoMail } from '@/utils/messaging/email';
 
 export async function POST(request) {
   const admin = await requireAdminApi();

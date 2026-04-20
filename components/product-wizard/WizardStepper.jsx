@@ -1,7 +1,7 @@
 // components/product-wizard/WizardStepper.jsx
 "use client";
 import React from "react";
-import { WIZARD_STEPS, getWizardStepUiState } from "@/lib/product-wizard-constants";
+import { WIZARD_STEPS, getWizardStepUiState } from "@/features/product-wizard/lib/constants";
 import { useWizard } from "./WizardProvider";
 
 export default function WizardStepper() {
@@ -16,25 +16,25 @@ export default function WizardStepper() {
       {/* MOBILE */}
       <div className="md:hidden mb-5">
         <div className="flex items-center justify-between mb-2.5">
-          <span className="text-xs font-bold text-[#2E5C45]">
+          <span className="text-xs font-bold text-[#2E6417]">
             Step {currentStep} of {WIZARD_STEPS.length}
           </span>
           <span className="text-xs font-semibold text-gray-500">
             {WIZARD_STEPS[currentStep - 1]?.label}
           </span>
         </div>
-        <div className="h-1.5 bg-[#dbe7e0] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-[#E8E4DC] rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#2E5C45] rounded-full transition-all duration-500 ease-out"
+            className="h-full bg-[#2E6417] rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
         <div className="flex justify-center gap-1.5 mt-2.5">
           {steps.map((s) => (
             <div key={s.num} className={`h-1.5 rounded-full transition-all duration-300 ${
-              s.num === currentStep ? "w-5 bg-[#2E5C45]"
-                : s.filled ? "w-1.5 bg-[#2E5C45]/50"
-                : "w-1.5 bg-[#dbe7e0]"
+              s.num === currentStep ? "w-5 bg-[#2E6417]"
+                : s.filled ? "w-1.5 bg-[#2E6417]/50"
+                : "w-1.5 bg-[#E8E4DC]"
             }`} />
           ))}
         </div>
@@ -42,11 +42,11 @@ export default function WizardStepper() {
 
       {/* DESKTOP */}
       <div className="hidden md:block mb-6">
-        <div className="relative rounded-2xl border border-[#dbe7e0] bg-white px-8 py-5 shadow-sm">
+        <div className="relative rounded-2xl border border-[#E8E4DC] bg-white px-8 py-5 shadow-sm">
           {/* Track */}
-          <div className="absolute top-1/2 left-[6%] right-[6%] h-[2px] bg-[#dbe7e0] -translate-y-1" />
+          <div className="absolute top-1/2 left-[6%] right-[6%] h-[2px] bg-[#E8E4DC] -translate-y-1" />
           <div
-            className="absolute top-1/2 left-[6%] h-[2px] bg-[#2E5C45] -translate-y-1 transition-all duration-500 ease-out"
+            className="absolute top-1/2 left-[6%] h-[2px] bg-[#2E6417] -translate-y-1 transition-all duration-500 ease-out"
             style={{ width: `${progress * 0.88}%` }}
           />
           <div className="relative flex justify-between">
@@ -67,11 +67,11 @@ export default function WizardStepper() {
                     className={`
                       w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold
                       border-[3px] transition-all duration-300
-                      ${active ? "bg-[#2E5C45] border-[#2E5C45] text-white scale-110 shadow-md shadow-[#2E5C45]/20"
-                        : done ? "bg-[#2E5C45] border-[#2E5C45] text-white hover:bg-[#254a38] hover:border-[#254a38] cursor-pointer"
-                        : "bg-white border-[#dbe7e0] text-gray-400"
+                      ${active ? "bg-[#2E6417] border-[#2E6417] text-white scale-110 shadow-md shadow-[#2E6417]/20"
+                        : done ? "bg-[#2E6417] border-[#2E6417] text-white hover:bg-[#245213] hover:border-[#245213] cursor-pointer"
+                        : "bg-white border-[#E8E4DC] text-gray-400"
                       }
-                      ${canGoToStep ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E5C45] focus-visible:ring-offset-2" : "cursor-default"}
+                      ${canGoToStep ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6417] focus-visible:ring-offset-2" : "cursor-default"}
                     `}
                   >
                     {done ? (
@@ -81,7 +81,7 @@ export default function WizardStepper() {
                     ) : s.num}
                   </button>
                   <span className={`text-[10px] font-semibold tracking-wide ${
-                    active ? "text-[#2E5C45]" : done ? "text-[#2E5C45]/60" : "text-gray-400"
+                    active ? "text-[#2E6417]" : done ? "text-[#2E6417]/60" : "text-gray-400"
                   }`}>
                     {s.label}
                   </span>

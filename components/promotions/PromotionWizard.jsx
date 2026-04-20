@@ -245,7 +245,7 @@ export default function PromotionWizard({ storeId, userId, onDone }) {
   if (success) {
     return (
       <div className="max-w-lg mx-auto text-center py-12">
-        <div className="w-16 h-16 rounded-full bg-[#2E5C45] mx-auto mb-5 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-[#2E6417] mx-auto mb-5 flex items-center justify-center">
           <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -254,7 +254,7 @@ export default function PromotionWizard({ storeId, userId, onDone }) {
         <p className="text-sm text-gray-500 mb-6">You'll be notified when it's approved — usually within 2 hours.</p>
         <button
           onClick={onDone}
-          className="px-6 py-3 rounded-xl bg-[#2E5C45] text-white font-semibold text-sm hover:bg-[#254a38] transition-colors"
+          className="px-6 py-3 rounded-xl bg-[#2E6417] text-white font-semibold text-sm hover:bg-[#245213] transition-colors"
         >
           Back to Promotions
         </button>
@@ -272,7 +272,7 @@ export default function PromotionWizard({ storeId, userId, onDone }) {
           <p className="text-sm font-medium text-amber-800">You have an unfinished promotion draft.</p>
           <div className="flex gap-2 flex-shrink-0">
             <button onClick={discardDraft} className="text-xs font-semibold text-gray-500 hover:text-gray-700">Discard</button>
-            <button onClick={resumeDraft} className="text-xs font-semibold text-[#2E5C45] hover:underline">Resume →</button>
+            <button onClick={resumeDraft} className="text-xs font-semibold text-[#2E6417] hover:underline">Resume →</button>
           </div>
         </div>
       )}
@@ -285,19 +285,19 @@ export default function PromotionWizard({ storeId, userId, onDone }) {
           return (
             <div key={s.num} className="flex items-center gap-1 flex-shrink-0">
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                isCurrent ? 'bg-[#2E5C45] text-white' : isDone ? 'bg-[#2E5C45]/10 text-[#2E5C45]' : 'bg-gray-100 text-gray-400'
+                isCurrent ? 'bg-[#2E6417] text-white' : isDone ? 'bg-[#2E6417]/10 text-[#2E6417]' : 'bg-gray-100 text-gray-400'
               }`}>
                 {isDone ? '✓' : s.displayNum}
                 <span className="hidden sm:inline">{s.label}</span>
               </div>
-              {i < visibleSteps.length - 1 && <div className={`w-4 h-px flex-shrink-0 ${isDone ? 'bg-[#2E5C45]' : 'bg-gray-200'}`} />}
+              {i < visibleSteps.length - 1 && <div className={`w-4 h-px flex-shrink-0 ${isDone ? 'bg-[#2E6417]' : 'bg-gray-200'}`} />}
             </div>
           );
         })}
       </div>
 
       {/* Step content */}
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-6">
+      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6">
         {step === 1 && <Step1Targeting state={state} dispatch={dispatch} />}
         {step === 2 && <Step2Products state={state} dispatch={dispatch} storeId={storeId} />}
         {step === 3 && <Step3Type state={state} dispatch={dispatch} />}
@@ -331,7 +331,7 @@ export default function PromotionWizard({ storeId, userId, onDone }) {
             type="button"
             onClick={goNext}
             disabled={!canNext}
-            className="px-6 py-2.5 rounded-xl bg-[#2E5C45] text-white text-sm font-bold hover:bg-[#254a38] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-2.5 rounded-xl bg-[#2E6417] text-white text-sm font-bold hover:bg-[#245213] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             Continue →
           </button>

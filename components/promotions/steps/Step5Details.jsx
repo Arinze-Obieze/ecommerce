@@ -30,7 +30,7 @@ export default function Step5Details({ state, dispatch }) {
           value={displayName}
           onChange={e => dispatch({ type: 'SET_DISPLAY_NAME', name: e.target.value })}
           placeholder="e.g. Summer Sale, Eid Special"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
         />
         <p className="text-xs text-gray-400 mt-1">{displayName?.length || 0}/30 · This is the badge buyers see on your products</p>
       </div>
@@ -46,7 +46,7 @@ export default function Step5Details({ state, dispatch }) {
           value={displayTag}
           onChange={e => dispatch({ type: 'SET_DISPLAY_TAG', tag: e.target.value })}
           placeholder="e.g. Clearance, Last Chance"
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
         />
         <p className="text-xs text-gray-400 mt-1">{displayTag?.length || 0}/20 · Appears as a small pill next to the badge</p>
       </div>
@@ -61,19 +61,19 @@ export default function Step5Details({ state, dispatch }) {
           value={description}
           onChange={e => dispatch({ type: 'SET_DESCRIPTION', text: e.target.value })}
           placeholder="Explain the promotion to buyers at checkout..."
-          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45] resize-none"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417] resize-none"
         />
       </div>
 
       {/* Promo code */}
       {allowsCode && (
-        <div className="rounded-xl border border-[#dbe7e0] p-4 space-y-3">
+        <div className="rounded-xl border border-[#E8E4DC] p-4 space-y-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={usePromoCode}
               onChange={e => dispatch({ type: 'SET_USE_PROMO_CODE', use: e.target.checked })}
-              className="w-4 h-4 accent-[#2E5C45]"
+              className="w-4 h-4 accent-[#2E6417]"
             />
             <span className="text-sm font-semibold text-gray-700">Require a promo code</span>
           </label>
@@ -84,7 +84,7 @@ export default function Step5Details({ state, dispatch }) {
                 value={promoCode}
                 onChange={e => handleCodeChange(e.target.value)}
                 placeholder="e.g. BIRTHDAY20"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:border-[#2E5C45]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-mono focus:outline-none focus:border-[#2E6417]"
               />
               <p className="text-xs text-gray-400 mt-1">Alphanumeric and hyphens only — auto uppercased</p>
             </div>
@@ -100,7 +100,7 @@ export default function Step5Details({ state, dispatch }) {
             type="datetime-local"
             value={startsAt}
             onChange={e => dispatch({ type: 'SET_STARTS_AT', value: e.target.value })}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
           />
         </div>
 
@@ -113,7 +113,7 @@ export default function Step5Details({ state, dispatch }) {
               type="checkbox"
               checked={hasEndDate}
               onChange={e => dispatch({ type: 'SET_HAS_END_DATE', has: e.target.checked })}
-              className="w-4 h-4 accent-[#2E5C45]"
+              className="w-4 h-4 accent-[#2E6417]"
             />
             <span className="text-xs text-gray-600">Set an end date</span>
           </label>
@@ -123,7 +123,7 @@ export default function Step5Details({ state, dispatch }) {
               value={endsAt}
               min={startsAt}
               onChange={e => dispatch({ type: 'SET_ENDS_AT', value: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
             />
           )}
           {!hasEndDate && <p className="text-xs text-gray-400">Runs until you manually stop it</p>}

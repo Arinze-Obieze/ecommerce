@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 const PRODUCT_SELECT = 'id, store_id, name, slug, sku, stock_quantity, is_active, moderation_status, updated_at';
 const VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';

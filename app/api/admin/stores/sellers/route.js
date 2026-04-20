@@ -4,8 +4,8 @@
 // - seller_id does not match any existing store name (store name = seller_id by our convention)
 // - business_name does not match any existing store name (fallback)
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireAdminApi } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 export async function GET(request) {
   const admin = await requireAdminApi();

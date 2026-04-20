@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { listPaystackBanks, resolvePaystackAccount } from '@/utils/paystackTransfers';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { listPaystackBanks, resolvePaystackAccount } from '@/utils/payments/paystack-transfers';
 
 function normalizeAccountNumber(value) {
   return String(value || '').replace(/\D+/g, '').trim();

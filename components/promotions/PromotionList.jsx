@@ -89,14 +89,14 @@ export default function PromotionList({ storeId, onCreate }) {
   if (promotions.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="w-14 h-14 rounded-2xl bg-[#2E5C45]/10 mx-auto mb-4 flex items-center justify-center">
-          <FiTag className="w-6 h-6 text-[#2E5C45]" />
+        <div className="w-14 h-14 rounded-2xl bg-[#2E6417]/10 mx-auto mb-4 flex items-center justify-center">
+          <FiTag className="w-6 h-6 text-[#2E6417]" />
         </div>
         <h3 className="text-base font-bold text-gray-900 mb-1">No promotions yet</h3>
         <p className="text-sm text-gray-500 mb-6">Create your first promotion to boost sales with discounts.</p>
         <button
           onClick={onCreate}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2E5C45] text-white text-sm font-bold hover:bg-[#254a38] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2E6417] text-white text-sm font-bold hover:bg-[#245213] transition-colors"
         >
           <FiPlus className="w-4 h-4" />
           Create Your First Promotion
@@ -111,8 +111,8 @@ export default function PromotionList({ storeId, onCreate }) {
         const pill = statusPill(promo);
         const type = promo.promotion_types;
         return (
-          <div key={promo.id} className="rounded-2xl border border-[#dbe7e0] bg-white p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#2E5C45]/10 flex items-center justify-center flex-shrink-0 text-xl">
+          <div key={promo.id} className="rounded-2xl border border-[#E8E4DC] bg-white p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#2E6417]/10 flex items-center justify-center flex-shrink-0 text-xl">
               {type?.icon || '🏷️'}
             </div>
 
@@ -144,7 +144,7 @@ export default function PromotionList({ storeId, onCreate }) {
                 <button
                   onClick={() => handleActivate(promo.id)}
                   disabled={activating === promo.id}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2E5C45] text-white text-xs font-bold hover:bg-[#254a38] transition-colors disabled:opacity-40"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2E6417] text-white text-xs font-bold hover:bg-[#245213] transition-colors disabled:opacity-40"
                   title="Activate promotion"
                 >
                   <FiZap className="w-3.5 h-3.5" />

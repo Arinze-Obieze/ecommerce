@@ -1,41 +1,19 @@
-import { LocationProvider } from '@/contexts/LocationContext'
-import { FilterProvider } from '@/contexts/FilterContext'
-import { AuthProvider } from '@/components/AuthProvider'
-import { CartProvider } from '@/contexts/CartContext'
-import { WishlistProvider } from '@/contexts/WishlistContext'
-import { ToastProvider } from '@/contexts/ToastContext'
 import './globals.css'
-import ConditionalFooter from '@/components/ConditionalFooter'   // ← changed
-import ConditionalHeader from '@/components/ConditionalHeader'   // ← changed
-import AnalyticsPageTracker from '@/components/AnalyticsPageTracker'
-import FloatingDashboardCTA from '@/components/FloatingDashboardCTA'
+import AppProviders from '@/components/providers/AppProviders'
+import SiteChrome from '@/components/layout/SiteChrome'
 
 export const metadata = {
-  title: 'Shop Clothing',
-  description: 'Shop quality clothes',
+  title: 'ZOVA | Verified Fashion, Made Easy',
+  description: 'Where trust meets the market. Shop verified fashion from trusted sellers.',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased bg-white text-gray-900">
-        <ToastProvider>
-          <AuthProvider>
-            <CartProvider>
-              <WishlistProvider>
-                <LocationProvider>
-                  <FilterProvider>
-                    <AnalyticsPageTracker />
-                    <ConditionalHeader />  {/* ← changed */}
-                    <FloatingDashboardCTA />
-                    {children}
-                    <ConditionalFooter /> {/* ← changed */}
-                  </FilterProvider>
-                </LocationProvider>
-              </WishlistProvider>
-            </CartProvider>
-          </AuthProvider>
-        </ToastProvider>
+      <body className="font-sans antialiased bg-(--zova-linen) text-(--zova-ink)">
+        <AppProviders>
+          <SiteChrome>{children}</SiteChrome>
+        </AppProviders>
       </body>
     </html>
   )

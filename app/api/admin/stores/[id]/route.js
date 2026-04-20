@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { writeAdminAuditLog } from '@/utils/adminAudit';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { writeAdminAuditLog } from '@/utils/admin/audit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');

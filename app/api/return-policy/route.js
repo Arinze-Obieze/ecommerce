@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { DEFAULT_RETURN_POLICY, normalizeReturnPolicyRecord } from '@/utils/returnPolicy';
+import { DEFAULT_RETURN_POLICY, normalizeReturnPolicyRecord } from '@/utils/catalog/return-policy';
 
 export const dynamic = 'force-dynamic';
 

@@ -20,10 +20,10 @@ export default function WizardShell({ title, subtitle, children }) {
       return { text: "Draft saving unavailable", tone: "text-amber-600 bg-amber-50 border-amber-200" };
     }
     if (draftStatus === "saving") {
-      return { text: `Last saved: ${savedTime} ● Saving…`, tone: "text-[#2E5C45] bg-[#f3faf6] border-[#cfe1d7]" };
+      return { text: `Last saved: ${savedTime} ● Saving…`, tone: "text-[#2E6417] bg-[#EDF5E6] border-[#B8D4A0]" };
     }
     if (draftStatus === "saved" && draftUpdatedAt) {
-      return { text: `Last saved: ${savedTime} ✓`, tone: "text-[#2E5C45] bg-[#f3faf6] border-[#cfe1d7]" };
+      return { text: `Last saved: ${savedTime} ✓`, tone: "text-[#2E6417] bg-[#EDF5E6] border-[#B8D4A0]" };
     }
     if (draftStatus === "error") {
       return { text: "Save failed. Retrying on next change.", tone: "text-red-600 bg-red-50 border-red-200" };
@@ -35,7 +35,7 @@ export default function WizardShell({ title, subtitle, children }) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-[3px] border-[#dbe7e0] border-t-[#2E5C45] rounded-full animate-spin" />
+          <div className="w-10 h-10 border-[3px] border-[#E8E4DC] border-t-[#2E6417] rounded-full animate-spin" />
           <p className="text-sm text-gray-500">Loading store…</p>
         </div>
       </div>
@@ -43,8 +43,8 @@ export default function WizardShell({ title, subtitle, children }) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#dbe7e0] bg-white shadow-sm overflow-hidden">
-      <div className="border-b border-[#dbe7e0]/60 px-4 py-3 sm:px-5 sm:py-4">
+    <div className="rounded-2xl border border-[#E8E4DC] bg-white shadow-sm overflow-hidden">
+      <div className="border-b border-[#E8E4DC]/60 px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-base font-bold text-gray-900 sm:text-lg">{title}</h2>

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeAdminAuditLog } from '@/utils/adminAudit';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeAdminAuditLog } from '@/utils/admin/audit';
 
 export async function POST(request) {
   const admin = await requireAdminApi([ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPPORT_ADMIN]);

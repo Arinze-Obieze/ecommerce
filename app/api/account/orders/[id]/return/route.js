@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
-import { createUserNotification } from '@/utils/notifications';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
+import { createUserNotification } from '@/utils/messaging/notifications';
 
 const MISSING_TABLE_HINT =
   'Database is missing public.order_return_requests. Apply documentation/migrations/2026-04-10_marketplace_ops_extensions.sql and retry.';

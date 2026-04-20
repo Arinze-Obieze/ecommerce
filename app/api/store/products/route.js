@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
-import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { generateProductSku, normalizeSpecifications } from '@/utils/catalog/product-catalog';
+import { normalizeBulkDiscountTiers } from '@/utils/catalog/bulk-pricing';
 
 const PRODUCT_LIST_SELECT = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
 const PRODUCT_LIST_SELECT_FALLBACK = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';

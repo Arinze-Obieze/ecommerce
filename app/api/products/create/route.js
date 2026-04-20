@@ -1,7 +1,7 @@
 // app/api/seller/products/create/route.js
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
-import { getGenderValidationError, normalizeGenderForCategory } from "@/lib/category-gender-rules";
+import { getGenderValidationError, normalizeGenderForCategory } from "@/features/product-wizard/lib/category-gender-rules";
 
 function slugify(text) {
   return (text || "")
