@@ -73,6 +73,8 @@ function wizardReducer(state, action) {
       return { ...state, isVerified: true };
     case "SET_LABEL_INFO":
       return { ...state, ...action.payload };
+    case "SET_MOOD_TAGS":
+      return { ...state, moodTags: action.payload };
     case "HYDRATE":
       return { ...INITIAL_WIZARD_STATE, ...action.payload };
     case "SYNC_DRAFT_IMAGES":

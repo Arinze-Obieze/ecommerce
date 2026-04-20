@@ -313,6 +313,7 @@ export default function Step2() {
     price: "",
     quantity: "",
     useVariantMedia: false,
+    selectedSizes: [],
   });
 
   const [productImageOrder, setProductImageOrder] = useState([]);
@@ -413,14 +414,15 @@ export default function Step2() {
 
   const openAddForm = () => {
     setFormMode("add"); setEditingVariantId(null);
-    setVariantForm({ attributes: [{ name: "Color", value: "" }], colorHex: "", price: "", quantity: "", useVariantMedia: false });
+    setVariantForm({ attributes: [{ name: "Color", value: "" }], colorHex: "", price: "", quantity: "", useVariantMedia: false, selectedSizes: [] });
     setFormOpen(true);
   };
 
   const openEditForm = (variant) => {
     setFormMode("edit"); setEditingVariantId(variant.id);
     const normalized = normalizeExistingVariant(variant);
-    setVariantForm({ attributes: normalized.attributes || [{ name: "Color", value: "" }], colorHex: normalized.colorHex || "", price: String(normalized.price || ""), quantity: String(normalized.quantity || ""), useVariantMedia: Boolean(normalized.useVariantMedia) });
+    const existingSize = normalized.size && normalized.size !== "OS" ? [normalized.size] : [];
+    setVariantForm({ attributes: normalized.attributes || [{ name: "Color", value: "" }], colorHex: normalized.colorHex || "", price: String(normalized.price || ""), quantity: String(normalized.quantity || ""), useVariantMedia: Boolean(normalized.useVariantMedia), selectedSizes: existingSize });
     setFormOpen(true);
   };
 
@@ -491,39 +493,73 @@ export default function Step2() {
   );
 
   const saveVariantForm = () => {
-    const attributes = (variantForm.attributes || [])
+    const baseAttributes = (variantForm.attributes || [])
       .map((entry) => ({ name: normalizeToken(entry?.name), value: normalizeToken(entry?.value) }))
       .filter((entry) => entry.name);
 
-    if (!attributes.some((e) => e.name.toLowerCase() === "color")) { showError("Add Color as one of the variant types."); return; }
-    if (attributes.some((e, i) => attributes.findIndex((x) => x.name.toLowerCase() === e.name.toLowerCase()) !== i)) { showError("Variant types must not repeat."); return; }
-    const missingValue = attributes.find((e) => !e.value);
-    if (missingValue) { showError(`Enter a value for ${missingValue.name}.`); return; }
-    if (!attributes.find((e) => e.name.toLowerCase() === "color")?.value) { showError("Select a color."); return; }
+    if (!baseAttributes.some((e) => e.name.toLowerCase() === "color")) { showError("Add Color as one of the variant types."); return; }
+    if (baseAttributes.some((e, i) => baseAttributes.findIndex((x) => x.name.toLowerCase() === e.name.toLowerCase()) !== i)) { showError("Variant types must not repeat."); return; }
+    if (!baseAttributes.find((e) => e.name.toLowerCase() === "color")?.value) { showError("Select a color."); return; }
 
-    const { color, size } = deriveColorSizeFromAttributes(attributes);
+    const hasSizeRow = baseAttributes.some((e) => e.name.toLowerCase() === "size");
+    const sizesToSave = hasSizeRow
+      ? (variantForm.selectedSizes || []).filter(Boolean)
+      : ["OS"];
+
+    if (hasSizeRow && sizesToSave.length === 0) { showError("Select at least one size."); return; }
+
+    const nonSizeAttrs = baseAttributes.filter((e) => e.name.toLowerCase() !== "size");
+    const missingValue = nonSizeAttrs.find((e) => !e.value);
+    if (missingValue) { showError(`Enter a value for ${missingValue.name}.`); return; }
+
     const price = Number.parseFloat(variantForm.price || "0") || 0;
     const quantity = Number.parseInt(variantForm.quantity || "0", 10) || 0;
-
     if (!(price > 0)) { showError("Price must be greater than 0."); return; }
     if (!(quantity >= 1)) { showError("Stock must be at least 1."); return; }
 
-    const nextVariant = {
-      id: editingVariantId || makeVariantId(), color, colorHex: normalizeToken(variantForm.colorHex), size,
-      attr1Name: attributes[0]?.name || "Color", attr1Value: attributes[0]?.value || "",
-      attr2Name: attributes[1]?.name || "", attr2Value: attributes[1]?.value || "",
-      attributes, price, quantity, useVariantMedia: Boolean(variantForm.useVariantMedia),
-    };
-
-    if (variants.some((v) => { if (formMode === "edit" && v.id === editingVariantId) return false; return variantKey(v.color, v.size) === variantKey(nextVariant.color, nextVariant.size); })) {
-      showError("This variant combination already exists."); return;
-    }
-
     if (formMode === "edit") {
+      // Edit: single size only
+      const size = sizesToSave[0] || "OS";
+      const attributes = hasSizeRow
+        ? [...nonSizeAttrs, { name: "Size", value: size }]
+        : nonSizeAttrs;
+      const { color } = deriveColorSizeFromAttributes(attributes);
+      const nextVariant = {
+        id: editingVariantId, color, colorHex: normalizeToken(variantForm.colorHex), size,
+        attr1Name: attributes[0]?.name || "Color", attr1Value: attributes[0]?.value || "",
+        attr2Name: attributes[1]?.name || "", attr2Value: attributes[1]?.value || "",
+        attributes, price, quantity, useVariantMedia: Boolean(variantForm.useVariantMedia),
+      };
+      if (variants.some((v) => v.id !== editingVariantId && variantKey(v.color, v.size) === variantKey(nextVariant.color, nextVariant.size))) {
+        showError("This variant combination already exists."); return;
+      }
       setVariants(variants.map((v) => (v.id === editingVariantId ? nextVariant : v)));
     } else {
-      setVariants([...variants, nextVariant]);
+      // Add: one variant per selected size
+      const { color } = deriveColorSizeFromAttributes(nonSizeAttrs);
+      const skipped = [];
+      const toAdd = [];
+
+      sizesToSave.forEach((size) => {
+        const attributes = hasSizeRow
+          ? [...nonSizeAttrs, { name: "Size", value: size }]
+          : nonSizeAttrs;
+        if (variants.some((v) => variantKey(v.color, v.size) === variantKey(color, size))) {
+          skipped.push(size); return;
+        }
+        toAdd.push({
+          id: makeVariantId(), color, colorHex: normalizeToken(variantForm.colorHex), size,
+          attr1Name: attributes[0]?.name || "Color", attr1Value: attributes[0]?.value || "",
+          attr2Name: attributes[1]?.name || "", attr2Value: attributes[1]?.value || "",
+          attributes, price, quantity, useVariantMedia: Boolean(variantForm.useVariantMedia),
+        });
+      });
+
+      if (toAdd.length === 0) { showError("All selected sizes already exist for this color."); return; }
+      if (skipped.length > 0) showError(`Skipped already-existing sizes: ${skipped.join(", ")}`);
+      setVariants([...variants, ...toAdd]);
     }
+
     setFormOpen(false); setEditingVariantId(null);
   };
 
@@ -806,6 +842,39 @@ export default function Step2() {
                                   setVariantForm((prev) => { const next = [...prev.attributes]; next[index] = { ...next[index], name: "Color", value: name }; return { ...prev, attributes: next, colorHex: normalizeHex(hex) }; })
                                 }
                               />
+                            ) : selectedName.toLowerCase() === "size" && presets ? (
+                              <div className="col-span-2 mt-1 space-y-1.5">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {presets.map((opt) => {
+                                    const active = (variantForm.selectedSizes || []).includes(opt);
+                                    return (
+                                      <button
+                                        key={opt}
+                                        type="button"
+                                        onClick={() => setVariantForm((prev) => {
+                                          const cur = prev.selectedSizes || [];
+                                          return { ...prev, selectedSizes: active ? cur.filter((s) => s !== opt) : [...cur, opt] };
+                                        })}
+                                        className="px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all"
+                                        style={{
+                                          background: active ? "#eaf2e3" : "#fff",
+                                          borderColor: active ? "#2E6417" : "#e5e7eb",
+                                          color: active ? "#2E6417" : "#6b7280",
+                                          boxShadow: active ? "0 0 0 1.5px #2E6417" : "none",
+                                        }}
+                                      >
+                                        {opt}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                {(variantForm.selectedSizes || []).length > 0 && (
+                                  <p className="text-[11px] text-[#2E6417] font-medium">
+                                    {(variantForm.selectedSizes || []).length} size{(variantForm.selectedSizes || []).length > 1 ? "s" : ""} selected
+                                    {formMode === "add" && (variantForm.selectedSizes || []).length > 1 ? " — will create one variant per size" : ""}
+                                  </p>
+                                )}
+                              </div>
                             ) : presets ? (
                               <select
                                 className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
@@ -879,10 +948,19 @@ export default function Step2() {
                     Variant SKU preview:{" "}
                     <span className="font-mono font-semibold text-[#2E5C45]">
                       {(() => {
-                        const attrs = (variantForm.attributes || []).map((e) => ({ name: normalizeToken(e?.name), value: normalizeToken(e?.value) })).filter((e) => e.name && e.value);
-                        const { color, size } = deriveColorSizeFromAttributes(attrs);
+                        const hasSizeAttr = (variantForm.attributes || []).some((e) => normalizeToken(e?.name).toLowerCase() === "size");
+                        const firstSize = hasSizeAttr ? ((variantForm.selectedSizes || [])[0] || "") : "";
+                        const attrsForPreview = (variantForm.attributes || [])
+                          .map((e) => {
+                            if (normalizeToken(e?.name).toLowerCase() === "size") return { name: "Size", value: firstSize };
+                            return { name: normalizeToken(e?.name), value: normalizeToken(e?.value) };
+                          })
+                          .filter((e) => e.name && e.value);
+                        const { color, size } = deriveColorSizeFromAttributes(attrsForPreview);
                         if (!normalizeToken(state.baseSku)) return "Set base SKU first";
-                        return buildVariantSkuFromPattern(state.baseSku, variantSkuPattern, { color, size, attributes: attrs });
+                        const preview = buildVariantSkuFromPattern(state.baseSku, variantSkuPattern, { color, size, attributes: attrsForPreview });
+                        const extra = hasSizeAttr && (variantForm.selectedSizes || []).length > 1 ? ` +${(variantForm.selectedSizes || []).length - 1} more` : "";
+                        return preview + extra;
                       })()}
                     </span>
                   </div>
@@ -914,6 +992,55 @@ export default function Step2() {
           </div>
         )}
 
+      </div>
+
+      {/* ── Mood Tags ── */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+        <div>
+          <h3 className="text-sm font-bold text-gray-900">Shop by Mood</h3>
+          <p className="text-xs text-gray-500 mt-0.5">Tag this product with moods so buyers can discover it through mood-based browsing. Select all that apply.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { key: "owambe",         emoji: "🎉", label: "Owambe Vibes",    sub: "Party" },
+            { key: "casual_chill",   emoji: "😎", label: "Casual & Chill",  sub: "Everyday" },
+            { key: "office_ready",   emoji: "💼", label: "Office Ready",    sub: "Work" },
+            { key: "date_night",     emoji: "🌙", label: "Date Night",      sub: "Night Out" },
+            { key: "sunday_best",    emoji: "⛪", label: "Sunday Best",     sub: "Sunday" },
+            { key: "street_trendy",  emoji: "🛹", label: "Street Style",    sub: "Trendy" },
+            { key: "soft_luxury",    emoji: "✨", label: "Soft Luxury",     sub: "Elevated" },
+            { key: "travel_weekend", emoji: "✈️", label: "Travel & Weekend", sub: "Outing" },
+          ].map(({ key, emoji, label, sub }) => {
+            const selected = (state.moodTags || []).includes(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => {
+                  const current = state.moodTags || [];
+                  const next = selected ? current.filter((t) => t !== key) : [...current, key];
+                  dispatch({ type: "SET_MOOD_TAGS", payload: next });
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all"
+                style={{
+                  background: selected ? "#eaf2e3" : "#fff",
+                  borderColor: selected ? "#2E6417" : "#e5e7eb",
+                  color: selected ? "#2E6417" : "#374151",
+                  boxShadow: selected ? "0 0 0 1.5px #2E6417" : "none",
+                }}
+              >
+                <span>{emoji}</span>
+                <span className="font-semibold">{label}</span>
+                <span className="text-[11px] font-normal opacity-60">{sub}</span>
+              </button>
+            );
+          })}
+        </div>
+        {(state.moodTags || []).length > 0 && (
+          <p className="text-xs text-[#2E6417] font-medium">
+            {(state.moodTags || []).length} mood{(state.moodTags || []).length > 1 ? "s" : ""} selected
+          </p>
+        )}
       </div>
 
       <WizardNav

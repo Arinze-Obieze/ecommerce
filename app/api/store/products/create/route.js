@@ -537,55 +537,6 @@ export async function POST(request) {
       }
     }
 
-    // 10. Mirror into storefront catalog table so it appears in /store/dashboard/products
-    try {
-      const imageUrls = imgSuccesses
-        .map((entry) => entry.record?.supabase_url)
-        .filter(Boolean);
-      const storefrontSpecifications = normalizeSpecifications(wd.specifications).value || null;
-      const slug = sanitizeSlug(`${wd.slug || productName || "product"}-${baseSku}`);
-      const storefrontPayload = {
-        store_id: store.id,
-        name: productName,
-        slug: slug || baseSku.toLowerCase(),
-        sku: baseSku,
-        description,
-        price: basePrice,
-        discount_price: null,
-        bulk_discount_tiers: bulkDiscountTiers,
-        stock_quantity: totalQty,
-        is_active: false,
-        image_urls: imageUrls,
-        video_urls: [],
-        specifications: storefrontSpecifications,
-        moderation_status: "pending_review",
-        submitted_at: now,
-        reviewed_at: null,
-        reviewed_by: null,
-        rejection_reason: null,
-        published_at: null,
-      };
-
-      const { data: existingStorefront } = await supabase
-        .from("products")
-        .select("id")
-        .eq("store_id", store.id)
-        .eq("sku", baseSku)
-        .maybeSingle();
-
-      if (existingStorefront?.id) {
-        await supabase
-          .from("products")
-          .update(storefrontPayload)
-          .eq("id", existingStorefront.id)
-          .eq("store_id", store.id);
-      } else {
-        await supabase.from("products").insert(storefrontPayload);
-      }
-    } catch (mirrorErr) {
-      console.warn("[Create] Storefront mirror failed:", mirrorErr?.message || mirrorErr);
-    }
-
     // 11. Print log — column names from R code
     if (wd.printCompleted && wd.printCopies > 0) {
       const { error: printErr } = await supabase.from("barcode_print_log").insert({
@@ -612,64 +563,24 @@ export async function POST(request) {
     });
     if (verifyErr) console.warn("[Create] Verify log failed:", verifyErr.message);
 
-    // 12. Insert into the marketplace `products` table so the product appears in the dashboard
-    const publicImageUrls = imgSuccesses.map(r => r.record.supabase_url).filter(Boolean);
-
-    // Generate a unique slug within this store
-    let productSlug = String(productName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || baseSku.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-    const { data: slugRows } = await supabase
+    // 12. Fetch the marketplace row auto-created by trg_sync_product_to_public
+    const { data: marketplaceProduct, error: fetchErr } = await supabase
       .from("products")
-      .select("slug")
-      .eq("store_id", store.id)
-      .ilike("slug", `${productSlug}%`)
-      .limit(20);
-    const usedSlugs = new Set((slugRows || []).map(r => r.slug));
-    if (usedSlugs.has(productSlug)) {
-      const suffixes = [...usedSlugs].map(s => { const m = s.match(/-(\d+)$/); return m ? parseInt(m[1], 10) : 0; });
-      productSlug = `${productSlug}-${Math.max(0, ...suffixes) + 1}`;
-    }
-
-    const specsForMarketplace = normalizeSpecifications(wd.specifications).value;
-
-    const marketplaceRecord = {
-      store_id: store.id,
-      name: productName,
-      slug: productSlug,
-      sku: baseSku,
-      description,
-      price: basePrice,
-      discount_price: null,
-      stock_quantity: totalQty,
-      is_active: false,
-      image_urls: publicImageUrls,
-      video_urls: [],
-      specifications: specsForMarketplace,
-      moderation_status: "draft",
-      submitted_at: null,
-      reviewed_at: null,
-      reviewed_by: null,
-      rejection_reason: null,
-      published_at: null,
-    };
-
-    const { data: marketplaceProduct, error: marketplaceErr } = await supabase
-      .from("products")
-      .insert(marketplaceRecord)
       .select("id")
-      .single();
+      .eq("store_id", store.id)
+      .eq("sku", baseSku)
+      .maybeSingle();
 
-    if (marketplaceErr) {
-      console.error("[Create] Marketplace insert failed:", marketplaceErr.message);
-      await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
-      productId = null;
-      return NextResponse.json({ success: false, error: `Failed to publish to marketplace: ${marketplaceErr.message}` }, { status: 500 });
+    if (fetchErr) {
+      console.warn("[Create] Could not fetch synced marketplace product:", fetchErr.message);
     }
-    console.log("[Create] Marketplace product:", marketplaceProduct.id);
+    const marketplaceId = marketplaceProduct?.id || null;
+    console.log("[Create] Synced marketplace product id:", marketplaceId);
 
     // 13. Insert mood tags
-    if (Array.isArray(wd.moodTags) && wd.moodTags.length > 0) {
+    if (marketplaceId && Array.isArray(wd.moodTags) && wd.moodTags.length > 0) {
       const moodRecs = wd.moodTags.map(key => ({
-        product_id: marketplaceProduct.id,
+        product_id: marketplaceId,
         mood_key: key,
         mood_fit_score: 0.7,
         is_active: true,
@@ -691,7 +602,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      product: { id: productId, marketplace_id: marketplaceProduct.id, base_sku: baseSku, name: productName, status: "draft" },
+      product: { id: productId, marketplace_id: marketplaceId, base_sku: baseSku, name: productName, status: "draft" },
       variants_created: varRecs.length,
       images_uploaded: imgSuccesses.length,
       bulk_discount_tiers_saved: bulkDiscountTiers?.length || 0,
