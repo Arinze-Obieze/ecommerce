@@ -193,10 +193,58 @@ const ShopByMood = () => {
         .mood-chip-card:hover .mood-img { transform: scale(1.04); }
         .mood-expand-btn:hover { border-color: #2E6417 !important; color: #2E6417 !important; }
         .mood-chips-row::-webkit-scrollbar { display: none; }
+
+        @media (max-width: 640px) {
+          .mood-section-header,
+          .mood-feature-grid,
+          .mood-expand-wrap {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+
+          .mood-section-header {
+            margin-bottom: 1.35rem !important;
+          }
+
+          .mood-feature-grid {
+            gap: 12px !important;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) !important;
+            margin-bottom: 14px !important;
+          }
+
+          .mood-hero-card {
+            height: 312px !important;
+            border-radius: 14px !important;
+          }
+
+          .mood-side-card {
+            min-height: 150px !important;
+            border-radius: 14px !important;
+          }
+
+          .mood-chips-row {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .mood-feature-grid {
+            gap: 10px !important;
+          }
+
+          .mood-hero-card {
+            height: 292px !important;
+          }
+
+          .mood-side-card {
+            min-height: 141px !important;
+          }
+        }
       `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', padding: '0 1rem' }}>
+      <div className="mood-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', padding: '0 1rem' }}>
         <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>Shop by mood</span>
         <Link href="/mood" style={{ fontSize: 13, fontWeight: 500, color: '#2E6417', textDecoration: 'none' }}>
           See all moods →
@@ -204,7 +252,7 @@ const ShopByMood = () => {
       </div>
 
       {/* Hero + Side grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 1rem', marginBottom: 10 }}>
+      <div className="mood-feature-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 1rem', marginBottom: 10 }}>
         <HeroCard mood={HERO_MOOD} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {SIDE_MOODS.map(mood => (
@@ -234,7 +282,7 @@ const ShopByMood = () => {
       </div>
 
       {/* Expand toggle */}
-      <div style={{ padding: '0 1rem', marginTop: 10 }}>
+      <div className="mood-expand-wrap" style={{ padding: '0 1rem', marginTop: 10 }}>
         <button
           onClick={() => setExpanded(prev => !prev)}
           className="mood-expand-btn"
