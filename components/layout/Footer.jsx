@@ -70,11 +70,11 @@ const NAV_SECTIONS = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy",     href: "/privacy-policy"      },
-      { label: "Cookie Policy",      href: "/cookie-policy"       },
-      { label: "Terms & Conditions", href: "/terms-and-conditions" },
-      { label: "IP Notice",          href: "/ip-notice"           },
-      { label: "Ad Choice",          href: "/ad-choice"           },
+      { label: "Privacy Policy",     href: "/legal/privacy-policy"      },
+      { label: "Cookie Policy",      href: "/legal/cookie-policy"       },
+      { label: "Terms & Conditions", href: "/legal/terms-and-conditions" },
+      { label: "IP Notice",          href: "/legal/ip-notice"           },
+      { label: "Ad Choice",          href: "/legal/ad-choice"           },
     ],
   },
 ];
@@ -99,11 +99,11 @@ const TRUST_BADGES = [
 ];
 
 const BOTTOM_LINKS = [
-  { label: "Privacy Center",     href: "/privacy-policy"      },
-  { label: "Cookie Policy",      href: "/cookie-policy"       },
-  { label: "Terms & Conditions", href: "/terms-and-conditions" },
-  { label: "IP Notice",          href: "/ip-notice"           },
-  { label: "Ad Choice",          href: "/ad-choice"           },
+  { label: "Privacy Center",     href: "/legal/privacy-policy"      },
+  { label: "Cookie Policy",      href: "/legal/cookie-policy"       },
+  { label: "Terms & Conditions", href: "/legal/terms-and-conditions" },
+  { label: "IP Notice",          href: "/legal/ip-notice"           },
+  { label: "Ad Choice",          href: "/legal/ad-choice"           },
 ];
 
 export default function Footer() {

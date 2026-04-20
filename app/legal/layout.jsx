@@ -92,9 +92,7 @@ export default function LegalLayout({ children }) {
     <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
+
         .toc-link { transition: color 0.15s, padding-left 0.15s; }
         .toc-link:hover { color: #00B86B !important; padding-left: 4px; }
         .legal-nav-link { transition: all 0.15s; }

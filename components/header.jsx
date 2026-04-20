@@ -16,32 +16,32 @@ import { createClient } from "@/utils/supabase/client";
 // ============================================================
 const THEME = {
   colors: {
-    // Primary greens
-    primary: '#00B86B',           // ZOVA Green (for accents)
-    primaryHover: '#0F7A4F',       // Darker green for hover
-    deepEmerald: '#0A3D2E',        // Deep emerald - HEADER BACKGROUND
-    gradientEnd: '#0F7A4F',
-    greenTint: '#EDFAF3',          // Light green tint for backgrounds
-    greenBorder: '#A8DFC4',        // Soft green border
-    
+    // Brand primaries
+    primary: '#2E6417',           // Zova Forest — primary green
+    primaryHover: '#1e4410',      // Darker forest for hover
+    primaryTint: '#eaf2e3',       // Light green tint for backgrounds
+    primaryBorder: '#c2d9b4',     // Soft green border
+
+    // Brand accent
+    gold: '#EC9C00',              // Gold Harvest — accent
+    goldTint: '#FEF3C7',          // Light gold tint
+
     // Neutrals
     white: '#FFFFFF',
-    pageBg: '#F9FAFB',
-    softGray: '#F5F5F5',
-    darkCharcoal: '#111111',
-    mediumGray: '#666666',
-    mutedText: '#888888',
-    border: '#E8E8E8',
-    cardBorder: '#EFEFEF',
-    
-    // Accent colors
+    softLinen: '#F5F1EA',         // Soft Linen — brand background
+    softGray: '#EDE8DF',          // Slightly darker linen for hover
+    onyx: '#191B19',              // Onyx Black — typography
+    mediumGray: '#5A5A5A',
+    mutedText: '#9A9A9A',
+    border: '#DDD8CF',
+
+    // Functional
     saleRed: '#E53935',
-    trendingOrange: '#EA580C',
-    starYellow: '#F59E0B',
-    whatsappGreen: '#25D366',
+    greenBorder: '#c2d9b4',
+    greenTint: '#eaf2e3',
   },
   shadows: {
-    header: '0 4px 20px rgba(0, 0, 0, 0.15)',
+    header: '0 4px 20px rgba(46, 100, 23, 0.12)',
     cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',
     dropdown: '0 12px 32px rgba(0, 0, 0, 0.15)',
   },
@@ -61,7 +61,7 @@ const HeaderLogo = () => {
         <div className="relative w-14 h-14 shrink-0 transition-transform duration-300 group-hover:scale-110">
           {!logoError ? (
             <Image
-              src="/logo.png"
+              src="/icon_only.png"
               alt="ZOVA"
               fill
               className="object-contain"
@@ -83,7 +83,7 @@ const HeaderLogo = () => {
           <span
             className="text-3xl font-black tracking-tight"
             style={{
-              color: THEME.colors.darkCharcoal,
+              color: THEME.colors.onyx,
               fontFamily: "'Poppins', sans-serif",
               letterSpacing: '-0.02em'
             }}
@@ -92,7 +92,7 @@ const HeaderLogo = () => {
           </span>
           <span
             className="text-[11px] font-medium tracking-[0.12em] uppercase hidden sm:block"
-            style={{ color: THEME.colors.mediumGray }}
+            style={{ color: THEME.colors.gold }}
           >
             Verified Quality
           </span>
@@ -111,10 +111,10 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
       <div
         className="flex items-center rounded-full transition-all duration-200"
         style={{
-          backgroundColor: THEME.colors.softGray,
+          backgroundColor: THEME.colors.white,
           backdropFilter: 'blur(10px)',
           border: `1.5px solid ${focused ? THEME.colors.primary : THEME.colors.border}`,
-          boxShadow: focused ? `0 0 0 3px rgba(0, 184, 107, 0.3)` : "none",
+          boxShadow: focused ? `0 0 0 3px rgba(46, 100, 23, 0.15)` : "none",
         }}
       >
         <FiSearch
@@ -124,7 +124,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
         <input
           type="text"
           className="flex-1 pl-2.5 pr-3 py-2.5 bg-transparent text-sm outline-none placeholder-gray-400"
-          style={{ color: THEME.colors.darkCharcoal }}
+          style={{ color: THEME.colors.onyx }}
           placeholder="Search products, brands..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -152,10 +152,10 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
         <button
           onClick={onSubmit}
           className="mr-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 shrink-0"
-          style={{ 
-            backgroundColor: THEME.colors.primary, 
+          style={{
+            backgroundColor: THEME.colors.primary,
             color: THEME.colors.white,
-            boxShadow: '0 2px 8px rgba(0, 184, 107, 0.4)'
+            boxShadow: '0 2px 8px rgba(46, 100, 23, 0.35)'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = THEME.colors.primaryHover;
@@ -200,7 +200,7 @@ const IconButton = ({ onClick, children, label }) => (
     type="button"
     aria-label={label}
     className="relative p-2.5 rounded-xl transition-all duration-200"
-    style={{ color: THEME.colors.darkCharcoal }}
+    style={{ color: THEME.colors.onyx }}
     onMouseEnter={(e) => {
       e.currentTarget.style.backgroundColor = THEME.colors.softGray;
       e.currentTarget.style.color = THEME.colors.primary;
@@ -208,7 +208,7 @@ const IconButton = ({ onClick, children, label }) => (
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.backgroundColor = "transparent";
-      e.currentTarget.style.color = THEME.colors.darkCharcoal;
+      e.currentTarget.style.color = THEME.colors.onyx;
       e.currentTarget.style.transform = 'scale(1)';
     }}
   >
@@ -251,11 +251,11 @@ const CartIcon = () => {
         {cartCount > 0 && (
           <span
             className="absolute -top-1 -right-1 text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2"
-            style={{ 
-              backgroundColor: THEME.colors.primary, 
-              color: THEME.colors.white, 
-              borderColor: THEME.colors.white,
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)'
+            style={{
+              backgroundColor: THEME.colors.gold,
+              color: THEME.colors.onyx,
+              borderColor: THEME.colors.softLinen,
+              boxShadow: '0 2px 6px rgba(236, 156, 0, 0.4)'
             }}
           >
             {cartCount}
@@ -287,7 +287,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
     <Link href={href || "#"}>
       <span
         className="flex items-center px-4 py-2.5 text-sm cursor-pointer transition-all duration-200"
-        style={{ color: danger ? THEME.colors.saleRed : THEME.colors.darkCharcoal }}
+        style={{ color: danger ? THEME.colors.saleRed : THEME.colors.onyx }}
         onClick={() => { onClick?.(); setIsOpen(false); }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = danger ? '#FFF1F2' : THEME.colors.greenTint;
@@ -296,7 +296,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = danger ? THEME.colors.saleRed : THEME.colors.darkCharcoal;
+          e.currentTarget.style.color = danger ? THEME.colors.saleRed : THEME.colors.onyx;
           e.currentTarget.style.paddingLeft = '16px';
         }}
       >
@@ -312,16 +312,16 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         onClick={() => setIsOpen(!isOpen)}
         type="button"
         className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-200"
-        style={{ color: THEME.colors.darkCharcoal }}
+        style={{ color: THEME.colors.onyx }}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = THEME.colors.softGray;
+          e.currentTarget.style.backgroundColor = THEME.colors.primaryTint;
           e.currentTarget.style.color = THEME.colors.primary;
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = THEME.colors.darkCharcoal;
+          e.currentTarget.style.color = THEME.colors.onyx;
         }}
       >
         <div
@@ -332,7 +332,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         >
           <FiUser 
             className="w-4 h-4 transition-colors" 
-            style={{ color: isOpen ? THEME.colors.white : THEME.colors.darkCharcoal }}
+            style={{ color: isOpen ? THEME.colors.white : THEME.colors.onyx }}
           />
         </div>
         <span
@@ -342,7 +342,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
           {/* Menu */}
         </span>
         <div className="hidden lg:flex flex-col items-start leading-none gap-0.5">
-          <span className="text-xs font-bold" style={{ color: THEME.colors.darkCharcoal }}>
+          <span className="text-xs font-bold" style={{ color: THEME.colors.onyx }}>
             {user ? displayName.split(" ")[0] : "Account"}
           </span>
           {isAdmin && (
@@ -370,8 +370,8 @@ const UserMenu = ({ user, signOut, adminRole }) => {
           <div
             className="absolute right-0 mt-2 w-52 rounded-2xl overflow-hidden z-50"
             style={{
-              backgroundColor: THEME.colors.white,
-              border: `1px solid ${THEME.colors.greenBorder}`,
+              backgroundColor: THEME.colors.softLinen,
+              border: `1px solid ${THEME.colors.primaryBorder}`,
               boxShadow: THEME.shadows.dropdown,
             }}
           >
@@ -382,7 +382,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
                   className="px-4 py-3.5"
                   style={{ borderBottom: `1px solid ${THEME.colors.border}` }}
                 >
-                  <p className="text-sm font-bold truncate" style={{ color: THEME.colors.darkCharcoal }}>
+                  <p className="text-sm font-bold truncate" style={{ color: THEME.colors.onyx }}>
                     {displayName}
                   </p>
                   <p className="text-xs truncate mt-0.5" style={{ color: THEME.colors.mediumGray }}>
@@ -493,7 +493,7 @@ const Header = () => {
     <header
       className="sticky top-0 z-100 transition-all duration-300"
       style={{
-        backgroundColor: THEME.colors.white,
+        backgroundColor: THEME.colors.softLinen,
         borderBottom: `1px solid ${scrolled ? THEME.colors.primary : THEME.colors.border}`,
         boxShadow: scrolled ? THEME.shadows.header : "none",
       }}

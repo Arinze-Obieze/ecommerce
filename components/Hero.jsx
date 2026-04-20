@@ -129,7 +129,11 @@ const Hero = () => {
 
   const navItems = [
     { name: 'Categories',   href: '#' },
-    { name: 'New Arrivals', href: '/shop?sortBy=newest' },
+    // ↓ Uses `sort=new_arrivals` so the route sorts by freshness_score DESC
+    //   (via the product_scores table, not a simple created_at sort).
+    { name: 'New Arrivals', href: '/shop?sort=new_arrivals' },
+    // ↓ `onSale=true` now resolves BOTH discount_price products AND
+    //   any product covered by an active promotion in the promotions table.
     { name: 'Deals',        href: '/shop?onSale=true' },
     { name: 'Top Stores',   href: '/stores' },
   ];
@@ -241,6 +245,7 @@ const Hero = () => {
                   {banner?.cta_text || 'Shop Now'}
                   <FiArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
+                {/* Deals button now navigates with onSale=true */}
                 <Link href="/shop?onSale=true" className="flex items-center gap-1.5 px-7 py-3 bg-white/12 backdrop-blur-sm text-white font-semibold rounded-xl text-[13px] border border-white/20 hover:bg-white/22 transition-all duration-300">
                   View Deals <FiChevronRight className="w-3.5 h-3.5" />
                 </Link>

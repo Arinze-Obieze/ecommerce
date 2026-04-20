@@ -41,7 +41,7 @@ const SkeletonCard = ({ delay = 0 }) => (
 );
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
-export default function ProductGrid({ products, loading, error, meta, surface = null, trackingMeta = null }) {
+export default function ProductGrid({ products, loading, error, meta, surface = null, trackingMeta = null, gridClassName = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" }) {
   const { clearAllFilters, hasActiveFilters } = useFilters();
 
   // ── Loading ──
@@ -49,7 +49,7 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
     return (
       <div
         style={{ display: 'grid', gap: 10 }}
-        className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5"
+        className={gridClassName}
       >
         {[...Array(8)].map((_, i) => <SkeletonCard key={i} delay={i * 50} />)}
       </div>
@@ -184,7 +184,7 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
       {/* Grid */}
       <div
         style={{ display: 'grid', gap: 10 }}
-        className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5"
+        className={gridClassName}
       >
         {products.map((product, index) => (
           <ProductImpressionTracker
