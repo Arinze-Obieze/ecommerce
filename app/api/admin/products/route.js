@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/utils/admin/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { getPagination, paginationMeta } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 
 export async function GET(request) {
   const admin = await requireAdminApi();
@@ -20,18 +22,19 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const moderationStatus = String(searchParams.get('moderationStatus') || '').trim();
+  const { page, limit, from, to } = getPagination(searchParams, { defaultLimit: 25, maxLimit: 100 });
 
   let query = admin.adminClient
     .from('products')
-    .select('id, name, slug, store_id, price, discount_price, stock_quantity, is_active, moderation_status, submitted_at, reviewed_at, reviewed_by, rejection_reason, created_at')
+    .select('id, name, slug, store_id, price, discount_price, stock_quantity, is_active, moderation_status, submitted_at, reviewed_at, reviewed_by, rejection_reason, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(300);
+    .range(from, to);
 
   if (moderationStatus) {
     query = query.eq('moderation_status', moderationStatus);
   }
 
-  const { data: products, error } = await query;
+  const { data: products, error, count } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -44,11 +47,12 @@ export async function GET(request) {
 
   const storeMap = new Map((stores || []).map((s) => [s.id, s]));
 
-  return NextResponse.json({
+  return privateJson({
     success: true,
     data: (products || []).map((product) => ({
       ...product,
       store: storeMap.get(product.store_id) || null,
     })),
+    meta: paginationMeta({ page, limit, total: count || 0 }),
   });
 }

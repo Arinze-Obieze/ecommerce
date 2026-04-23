@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { writeAdminAuditLog } from '@/utils/admin/audit';
+import { invalidateProductCache } from '@/utils/platform/cache-invalidation';
 
 export async function POST(request) {
   const admin = await requireAdminApi([ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPPORT_ADMIN]);
@@ -92,6 +93,8 @@ export async function POST(request) {
       ...(decision === 'reject' ? { rejectionReason } : {}),
     },
   });
+
+  invalidateProductCache(after);
 
   return NextResponse.json({ success: true, data: after });
 }

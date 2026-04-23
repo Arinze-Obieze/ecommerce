@@ -54,7 +54,7 @@ export async function GET() {
         count: sellerCount || 0,
         averageRating,
       },
-    });
+    }, { policy: 'publicShort' });
   } catch (error) {
     console.error('Server error fetching hero banner data:', error);
     return errorJson('Internal Server Error');

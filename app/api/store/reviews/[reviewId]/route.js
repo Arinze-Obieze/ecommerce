@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { createUserNotification } from '@/utils/messaging/notifications';
+import { invalidateReviewCache } from '@/utils/platform/cache-invalidation';
 
 const MIGRATION_HINT =
   'Database is missing the hardened review columns. Apply documentation/migrations/2026-04-10_marketplace_ops_extensions.sql and retry.';
@@ -97,6 +98,8 @@ export async function PATCH(request, { params }) {
       entityId: result.data.id,
     });
   }
+
+  invalidateReviewCache(result.data);
 
   return NextResponse.json({ success: true, data: result.data });
 }

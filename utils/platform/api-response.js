@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
+import { getCacheHeaders } from '@/utils/platform/cache-policy';
+import { toPositiveInt } from '@/utils/platform/pagination';
+
+export { toPositiveInt };
 
 export const API_HEADERS = {
-  noStore: {
-    'Cache-Control': 'no-store, max-age=0',
-  },
-  publicShort: {
-    'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-  },
-  publicCatalog: {
-    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
-  },
+  noStore: getCacheHeaders('noStore'),
+  publicShort: getCacheHeaders('publicShort'),
+  publicCatalog: getCacheHeaders('publicCatalog'),
+  publicDetail: getCacheHeaders('publicDetail'),
 };
 
 export function apiJson(payload, init = {}) {
@@ -23,20 +22,22 @@ export function apiJson(payload, init = {}) {
 }
 
 export function publicJson(payload, init = {}) {
+  const policy = init.policy || 'publicCatalog';
   return apiJson(payload, {
     ...init,
     headers: {
-      ...API_HEADERS.publicCatalog,
+      ...getCacheHeaders(policy),
       ...(init.headers || {}),
     },
   });
 }
 
 export function privateJson(payload, init = {}) {
+  const policy = init.policy || 'noStore';
   return apiJson(payload, {
     ...init,
     headers: {
-      ...API_HEADERS.noStore,
+      ...getCacheHeaders(policy),
       ...(init.headers || {}),
     },
   });
@@ -51,12 +52,6 @@ export function errorJson(message, status = 500, extra = {}, headers = {}) {
     },
     { status, headers }
   );
-}
-
-export function toPositiveInt(value, fallback, { min = 1, max = 100 } = {}) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.min(max, Math.max(min, parsed));
 }
 
 export async function parseJsonBody(request, fallback = {}) {

@@ -3,6 +3,9 @@ import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/catalog/product-catalog';
 import { normalizeBulkDiscountTiers } from '@/utils/catalog/bulk-pricing';
+import { getPagination, paginationMeta } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
+import { invalidateProductCache, invalidateProductsCache } from '@/utils/platform/cache-invalidation';
 
 const PRODUCT_LIST_SELECT = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
 const PRODUCT_LIST_SELECT_FALLBACK = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
@@ -117,16 +120,14 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const moderationStatus = normalizeModerationFilter(searchParams.get('moderationStatus'));
   const search = String(searchParams.get('search') || '').trim();
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '500', 10)));
-  const offset = (page - 1) * limit;
+  const { page, limit, from, to } = getPagination(searchParams, { defaultLimit: 25, maxLimit: 100 });
 
   let query = ctx.adminClient
     .from('products')
-    .select(PRODUCT_LIST_SELECT)
+    .select(PRODUCT_LIST_SELECT, { count: 'exact' })
     .eq('store_id', ctx.membership.store_id)
     .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+    .range(from, to);
 
   if (moderationStatus) {
     query = query.eq('moderation_status', moderationStatus);
@@ -136,15 +137,15 @@ export async function GET(request) {
     query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
   }
 
-  let { data, error } = await query;
+  let { data, error, count } = await query;
 
   if (error && isMissingBulkDiscountColumnError(error)) {
     let fallbackQuery = ctx.adminClient
       .from('products')
-      .select(PRODUCT_LIST_SELECT_FALLBACK)
+      .select(PRODUCT_LIST_SELECT_FALLBACK, { count: 'exact' })
       .eq('store_id', ctx.membership.store_id)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .range(from, to);
 
     if (moderationStatus) {
       fallbackQuery = fallbackQuery.eq('moderation_status', moderationStatus);
@@ -160,6 +161,7 @@ export async function GET(request) {
       bulk_discount_tiers: null,
     }));
     error = fallbackResult.error;
+    count = fallbackResult.count;
   }
 
   if (error) {
@@ -183,7 +185,12 @@ export async function GET(request) {
     archived: stats.filter((p) => p.moderation_status === 'archived').length,
   };
 
-  return NextResponse.json({ success: true, data: products, summary });
+  return privateJson({
+    success: true,
+    data: products,
+    summary,
+    meta: paginationMeta({ page, limit, total: count || 0 }),
+  });
 }
 
 export async function POST(request) {
@@ -269,6 +276,8 @@ export async function POST(request) {
         return NextResponse.json({ error: error.message || 'Failed to archive products' }, { status: 400 });
       }
 
+      invalidateProductsCache(resolvedProducts.filter((product) => targetIds.includes(product.id)));
+
       return NextResponse.json({ success: true, data: { count: targetIds.length, skipped: resolvedProducts.length - targetIds.length } });
     }
 
@@ -298,6 +307,8 @@ export async function POST(request) {
         return NextResponse.json({ error: error.message || 'Failed to unarchive products' }, { status: 400 });
       }
 
+      invalidateProductsCache(resolvedProducts.filter((product) => targetIds.includes(product.id)));
+
       return NextResponse.json({ success: true, data: { count: targetIds.length, skipped: resolvedProducts.length - targetIds.length } });
     }
 
@@ -318,6 +329,8 @@ export async function POST(request) {
           return NextResponse.json({ error: error.message || 'Failed to delete products' }, { status: 400 });
         }
       }
+
+      invalidateProductsCache(resolvedProducts.filter((product) => deletableIds.includes(product.id)));
 
       return NextResponse.json({
         success: true,
@@ -386,6 +399,11 @@ export async function POST(request) {
           return NextResponse.json({ error: error.message || 'Failed to duplicate products' }, { status: 400 });
         }
       }
+
+      invalidateProductsCache(created.map((product) => ({
+        ...product,
+        store_id: ctx.membership.store_id,
+      })));
 
       return NextResponse.json({ success: true, data: { count: created.length, created } }, { status: 201 });
     }
@@ -509,6 +527,8 @@ export async function POST(request) {
     }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  invalidateProductCache(data);
 
   return NextResponse.json({ success: true, data }, { status: 201 });
 }

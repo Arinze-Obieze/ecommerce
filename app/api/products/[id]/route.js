@@ -222,7 +222,7 @@ export async function GET(request, { params }) {
       durationMs: Date.now() - startedAt,
     });
 
-    return publicJson(flattenedProduct);
+    return publicJson(flattenedProduct, { policy: 'publicDetail' });
 
   } catch (err) {
     console.error('API Error:', err);

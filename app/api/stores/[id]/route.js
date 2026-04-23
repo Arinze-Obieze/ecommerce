@@ -47,7 +47,7 @@ export async function GET(request, { params }) {
       return errorJson('Store not found', 404);
     }
 
-    return publicJson(store);
+    return publicJson(store, { policy: 'publicDetail' });
 
   } catch (err) {
     console.error('Store API Error:', err);

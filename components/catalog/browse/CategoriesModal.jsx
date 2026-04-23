@@ -31,6 +31,7 @@ const THEME = {
 const CategoriesModal = ({ onClose }) => {
   const { hierarchicalCategories, categoriesLoading } = useFilters();
   const [activeCategory, setActiveCategory] = React.useState(0);
+  const [expandedCategory, setExpandedCategory] = React.useState(0);
   const [mounted, setMounted] = useState(false);
   const [closeBtnHover, setCloseBtnHover] = useState(false);
 
@@ -50,6 +51,10 @@ const CategoriesModal = ({ onClose }) => {
   }, []);
 
   const activeCat = hierarchicalCategories?.[activeCategory];
+  const handleCategoryToggle = useCallback((idx) => {
+    setActiveCategory(idx);
+    setExpandedCategory((current) => (current === idx ? null : idx));
+  }, []);
 
   const modal = (
     <>
@@ -156,17 +161,19 @@ const CategoriesModal = ({ onClose }) => {
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                   {hierarchicalCategories.map((cat, idx) => {
                     const isActive = idx === activeCategory;
+                    const isExpanded = idx === expandedCategory;
                     return (
                       <React.Fragment key={cat.id || idx}>
                         <SidebarItem
                           cat={cat}
                           isActive={isActive}
-                          onClick={() => setActiveCategory(idx)}
+                          isExpanded={isExpanded}
+                          onClick={() => handleCategoryToggle(idx)}
                           theme={THEME}
                         />
 
                         {/* ── Mobile accordion — hidden on md+ ── */}
-                        {isActive && (
+                        {isExpanded && (
                           <div className="md:hidden" style={{ backgroundColor: THEME.white, borderBottom: `1px solid ${THEME.linenDark}` }}>
                             <div style={{ padding: '12px 16px 16px' }}>
                               <Link
@@ -490,12 +497,13 @@ const CategoriesModal = ({ onClose }) => {
 
 // ── Sub-components ──────────────────────────────────────────
 
-const SidebarItem = ({ cat, isActive, onClick, theme }) => {
+const SidebarItem = ({ cat, isActive, isExpanded, onClick, theme }) => {
   const [hovered, setHovered] = useState(false);
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-expanded={isExpanded}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -533,9 +541,9 @@ const SidebarItem = ({ cat, isActive, onClick, theme }) => {
       </div>
       <FiChevronRight style={{
         width: 13, height: 13, flexShrink: 0,
-        color: isActive ? theme.gold : theme.onyxMuted,
-        opacity: isActive ? 1 : 0.25,
-        transform: isActive ? 'rotate(90deg)' : 'rotate(0deg)',
+        color: isExpanded || isActive ? theme.gold : theme.onyxMuted,
+        opacity: isExpanded || isActive ? 1 : 0.25,
+        transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
         transition: 'transform 0.18s, opacity 0.14s, color 0.14s',
       }} />
     </button>

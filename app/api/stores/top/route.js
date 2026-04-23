@@ -21,7 +21,7 @@ export async function GET(request) {
       throw error;
     }
 
-    return publicJson({ success: true, data: stores || [] });
+    return publicJson({ success: true, data: stores || [] }, { policy: 'publicShort' });
   } catch (error) {
     console.error('Fetch Top Stores Error:', error);
     return errorJson('Failed to fetch top stores');

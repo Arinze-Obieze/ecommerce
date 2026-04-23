@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
 import { writeAdminAuditLog } from '@/utils/admin/audit';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { getPagination, paginationMeta } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 import { sendStoreAccessGrantedEmail } from '@/utils/messaging/email-notifications';
+import { invalidateStoreCache } from '@/utils/platform/cache-invalidation';
 
 function sanitizeSlug(value) {
   return String(value || '')
@@ -11,12 +14,6 @@ function sanitizeSlug(value) {
     .replace(/[^a-z0-9-]+/g, '-')
     .replace(/-{2,}/g, '-')
     .replace(/^-|-$/g, '');
-}
-
-function toPositiveInt(value, fallback) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
 }
 
 export async function GET(request) {
@@ -38,9 +35,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const search = (searchParams.get('search') || '').trim();
   const status = (searchParams.get('status') || '').trim();
-  const page = toPositiveInt(searchParams.get('page'), 1);
-  const limit = Math.min(100, toPositiveInt(searchParams.get('limit'), 20));
-  const offset = (page - 1) * limit;
+  const { page, limit, from, to } = getPagination(searchParams, { defaultLimit: 20, maxLimit: 100 });
 
   let query = admin.adminClient
     .from('stores')
@@ -55,7 +50,7 @@ export async function GET(request) {
     query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
   }
 
-  query = query.range(offset, offset + limit - 1);
+  query = query.range(from, to);
 
   const { data, error, count } = await query;
 
@@ -63,15 +58,10 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({
+  return privateJson({
     success: true,
     data: data || [],
-    meta: {
-      page,
-      limit,
-      total: count || 0,
-      totalPages: Math.max(1, Math.ceil((count || 0) / limit)),
-    },
+    meta: paginationMeta({ page, limit, total: count || 0 }),
   });
 }
 
@@ -197,6 +187,8 @@ export async function POST(request) {
       ...(ownerEmailError ? { ownerEmailError } : {}),
     },
   });
+
+  invalidateStoreCache(store);
 
   return NextResponse.json(
     {

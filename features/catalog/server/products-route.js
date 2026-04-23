@@ -3,6 +3,7 @@ import { resolveAdminMembership } from '@/utils/admin/auth';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
 import { attachPromotionsToProducts } from '@/utils/catalog/promotions';
 import { errorJson, publicJson, toPositiveInt } from '@/utils/platform/api-response';
+import { paginationMeta } from '@/utils/platform/pagination';
 import { enforceRateLimit, rateLimitHeaders, rateLimitPayload } from '@/utils/platform/rate-limit';
 
 const DEFAULT_LIMIT = 24;
@@ -1034,17 +1035,20 @@ export async function GET(request) {
       durationMs: Date.now() - startedAt,
     });
 
+    const standardPaginationMeta = paginationMeta({ page, limit, total: totalItems });
+
     return publicJson({
       success: true,
       data: pageData,
       meta: {
+        ...standardPaginationMeta,
         pagination: {
-          currentPage: page,
-          totalPages,
-          totalItems,
-          itemsPerPage: limit,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1,
+          currentPage: standardPaginationMeta.page,
+          totalPages: standardPaginationMeta.totalPages,
+          totalItems: standardPaginationMeta.total,
+          itemsPerPage: standardPaginationMeta.limit,
+          hasNextPage: standardPaginationMeta.hasNextPage,
+          hasPreviousPage: standardPaginationMeta.hasPreviousPage,
           startItem: totalItems > 0 ? offset + 1 : 0,
           endItem: Math.min(offset + limit, totalItems),
           pageNumbers,

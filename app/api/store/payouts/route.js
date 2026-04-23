@@ -6,6 +6,8 @@ import {
   listPaystackBanks,
   resolvePaystackAccount,
 } from '@/utils/payments/paystack-transfers';
+import { getPagination, paginateArray } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 
 function normalizeAccountNumber(value) {
   return String(value || '').replace(/\D+/g, '').trim();
@@ -44,6 +46,8 @@ export async function GET(request) {
   }
 
   const storeId = ctx.membership.store_id;
+  const { searchParams } = new URL(request.url);
+  const { page, limit } = getPagination(searchParams, { defaultLimit: 50, maxLimit: 100 });
   const bankOptionsPromise = listPaystackBanks().catch(() => []);
 
   const [accountRes, payoutsRes, escrowRes, bankOptions] = await Promise.all([
@@ -136,14 +140,19 @@ export async function GET(request) {
     pendingEscrowItems: escrowRows.filter((row) => ['held', 'eligible'].includes(row.seller_view_status)).length,
   };
 
-  return NextResponse.json({
+  const paginatedPayouts = paginateArray(payoutRows, { page, limit });
+
+  return privateJson({
     success: true,
     data: {
       payoutAccount: accountRes.data || null,
-      payouts: payoutRows,
+      payouts: paginatedPayouts.data,
       escrowItems: escrowRows,
       bankOptions,
       summary,
+    },
+    meta: {
+      payouts: paginatedPayouts.meta,
     },
   });
 }

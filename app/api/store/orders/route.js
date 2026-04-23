@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
-
-function toPositiveInt(value, fallback) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
-}
+import { getPagination, paginateArray, paginationMeta } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 
 export async function GET(request) {
   const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
@@ -25,8 +21,7 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page = toPositiveInt(searchParams.get('page'), 1);
-  const limit = Math.min(100, toPositiveInt(searchParams.get('limit'), 25));
+  const { page, limit } = getPagination(searchParams, { defaultLimit: 25, maxLimit: 100 });
 
   const { data: productRows, error: productError } = await ctx.adminClient
     .from('products')
@@ -40,7 +35,7 @@ export async function GET(request) {
 
   const productIds = (productRows || []).map((row) => row.id);
   if (productIds.length === 0) {
-    return NextResponse.json({ success: true, data: [], meta: { page: 1, limit, total: 0, totalPages: 1 } });
+    return privateJson({ success: true, data: [], meta: paginationMeta({ page: 1, limit, total: 0 }) });
   }
 
   const { data: orderItems, error: itemsError } = await ctx.adminClient
@@ -55,7 +50,7 @@ export async function GET(request) {
 
   const orderIds = [...new Set((orderItems || []).map((row) => row.order_id).filter(Boolean))];
   if (orderIds.length === 0) {
-    return NextResponse.json({ success: true, data: [], meta: { page: 1, limit, total: 0, totalPages: 1 } });
+    return privateJson({ success: true, data: [], meta: paginationMeta({ page: 1, limit, total: 0 }) });
   }
 
   const { data: orders, error: ordersError } = await ctx.adminClient
@@ -85,21 +80,11 @@ export async function GET(request) {
     };
   });
 
-  const total = enriched.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * limit;
+  const paginated = paginateArray(enriched, { page, limit });
 
-  return NextResponse.json({
+  return privateJson({
     success: true,
-    data: enriched.slice(start, start + limit),
-    meta: {
-      page: safePage,
-      limit,
-      total,
-      totalPages,
-      hasNextPage: safePage < totalPages,
-      hasPreviousPage: safePage > 1,
-    },
+    data: paginated.data,
+    meta: paginated.meta,
   });
 }

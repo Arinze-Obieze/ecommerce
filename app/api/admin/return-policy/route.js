@@ -6,6 +6,7 @@ import {
   normalizeReturnPolicyRecord,
   buildReturnPolicyUpdatePayload,
 } from '@/utils/catalog/return-policy';
+import { invalidateReturnPolicyCache } from '@/utils/platform/cache-invalidation';
 
 const EDITOR_ROLES = [ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPPORT_ADMIN];
 
@@ -87,6 +88,8 @@ export async function PATCH(request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  invalidateReturnPolicyCache();
 
   return NextResponse.json({
     success: true,

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useOptimistic, useState, useTransition } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { FiPlus, FiTrash2, FiTag, FiZap, FiInfo } from 'react-icons/fi';
 
@@ -8,11 +8,11 @@ function statusPill(promo) {
   const starts = new Date(promo.starts_at);
   const ends = promo.ends_at ? new Date(promo.ends_at) : null;
 
+  if (ends && ends < now) return { label: 'Expired', cls: 'bg-gray-100 text-gray-500' };
+  if (!promo.approved_by_zova && promo.is_active) return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' };
+  if (starts > now) return { label: 'Scheduled', cls: 'bg-blue-100 text-blue-700' };
   if (!promo.is_active && promo.approved_by_zova) return { label: 'Approved', cls: 'bg-emerald-100 text-emerald-700' };
   if (!promo.is_active) return { label: 'Draft', cls: 'bg-gray-100 text-gray-600' };
-  if (!promo.approved_by_zova) return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' };
-  if (starts > now) return { label: 'Scheduled', cls: 'bg-blue-100 text-blue-700' };
-  if (ends && ends < now) return { label: 'Expired', cls: 'bg-gray-100 text-gray-500' };
   return { label: 'Active', cls: 'bg-emerald-100 text-emerald-700' };
 }
 
@@ -50,10 +50,31 @@ export default function PromotionList({ storeId, onCreate }) {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
   const [activating, setActivating] = useState(null);
+  const [actionError, setActionError] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const [optimisticPromotions, applyOptimisticPromotion] = useOptimistic(
+    promotions,
+    (currentPromotions, action) => {
+      if (action.type === 'activate') {
+        return currentPromotions.map((promotion) =>
+          promotion.id === action.id
+            ? { ...promotion, is_active: true, auto_activated: false }
+            : promotion
+        );
+      }
+
+      if (action.type === 'delete') {
+        return currentPromotions.filter((promotion) => promotion.id !== action.id);
+      }
+
+      return currentPromotions;
+    }
+  );
 
   const load = async () => {
     if (!storeId) return;
     setLoading(true);
+    setActionError('');
     const supabase = createClient();
     const { data } = await supabase
       .from('promotions')
@@ -68,20 +89,51 @@ export default function PromotionList({ storeId, onCreate }) {
   useEffect(() => { load(); }, [storeId]);
 
   const handleActivate = async (id) => {
+    setActionError('');
     setActivating(id);
-    const supabase = createClient();
-    await supabase.from('promotions').update({ is_active: true }).eq('id', id);
-    setPromotions(prev => prev.map(p => p.id === id ? { ...p, is_active: true } : p));
-    setActivating(null);
+    startTransition(() => {
+      applyOptimisticPromotion({ type: 'activate', id });
+    });
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('promotions')
+        .update({ is_active: true, auto_activated: false })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setPromotions((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, is_active: true, auto_activated: false } : p))
+      );
+    } catch (error) {
+      console.error('Failed to activate promotion:', error);
+      setActionError('We could not activate that promotion. Please try again.');
+    } finally {
+      setActivating(null);
+    }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this promotion? This cannot be undone.')) return;
+    setActionError('');
     setDeleting(id);
-    const supabase = createClient();
-    await supabase.from('promotions').delete().eq('id', id);
-    setPromotions(prev => prev.filter(p => p.id !== id));
-    setDeleting(null);
+    startTransition(() => {
+      applyOptimisticPromotion({ type: 'delete', id });
+    });
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('promotions').delete().eq('id', id);
+      if (error) throw error;
+      setPromotions((prev) => prev.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error('Failed to delete promotion:', error);
+      setActionError('We could not delete that promotion. Please try again.');
+    } finally {
+      setDeleting(null);
+    }
   };
 
   if (loading) return <Skeleton />;
@@ -107,7 +159,12 @@ export default function PromotionList({ storeId, onCreate }) {
 
   return (
     <div className="space-y-3">
-      {promotions.map(promo => {
+      {actionError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {actionError}
+        </div>
+      ) : null}
+      {optimisticPromotions.map(promo => {
         const pill = statusPill(promo);
         const type = promo.promotion_types;
         return (
@@ -143,7 +200,7 @@ export default function PromotionList({ storeId, onCreate }) {
               {promo.approved_by_zova && !promo.is_active && (
                 <button
                   onClick={() => handleActivate(promo.id)}
-                  disabled={activating === promo.id}
+                  disabled={activating === promo.id || isPending}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2E6417] text-white text-xs font-bold hover:bg-[#245213] transition-colors disabled:opacity-40"
                   title="Activate promotion"
                 >
@@ -153,7 +210,7 @@ export default function PromotionList({ storeId, onCreate }) {
               )}
               <button
                 onClick={() => handleDelete(promo.id)}
-                disabled={deleting === promo.id}
+                disabled={deleting === promo.id || isPending}
                 className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
                 title="Delete"
               >

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { normalizeSpecifications } from "@/utils/catalog/product-catalog";
 import { normalizeBulkDiscountTiers } from "@/utils/catalog/bulk-pricing";
 import { getGenderValidationError, normalizeGenderForCategory } from "@/features/product-wizard/lib/category-gender-rules";
+import { invalidateProductCache } from "@/utils/platform/cache-invalidation";
 import {
   WASHING_OPTIONS,
   BLEACHING_OPTIONS,
@@ -642,7 +643,7 @@ export async function POST(request) {
     const { data: marketplaceProduct, error: marketplaceErr } = await supabase
       .from("products")
       .insert(marketplaceRecord)
-      .select("id")
+      .select("id, store_id, slug")
       .single();
 
     if (marketplaceErr) {
@@ -670,6 +671,8 @@ export async function POST(request) {
       user.id,
       existingPersistedImages
     );
+
+    invalidateProductCache(marketplaceProduct);
 
     return NextResponse.json({
       success: true,
