@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
-import { sendStoreInvitationEmail } from '@/utils/emailNotifications';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
+import { sendStoreInvitationEmail } from '@/utils/messaging/email-notifications';
 import {
   generateStoreInviteLink,
   getStoreInvitationsMigrationHint,
   isMissingStoreInvitationsTableError,
-} from '@/utils/storeInvitations';
-import { createUserNotification } from '@/utils/notifications';
+} from '@/utils/store/invitations';
+import { createUserNotification } from '@/utils/messaging/notifications';
 
 async function loadInvitation(ctx, inviteId) {
   const result = await ctx.adminClient

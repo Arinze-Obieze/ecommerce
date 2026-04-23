@@ -1,26 +1,26 @@
-import { createClient } from '@/utils/supabase/server'
+import { errorJson, publicJson } from '@/utils/platform/api-response'
+import { createPublicClient } from '@/utils/supabase/public'
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     
     const { data: collections, error } = await supabase
       .from('collections')
-      .select('*')
+      .select('id, name, slug, description, image_url, display_order')
       .eq('is_active', true)
       .order('display_order', { ascending: true })
 
     if (error) throw error
 
-    return Response.json({
+    return publicJson({
       success: true,
-      data: collections
+      data: collections || []
     })
   } catch (error) {
     console.error('Collections API Error:', error)
-    return Response.json({
-      success: false,
-      error: error.message
-    }, { status: 500 })
+    return errorJson('Failed to fetch collections')
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/utils/supabase/server';
-import { enforceRateLimit, rateLimitHeaders, rateLimitPayload } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitHeaders, rateLimitPayload } from '@/utils/platform/rate-limit';
 
 function normalizeEventType(value) {
   const eventType = String(value || '').trim().toLowerCase();

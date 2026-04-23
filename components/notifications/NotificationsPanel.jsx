@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { getAccountNotifications, updateAccountNotifications } from '@/features/notifications/api/client';
 
 function formatDate(value) {
   if (!value) return '-';
@@ -32,9 +33,7 @@ export default function NotificationsPanel({
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(endpoint, { cache: 'no-store' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load notifications');
+      const json = await getAccountNotifications(endpoint);
       setRows(json.data || []);
     } catch (err) {
       setError(err.message || 'Failed to load notifications');
@@ -51,13 +50,7 @@ export default function NotificationsPanel({
     try {
       setSaving(true);
       setError('');
-      const res = await fetch('/api/account/notifications', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(markAllRead ? { markAllRead: true, status } : { notificationId, status }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to update notification');
+      await updateAccountNotifications(markAllRead ? { markAllRead: true, status } : { notificationId, status });
       await load();
     } catch (err) {
       setError(err.message || 'Failed to update notification');
@@ -70,7 +63,7 @@ export default function NotificationsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
@@ -80,7 +73,7 @@ export default function NotificationsPanel({
             type="button"
             disabled={saving || unreadCount === 0}
             onClick={() => updateNotification('', 'read', true)}
-            className="rounded-xl border border-[#2E5C45] px-4 py-2 text-sm font-semibold text-[#2E5C45] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-[#2E6417] px-4 py-2 text-sm font-semibold text-[#2E6417] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Mark all read
           </button>
@@ -89,7 +82,7 @@ export default function NotificationsPanel({
 
       {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
         {loading ? (
           <p className="text-sm text-gray-500">Loading notifications...</p>
         ) : rows.length === 0 ? (
@@ -105,7 +98,7 @@ export default function NotificationsPanel({
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold text-gray-900">{row.title}</p>
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${row.status === 'unread' ? 'bg-[#e5f6ec] text-[#2E5C45]' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${row.status === 'unread' ? 'bg-[#e5f6ec] text-[#2E6417]' : 'bg-gray-100 text-gray-600'}`}>
                         {prettify(row.type)}
                       </span>
                     </div>
@@ -116,7 +109,7 @@ export default function NotificationsPanel({
                     {row.action_url ? (
                       <Link
                         href={row.action_url}
-                        className="rounded-xl bg-[#2E5C45] px-3 py-2 text-sm font-semibold text-white hover:bg-[#254a38]"
+                        className="rounded-xl bg-[#2E6417] px-3 py-2 text-sm font-semibold text-white hover:bg-[#245213]"
                       >
                         Open
                       </Link>

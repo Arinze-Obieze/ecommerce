@@ -50,14 +50,14 @@ export default function Step1Targeting({ state, dispatch }) {
               onClick={() => select(opt.value, opt.mode)}
               className={`w-full text-left rounded-2xl border-2 p-4 transition-all ${
                 isSelected
-                  ? 'border-[#2E5C45] bg-[#2E5C45]/5'
-                  : 'border-[#dbe7e0] bg-white hover:border-[#2E5C45]/40'
+                  ? 'border-[#2E6417] bg-[#2E6417]/5'
+                  : 'border-[#E8E4DC] bg-white hover:border-[#2E6417]/40'
               }`}
             >
               <div className="flex items-start gap-3">
                 <span className="text-2xl mt-0.5">{opt.icon}</span>
                 <div className="flex-1">
-                  <p className={`text-sm font-semibold ${isSelected ? 'text-[#2E5C45]' : 'text-gray-900'}`}>
+                  <p className={`text-sm font-semibold ${isSelected ? 'text-[#2E6417]' : 'text-gray-900'}`}>
                     {opt.title}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
@@ -71,7 +71,7 @@ export default function Step1Targeting({ state, dispatch }) {
                         type="checkbox"
                         checked={wholeStore}
                         onChange={toggleWholeStore}
-                        className="w-4 h-4 rounded accent-[#2E5C45]"
+                        className="w-4 h-4 rounded accent-[#2E6417]"
                       />
                       <span className="text-xs font-medium text-gray-700">
                         Whole store — apply to all my products
@@ -80,7 +80,7 @@ export default function Step1Targeting({ state, dispatch }) {
                   )}
                 </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                  isSelected ? 'border-[#2E5C45] bg-[#2E5C45]' : 'border-gray-300'
+                  isSelected ? 'border-[#2E6417] bg-[#2E6417]' : 'border-gray-300'
                 }`}>
                   {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                 </div>
@@ -91,11 +91,11 @@ export default function Step1Targeting({ state, dispatch }) {
 
         {/* Whole store selected state */}
         {wholeStore && (
-          <div className="rounded-2xl border-2 border-[#2E5C45] bg-[#2E5C45]/5 p-4">
+          <div className="rounded-2xl border-2 border-[#2E6417] bg-[#2E6417]/5 p-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🏪</span>
               <div>
-                <p className="text-sm font-semibold text-[#2E5C45]">Whole Store</p>
+                <p className="text-sm font-semibold text-[#2E6417]">Whole Store</p>
                 <p className="text-xs text-gray-500">All your active products will receive this discount</p>
               </div>
             </div>

@@ -37,20 +37,30 @@ D. Shared Domain
 3) TARGET ROUTE STRUCTURE (APP ROUTER)
 ====================================================================
 app/
-  (shop)/
+  (storefront)/
+    page.js
     shop/
       page.js
       [category]/page.js
     products/[slug]/page.js
-    cart/page.js
-    checkout/... (if applicable)
-    profile/... (buyer profile area)
+    store/[id]/page.js
+    stores/page.js
+    seller/[id]/page.js
+    mood/[slug]/page.js
 
-  (stores)/
-    stores/
-      page.js                          # seller store chooser/listing
+  (account)/
+    account/page.js
+    cart/page.js
+    wishlist/page.js
+    profile/
+      layout.js
+      page.js
+      orders/[id]/page.js
+
+  (store-console)/
+    store/
       dashboard/
-        layout.js                      # seller auth + membership + store context
+        layout.js
         page.js
         analytics/page.js
         inventory/
@@ -61,9 +71,6 @@ app/
         orders/
           page.js
           [id]/page.js
-          _components/
-          _hooks/
-          _lib/
         products/
           page.js
           [id]/page.js
@@ -76,22 +83,40 @@ app/
             _components/
             _hooks/
             _lib/
+    stores/
+      dashboard/
+        page.js
+        [...slug]/page.js
 
   (auth)/
     login/page.js
     signup/page.js
     forgot-password/page.js
-    account/page.js
+    reset-password/page.js
+    auth/callback/route.js
 
-  admin/
-    ...
+  (admin)/
+    admin/
+      ...
+
+  (content)/
+    about/page.jsx
+    how-to-order/page.jsx
+    how-to-track/page.jsx
+    legal/
+      layout.jsx
+      page.jsx
+      ...
+    return-policy/page.jsx
+    shipping-info/page.jsx
 
   api/
     ...route.js only (NO page/layout files)
 
 Notes:
-- Keep temporary redirects from old paths to new route groups for one release cycle.
-- Remove old paths after observability confirms migration completion.
+- Route groups do not change URLs; they are ownership boundaries only.
+- The buyer-facing redesigned storefront remains the visual source of truth.
+- API routes are shared backend contracts for the web app and future mobile app.
 
 ====================================================================
 4) TARGET COMPONENT STRUCTURE
@@ -124,7 +149,7 @@ Rules:
 ====================================================================
 Folders:
 - lowercase, plural for domain nouns: stores, products, orders, reviews
-- route groups in parentheses: (shop), (stores), (auth)
+- route groups in parentheses: (storefront), (account), (store-console), (auth), (admin), (content)
 
 Files:
 - Components: PascalCase.jsx
@@ -135,6 +160,8 @@ Files:
 APIs:
 - app/api/**/route.js only
 - No UI pages/layouts under app/api
+- Keep response shapes stable for both web and mobile clients.
+- See documentation/architecture/API_CONTRACTS.md for contract rules.
 
 Behavior naming:
 - Use domain verbs for handlers: createProductDraft, publishProduct, adjustInventory
@@ -203,10 +230,10 @@ Plan:
 9) FILE SPLIT PRIORITY (LARGE MONOLITHS)
 ====================================================================
 Priority 1:
-- app/store/dashboard/products/ProductsClientView.jsx
-- app/store/dashboard/products/new/step-2/page.js
-- app/store/dashboard/products/[id]/page.js
-- app/store/dashboard/orders/page.js
+- app/(store-console)/store/dashboard/products/ProductsClientView.jsx
+- app/(store-console)/store/dashboard/products/new/step-2/page.js
+- app/(store-console)/store/dashboard/products/[id]/page.js
+- app/(store-console)/store/dashboard/orders/page.js
 
 Split template per feature:
 - page.js (thin route wrapper)
@@ -226,12 +253,12 @@ Phase 0: Freeze + Guardrails (Day 0-1)
    - warn on oversized files above threshold
 
 Phase 1: Routing Domain Cutover (Day 1-3)
-1. Introduce (stores) and (shop) route groups.
-2. Add redirects from old routes.
+1. Introduce (storefront), (account), (store-console), (auth), (admin), and (content) route groups.
+2. Keep URLs stable because route groups do not affect public paths.
 3. Remove app/api UI routes and stale wizard path artifacts.
 
 Phase 2: Component Rehoming (Day 3-6)
-1. Move components into domain folders: components/auth, components/stores, components/shop, components/admin, components/shared.
+1. Move components into domain folders: components/auth, components/storefront/stores, components/catalog/browse, components/admin, components/shared.
 2. Rename inconsistent files to convention-compliant names.
 
 Phase 3: Monolith Decomposition (Day 6-12)
@@ -289,9 +316,9 @@ Mitigations:
    - remove/relocate app/api/seller/products/new UI pages/layout
    - fix/retire invalid step redirects
 2. Domain grouping:
-   - introduce (stores) and (shop) route groups
+   - keep (storefront) route group and organize storefront stores plus catalog browse responsibilities
 3. Component taxonomy:
-   - create components/auth, components/stores, components/shop, components/admin, components/shared
+   - create components/auth, components/storefront/stores, components/catalog/browse, components/admin, components/shared
 4. Monolith split kickoff:
    - split ProductsClientView.jsx using established inventory pattern
 5. Dead file pass #1:

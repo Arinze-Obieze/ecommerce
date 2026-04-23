@@ -1,10 +1,10 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
-import { notifyOrderCompletionEmails } from '@/utils/emailNotifications';
-import { ensureEscrowFundedForOrder } from '@/utils/escrow';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
+import { notifyOrderCompletionEmails } from '@/utils/messaging/email-notifications';
+import { ensureEscrowFundedForOrder } from '@/utils/payments/escrow';
 
 // ── Ranking engine event logger (server-side, no browser APIs needed) ────────
 // We insert directly via the service client instead of using the browser util.

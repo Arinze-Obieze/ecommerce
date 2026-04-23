@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { FiSearch, FiShoppingCart, FiUser, FiHeart, FiChevronDown, FiX } from "react-icons/fi";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { useAuth } from '@/components/auth/AuthProvider';
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useCart } from "@/contexts/CartContext";
-import { useWishlist } from "@/contexts/WishlistContext";
+import { useCart } from "@/contexts/cart/CartContext";
+import { useWishlist } from "@/contexts/wishlist/WishlistContext";
 import { useRouter } from "next/navigation";
-import { trackAnalyticsEvent } from "@/utils/analytics";
+import { trackAnalyticsEvent } from "@/utils/telemetry/analytics";
 import { createClient } from "@/utils/supabase/client";
 
 // ============================================================
@@ -16,13 +16,13 @@ import { createClient } from "@/utils/supabase/client";
 // ============================================================
 const THEME = {
   colors: {
-    // Primary greens
-    primary: '#00B86B',           // ZOVA Green (for accents)
-    primaryHover: '#0F7A4F',       // Darker green for hover
-    deepEmerald: '#0A3D2E',        // Deep emerald - HEADER BACKGROUND
-    gradientEnd: '#0F7A4F',
-    greenTint: '#EDFAF3',          // Light green tint for backgrounds
-    greenBorder: '#A8DFC4',        // Soft green border
+    // Brand
+    primary: '#2E6417',            // ZOVA Forest
+    primaryHover: '#245213',
+    deepEmerald: '#191B19',        // Onyx Black header background
+    gradientEnd: '#245213',
+    greenTint: '#EDF5E6',
+    greenBorder: '#B8D4A0',
     
     // Neutrals
     white: '#FFFFFF',
@@ -61,7 +61,7 @@ const HeaderLogo = () => {
         <div className="relative w-14 h-14 shrink-0 transition-transform duration-300 group-hover:scale-110">
           {!logoError ? (
             <Image
-              src="/logo.png"
+              src="/brand/logo.png"
               alt="ZOVA"
               fill
               className="object-contain"
@@ -82,17 +82,17 @@ const HeaderLogo = () => {
         <div className="flex flex-col leading-none">
           <span
             className="text-3xl font-black tracking-tight"
-            style={{ 
-              color: THEME.colors.white,
-              fontFamily: "'Poppins', sans-serif", 
-              letterSpacing: '-0.02em' 
+            style={{
+              color: THEME.colors.darkCharcoal,
+              fontFamily: "'Poppins', sans-serif",
+              letterSpacing: '-0.02em'
             }}
           >
             ZOVA
           </span>
           <span
             className="text-[11px] font-medium tracking-[0.12em] uppercase hidden sm:block"
-            style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+            style={{ color: THEME.colors.mediumGray }}
           >
             Verified Quality
           </span>
@@ -111,20 +111,20 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
       <div
         className="flex items-center rounded-full transition-all duration-200"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.1)', // Semi-transparent white
+          backgroundColor: THEME.colors.softGray,
           backdropFilter: 'blur(10px)',
-          border: `1.5px solid ${focused ? THEME.colors.primary : 'rgba(255, 255, 255, 0.2)'}`,
-          boxShadow: focused ? `0 0 0 3px rgba(0, 184, 107, 0.3)` : "none",
+          border: `1.5px solid ${focused ? THEME.colors.primary : THEME.colors.border}`,
+          boxShadow: focused ? `0 0 0 3px rgba(46, 100, 23, 0.3)` : "none",
         }}
       >
         <FiSearch
           className="ml-3.5 w-4 h-4 shrink-0 transition-colors"
-          style={{ color: focused ? THEME.colors.primary : 'rgba(255, 255, 255, 0.6)' }}
+          style={{ color: focused ? THEME.colors.primary : THEME.colors.mediumGray }}
         />
         <input
           type="text"
-          className="flex-1 pl-2.5 pr-3 py-2.5 bg-transparent text-sm outline-none placeholder-white/50"
-          style={{ color: THEME.colors.white }}
+          className="flex-1 pl-2.5 pr-3 py-2.5 bg-transparent text-sm outline-none placeholder-gray-400"
+          style={{ color: THEME.colors.darkCharcoal }}
           placeholder="Search products, brands..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -136,14 +136,14 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
           <button
             onClick={() => setSearchQuery("")}
             className="mr-1 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-            style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+            style={{ color: THEME.colors.mediumGray }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.backgroundColor = THEME.colors.softGray;
               e.currentTarget.style.color = THEME.colors.primary;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+              e.currentTarget.style.color = THEME.colors.mediumGray;
             }}
           >
             <FiX className="w-3.5 h-3.5" />
@@ -155,7 +155,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
           style={{ 
             backgroundColor: THEME.colors.primary, 
             color: THEME.colors.white,
-            boxShadow: '0 2px 8px rgba(0, 184, 107, 0.4)'
+            boxShadow: '0 2px 8px rgba(46, 100, 23, 0.4)'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = THEME.colors.primaryHover;
@@ -177,14 +177,14 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
 const CurrencySelector = () => (
   <div
     className="hidden lg:flex items-center gap-1 text-sm font-semibold cursor-pointer px-3 py-1.5 rounded-lg transition-all duration-200"
-    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+    style={{ color: THEME.colors.mediumGray }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+      e.currentTarget.style.backgroundColor = THEME.colors.softGray;
       e.currentTarget.style.color = THEME.colors.primary;
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.backgroundColor = "transparent";
-      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+      e.currentTarget.style.color = THEME.colors.mediumGray;
     }}
   >
     <span>₦</span>
@@ -200,15 +200,15 @@ const IconButton = ({ onClick, children, label }) => (
     type="button"
     aria-label={label}
     className="relative p-2.5 rounded-xl transition-all duration-200"
-    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+    style={{ color: THEME.colors.darkCharcoal }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+      e.currentTarget.style.backgroundColor = THEME.colors.softGray;
       e.currentTarget.style.color = THEME.colors.primary;
       e.currentTarget.style.transform = 'scale(1.05)';
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.backgroundColor = "transparent";
-      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+      e.currentTarget.style.color = THEME.colors.darkCharcoal;
       e.currentTarget.style.transform = 'scale(1)';
     }}
   >
@@ -230,7 +230,7 @@ const WishlistIcon = () => {
           style={{ 
             backgroundColor: THEME.colors.primary, 
             color: THEME.colors.white, 
-            borderColor: THEME.colors.deepEmerald,
+            borderColor: THEME.colors.white,
             boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)'
           }}
         >
@@ -254,7 +254,7 @@ const CartIcon = () => {
             style={{ 
               backgroundColor: THEME.colors.primary, 
               color: THEME.colors.white, 
-              borderColor: THEME.colors.deepEmerald,
+              borderColor: THEME.colors.white,
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)'
             }}
           >
@@ -270,7 +270,7 @@ const CartIcon = () => {
 const Divider = ({ mobileHidden = false }) => (
   <div
     className={`${mobileHidden ? "hidden lg:block" : "hidden md:block"} h-6 w-px mx-1`}
-    style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+    style={{ backgroundColor: THEME.colors.border }}
   />
 );
 
@@ -312,37 +312,37 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         onClick={() => setIsOpen(!isOpen)}
         type="button"
         className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-200"
-        style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+        style={{ color: THEME.colors.darkCharcoal }}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+          e.currentTarget.style.backgroundColor = THEME.colors.softGray;
           e.currentTarget.style.color = THEME.colors.primary;
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+          e.currentTarget.style.color = THEME.colors.darkCharcoal;
         }}
       >
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all"
           style={{ 
-            backgroundColor: isOpen ? THEME.colors.primary : 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: isOpen ? THEME.colors.primary : THEME.colors.softGray,
           }}
         >
           <FiUser 
             className="w-4 h-4 transition-colors" 
-            style={{ color: isOpen ? THEME.colors.white : THEME.colors.white }} 
+            style={{ color: isOpen ? THEME.colors.white : THEME.colors.darkCharcoal }}
           />
         </div>
         <span
           className="md:hidden text-[10px] font-bold uppercase tracking-[0.12em]"
-          style={{ color: isOpen ? THEME.colors.primary : 'rgba(255, 255, 255, 0.72)' }}
+          style={{ color: isOpen ? THEME.colors.primary : THEME.colors.mediumGray }}
         >
           {/* Menu */}
         </span>
         <div className="hidden lg:flex flex-col items-start leading-none gap-0.5">
-          <span className="text-xs font-bold" style={{ color: THEME.colors.white }}>
+          <span className="text-xs font-bold" style={{ color: THEME.colors.darkCharcoal }}>
             {user ? displayName.split(" ")[0] : "Account"}
           </span>
           {isAdmin && (
@@ -357,7 +357,7 @@ const UserMenu = ({ user, signOut, adminRole }) => {
         <FiChevronDown
           className="w-3.5 h-3.5 transition-all duration-300"
           style={{
-            color: isOpen ? THEME.colors.primary : 'rgba(255, 255, 255, 0.6)',
+            color: isOpen ? THEME.colors.primary : THEME.colors.mediumGray,
             transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
           }}
         />
@@ -493,8 +493,8 @@ const Header = () => {
     <header
       className="sticky top-0 z-100 transition-all duration-300"
       style={{
-        backgroundColor: THEME.colors.deepEmerald, // Deep Emerald background
-        borderBottom: `1px solid ${scrolled ? THEME.colors.primary : 'rgba(255, 255, 255, 0.1)'}`,
+        backgroundColor: THEME.colors.white,
+        borderBottom: `1px solid ${scrolled ? THEME.colors.primary : THEME.colors.border}`,
         boxShadow: scrolled ? THEME.shadows.header : "none",
       }}
     >

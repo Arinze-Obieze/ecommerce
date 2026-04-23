@@ -12,11 +12,11 @@ import { createClient } from '@/utils/supabase/client';
 // THEME
 // ─────────────────────────────────────────────────────────────
 const T = {
-  green:       '#00B86B',
-  greenDark:   '#0F7A4F',
-  greenDeep:   '#0A3D2E',
-  greenTint:   '#EDFAF3',
-  greenBorder: '#A8DFC4',
+  green:       '#2E6417',
+  greenDark:   '#245213',
+  greenDeep:   '#191B19',
+  greenTint:   '#EDF5E6',
+  greenBorder: '#B8D4A0',
   charcoal:    '#111111',
   softGray:    '#F5F5F5',
   pageBg:      '#F9FAFB',
@@ -201,7 +201,7 @@ export default function SignupPage() {
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
-    boxShadow: foc[key] ? `0 0 0 3.5px rgba(0,184,107,0.13)` : 'none',
+    boxShadow: foc[key] ? `0 0 0 3.5px rgba(46,100,23,0.13)` : 'none',
     ...extra,
   });
 
@@ -263,8 +263,8 @@ export default function SignupPage() {
           }}>
             <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,184,107,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
-                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${T.green},${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(0,184,107,0.4)` }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,100,23,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${T.green},${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(46,100,23,0.4)` }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path d="M9 19L16.5 26.5L29 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                       style={{ strokeDasharray: 36, strokeDashoffset: 0, animation: 'checkDraw 0.45s ease 0.2s both' }} />
@@ -303,12 +303,12 @@ export default function SignupPage() {
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  boxShadow: `0 4px 12px rgba(0,184,107,0.3)`,
+                  boxShadow: `0 4px 12px rgba(46,100,23,0.3)`,
                   overflow: 'hidden'
                 }}>
                   {!logoError ? (
                     <Image
-                      src="/icon_only.png"
+                      src="/brand/icon-only.png"
                       alt="ZOVA"
                       width={100}
                       height={100}
@@ -479,7 +479,7 @@ export default function SignupPage() {
                           ...inputStyle('confirm', { paddingRight: 46 }),
                           borderColor: confirmPassword.length > 0 ? (passwordsMatch ? T.green : T.red) : foc.confirm ? T.green : hov.confirm ? T.greenBorder : T.border,
                           background:  confirmPassword.length > 0 ? (passwordsMatch ? T.greenTint : T.redLight) : foc.confirm ? T.white : T.softGray,
-                          boxShadow:   confirmPassword.length > 0 ? (passwordsMatch ? `0 0 0 3px rgba(0,184,107,0.12)` : `0 0 0 3px rgba(229,57,53,0.1)`) : foc.confirm ? `0 0 0 3.5px rgba(0,184,107,0.13)` : 'none',
+                          boxShadow:   confirmPassword.length > 0 ? (passwordsMatch ? `0 0 0 3px rgba(46,100,23,0.12)` : `0 0 0 3px rgba(229,57,53,0.1)`) : foc.confirm ? `0 0 0 3.5px rgba(46,100,23,0.13)` : 'none',
                         }} />
                       <button type="button" onClick={() => setShowConfirm(v => !v)}
                         style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
@@ -525,7 +525,7 @@ export default function SignupPage() {
                       cursor: loading || !agreeTerms ? 'not-allowed' : 'pointer',
                       background: loading || !agreeTerms ? T.border : submitHov ? T.greenDark : T.green,
                       color: loading || !agreeTerms ? T.mutedText : T.white,
-                      boxShadow: !loading && agreeTerms && submitHov ? `0 10px 30px rgba(0,184,107,0.4)` : !loading && agreeTerms ? `0 5px 18px rgba(0,184,107,0.28)` : 'none',
+                      boxShadow: !loading && agreeTerms && submitHov ? `0 10px 30px rgba(46,100,23,0.4)` : !loading && agreeTerms ? `0 5px 18px rgba(46,100,23,0.28)` : 'none',
                       transform: !loading && agreeTerms && submitHov ? 'translateY(-1px)' : 'none',
                       transition: 'all 0.18s',
                       marginBottom: 20,
@@ -623,7 +623,7 @@ export default function SignupPage() {
             }}>
               {!logoError ? (
                 <Image
-                  src="/icon_only.png"
+                  src="/brand/icon-only.png"
                   alt="ZOVA"
                   width={50}
                   height={50}

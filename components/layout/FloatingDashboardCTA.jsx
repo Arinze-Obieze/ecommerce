@@ -9,15 +9,14 @@ import { createClient } from '@/utils/supabase/client';
 
 function rolePriority(role) {
   const normalized = String(role || '').trim().toLowerCase();
-  if (normalized === 'owner') return 3;
+  if (normalized === 'owner')   return 3;
   if (normalized === 'manager') return 2;
-  if (normalized === 'staff') return 1;
+  if (normalized === 'staff')   return 1;
   return 0;
 }
 
 function pickBestStoreMembership(memberships) {
   if (!Array.isArray(memberships) || memberships.length === 0) return null;
-
   return [...memberships].sort((a, b) => {
     const priorityDiff = rolePriority(b.role) - rolePriority(a.role);
     if (priorityDiff !== 0) return priorityDiff;
@@ -27,14 +26,15 @@ function pickBestStoreMembership(memberships) {
 
 function shouldHide(pathname) {
   if (!pathname) return true;
-
-  return pathname.startsWith('/admin') ||
+  return (
+    pathname.startsWith('/admin') ||
     pathname.startsWith('/store/dashboard') ||
     pathname.startsWith('/seller') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/reset-password');
+    pathname.startsWith('/reset-password')
+  );
 }
 
 export default function FloatingDashboardCTA() {
@@ -53,6 +53,7 @@ export default function FloatingDashboardCTA() {
 
       const supabase = createClient();
 
+      // Check superadmin
       const { data: adminMembership, error: adminError } = await supabase
         .from('admin_users')
         .select('role')
@@ -64,16 +65,19 @@ export default function FloatingDashboardCTA() {
 
       if (!adminError && adminMembership?.role) {
         setDestination({
-          href: '/admin',
-          label: 'Back to Admin',
+          href:   '/admin',
+          label:  'Back to Admin',
           detail: 'Open superadmin workspace',
-          icon: FiShield,
-          accent: 'from-[#0A3D2E] to-[#14532d]',
-          ring: 'ring-emerald-200/70',
+          icon:   FiShield,
+          // Zova Forest gradient
+          accent: 'from-[#245213] to-[#2E6417]',
+          ring:   'ring-[#B8D4A0]/70',
+          dot:    '#EC9C00',   // Gold Harvest dot accent
         });
         return;
       }
 
+      // Check store membership
       const { data: storeMemberships, error: storeError } = await supabase
         .from('store_users')
         .select('role, created_at')
@@ -87,12 +91,14 @@ export default function FloatingDashboardCTA() {
 
       if (!storeError && storeMembership?.role) {
         setDestination({
-          href: '/store/dashboard',
-          label: 'Back to Store',
+          href:   '/store/dashboard',
+          label:  'Back to Store',
           detail: 'Return to seller dashboard',
-          icon: FiBriefcase,
-          accent: 'from-[#2E5C45] to-[#00B86B]',
-          ring: 'ring-emerald-300/70',
+          icon:   FiBriefcase,
+          // Zova Forest → Gold Harvest gradient
+          accent: 'from-[#2E6417] to-[#2E6417]',
+          ring:   'ring-[#B8D4A0]/70',
+          dot:    '#EC9C00',
         });
         return;
       }
@@ -101,14 +107,10 @@ export default function FloatingDashboardCTA() {
     }
 
     resolveDestination();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [pathname, user?.id]);
 
-  if (loading || !destination || shouldHide(pathname)) {
-    return null;
-  }
+  if (loading || !destination || shouldHide(pathname)) return null;
 
   const Icon = destination.icon;
 
@@ -116,16 +118,24 @@ export default function FloatingDashboardCTA() {
     <div className="pointer-events-none fixed bottom-5 right-4 z-[90] sm:bottom-6 sm:right-6">
       <Link
         href={destination.href}
-        className={`pointer-events-auto flex items-center gap-3 rounded-2xl bg-gradient-to-br ${destination.accent} px-4 py-3 text-white shadow-[0_18px_45px_rgba(10,61,46,0.24)] ring-1 ${destination.ring} backdrop-blur transition-transform duration-200 hover:-translate-y-1`}
+        className={`pointer-events-auto flex items-center gap-2.5 rounded-xl bg-gradient-to-br ${destination.accent} px-3.5 py-2.5 text-white shadow-[0_12px_30px_rgba(46,100,23,0.25)] ring-1 ${destination.ring} backdrop-blur transition-transform duration-200 hover:-translate-y-1`}
       >
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/14">
-          <Icon className="h-5 w-5" />
+        {/* Icon bubble */}
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 flex-shrink-0">
+          <Icon className="h-3.5 w-3.5" />
         </span>
+
+        {/* Text */}
         <span className="min-w-0">
-          <span className="block text-sm font-semibold leading-tight">{destination.label}</span>
-          <span className="block text-xs text-white/80">{destination.detail}</span>
+          <span className="block text-xs font-bold leading-tight">{destination.label}</span>
+          <span className="block text-[10px] text-white/75 leading-tight mt-0.5">{destination.detail}</span>
         </span>
-        <FiArrowUpRight className="h-4 w-4 shrink-0 text-white/85" />
+
+        {/* Gold harvest arrow */}
+        <FiArrowUpRight
+          className="h-3.5 w-3.5 shrink-0"
+          style={{ color: destination.dot }}
+        />
       </Link>
     </div>
   );

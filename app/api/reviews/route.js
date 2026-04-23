@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
+import { invalidateReviewCache } from '@/utils/platform/cache-invalidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -147,6 +148,8 @@ export async function POST(request) {
       .eq('id', user.id)
       .maybeSingle();
 
+    invalidateReviewCache(saveResult.data);
+
     return NextResponse.json({
       ...saveResult.data,
       user: {
@@ -204,6 +207,8 @@ export async function PATCH(request) {
       return NextResponse.json({ error: result.error.message || 'Failed to update review' }, { status: 400 });
     }
 
+    invalidateReviewCache(result.data);
+
     return NextResponse.json({ success: true, data: result.data });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
@@ -233,7 +238,7 @@ export async function DELETE(request) {
       .eq('id', reviewId)
       .eq('user_id', user.id)
       .is('deleted_at', null)
-      .select('id')
+      .select('id, product_id')
       .single();
 
     if (isMissingReviewColumnsError(result.error)) {
@@ -243,6 +248,8 @@ export async function DELETE(request) {
     if (result.error) {
       return NextResponse.json({ error: result.error.message || 'Failed to delete review' }, { status: 400 });
     }
+
+    invalidateReviewCache(result.data);
 
     return NextResponse.json({ success: true, data: result.data });
   } catch (err) {

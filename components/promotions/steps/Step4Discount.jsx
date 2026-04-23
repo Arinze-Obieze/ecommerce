@@ -38,8 +38,8 @@ export default function Step4Discount({ state, dispatch }) {
             onClick={() => dispatch({ type: 'SET_DISCOUNT_TYPE', discountType: opt.value })}
             className={`py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
               discountType === opt.value
-                ? 'border-[#2E5C45] bg-[#2E5C45] text-white'
-                : 'border-[#dbe7e0] text-gray-700 hover:border-[#2E5C45]/40'
+                ? 'border-[#2E6417] bg-[#2E6417] text-white'
+                : 'border-[#E8E4DC] text-gray-700 hover:border-[#2E6417]/40'
             }`}
           >
             {opt.label}
@@ -59,7 +59,7 @@ export default function Step4Discount({ state, dispatch }) {
                 value={discountValue || ''}
                 onChange={e => dispatch({ type: 'SET_DISCOUNT_VALUE', value: Number(e.target.value) })}
                 placeholder="e.g. 20"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm pr-10 focus:outline-none focus:border-[#2E5C45]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm pr-10 focus:outline-none focus:border-[#2E6417]"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">%</span>
             </div>
@@ -80,7 +80,7 @@ export default function Step4Discount({ state, dispatch }) {
                 value={maxDiscountCap || ''}
                 onChange={e => dispatch({ type: 'SET_MAX_CAP', cap: Number(e.target.value) || null })}
                 placeholder="No cap"
-                className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+                className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
               />
             </div>
             <p className="text-xs text-gray-400 mt-1">e.g. cap at ₦5,000 even if 30% would be more</p>
@@ -99,7 +99,7 @@ export default function Step4Discount({ state, dispatch }) {
               value={discountValue || ''}
               onChange={e => dispatch({ type: 'SET_DISCOUNT_VALUE', value: Number(e.target.value) })}
               placeholder="e.g. 2000"
-              className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+              className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
             />
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function Step4Discount({ state, dispatch }) {
 
       {/* Bundle fields */}
       {allowsBundle && (
-        <div className="rounded-xl border border-[#dbe7e0] p-4 space-y-3">
+        <div className="rounded-xl border border-[#E8E4DC] p-4 space-y-3">
           <p className="text-sm font-semibold text-gray-700">Bundle configuration</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -117,7 +117,7 @@ export default function Step4Discount({ state, dispatch }) {
                 value={buyXQuantity || ''}
                 onChange={e => dispatch({ type: 'SET_BUNDLE', buyX: Number(e.target.value), getY: getYQuantity })}
                 placeholder="e.g. 2"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
               />
             </div>
             <div>
@@ -127,7 +127,7 @@ export default function Step4Discount({ state, dispatch }) {
                 value={getYQuantity || ''}
                 onChange={e => dispatch({ type: 'SET_BUNDLE', buyX: buyXQuantity, getY: Number(e.target.value) })}
                 placeholder="e.g. 1"
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
               />
             </div>
           </div>
@@ -149,7 +149,7 @@ export default function Step4Discount({ state, dispatch }) {
         <button
           type="button"
           onClick={() => { setShowMinOrder(v => !v); if (showMinOrder) dispatch({ type: 'SET_MIN_ORDER', amount: null }); }}
-          className="text-sm font-medium text-[#2E5C45] hover:underline"
+          className="text-sm font-medium text-[#2E6417] hover:underline"
         >
           {showMinOrder ? '− Remove minimum order' : '+ Add minimum order amount'}
         </button>
@@ -163,7 +163,7 @@ export default function Step4Discount({ state, dispatch }) {
                 value={minOrderAmount || ''}
                 onChange={e => dispatch({ type: 'SET_MIN_ORDER', amount: Number(e.target.value) || null })}
                 placeholder="e.g. 10000"
-                className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E5C45]"
+                className="w-full pl-7 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
               />
             </div>
             <p className="text-xs text-gray-400 mt-1">Discount only applies when cart total is above this amount</p>

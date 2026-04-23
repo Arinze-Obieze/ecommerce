@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
 
 const MISSING_TABLE_HINT = 'Database is missing public.order_cancellation_requests. Apply documentation/migrations/2026-04-09_order_cancellation_requests.sql and retry.';
 

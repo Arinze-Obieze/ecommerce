@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
-import { createUserNotification } from '@/utils/notifications';
-import { sendReturnRequestStatusEmail } from '@/utils/emailNotifications';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
+import { createUserNotification } from '@/utils/messaging/notifications';
+import { sendReturnRequestStatusEmail } from '@/utils/messaging/email-notifications';
 
 const MISSING_TABLE_HINT =
   'Database is missing public.order_return_requests. Apply documentation/migrations/2026-04-10_marketplace_ops_extensions.sql and retry.';

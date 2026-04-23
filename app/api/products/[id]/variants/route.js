@@ -1,14 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
-import { NextResponse } from 'next/server';
+import { errorJson, publicJson } from '@/utils/platform/api-response';
+import { createPublicClient } from '@/utils/supabase/public';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request, { params }) {
     const { id } = await params;
     
     try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        );
+        const supabase = createPublicClient();
 
         const numericId = Number(id);
         let productId = Number.isInteger(numericId) ? numericId : null;
@@ -19,25 +18,41 @@ export async function GET(request, { params }) {
                 .from('products')
                 .select('id')
                 .eq('slug', id)
+                .eq('is_active', true)
+                .eq('moderation_status', 'approved')
                 .single();
 
             if (productError || !productBySlug) {
-                return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+                return errorJson('Product not found', 404);
             }
             productId = productBySlug.id;
         }
 
+        if (productId) {
+            const { data: product, error: productError } = await supabase
+                .from('products')
+                .select('id')
+                .eq('id', productId)
+                .eq('is_active', true)
+                .eq('moderation_status', 'approved')
+                .single();
+
+            if (productError || !product) {
+                return errorJson('Product not found', 404);
+            }
+        }
+
         const { data: variants, error } = await supabase
             .from('product_variants')
-            .select('*')
+            .select('id, product_id, color, size, price_modifier, stock_quantity, color_hex, color_family, color_source, created_at')
             .eq('product_id', productId);
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 400 });
+            return errorJson('Failed to load product variants', 400);
         }
 
-        return NextResponse.json({ variants });
+        return publicJson({ success: true, variants: variants || [] });
     } catch (err) {
-        return NextResponse.json({ error: 'Server Error' }, { status: 500 });
+        return errorJson('Server Error');
     }
 }

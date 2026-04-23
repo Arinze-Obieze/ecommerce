@@ -1,20 +1,16 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
 const DEFAULT_BUCKET = process.env.SUPABASE_PRODUCT_MEDIA_BUCKET || process.env.NEXT_PUBLIC_SUPABASE_PRODUCT_MEDIA_BUCKET || 'product-media';
 const MAX_IMAGE_BYTES = Number.parseInt(process.env.STORE_MAX_IMAGE_UPLOAD_BYTES || `${8 * 1024 * 1024}`, 10);
 const MAX_VIDEO_BYTES = Number.parseInt(process.env.STORE_MAX_VIDEO_UPLOAD_BYTES || `${80 * 1024 * 1024}`, 10);
 
 function randomPart() {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 }
 
 function fileExtension(filename, mimeType) {
-  const normalized = String(filename || '').trim();
-  const extFromName = normalized.includes('.') ? normalized.split('.').pop().toLowerCase() : '';
-  if (extFromName) return extFromName;
-
   const map = {
     'image/jpeg': 'jpg',
     'image/png': 'png',
@@ -26,6 +22,16 @@ function fileExtension(filename, mimeType) {
   };
   return map[mimeType] || 'bin';
 }
+
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+]);
 
 export async function POST(request) {
   const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
@@ -52,12 +58,12 @@ export async function POST(request) {
     return NextResponse.json({ error: 'filename, mime_type, and byte_size are required' }, { status: 400 });
   }
 
-  const isImage = mimeType.startsWith('image/');
-  const isVideo = mimeType.startsWith('video/');
-  if (!isImage && !isVideo) {
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
     return NextResponse.json({ error: 'Only image and video uploads are allowed' }, { status: 400 });
   }
 
+  const isImage = mimeType.startsWith('image/');
+  const isVideo = mimeType.startsWith('video/');
   const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
   if (byteSize > maxBytes) {
     return NextResponse.json({
@@ -68,7 +74,7 @@ export async function POST(request) {
   const now = new Date();
   const yyyy = String(now.getUTCFullYear());
   const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const ext = fileExtension(filename, mimeType);
+  const ext = fileExtension(null, mimeType);
   const path = `${ctx.membership.store_id}/${yyyy}/${mm}/${Date.now()}_${randomPart()}.${ext}`;
 
   const { data: signedData, error: signedError } = await ctx.adminClient.storage

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import {
   DEFAULT_RETURN_POLICY,
   normalizeReturnPolicyRecord,
   buildReturnPolicyUpdatePayload,
-} from '@/utils/returnPolicy';
+} from '@/utils/catalog/return-policy';
+import { invalidateReturnPolicyCache } from '@/utils/platform/cache-invalidation';
 
 const EDITOR_ROLES = [ADMIN_ROLES.SUPER_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPPORT_ADMIN];
 
@@ -87,6 +88,8 @@ export async function PATCH(request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  invalidateReturnPolicyCache();
 
   return NextResponse.json({
     success: true,

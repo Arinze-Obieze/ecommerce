@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-
-function toPositiveInt(value, fallback) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
-}
+import { requireAdminApi } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { getPagination, paginateArray } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 
 function toNullableInt(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -44,8 +40,7 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page = toPositiveInt(searchParams.get('page'), 1);
-  const limit = Math.min(100, toPositiveInt(searchParams.get('limit'), 25));
+  const { page, limit } = getPagination(searchParams, { defaultLimit: 25, maxLimit: 100 });
   const range = (searchParams.get('range') || '90d').trim();
   const status = (searchParams.get('status') || '').trim();
   const minItems = toNullableInt(searchParams.get('minItems'));
@@ -96,22 +91,13 @@ export async function GET(request) {
     filtered = filtered.filter((o) => o.items_count <= maxItems);
   }
 
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * limit;
-  const data = filtered.slice(start, start + limit);
+  const paginated = paginateArray(filtered, { page, limit });
 
-  return NextResponse.json({
+  return privateJson({
     success: true,
-    data,
+    data: paginated.data,
     meta: {
-      page: safePage,
-      limit,
-      total,
-      totalPages,
-      hasNextPage: safePage < totalPages,
-      hasPreviousPage: safePage > 1,
+      ...paginated.meta,
       filters: {
         range,
         status,

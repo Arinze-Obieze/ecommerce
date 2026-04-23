@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { writeAdminAuditLog } from '@/utils/adminAudit';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { writeAdminAuditLog } from '@/utils/admin/audit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { invalidateProductsCache, invalidateStoreCache } from '@/utils/platform/cache-invalidation';
 
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
@@ -188,6 +189,8 @@ export async function PATCH(request, { params }) {
     metadata: { updatedFields: Object.keys(updates) },
   });
 
+  invalidateStoreCache(store);
+
   return NextResponse.json({ success: true, data: store });
 }
 
@@ -219,6 +222,10 @@ export async function DELETE(request, { params }) {
   }
 
   const store = storeResult.data;
+  const { data: storeProducts } = await admin.adminClient
+    .from('products')
+    .select('id, store_id')
+    .eq('store_id', store.id);
 
   // Since we want to automatically delete all products under the store
   const { error: productsError } = await admin.adminClient
@@ -250,6 +257,9 @@ export async function DELETE(request, { params }) {
     afterData: null,
     metadata: { deletedWithProducts: true },
   });
+
+  invalidateStoreCache(store);
+  invalidateProductsCache(storeProducts || []);
 
   return NextResponse.json({ success: true, message: 'Store and its products deleted successfully' });
 }

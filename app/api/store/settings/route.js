@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { invalidateStoreCache } from '@/utils/platform/cache-invalidation';
 
 function sanitizeSlug(value) {
   return String(value || '')
@@ -168,6 +169,8 @@ export async function PATCH(request) {
     }
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  invalidateStoreCache(data);
 
   return NextResponse.json({ success: true, data: toSettingsRow(data) });
 }

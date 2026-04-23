@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { generateProductSku, normalizeSpecifications } from '@/utils/productCatalog';
-import { normalizeBulkDiscountTiers } from '@/utils/bulkPricing';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { generateProductSku, normalizeSpecifications } from '@/utils/catalog/product-catalog';
+import { normalizeBulkDiscountTiers } from '@/utils/catalog/bulk-pricing';
+import { invalidateProductCache } from '@/utils/platform/cache-invalidation';
 
 const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, bulk_discount_tiers, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
 const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
@@ -312,6 +313,8 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
+  invalidateProductCache(data);
+
   return NextResponse.json({ success: true, data });
 }
 
@@ -409,6 +412,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    invalidateProductCache(data);
+
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message || 'Failed to duplicate product' }, { status: 400 });
@@ -461,6 +466,8 @@ export async function DELETE(request, { params }) {
   if (error) {
     return NextResponse.json({ error: error.message || 'Failed to delete product' }, { status: 400 });
   }
+
+  invalidateProductCache(product);
 
   return NextResponse.json({ success: true, data: { id: product.id } });
 }

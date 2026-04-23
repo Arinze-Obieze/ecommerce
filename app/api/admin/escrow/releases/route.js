@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi, ADMIN_ROLES } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { releaseEscrowForOrderStore } from '@/utils/escrow';
-import { initiatePaystackTransfer } from '@/utils/paystackTransfers';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { releaseEscrowForOrderStore } from '@/utils/payments/escrow';
+import { initiatePaystackTransfer } from '@/utils/payments/paystack-transfers';
 
 function toMoney(value) {
   const numeric = Number(value || 0);

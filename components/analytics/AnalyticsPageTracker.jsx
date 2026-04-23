@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { trackAnalyticsEvent } from '@/utils/analytics';
+import { trackAnalyticsEvent } from '@/utils/telemetry/analytics';
 
 export default function AnalyticsPageTracker() {
   const pathname = usePathname();

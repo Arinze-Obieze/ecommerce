@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
-import { createUserNotification } from '@/utils/notifications';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
+import { createUserNotification } from '@/utils/messaging/notifications';
 
 const FULFILLMENT_STATUSES = ['processing', 'packed', 'shipped', 'delivered', 'issue'];
 const MISSING_UPDATES_TABLE_HINT = 'Database is missing public.order_fulfillment_updates. Apply documentation/migrations/2026-04-09_store_order_fulfillment_updates.sql and retry.';

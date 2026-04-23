@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireStoreApi, STORE_ROLES } from "@/utils/storeAuth";
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireStoreApi, STORE_ROLES } from "@/utils/store/auth";
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import {
   WASHING_OPTIONS,
   BLEACHING_OPTIONS,
   DRYING_OPTIONS,
   IRONING_OPTIONS,
   DRY_CLEANING_OPTIONS,
-} from "@/lib/product-wizard-constants";
+} from "@/features/product-wizard/lib/constants";
 
 const DRAFT_TABLE = "product_creation_drafts";
 const DRAFT_BUCKET = "product-images";

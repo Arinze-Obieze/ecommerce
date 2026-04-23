@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
-import { resolvePostLoginTarget } from '@/utils/postLoginRedirect';
-import { acceptPendingStoreInvitations, ensureUserProfile } from '@/utils/storeInvitations';
+import { resolvePostLoginTarget } from '@/utils/auth/post-login-redirect';
+import { acceptPendingStoreInvitations, ensureUserProfile } from '@/utils/store/invitations';
 
 export async function GET() {
   const supabase = await createClient();

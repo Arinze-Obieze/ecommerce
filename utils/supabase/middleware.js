@@ -1,6 +1,94 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import { resolvePostLoginTarget } from "@/utils/postLoginRedirect";
+import { resolvePostLoginTarget } from "@/utils/auth/post-login-redirect";
+
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self)',
+  'Origin-Agent-Cluster': '?1',
+  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+};
+
+function getSupabaseHost() {
+  try {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : '';
+  } catch {
+    return '';
+  }
+}
+
+function buildReportOnlyCsp() {
+  const supabaseHost = getSupabaseHost();
+  const supabaseSources = supabaseHost
+    ? [`https://${supabaseHost}`, `wss://${supabaseHost}`]
+    : ['https://*.supabase.co', 'wss://*.supabase.co'];
+
+  const directives = [
+    ["default-src", "'self'"],
+    ["base-uri", "'self'"],
+    ["object-src", "'none'"],
+    ["frame-ancestors", "'none'"],
+    ["form-action", "'self'"],
+    [
+      "script-src",
+      "'self'",
+      "'unsafe-inline'",
+      "'unsafe-eval'",
+      "https://js.paystack.co",
+      "https://checkout.paystack.com",
+    ],
+    ["style-src", "'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    ["font-src", "'self'", "data:", "https://fonts.gstatic.com"],
+    [
+      "img-src",
+      "'self'",
+      "data:",
+      "blob:",
+      "https://images.unsplash.com",
+      "https://placehold.co",
+      "https://api.qrserver.com",
+      ...supabaseSources.filter((source) => source.startsWith('https://')),
+    ],
+    ["media-src", "'self'", "blob:", ...supabaseSources.filter((source) => source.startsWith('https://'))],
+    [
+      "connect-src",
+      "'self'",
+      ...supabaseSources,
+      "https://api.paystack.co",
+      "https://checkout.paystack.com",
+    ],
+    ["frame-src", "'self'", "https://js.paystack.co", "https://checkout.paystack.com"],
+    ["worker-src", "'self'", "blob:"],
+    ["manifest-src", "'self'"],
+    ["report-uri", "/api/security/csp-report"],
+    ["report-to", "csp-endpoint"],
+  ];
+
+  return directives
+    .map(([name, ...values]) => `${name} ${values.join(' ')}`)
+    .join('; ');
+}
+
+function applySecurityHeaders(response) {
+  Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  if (process.env.CSP_REPORT_ONLY_DISABLED !== 'true') {
+    response.headers.set('Content-Security-Policy-Report-Only', buildReportOnlyCsp());
+    response.headers.set('Reporting-Endpoints', 'csp-endpoint="/api/security/csp-report"');
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  }
+
+  return response;
+}
 
 export async function updateSession(request) {
   let response = NextResponse.next({
@@ -49,7 +137,7 @@ export async function updateSession(request) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return NextResponse.redirect(url);
+    return applySecurityHeaders(NextResponse.redirect(url));
   }
 
   // Optional: Redirect authenticated users away from login/signup
@@ -60,8 +148,8 @@ export async function updateSession(request) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = await resolvePostLoginTarget(supabase, user.id);
-    return NextResponse.redirect(url);
+    return applySecurityHeaders(NextResponse.redirect(url));
   }
 
-  return response;
+  return applySecurityHeaders(response);
 }

@@ -1,11 +1,13 @@
-import { createClient } from '@/utils/supabase/server';
-import { NextResponse } from 'next/server';
+import { publicJson, errorJson, toPositiveInt } from '@/utils/platform/api-response';
+import { createPublicClient } from '@/utils/supabase/public';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '8', 10);
+    const limit = toPositiveInt(searchParams.get('limit'), 8, { min: 1, max: 24 });
 
     const { data: stores, error } = await supabase
       .from('stores')
@@ -19,12 +21,9 @@ export async function GET(request) {
       throw error;
     }
 
-    return NextResponse.json({ success: true, data: stores });
+    return publicJson({ success: true, data: stores || [] }, { policy: 'publicShort' });
   } catch (error) {
     console.error('Fetch Top Stores Error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to fetch top stores' },
-      { status: 500 }
-    );
+    return errorJson('Failed to fetch top stores');
   }
 }

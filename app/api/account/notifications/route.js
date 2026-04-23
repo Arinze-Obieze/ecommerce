@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import {
   isMissingNotificationsTableError,
   NOTIFICATIONS_MIGRATION_HINT,
-} from '@/utils/notifications';
+} from '@/utils/messaging/notifications';
+import { getPagination, paginationMeta } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 
 async function getAuthedContext(request) {
   const authClient = await createClient();
@@ -37,12 +39,15 @@ export async function GET(request) {
   const ctx = await getAuthedContext(request);
   if (!ctx.ok) return ctx.response;
 
+  const { searchParams } = new URL(request.url);
+  const { page, limit, from, to } = getPagination(searchParams, { defaultLimit: 30, maxLimit: 100 });
+
   const result = await ctx.adminClient
     .from('user_notifications')
-    .select('id, type, title, body, action_url, entity_type, entity_id, status, metadata, read_at, created_at, store_id')
+    .select('id, type, title, body, action_url, entity_type, entity_id, status, metadata, read_at, created_at, store_id', { count: 'exact' })
     .eq('user_id', ctx.user.id)
     .order('created_at', { ascending: false })
-    .limit(100);
+    .range(from, to);
 
   if (isMissingNotificationsTableError(result.error)) {
     return NextResponse.json({ error: NOTIFICATIONS_MIGRATION_HINT }, { status: 500 });
@@ -52,12 +57,19 @@ export async function GET(request) {
     return NextResponse.json({ error: result.error.message || 'Failed to load notifications' }, { status: 500 });
   }
 
+  const unreadResult = await ctx.adminClient
+    .from('user_notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', ctx.user.id)
+    .eq('status', 'unread');
+
   const rows = result.data || [];
-  return NextResponse.json({
+  return privateJson({
     success: true,
     data: rows,
     meta: {
-      unreadCount: rows.filter((row) => row.status === 'unread').length,
+      ...paginationMeta({ page, limit, total: result.count || 0 }),
+      unreadCount: unreadResult.error ? rows.filter((row) => row.status === 'unread').length : unreadResult.count || 0,
     },
   });
 }

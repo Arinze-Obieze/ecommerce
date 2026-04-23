@@ -1,15 +1,11 @@
 // app/api/seller/products/next-sku/route.js
-import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { requireStoreApi, STORE_ROLES } from "@/utils/store/auth";
 
 export async function GET(request) {
   try {
-    const supabase = await createClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
+    if (!ctx.ok) return ctx.response;
 
     const { searchParams } = new URL(request.url);
     const prefix = searchParams.get("prefix");
@@ -19,7 +15,7 @@ export async function GET(request) {
     }
 
     // Find highest existing sequence for this prefix
-    const { data, error } = await supabase
+    const { data, error } = await ctx.adminClient
       .from("products_internal")
       .select("base_sku")
       .like("base_sku", `${prefix}-%`)

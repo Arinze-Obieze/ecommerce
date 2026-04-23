@@ -1,10 +1,35 @@
 import { createClient } from '@/utils/supabase/server';
-import { NextResponse } from 'next/server';
-import redis from '@/utils/redis';
-import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
-import { DEFAULT_RETURN_POLICY, normalizeReturnPolicyRecord } from '@/utils/returnPolicy';
+import redis from '@/utils/platform/redis';
+import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
+import { DEFAULT_RETURN_POLICY, normalizeReturnPolicyRecord } from '@/utils/catalog/return-policy';
+import { errorJson, publicJson } from '@/utils/platform/api-response';
 
 export const dynamic = 'force-dynamic';
+
+const PRODUCT_DETAIL_SELECT = `
+  id,
+  store_id,
+  name,
+  slug,
+  description,
+  price,
+  discount_price,
+  stock_quantity,
+  image_urls,
+  video_urls,
+  sizes,
+  colors,
+  specifications,
+  bulk_discount_tiers,
+  rating,
+  is_active,
+  is_featured,
+  moderation_status,
+  created_at,
+  updated_at,
+  product_categories(categories(id, name, slug, parent_id)),
+  stores(id, name, slug, logo_url, rating, followers, kyc_status, payout_ready, is_verified)
+`;
 
 export async function GET(request, { params }) {
   const startedAt = Date.now();
@@ -21,7 +46,7 @@ export async function GET(request, { params }) {
       message: 'Product slug/id missing',
       durationMs: Date.now() - startedAt,
     });
-    return NextResponse.json({ error: 'Slug/ID required' }, { status: 400 });
+    return errorJson('Slug/ID required', 400);
   }
 
   const cacheKey = `product:${id}`;
@@ -63,9 +88,9 @@ export async function GET(request, { params }) {
         });
         // @upstash/redis may automatically parse JSON
         if (typeof cachedData === 'object') {
-             return NextResponse.json(cachedData);
+             return publicJson(cachedData);
         }
-        return NextResponse.json(parsed);
+        return publicJson(parsed);
       }
     }
 
@@ -76,9 +101,10 @@ export async function GET(request, { params }) {
     // First try slug lookup
     const slugResult = await supabase
       .from('products')
-      .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
+      .select(PRODUCT_DETAIL_SELECT)
       .eq('slug', id)
       .eq('is_active', true)
+      .eq('moderation_status', 'approved')
       .single();
 
     product = slugResult.data;
@@ -88,9 +114,10 @@ export async function GET(request, { params }) {
     if ((!product || error) && Number.isInteger(Number(id))) {
       const idResult = await supabase
         .from('products')
-        .select('*, product_categories(categories(*)), stores(id, name, slug, logo_url)')
+        .select(PRODUCT_DETAIL_SELECT)
         .eq('id', Number(id))
         .eq('is_active', true)
+        .eq('moderation_status', 'approved')
         .single();
       product = idResult.data;
       error = idResult.error;
@@ -109,7 +136,7 @@ export async function GET(request, { params }) {
           metadata: { id },
           durationMs: Date.now() - startedAt,
         });
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        return errorJson('Product not found', 404);
     }
 
     const { data: returnPolicyRecord, error: returnPolicyError } = await supabase
@@ -195,7 +222,7 @@ export async function GET(request, { params }) {
       durationMs: Date.now() - startedAt,
     });
 
-    return NextResponse.json(flattenedProduct);
+    return publicJson(flattenedProduct, { policy: 'publicDetail' });
 
   } catch (err) {
     console.error('API Error:', err);
@@ -212,6 +239,6 @@ export async function GET(request, { params }) {
       metadata: { id },
       durationMs: Date.now() - startedAt,
     });
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return errorJson('Internal Server Error');
   }
 }

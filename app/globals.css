@@ -24,30 +24,55 @@ button {
 }
 
 @theme {
-  /* Primary Colors */
-  --color-primary: #2563eb; /* Blue - trust, security, professional */
-  --color-primary-hover: #1d4ed8; /* Darker blue for hover states */
+  /* Typography */
+  --font-sans: "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Panton", "Fraunces", "Playfair Display", Georgia, serif;
 
-  /* Action/CTA Colors */
-  --color-accent: #dc2626; /* Red - urgency, sales, attention */
-  --color-success: #059669; /* Green - success, positive actions */
+  /* Brand */
+  --color-primary: #2E6417;
+  --color-primary-hover: #245213;
+  --color-primary-soft: #EDF5E6;
+  --color-accent: #EC9C00;
+  --color-accent-hover: #d48c00;
 
-  /* Neutral/Background Colors */
-  --color-background: #ffffff; /* Clean white background */
-  --color-background-alt: #f8fafc; /* Light gray for sections */
+  /* Surfaces */
+  --color-background: #ffffff;
+  --color-background-alt: #F5F1EA;
+  --color-card: #ffffff;
+  --color-card-hover: #F5F1EA;
+  --color-border: #E8E4DC;
 
-  /* Text Colors */
-  --color-text: #1e293b; /* Dark slate - primary text */
-  --color-text-light: #64748b; /* Gray - secondary text */
-  --color-text-inverted: #ffffff; /* White text on dark backgrounds */
+  /* Text */
+  --color-text: #191B19;
+  --color-text-light: #6B6B6B;
+  --color-text-muted: #999999;
+  --color-text-inverted: #ffffff;
 
-  /* UI/Component Colors */
-  --color-border: #e2e8f0; /* Light borders */
-  --color-card: #ffffff; /* Card backgrounds */
-  --color-card-hover: #f1f5f9; /* Card hover states */
+  /* Status */
+  --color-success: #059669;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #2563eb;
+}
 
-  /* Status Colors */
-  --color-error: #ef4444; /* Error states */
-  --color-warning: #f59e0b; /* Warnings */
-  --color-info: #3b82f6; /* Information */
+:root {
+  --zova-font-sans: "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --zova-font-display: "Panton", "Fraunces", "Playfair Display", Georgia, serif;
+  --zova-green: #2E6417;
+  --zova-green-dark: #245213;
+  --zova-green-soft: #EDF5E6;
+  --zova-gold: #EC9C00;
+  --zova-ink: #191B19;
+  --zova-muted: #6B6B6B;
+  --zova-linen: #F5F1EA;
+  --zova-border: #E8E4DC;
+  --zova-radius-sm: 8px;
+  --zova-radius-md: 12px;
+  --zova-radius-lg: 16px;
+  --zova-shadow-card: 0 1px 4px rgba(46, 100, 23, 0.05);
+  --zova-shadow-card-hover: 0 8px 24px rgba(46, 100, 23, 0.10);
+}
+
+body {
+  font-family: var(--zova-font-sans);
 }

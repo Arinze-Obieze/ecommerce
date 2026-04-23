@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog } from '@/utils/serverTelemetry';
-import { sendStoreAccessRevokedEmail, sendStoreAccessUpdatedEmail } from '@/utils/emailNotifications';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog } from '@/utils/telemetry/server';
+import { sendStoreAccessRevokedEmail, sendStoreAccessUpdatedEmail } from '@/utils/messaging/email-notifications';
 
 function validRole(role) {
   return role === STORE_ROLES.MANAGER || role === STORE_ROLES.STAFF;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { trackAnalyticsEvent } from '@/utils/analytics';
+import { trackAnalyticsEvent } from '@/utils/telemetry/analytics';
 
 function getStorageKey(productId, surface, position) {
   return `shophub_impression:${surface || 'unknown'}:${productId}:${position ?? 'na'}`;

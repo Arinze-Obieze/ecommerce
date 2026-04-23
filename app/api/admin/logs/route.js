@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-
-function toPositiveInt(value, fallback) {
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
-}
+import { requireAdminApi } from '@/utils/admin/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { getPagination, paginationMeta } from '@/utils/platform/pagination';
+import { privateJson } from '@/utils/platform/api-response';
 
 export async function GET(request) {
   const admin = await requireAdminApi();
@@ -25,9 +21,7 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const page = toPositiveInt(searchParams.get('page'), 1);
-  const limit = Math.min(100, toPositiveInt(searchParams.get('limit'), 40));
-  const offset = (page - 1) * limit;
+  const { page, limit, from: rangeFrom, to: rangeTo } = getPagination(searchParams, { defaultLimit: 40, maxLimit: 100 });
 
   const level = (searchParams.get('level') || '').trim();
   const service = (searchParams.get('service') || '').trim();
@@ -56,7 +50,7 @@ export async function GET(request) {
     query = query.or(`message.ilike.%${search}%,action.ilike.%${search}%,service.ilike.%${search}%`);
   }
 
-  query = query.range(offset, offset + limit - 1);
+  query = query.range(rangeFrom, rangeTo);
 
   const { data, error, count } = await query;
 
@@ -101,15 +95,10 @@ export async function GET(request) {
     .sort((a, b) => b.occurrences - a.occurrences)
     .slice(0, 10);
 
-  return NextResponse.json({
+  return privateJson({
     success: true,
     data: data || [],
-    meta: {
-      page,
-      limit,
-      total: count || 0,
-      totalPages: Math.max(1, Math.ceil((count || 0) / limit)),
-    },
+    meta: paginationMeta({ page, limit, total: count || 0 }),
     summary24h: {
       errors: errorCounts,
       warnings: warnCounts,

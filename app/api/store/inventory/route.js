@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { requireStoreApi, STORE_ROLES } from '@/utils/storeAuth';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
+import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { paginationMeta } from '@/utils/platform/pagination';
+import { invalidateProductCache, invalidateProductsCache } from '@/utils/platform/cache-invalidation';
 
 const PRODUCT_SELECT = 'id, store_id, name, slug, sku, stock_quantity, is_active, moderation_status, updated_at';
 const VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';
@@ -196,9 +198,8 @@ function serializeInventory(products, variants, history, options = {}) {
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, toInteger(options.pageSize) || DEFAULT_PAGE_SIZE));
   const page = Math.max(1, toInteger(options.page) || 1);
   const filteredRows = rows.filter((row) => matchesInventoryFilter(row, filter, lowStockThreshold) && matchesInventorySearch(row, search));
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * pageSize;
+  const meta = paginationMeta({ page, limit: pageSize, total: filteredRows.length });
+  const start = (meta.page - 1) * pageSize;
 
   return {
     rows: filteredRows.slice(start, start + pageSize),
@@ -209,11 +210,14 @@ function serializeInventory(products, variants, history, options = {}) {
       low_stock_threshold: lowStockThreshold,
     },
     pagination: {
-      page: safePage,
+      page: meta.page,
       pageSize,
-      total: filteredRows.length,
-      totalPages,
+      total: meta.total,
+      totalPages: meta.totalPages,
+      hasNextPage: meta.hasNextPage,
+      hasPreviousPage: meta.hasPreviousPage,
     },
+    meta,
   };
 }
 
@@ -396,6 +400,8 @@ async function adjustProductStock(ctx, request, body) {
     message: `${product.name} stock ${mode === 'set' ? 'set' : mode === 'add' ? 'increased' : 'decreased'} to ${nextQuantity}`,
   });
 
+  invalidateProductCache(product);
+
   const inventory = await loadInventoryData(ctx);
   return NextResponse.json({ success: true, ...inventory });
 }
@@ -511,6 +517,8 @@ async function adjustVariantStock(ctx, request, body) {
     message: `${product.name} (${variantLabel}) stock ${mode === 'set' ? 'set' : mode === 'add' ? 'increased' : 'decreased'} to ${nextQuantity}`,
   });
 
+  invalidateProductCache(product);
+
   const inventory = await loadInventoryData(ctx);
   return NextResponse.json({ success: true, ...inventory });
 }
@@ -562,6 +570,8 @@ async function restockLowStock(ctx, request, body) {
     delta: targetQuantity - row.effective_stock_quantity,
     message: `${row.name} restocked to ${targetQuantity}`,
   })));
+
+  invalidateProductsCache(targetRows);
 
   const refreshed = await loadInventoryData(ctx);
   return NextResponse.json({ success: true, ...refreshed });

@@ -4,7 +4,15 @@ import Footer from '@/components/layout/Footer';
 
 export default function ConditionalFooter() {
   const pathname = usePathname();
- // ConditionalHeader.jsx
-if (pathname?.startsWith('/admin') || pathname?.startsWith('/store/dashboard')) return null;
+
+  const hiddenRoutes = ['/login', '/signup', '/register', '/forgot-password', '/reset-password'];
+  if (
+    hiddenRoutes.includes(pathname) ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/store/dashboard')
+  ) {
+    return null;
+  }
+
   return <Footer />;
 }

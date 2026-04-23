@@ -54,7 +54,7 @@ export default function Step6Review({ state, onSubmit, onDraft, saving }) {
       </div>
 
       {/* Summary card */}
-      <div className="rounded-2xl border border-[#dbe7e0] bg-white p-5">
+      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5">
         <Row label="Targeting" value={targetingSummary} />
         {promotionTypeLabel && (
           <Row label="Type" value={`${promotionTypeIcon || ''} ${promotionTypeLabel}`} />
@@ -98,7 +98,7 @@ export default function Step6Review({ state, onSubmit, onDraft, saving }) {
           type="button"
           onClick={() => onDraft()}
           disabled={saving}
-          className="flex-1 py-3 rounded-xl border-2 border-[#dbe7e0] text-sm font-semibold text-gray-700 hover:border-gray-300 disabled:opacity-50 transition-all"
+          className="flex-1 py-3 rounded-xl border-2 border-[#E8E4DC] text-sm font-semibold text-gray-700 hover:border-gray-300 disabled:opacity-50 transition-all"
         >
           Save as Draft
         </button>
@@ -106,7 +106,7 @@ export default function Step6Review({ state, onSubmit, onDraft, saving }) {
           type="button"
           onClick={() => onSubmit()}
           disabled={saving}
-          className="flex-1 py-3 rounded-xl bg-[#2E5C45] text-white text-sm font-bold hover:bg-[#254a38] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+          className="flex-1 py-3 rounded-xl bg-[#2E6417] text-white text-sm font-bold hover:bg-[#245213] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
         >
           {saving ? (
             <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting…</>

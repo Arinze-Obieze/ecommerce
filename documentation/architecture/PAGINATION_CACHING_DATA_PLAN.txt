@@ -1,0 +1,334 @@
+Pagination, Caching, and Data Access Implementation Plan
+Date: 2026-04-20
+
+Current status
+--------------
+The project already has a good rendering foundation:
+
+- app/(storefront)/layout.js uses revalidate = 300.
+- app/(content)/layout.js is static.
+- app/(account), app/(admin), and app/(store-console) are dynamic and no-store.
+- API cache response headers are centralized in utils/platform/api-response.js.
+- Redis support exists in utils/platform/redis.js.
+- Rate limiting exists in utils/platform/rate-limit.js.
+
+The main remaining gap is consistency. Some pages and route handlers query Supabase directly, some use feature clients, and public/private caching policy is not yet centralized enough for quick fixes.
+
+
+Implemented first step
+----------------------
+The /stores listing now has backend and frontend pagination:
+
+- app/api/stores/route.js
+  Supports page, limit, and sort query parameters.
+  Returns data plus meta with page, limit, total, totalPages, hasNextPage, and hasPreviousPage.
+  Uses public API response cache headers.
+
+- app/(storefront)/stores/page.js
+  Renders a stores directory client component inside Suspense.
+
+- features/storefront/stores/StoresDirectory.jsx
+  Fetches paginated store data.
+  Shows loading states.
+  Shows page count and total stores.
+  Renders Previous, Next, and page buttons.
+  Adds an Open Store button to each store card.
+
+- features/storefront/stores/api/client.js
+  Central client helper for loading paginated stores.
+
+
+Implemented cache and pagination foundation
+-------------------------------------------
+Added shared platform modules:
+
+- utils/platform/cache-policy.js
+  Central cache policy registry for publicShort, publicCatalog, publicDetail, noStore,
+  privateUser, storeConsole, adminOps, and mutation-style responses.
+
+- utils/platform/cache-tags.js
+  Central cache tag names and tag builders for products, stores, categories,
+  collections, return policy, reviews, and storefront homepage data.
+
+- utils/platform/cached-fetch.js
+  Convenience wrappers for publicCatalogFetch, publicShortFetch, and noStoreFetch.
+
+- utils/platform/pagination.js
+  Shared helpers for getPagination, paginationMeta, paginateArray, and toPositiveInt.
+
+Updated API response behavior:
+
+- utils/platform/api-response.js now reads cache headers from cache-policy.js.
+- publicJson supports policy selection such as publicShort and publicDetail.
+- privateJson supports no-store policies for private, admin, and store-console data.
+
+Updated list endpoints to return standard pagination metadata:
+
+- /api/stores
+- /api/products
+- /api/admin/products
+- /api/admin/orders
+- /api/admin/stores
+- /api/admin/logs
+- /api/store/products
+- /api/store/orders
+- /api/store/inventory
+- /api/store/payouts
+- /api/account/notifications
+
+Updated public endpoint cache policies:
+
+- /api/stores/top uses publicShort.
+- /api/stores/[id] uses publicDetail.
+- /api/products/[id] uses publicDetail.
+- /api/hero-banner uses publicShort.
+- /api/return-policy uses publicDetail.
+
+Started moving data access into feature server modules:
+
+- features/storefront/stores/server/queries.js owns public store listing query logic.
+- features/catalog/server/products-route.js already owns product listing logic.
+
+
+Recommended target architecture
+-------------------------------
+Create one consistent data path:
+
+1. Route handlers parse request input and return JSON.
+2. Server pages call feature server modules for server-side data.
+3. Client components call feature API clients.
+4. Feature server modules own Supabase queries and cache behavior.
+5. Shared cache policy and tags live under utils/platform.
+
+Recommended folders:
+
+- utils/platform/cache-policy.js
+- utils/platform/cache-tags.js
+- utils/platform/cached-fetch.js
+- features/catalog/server/
+- features/storefront/stores/server/
+- features/account/server/
+- features/store-console/server/
+- features/admin/server/
+
+
+Central cache policy
+--------------------
+Add a cache policy module at:
+
+utils/platform/cache-policy.js
+
+Suggested policies:
+
+- publicCatalog
+  CDN TTL: 120 seconds
+  Browser TTL: 0 seconds
+  Revalidation: must-revalidate
+  Use for product lists, categories, collections, public store lists.
+
+- publicDetail
+  CDN TTL: 60 seconds
+  Browser TTL: 0 seconds
+  Revalidation: must-revalidate
+  Use for product detail and public store detail pages.
+
+- publicShort
+  CDN TTL: 30 seconds
+  Browser TTL: 0 seconds
+  Revalidation: must-revalidate
+  Use for hero banners, top stores, and homepage merchandising that changes more often.
+
+- privateUser
+  no-store
+  Use for account, cart, wishlist, addresses, orders, notifications.
+
+- storeConsole
+  no-store
+  Use for seller dashboard, inventory, products, orders, payouts, team, analytics.
+
+- adminOps
+  no-store
+  Use for admin dashboards, reviews, sellers, products, logs, escrow, orders.
+
+- mutation
+  no-store
+  Use for all POST, PATCH, PUT, and DELETE routes.
+
+
+Central cache tags
+------------------
+Add a tag registry at:
+
+utils/platform/cache-tags.js
+
+Suggested tags:
+
+- products
+- products:list
+- products:detail:{id}
+- products:store:{storeId}
+- categories
+- collections
+- stores
+- stores:list
+- stores:top
+- stores:detail:{id}
+- storefront:home
+- return-policy
+- reviews:product:{productId}
+
+Mutation routes should invalidate related tags after writes.
+
+Examples:
+
+- Product create/update/delete:
+  Invalidate products, products:list, products:store:{storeId}, stores:detail:{storeId}
+
+- Store settings update:
+  Invalidate stores, stores:list, stores:top, stores:detail:{storeId}
+
+- Review create/update/moderate:
+  Invalidate reviews:product:{productId}, products:detail:{productId}
+
+- Category or collection changes:
+  Invalidate categories, collections, products:list, storefront:home
+
+
+Redis usage
+-----------
+Redis should be used deliberately, not everywhere.
+
+Good Redis use cases:
+
+- Rate limiting.
+- Expensive recommendation ranking.
+- Aggregated metrics.
+- Hot computed data that is expensive to rebuild.
+- Temporary payment/session locks if needed.
+
+Avoid Redis for:
+
+- Simple public lists that Next/CDN caching can handle.
+- Private user data.
+- Seller/admin dashboards that must always be fresh.
+
+
+Pagination standard
+-------------------
+Every list endpoint should return the same shape:
+
+{
+  "success": true,
+  "data": [],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 0,
+    "totalPages": 1,
+    "hasNextPage": false,
+    "hasPreviousPage": false
+  }
+}
+
+Endpoints that should follow this standard:
+
+- /api/products
+- /api/stores
+- /api/admin/products
+- /api/admin/orders
+- /api/admin/stores
+- /api/admin/logs
+- /api/store/products
+- /api/store/orders
+- /api/store/inventory
+- /api/store/payouts
+- /api/account/notifications
+- /api/account/orders if added later
+
+
+Streaming and Suspense plan
+---------------------------
+Use streaming mostly on public storefront pages.
+
+Good candidates:
+
+- Homepage:
+  Render shell and hero immediately.
+  Stream top stores, recommended products, recently viewed, and merchandising sections.
+
+- Product detail page:
+  Render product primary data first.
+  Stream reviews, related products, and recently viewed products.
+
+- Store profile page:
+  Render store header first.
+  Stream store products and reviews separately.
+
+Avoid overusing streaming in:
+
+- Checkout.
+- Admin dashboards.
+- Seller order pages.
+- Inventory operations.
+
+For operational pages, no-store plus explicit loading states is safer and easier to reason about.
+
+
+Implementation phases
+---------------------
+Phase 1: Standardize list APIs
+
+- Confirm /api/stores is complete.
+- Normalize /api/products meta shape.
+- Normalize /api/admin/products.
+- Normalize /api/admin/orders.
+- Normalize /api/admin/stores.
+- Normalize /api/store/products.
+- Normalize /api/store/orders.
+- Normalize /api/store/inventory.
+- Normalize /api/account/notifications.
+
+Phase 2: Centralize cache helpers
+
+- Add utils/platform/cache-policy.js.
+- Add utils/platform/cache-tags.js.
+- Add utils/platform/cached-fetch.js.
+- Update utils/platform/api-response.js to import shared policies.
+
+Phase 3: Move data access into feature server modules
+
+- Move public store query logic into features/storefront/stores/server.
+- Move product list/detail query logic into features/catalog/server.
+- Move account query logic into features/account/server.
+- Move store-console query logic into features/store-console/server.
+- Move admin query logic into features/admin/server.
+
+Phase 4: Add cache invalidation
+
+- Done: added centralized invalidation helpers in utils/platform/cache-invalidation.js.
+- Done: added explicit revalidation/invalidation calls after product mutations.
+- Done: added invalidation after store settings and admin store updates.
+- Done: added invalidation after admin product moderation.
+- Done: added invalidation after review create/update/delete and seller replies.
+- Done: added invalidation after inventory stock changes.
+- Done: added invalidation after return policy admin content changes.
+- Later: wire category/collection mutation invalidation when those admin mutation endpoints exist.
+
+Phase 5: Add verification tests
+
+- Add API contract tests for paginated endpoints.
+- Add cache header tests for public APIs.
+- Add no-store tests for private/admin/store-console APIs.
+- Add manual QA checklist for cache invalidation after mutations.
+
+
+Rules of thumb
+--------------
+- Public catalog/storefront data can be cached briefly.
+- Private account data must be no-store.
+- Admin and seller console data must be no-store.
+- Mutations must be no-store.
+- Route handlers should stay thin.
+- Business queries should live in feature server modules.
+- Cache policy should be changed in one central file, not scattered across pages.
+- Pagination shape should be consistent everywhere.

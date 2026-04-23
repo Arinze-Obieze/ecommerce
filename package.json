@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3003",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check:architecture": "node scripts/architecture/check_architecture.js"
   },
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",

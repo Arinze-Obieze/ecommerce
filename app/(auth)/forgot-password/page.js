@@ -7,11 +7,11 @@ import { FiArrowLeft, FiCheck, FiMail } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 
 const T = {
-  green: '#00B86B',
-  greenDark: '#0F7A4F',
-  greenDeep: '#0A3D2E',
-  greenTint: '#EDFAF3',
-  greenBorder: '#A8DFC4',
+  green: '#2E6417',
+  greenDark: '#245213',
+  greenDeep: '#191B19',
+  greenTint: '#EDF5E6',
+  greenBorder: '#B8D4A0',
   charcoal: '#111111',
   softGray: '#F5F5F5',
   pageBg: '#F9FAFB',
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
-    boxShadow: emailFocused ? '0 0 0 3.5px rgba(0,184,107,0.13)' : 'none',
+    boxShadow: emailFocused ? '0 0 0 3.5px rgba(46,100,23,0.13)' : 'none',
   };
 
   return (
@@ -146,8 +146,8 @@ export default function ForgotPasswordPage() {
           >
             <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,184,107,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
-                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg, ${T.green}, ${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 12px 40px rgba(0,184,107,0.4)' }}>
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,100,23,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg, ${T.green}, ${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 12px 40px rgba(46,100,23,0.4)' }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path
                       d="M9 19L16.5 26.5L29 12"
@@ -190,7 +190,7 @@ export default function ForgotPasswordPage() {
               >
                 {!logoError ? (
                   <Image
-                    src="/logo.png"
+                    src="/brand/logo.png"
                     alt="Zova"
                     width={118}
                     height={34}
@@ -291,7 +291,7 @@ export default function ForgotPasswordPage() {
                   padding: '14px 18px',
                   cursor: loading || success ? 'not-allowed' : 'pointer',
                   transition: 'background 0.18s, transform 0.18s, box-shadow 0.18s',
-                  boxShadow: loading || success ? 'none' : '0 10px 24px rgba(0,184,107,0.22)',
+                  boxShadow: loading || success ? 'none' : '0 10px 24px rgba(46,100,23,0.22)',
                   transform: loading || success ? 'none' : submitHovered ? 'translateY(-1px)' : 'translateY(0)',
                 }}
               >

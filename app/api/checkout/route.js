@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
-import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/rateLimit';
-import { writeActivityLog, writeAnalyticsEvent } from '@/utils/serverTelemetry';
-import { calculateBulkPricing } from '@/utils/bulkPricing';
+import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
+import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
+import { calculateBulkPricing } from '@/utils/catalog/bulk-pricing';
 
 function createServiceClient() {
   return createClient(

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/adminAuth';
+import { requireAdminApi } from '@/utils/admin/auth';
 
 export async function GET() {
   const admin = await requireAdminApi();
