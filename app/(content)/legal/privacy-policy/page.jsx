@@ -1,12 +1,13 @@
 "use client";
 import { LegalPageContainer, Section, P, Ul, InfoBox } from "../LegalComponents";
+import { LuShield, LuInfo, LuMail, LuTimer } from "react-icons/lu";
 
 const TOC = [
   { id: "who-we-are",       label: "1. Who We Are" },
   { id: "data-we-collect",  label: "2. Data We Collect" },
   { id: "how-we-use",       label: "3. How We Use Your Data" },
   { id: "sharing",          label: "4. Sharing Your Data" },
-  { id: "your-rights",      label: "5. Your Rights (NDPR)" },
+  { id: "your-rights",      label: "5. Your Rights (NDPA 2023)" },
   { id: "cookies",          label: "6. Cookies" },
   { id: "retention",        label: "7. Data Retention" },
   { id: "security",         label: "8. Security" },
@@ -19,7 +20,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPageContainer
       title="Privacy Policy"
-      icon="🔒"
+      icon={<LuShield />}
       subtitle="We value your privacy. This policy explains what data we collect, why we collect it, and how we protect it — in plain language."
       lastUpdated="March 2026"
       tocItems={TOC}
@@ -28,7 +29,7 @@ export default function PrivacyPolicyPage() {
       <Section title="1. Who We Are" id="who-we-are">
         <P>ZOVA Limited (&quot;ZOVA&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) operates the ZOVA marketplace platform available at www.zova.ng. We are registered in Nigeria and headquartered at Onitsha Main Market, Anambra State.</P>
         <P>We act as the data controller for personal information collected through our platform. This Privacy Policy explains how we collect, use, share, and protect your personal data in compliance with the Nigeria Data Protection Regulation (NDPR) 2019 and the Nigeria Data Protection Act 2023.</P>
-        <InfoBox icon="🇳🇬">This policy is governed by Nigerian law, specifically the NDPR 2019 and the Nigeria Data Protection Act 2023 administered by the Nigeria Data Protection Commission (NDPC).</InfoBox>
+        <InfoBox icon={<LuInfo />}>This policy is governed by Nigerian law, specifically the NDPR 2019 and the Nigeria Data Protection Act 2023 administered by the Nigeria Data Protection Commission (NDPC).</InfoBox>
       </Section>
 
       <Section title="2. Data We Collect" id="data-we-collect">
@@ -68,7 +69,7 @@ export default function PrivacyPolicyPage() {
           "To resolve disputes between buyers and sellers",
           "To detect and prevent fraudulent activity on the platform",
         ]} />
-        <InfoBox icon="📧">We will only send you marketing emails or SMS if you have opted in. You can unsubscribe at any time by clicking &quot;Unsubscribe&quot; in any email or replying STOP to any SMS.</InfoBox>
+        <InfoBox icon={<LuMail />}>We will only send you marketing emails or SMS if you have opted in. You can unsubscribe at any time by clicking &quot;Unsubscribe&quot; in any email or replying STOP to any SMS.</InfoBox>
       </Section>
 
       <Section title="4. Sharing Your Data" id="sharing">
@@ -84,8 +85,8 @@ export default function PrivacyPolicyPage() {
         <P>All third parties we share data with are required to handle it in accordance with applicable Nigerian data protection law.</P>
       </Section>
 
-      <Section title="5. Your Rights (NDPR)" id="your-rights">
-        <P>Under the NDPR 2019 and Nigeria Data Protection Act 2023, you have the following rights:</P>
+      <Section title="5. Your Rights (NDPA 2023)" id="your-rights">
+        <P>Under the Nigeria Data Protection Act 2023, you have the following rights:</P>
         <Ul items={[
           "Right to Access: Request a copy of the personal data we hold about you",
           "Right to Rectification: Ask us to correct inaccurate or incomplete data",
@@ -149,7 +150,7 @@ export default function PrivacyPolicyPage() {
           "Post: ZOVA Limited, Onitsha Main Market, Anambra State, Nigeria",
           "Data Protection Officer: dpo@zova.ng",
         ]} />
-        <InfoBox icon="⏱️">We aim to respond to all data-related requests within 30 days. For urgent matters involving account security, please contact us via WhatsApp for a faster response.</InfoBox>
+        <InfoBox icon={<LuTimer />}>We aim to respond to all data-related requests within 30 days. For urgent matters involving account security, please contact us via WhatsApp for a faster response.</InfoBox>
       </Section>
 
     </LegalPageContainer>

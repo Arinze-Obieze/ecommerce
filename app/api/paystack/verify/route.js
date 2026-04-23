@@ -1,24 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { createClient as createServerClient } from '@/utils/supabase/server';
+import { createAdminClient, createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
 import { notifyOrderCompletionEmails } from '@/utils/messaging/email-notifications';
 import { ensureEscrowFundedForOrder } from '@/utils/payments/escrow';
-
-function createServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    }
-  );
-}
 
 function extractOrderIdFromMetadata(metadata) {
   if (!metadata || typeof metadata !== 'object') return null;
@@ -128,7 +113,6 @@ function buildPaymentValidation(verifyData, order) {
 }
 
 export async function POST(request) {
-  const serviceClient = createServiceClient();
   const startedAt = Date.now();
   let currentUser = null;
 
@@ -183,7 +167,7 @@ export async function POST(request) {
       return NextResponse.json(rateLimitPayload('Too many verification attempts. Please try again shortly.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
-    const { data: order, error: orderError } = await serviceClient
+    const { data: order, error: orderError } = await authClient
       .from('orders')
       .select(`
         id,
@@ -283,10 +267,12 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unable to verify payment with gateway' }, { status: 502 });
     }
 
+    const adminClient = await createAdminClient();
+
     if (paystackStatus !== 'success') {
       // Only cancel and release on definitive failure statuses.
       if (['failed', 'abandoned', 'reversed'].includes(paystackStatus)) {
-        const cancelResult = await cancelPendingOrderAndReleaseStock(serviceClient, order);
+        const cancelResult = await cancelPendingOrderAndReleaseStock(adminClient, order);
         if (cancelResult.cancelled) {
           await writeAnalyticsEvent({
             eventName: 'payment_failed',
@@ -353,7 +339,7 @@ export async function POST(request) {
       return NextResponse.json({ error: validation.error }, { status: 409 });
     }
 
-    const { data: completedRows, error: updateError } = await serviceClient
+    const { data: completedRows, error: updateError } = await adminClient
       .from('orders')
       .update({ status: 'completed', payment_reference: reference })
       .eq('id', orderId)
@@ -383,7 +369,7 @@ export async function POST(request) {
     }
 
     if (!completedRows || completedRows.length === 0) {
-      const { data: latestOrder } = await serviceClient
+      const { data: latestOrder } = await authClient
         .from('orders')
         .select('status, payment_reference')
         .eq('id', orderId)
@@ -427,7 +413,7 @@ export async function POST(request) {
     });
 
     const escrowResult = await ensureEscrowFundedForOrder({
-      serviceClient,
+      serviceClient: adminClient,
       orderId: order.id,
     });
 
@@ -447,7 +433,7 @@ export async function POST(request) {
     }
 
     const emailSummary = await notifyOrderCompletionEmails({
-      serviceClient,
+      serviceClient: adminClient,
       orderId: order.id,
     });
 

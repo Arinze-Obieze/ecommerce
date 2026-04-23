@@ -1,24 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { createClient as createServerClient } from '@/utils/supabase/server';
+import { createAdminClient, createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 
-function createServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    }
-  );
-}
-
-async function releaseOrderStockAtomic(client, orderId) {
-  const { error } = await client.rpc('release_order_stock', {
+async function releaseOrderStockAtomic(adminClient, orderId) {
+  const { error } = await adminClient.rpc('release_order_stock', {
     p_order_id: orderId,
   });
 
@@ -56,8 +41,7 @@ export async function POST(request) {
       return NextResponse.json(rateLimitPayload('Too many requests. Please wait a moment and try again.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
-    const serviceClient = createServiceClient();
-    const { data: order, error: orderError } = await serviceClient
+    const { data: order, error: orderError } = await authClient
       .from('orders')
       .select(`
         id,
@@ -88,7 +72,8 @@ export async function POST(request) {
       });
     }
 
-    const { data: claimedRows, error: claimError } = await serviceClient
+    const adminClient = await createAdminClient();
+    const { data: claimedRows, error: claimError } = await adminClient
       .from('orders')
       .update({ status: 'processing' })
       .eq('id', orderId)
@@ -108,9 +93,9 @@ export async function POST(request) {
     }
 
     try {
-      await releaseOrderStockAtomic(serviceClient, orderId);
+      await releaseOrderStockAtomic(adminClient, orderId);
     } catch (releaseError) {
-      await serviceClient
+      await adminClient
         .from('orders')
         .update({ status: 'pending' })
         .eq('id', orderId)
@@ -119,7 +104,7 @@ export async function POST(request) {
       throw releaseError;
     }
 
-    const { error: cancelError } = await serviceClient
+    const { error: cancelError } = await adminClient
       .from('orders')
       .update({ status: 'cancelled' })
       .eq('id', orderId)
