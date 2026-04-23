@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { LegalPageContainer, Section, P, Ul, InfoBox } from "../LegalComponents";
 import { B } from "../layout";
+import { LuCookie, LuSettings2 } from "react-icons/lu";
 
 const TOC = [
   { id: "what-are-cookies",  label: "1. What Are Cookies?" },
@@ -45,7 +46,7 @@ export default function CookiePolicyPage() {
   return (
     <LegalPageContainer
       title="Cookie Policy"
-      icon="🍪"
+      icon={<LuCookie />}
       subtitle="We use cookies to make ZOVA work and to improve your experience. Here is exactly what we use and how to control it."
       lastUpdated="March 2026"
       tocItems={TOC}
@@ -54,7 +55,7 @@ export default function CookiePolicyPage() {
       <Section title="1. What Are Cookies?" id="what-are-cookies">
         <P>Cookies are small text files placed on your device when you visit a website. They allow websites to remember information about your visit, such as your login status, preferences, and shopping cart contents.</P>
         <P>Cookies are not programs and cannot carry viruses or access other files on your device. They are simply a way for our website to recognise your browser across visits.</P>
-        <InfoBox icon="🍪">ZOVA uses cookies to keep you logged in, remember your cart, understand how people use our platform, and (with your consent) show you relevant ads on social media.</InfoBox>
+        <InfoBox icon={<LuCookie />}>ZOVA uses cookies to keep you logged in, remember your cart, understand how people use our platform, and (with your consent) show you relevant ads on social media.</InfoBox>
       </Section>
 
       <Section title="2. Cookies We Use" id="cookies-we-use">
@@ -106,10 +107,12 @@ export default function CookiePolicyPage() {
         <P>You can manage your cookie preferences at any time using the controls below, or by adjusting your browser settings.</P>
 
         {/* Cookie preference panel */}
-        <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #D4EAE0", overflow: "hidden", marginTop: 16, marginBottom: 16 }}>
-          <div style={{ padding: "16px 20px", background: "#F0FBF5", borderBottom: "1px solid #D4EAE0" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#191B19" }}>🎛️ Your Cookie Preferences</div>
-            <div style={{ fontSize: 12, color: "#4B5563", marginTop: 2 }}>Essential cookies are always active. Toggle optional categories below.</div>
+        <div style={{ background: B.surface, borderRadius: 8, border: `1px solid ${B.border}`, overflow: "hidden", marginTop: 16, marginBottom: 16, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+          <div style={{ padding: "16px clamp(12px, 4vw, 24px)", background: B.hoverBg, borderBottom: `1px solid ${B.border}` }}>
+            <div style={{ fontSize: 16, fontWeight: 600, color: B.charcoal, display: "flex", alignItems: "center", gap: 8 }}>
+              <LuSettings2 /> Your Cookie Preferences
+            </div>
+            <div style={{ fontSize: 13, color: B.textSubtle, marginTop: 4 }}>Essential cookies are always active. Toggle optional categories below.</div>
           </div>
 
           {[
@@ -117,33 +120,35 @@ export default function CookiePolicyPage() {
             { key: "functional", label: "Functional Cookies", desc: "Remember your size preferences and filter settings.", val: functionalOn, setter: setFunctionalOn, locked: false },
             { key: "analytics", label: "Analytics Cookies", desc: "Help us understand how people use ZOVA (anonymised).", val: analyticsOn, setter: setAnalyticsOn, locked: false },
             { key: "marketing", label: "Marketing Cookies", desc: "Allow us to show you ZOVA ads on social media platforms.", val: marketingOn, setter: setMarketingOn, locked: false },
-          ].map((item) => (
-            <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 20px", borderBottom: "1px solid #F3F4F6", gap: 16 }}>
+          ].map((item, idx, arr) => (
+            <div key={item.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px clamp(12px, 4vw, 24px)", borderBottom: idx === arr.length - 1 ? "none" : `1px solid ${B.border}`, gap: 16 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: "#111", marginBottom: 2 }}>{item.label}</div>
-                <div style={{ fontSize: 12, color: "#6B7280" }}>{item.desc}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: B.charcoal, marginBottom: 4 }}>{item.label}</div>
+                <div style={{ fontSize: 13, color: B.textSubtle }}>{item.desc}</div>
               </div>
               <div
                 onClick={() => { if (!item.locked && item.setter) item.setter(!item.val); }}
                 style={{
                   width: 44, height: 24, borderRadius: 12, flexShrink: 0, cursor: item.locked ? "not-allowed" : "pointer",
-                  background: item.val ? "#2E6417" : "#E5E7EB",
-                  position: "relative", transition: "background 0.2s", opacity: item.locked ? 0.6 : 1,
+                  background: item.val ? B.green : B.borderDark,
+                  position: "relative", transition: "background 0.2s cubic-bezier(0.19, 1, 0.22, 1)", opacity: item.locked ? 0.6 : 1,
                 }}
               >
-                <div style={{ position: "absolute", top: 2, left: item.val ? 22 : 2, width: 20, height: 20, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 0.2s" }} />
+                <div style={{ position: "absolute", top: 2, left: item.val ? 22 : 2, width: 20, height: 20, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "left 0.2s cubic-bezier(0.19, 1, 0.22, 1)" }} />
               </div>
             </div>
           ))}
 
-          <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ padding: "16px clamp(12px, 4vw, 24px)", display: "flex", alignItems: "center", gap: 16, background: B.bg, borderTop: `1px solid ${B.border}` }}>
             <button
               onClick={handleSave}
-              style={{ padding: "10px 22px", borderRadius: 8, background: "#2E6417", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}
+              style={{ padding: "8px 24px", borderRadius: 4, background: B.green, color: "#fff", border: "none", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s ease", boxShadow: "0 2px 4px rgba(46,100,23,0.1)" }}
+              onMouseOver={(e) => e.currentTarget.style.background = B.greenDark}
+              onMouseOut={(e) => e.currentTarget.style.background = B.green}
             >
-              {saved ? "✓ Saved!" : "Save Preferences"}
+              {saved ? "✓ Saved" : "Save Preferences"}
             </button>
-            <span style={{ fontSize: 12, color: "#9CA3AF" }}>Changes take effect on your next page load.</span>
+            <span style={{ fontSize: 13, color: B.textSubtle }}>Changes take effect on your next page load.</span>
           </div>
         </div>
 

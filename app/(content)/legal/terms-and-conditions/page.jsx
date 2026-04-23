@@ -1,5 +1,6 @@
 "use client";
 import { LegalPageContainer, Section, P, Ul, InfoBox } from "../LegalComponents";
+import { LuFileText, LuPin, LuTriangleAlert } from "react-icons/lu";
 
 const TOC = [
   { id: "agreement",       label: "1. The Agreement" },
@@ -22,13 +23,13 @@ export default function TermsPage() {
   return (
     <LegalPageContainer
       title="Terms & Conditions"
-      icon="📋"
+      icon={<LuFileText />}
       subtitle="These terms govern your use of the ZOVA platform, whether you are a buyer or seller. Please read them carefully before using our services."
       lastUpdated="March 2026"
       tocItems={TOC}
     >
 
-      <InfoBox icon="📌">
+      <InfoBox icon={<LuPin />}>
         By creating an account or placing an order on ZOVA, you agree to these Terms and Conditions. If you do not agree, please do not use our platform.
       </InfoBox>
 
@@ -79,7 +80,7 @@ export default function TermsPage() {
           "Maintain accurate inventory to prevent overselling",
           "Comply with all Nigerian laws including tax obligations to FIRS",
         ]} />
-        <InfoBox icon="⚠️">Sellers who accumulate 3 seller-fault returns, 2 counterfeit item reports, or a customer complaint rate above 15% are subject to account review and suspension.</InfoBox>
+        <InfoBox icon={<LuTriangleAlert />}>Sellers who accumulate 3 seller-fault returns, 2 counterfeit item reports, or a customer complaint rate above 15% are subject to account review and suspension.</InfoBox>
       </Section>
 
       <Section title="6. Payments & Fees" id="payments">
@@ -168,8 +169,8 @@ export default function TermsPage() {
         <P>In the event of a dispute between ZOVA and a user, the parties agree to the following process:</P>
         <Ul items={[
           "Step 1 — Good faith negotiation: Contact support@zova.ng within 30 days of the dispute arising",
-          "Step 2 — Mediation: If unresolved after 14 days, parties agree to attempt mediation",
-          "Step 3 — Arbitration or litigation: If mediation fails, disputes shall be resolved in the courts of Anambra State, Nigeria",
+          "Step 2 — Mediation: If unresolved after 14 days, parties agree to attempt mediation via the Lagos Multi-Door Courthouse (LMDC) or similar dispute resolution body in Anambra State",
+          "Step 3 — Arbitration or litigation: If mediation fails, disputes shall be finally resolved by binding arbitration under the Arbitration and Mediation Act 2023 of Nigeria, or in the competent courts of Nigeria",
         ]} />
         <P>These Terms are governed by and construed in accordance with the laws of the Federal Republic of Nigeria. The language of all proceedings shall be English.</P>
       </Section>

@@ -1,46 +1,68 @@
 "use client";
 import { B } from "./layout";
 import Link from "next/link";
+import { LuInfo } from "react-icons/lu";
 
 export function Section({ title, id, children }) {
   return (
-    <section id={id} style={{ marginBottom: 40, scrollMarginTop: 80 }}>
-      <h2 style={{
-        fontSize: 18, fontWeight: 700, color: B.charcoal,
-        marginBottom: 14, paddingBottom: 10,
-        borderBottom: `2px solid ${B.greenBorder}`,
-        display: "flex", alignItems: "center", gap: 10,
-      }}>
-        <span style={{ width: 4, height: 20, background: B.green, borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
-        {title}
-      </h2>
-      <div style={{ fontSize: 14, color: B.g600, lineHeight: 1.85 }}>{children}</div>
+    <section id={id} style={{ marginBottom: 48, scrollMarginTop: 100 }}>
+      {title && (
+        <h2 style={{
+          fontSize: 20, 
+          fontWeight: 600, 
+          color: B.charcoal,
+          marginBottom: 16, 
+          paddingBottom: 8,
+          borderBottom: `1px solid ${B.border}`,
+          display: "flex", 
+          alignItems: "center", 
+          gap: 12,
+        }}>
+          {title}
+        </h2>
+      )}
+      <div style={{ fontSize: 15, color: B.charcoal, lineHeight: 1.6 }}>{children}</div>
     </section>
   );
 }
 
 export function P({ children, style = {} }) {
-  return <p style={{ marginBottom: 12, ...style }}>{children}</p>;
+  return <p style={{ marginBottom: 16, color: B.charcoal, lineHeight: 1.6, ...style }}>{children}</p>;
 }
 
 export function Ul({ items }) {
   return (
-    <ul style={{ marginBottom: 12, paddingLeft: 0, listStyle: "none" }}>
+    <ul style={{ marginBottom: 20, paddingLeft: 0, listStyle: "none" }}>
       {items.map((item, i) => (
-        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-          <span style={{ width: 20, height: 20, borderRadius: "50%", background: B.greenLight, border: `1px solid ${B.greenBorder}`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: B.green, flexShrink: 0, marginTop: 2 }}>✓</span>
-          <span>{item}</span>
+        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 10, color: B.charcoal }}>
+          <span style={{ 
+            color: B.green, 
+            display: "inline-block", 
+            marginTop: 2, 
+            fontWeight: "bold",
+            fontSize: 14
+          }}>•</span>
+          <span style={{ lineHeight: 1.5 }}>{item}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-export function InfoBox({ children, icon = "ℹ️" }) {
+export function InfoBox({ children, icon = <LuInfo /> }) {
   return (
-    <div style={{ padding: "14px 18px", borderRadius: 10, background: B.greenLight, border: `1px solid ${B.greenBorder}`, display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
-      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
-      <div style={{ fontSize: 13, color: B.greenDark, lineHeight: 1.75 }}>{children}</div>
+    <div style={{ 
+      padding: "16px 20px", 
+      borderRadius: 4, 
+      background: B.hoverBg, 
+      borderLeft: `4px solid ${B.green}`, 
+      display: "flex", 
+      gap: 16, 
+      alignItems: "flex-start", 
+      marginBottom: 20 
+    }}>
+      <span style={{ fontSize: 18, marginTop: -2, flexShrink: 0 }}>{icon}</span>
+      <div style={{ fontSize: 14, color: B.charcoal, lineHeight: 1.6 }}>{children}</div>
     </div>
   );
 }
@@ -48,46 +70,53 @@ export function InfoBox({ children, icon = "ℹ️" }) {
 export function LegalPageContainer({ title, icon, subtitle, lastUpdated, tocItems, children }) {
   return (
     <>
-      <div style={{ gridColumn: "1 / -1", marginBottom: 24 }}>
-        {/* ── HERO ── */}
-        <div style={{ background: `linear-gradient(150deg, ${B.greenDark} 0%, ${B.greenMid} 100%)`, padding: "56px 24px 48px", position: "relative", overflow: "hidden", borderRadius: 24 }}>
-          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(46,100,23,0.1) 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-          <div style={{ position: "absolute", top: -60, right: -60, width: 280, height: 280, borderRadius: "50%", background: "rgba(46,100,23,0.1)" }} />
-          <div style={{ position: "relative", zIndex: 1, maxWidth: 860, margin: "0 auto" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(46,100,23,0.2)", border: "1px solid rgba(46,100,23,0.35)", marginBottom: 18, fontSize: 11, fontWeight: 700, color: "#7FFFC4", letterSpacing: 1.2, textTransform: "uppercase" }}>
-              ⚖️ Legal & Policies
+      <div style={{ gridColumn: "1 / -1", marginBottom: 8 }}>
+        {/* ── HERO (Fluent Style) ── */}
+        <div style={{ 
+          background: B.surface, 
+          padding: "clamp(32px, 6vw, 48px) clamp(16px, 5vw, 32px) clamp(24px, 6vw, 40px)", 
+          borderRadius: 8,
+          border: `1px solid ${B.border}`,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.02), 0 0 2px rgba(0,0,0,0.04)"
+        }}>
+          <div style={{ maxWidth: 860, margin: "0 auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 6, background: B.greenLight, color: B.greenDark, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, border: `1px solid ${B.greenBorder}` }}>{icon}</div>
+              <h1 style={{ fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 600, color: B.charcoal, margin: 0, letterSpacing: "-0.01em" }}>{title}</h1>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 10 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(46,100,23,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>{icon}</div>
-              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, color: B.white, lineHeight: 1.15 }}>{title}</h1>
-            </div>
-            <p style={{ fontSize: 15, color: B.greenSub, lineHeight: 1.7, maxWidth: 560, marginBottom: 16 }}>{subtitle}</p>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>Last updated: {lastUpdated} &nbsp;·&nbsp; ZOVA Limited &nbsp;·&nbsp; Onitsha, Anambra State, Nigeria</div>
+            <p style={{ fontSize: 16, color: B.textSubtle, lineHeight: 1.6, maxWidth: 640, marginBottom: 20 }}>{subtitle}</p>
+            <div style={{ fontSize: 13, color: B.textSubtle, fontWeight: 400 }}>Last updated: {lastUpdated} &nbsp;·&nbsp; ZOVA Limited &nbsp;·&nbsp; Onitsha, Anambra State, Nigeria</div>
           </div>
         </div>
       </div>
 
-      {/* Sidebar TOC - Hidden on mobile in layout CSS, but let's make it explicit here if needed */}
+      {/* Sidebar TOC - Sticky */}
       <div className="sidebar-sticky">
-        <div style={{ background: B.white, borderRadius: 14, border: `1px solid ${B.greenBorder}`, padding: "20px 18px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, color: B.green, marginBottom: 14 }}>Contents</div>
-          <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{ 
+          background: B.surface, 
+          borderRadius: 8, 
+          border: `1px solid ${B.border}`, 
+          padding: "24px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: B.textSubtle, marginBottom: 16 }}>On this page</div>
+          <nav style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {tocItems.map(({ id, label }) => (
               <a
                 key={id}
                 href={`#${id}`}
                 className="toc-link"
-                style={{ fontSize: 12, color: B.g600, textDecoration: "none", padding: "5px 0", fontWeight: 500, lineHeight: 1.4, display: "block" }}
+                style={{ fontSize: 14, color: B.charcoal, textDecoration: "none", padding: "4px 8px 4px 0", fontWeight: 400, lineHeight: 1.4, display: "block" }}
               >
                 {label}
               </a>
             ))}
           </nav>
-          <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${B.greenBorder}` }}>
-            <a href="mailto:legal@zova.ng" style={{ fontSize: 12, color: B.green, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${B.border}` }}>
+            <a href="mailto:legal@zova.ng" style={{ fontSize: 13, color: B.green, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
               ✉️ legal@zova.ng
             </a>
-            <a href="https://wa.me/234XXXXXXXXXX" style={{ fontSize: 12, color: B.green, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+            <a href="https://wa.me/234XXXXXXXXXX" style={{ fontSize: 13, color: B.green, fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
               📲 WhatsApp Us
             </a>
           </div>
@@ -96,25 +125,34 @@ export function LegalPageContainer({ title, icon, subtitle, lastUpdated, tocItem
 
       {/* Main content */}
       <div>
-        {/* Mobile TOC Select / Quick links can go here or be handle by layout */}
+        {/* Mobile TOC Select */}
         <div className="mobile-toc-trigger">
-          <div style={{ background: B.white, borderRadius: 12, border: `1px solid ${B.greenBorder}`, padding: "12px 16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: B.green, marginBottom: 8, textTransform: "uppercase" }}>Quick Navigation</div>
+          <div style={{ background: B.surface, borderRadius: 8, border: `1px solid ${B.border}`, padding: "16px" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: B.textSubtle, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em" }}>Quick Navigation</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {tocItems.map(({ id, label }) => (
                 <a
                   key={id}
                   href={`#${id}`}
-                  style={{ fontSize: 11, color: B.g600, background: B.g100, padding: "4px 10px", borderRadius: 6, textDecoration: "none" }}
+                  style={{ fontSize: 13, color: B.charcoal, background: B.bg, border: `1px solid ${B.border}`, padding: "6px 12px", borderRadius: 4, textDecoration: "none" }}
                 >
-                  {label.split(". ")[1] || label}
+                  {label.includes(". ") ? label.split(". ")[1] : label}
                 </a>
               ))}
             </div>
           </div>
         </div>
         
-        {children}
+        {/* Content wrapper with Fluent typography space */}
+        <div style={{ 
+          background: B.surface, 
+          padding: "clamp(24px, 5vw, 32px) clamp(16px, 5vw, 40px)", 
+          borderRadius: 8, 
+          border: `1px solid ${B.border}`,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.02)"
+        }}>
+          {children}
+        </div>
       </div>
     </>
   );

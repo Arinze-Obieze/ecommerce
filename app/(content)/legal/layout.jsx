@@ -2,22 +2,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Microsoft Fluent UI inspired palette mixed with ZOVA brand
 export const B = {
   green:       "#2E6417",
-  greenDark:   "#191B19",
-  greenMid:    "#245213",
+  greenDark:   "#1F4210",
   greenLight:  "#F0FBF5",
   greenBorder: "#D4EAE0",
-  greenSub:    "#A8C4B8",
   white:       "#FFFFFF",
-  cream:       "#F7FDF9",
-  charcoal:    "#111111",
-  g50:         "#F9FAFB",
-  g100:        "#F3F4F6",
-  g200:        "#E5E7EB",
-  g400:        "#9CA3AF",
-  g600:        "#4B5563",
-  g800:        "#1F2937",
+  bg:          "#FAFAFA", // Fluent background
+  surface:     "#FFFFFF",
+  charcoal:    "#201F1E", // Fluent neutralPrimary (Text)
+  textSubtle:  "#605E5C", // Fluent neutralSecondary
+  border:      "#EDEBE9", // Fluent neutralLight
+  borderDark:  "#C8C6C4", // Fluent neutralTertiary
+  hoverBg:     "#F3F2F1", // Fluent neutralLighter
+  pressedBg:   "#EDEBE9",
 };
 
 const LEGAL_NAV = [
@@ -29,70 +28,12 @@ const LEGAL_NAV = [
   { label: "Ad Choice",          href: "/legal/ad-choice"           },
 ];
 
-export function Section({ title, id, children }) {
-  return (
-    <section id={id} style={{ marginBottom: 40, scrollMarginTop: 80 }}>
-      <h2 style={{
-        fontSize: 18, fontWeight: 700, color: B.charcoal,
-        marginBottom: 14, paddingBottom: 10,
-        borderBottom: `2px solid ${B.greenBorder}`,
-        display: "flex", alignItems: "center", gap: 10,
-      }}>
-        <span style={{ width: 4, height: 20, background: B.green, borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
-        {title}
-      </h2>
-      <div style={{ fontSize: 14, color: B.g600, lineHeight: 1.85 }}>{children}</div>
-    </section>
-  );
-}
-
-export function P({ children, style = {} }) {
-  return <p style={{ marginBottom: 12, ...style }}>{children}</p>;
-}
-
-export function Ul({ items }) {
-  return (
-    <ul style={{ marginBottom: 12, paddingLeft: 0, listStyle: "none" }}>
-      {items.map((item, i) => (
-        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-          <span style={{ width: 20, height: 20, borderRadius: "50%", background: B.greenLight, border: `1px solid ${B.greenBorder}`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: B.green, flexShrink: 0, marginTop: 2 }}>✓</span>
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function InfoBox({ children, icon = "ℹ️" }) {
-  return (
-    <div style={{ padding: "14px 18px", borderRadius: 10, background: B.greenLight, border: `1px solid ${B.greenBorder}`, display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
-      <span style={{ fontSize: 16, flexShrink: 0 }}>{icon}</span>
-      <div style={{ fontSize: 13, color: B.greenDark, lineHeight: 1.75 }}>{children}</div>
-    </div>
-  );
-}
-
 export default function LegalLayout({ children }) {
   const pathname = usePathname();
 
-  // Find the current page data from children if passed as props or just from metadata
-  // Since this is a layout, we need to handle the content dynamically.
-  // We'll wrap the logic to extract page-specific info from the child if possible, 
-  // or just pass it down via a context or rely on the fact that children will be the page.
-  
-  // However, the original LegalLayout was a wrapper component used inside pages.
-  // In App Router, we usually want the layout to be the shell.
-  // But since the pages have different TOCs and titles, we might keep it as a wrapper
-  // OR use a Context to pass metadata up.
-  
-  // Given the current structure, I'll keep it as a shared layout but with the responsive fixes.
-  // I'll make it so it can be used as a standard layout.
-
   return (
-    <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+    <div style={{ background: B.bg, minHeight: "100vh", fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
-        
         .legal-page-shell,
         .legal-page-shell * { box-sizing: border-box; }
         .legal-page-shell h1,
@@ -103,24 +44,59 @@ export default function LegalLayout({ children }) {
           margin-top: 0;
         }
         html { scroll-behavior: smooth; }
-        .toc-link { transition: color 0.15s, padding-left 0.15s; }
-        .toc-link:hover { color: #2E6417 !important; padding-left: 4px; }
-        .legal-nav-link { transition: all 0.15s; }
-        .legal-nav-link:hover { background: #F0FBF5 !important; color: #2E6417 !important; }
-        .legal-nav-link.active { background: #2E6417 !important; color: #fff !important; }
+        
+        .toc-link { 
+          transition: all 0.15s ease-in-out; 
+          border-left: 2px solid transparent; 
+        }
+        .toc-link:hover { 
+          color: #201F1E !important; 
+          background: #F3F2F1;
+        }
+        
+        .legal-nav-link { 
+          transition: all 0.1s ease-out; 
+          position: relative;
+        }
+        .legal-nav-link:hover { 
+          background: #F3F2F1 !important; 
+          color: #201F1E !important; 
+        }
+        .legal-nav-link:active {
+          background: #EDEBE9 !important;
+        }
+        .legal-nav-link.active { 
+          color: #201F1E !important; 
+          font-weight: 600 !important;
+        }
+        /* Fluent active indicator (bottom border) */
+        .legal-nav-link.active::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 12px;
+          right: 12px;
+          height: 3px;
+          background: #2E6417; /* ZOVA Green accent */
+          border-radius: 3px 3px 0 0;
+        }
         
         .legal-container {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 40px;
+          gap: 32px;
           max-width: 1100px;
           margin: 0 auto;
-          padding: 40px 24px 72px;
+          padding: 32px 16px 80px;
+          overflow-wrap: anywhere;
+          word-wrap: break-word;
         }
 
         @media (min-width: 768px) {
           .legal-container {
-            grid-template-columns: 240px 1fr;
+            grid-template-columns: 260px 1fr;
+            gap: 48px;
+            padding: 32px 24px 80px;
           }
         }
         
@@ -148,32 +124,35 @@ export default function LegalLayout({ children }) {
         }
       `}</style>
 
-      {/* ── LEGAL NAV STRIP ── */}
-      <div style={{ background: B.white, borderBottom: `1px solid ${B.greenBorder}`, padding: "12px 24px", overflowX: "auto", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", gap: 8, minWidth: "max-content" }}>
-          {LEGAL_NAV.map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`legal-nav-link${pathname === href ? " active" : ""}`}
-              style={{
-                padding: "7px 14px", borderRadius: 8,
-                fontSize: 13, fontWeight: 600, textDecoration: "none",
-                border: `1px solid ${B.greenBorder}`,
-                background: pathname === href ? B.green : B.white,
-                color: pathname === href ? B.white : B.g600,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {label}
-            </Link>
-          ))}
+      {/* ── LEGAL NAV STRIP (Pivot menu style) ── */}
+      <div style={{ background: B.surface, borderBottom: `1px solid ${B.border}`, position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", overflowX: "auto", padding: "0 12px" }}>
+          {LEGAL_NAV.map(({ label, href }) => {
+            const isActive = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`legal-nav-link${isActive ? " active" : ""}`}
+                style={{
+                  padding: "14px 16px", 
+                  fontSize: 14, 
+                  fontWeight: 400, 
+                  textDecoration: "none",
+                  background: "transparent",
+                  color: isActive ? B.charcoal : B.textSubtle,
+                  whiteSpace: "nowrap",
+                  flexShrink: 0
+                }}
+              >
+                {label}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
       <div className="legal-container">
-        {/* Child components will handle their own TOC and Sidebar if they want, 
-            or we can try to centralise it. For now, let's keep it flexible. */}
         {children}
       </div>
 
