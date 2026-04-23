@@ -1,17 +1,16 @@
 // app/api/store/products/next-sku/route.js
-import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+import { requireStoreApi, STORE_ROLES } from "@/utils/store/auth";
 
 export async function GET(request) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const ctx = await requireStoreApi([STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF]);
+    if (!ctx.ok) return ctx.response;
 
     const prefix = new URL(request.url).searchParams.get("prefix");
     if (!prefix?.startsWith("ZVA-")) return NextResponse.json({ error: "Invalid prefix" }, { status: 400 });
 
-    const { data } = await supabase
+    const { data } = await ctx.adminClient
       .from("products_internal").select("base_sku")
       .like("base_sku", `${prefix}-%`)
       .order("base_sku", { ascending: false }).limit(1);

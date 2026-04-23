@@ -1,7 +1,7 @@
 // app/api/seller/products/create/route.js
-import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { getGenderValidationError, normalizeGenderForCategory } from "@/features/product-wizard/lib/category-gender-rules";
+import { requireStoreApi, STORE_ROLES } from "@/utils/store/auth";
 
 function slugify(text) {
   return (text || "")
@@ -12,22 +12,7 @@ function slugify(text) {
 
 export async function POST(request) {
   try {
-    const supabase = await createClient();
-
-    // ── 1. Authenticate ──────────────────────────────────────
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    // ── 2. Parse form data ───────────────────────────────────
+    // ── 1. Parse form data ───────────────────────────────────
     const formData = await request.formData();
     const wizardDataStr = formData.get("wizard_data");
 
@@ -39,6 +24,27 @@ export async function POST(request) {
     }
 
     const wd = JSON.parse(wizardDataStr);
+    const ctx = await requireStoreApi(
+      [STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF],
+      wd.storeId || null
+    );
+    if (!ctx.ok) return ctx.response;
+
+    const { user } = ctx;
+    const store = {
+      id: String(ctx.membership.store_id),
+      slug: ctx.store?.slug || null,
+      name: ctx.store?.name || null,
+    };
+    const supabase = ctx.adminClient;
+
+    if (wd.storeId && String(wd.storeId) !== store.id) {
+      return NextResponse.json(
+        { success: false, error: "Store access denied" },
+        { status: 403 }
+      );
+    }
+
     const genderError = getGenderValidationError(wd.category, wd.gender);
     if (genderError) {
       return NextResponse.json(
@@ -49,22 +55,7 @@ export async function POST(request) {
     const normalizedGender = normalizeGenderForCategory(wd.category, wd.gender);
     const normalizedAgeGroup = String(wd.category || "").trim().toLowerCase() === "kids" ? (wd.ageGroup || null) : null;
 
-    // ── 3. Validate store ownership ──────────────────────────
-    const { data: store, error: storeError } = await supabase
-      .from("stores")
-      .select("id, slug, name")
-      .eq("id", wd.storeId)
-      .eq("owner_id", user.id)
-      .single();
-
-    if (storeError || !store) {
-      return NextResponse.json(
-        { success: false, error: "Store not found or not owned by you" },
-        { status: 403 }
-      );
-    }
-
-    // ── 4. Check SKU uniqueness ──────────────────────────────
+    // ── 3. Check SKU uniqueness ──────────────────────────────
     const { data: existingSku } = await supabase
       .from("products_internal")
       .select("id")

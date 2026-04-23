@@ -1,11 +1,11 @@
 // app/api/store/products/create/route.js
 import { randomUUID } from "crypto";
-import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 import { normalizeSpecifications } from "@/utils/catalog/product-catalog";
 import { normalizeBulkDiscountTiers } from "@/utils/catalog/bulk-pricing";
 import { getGenderValidationError, normalizeGenderForCategory } from "@/features/product-wizard/lib/category-gender-rules";
 import { invalidateProductCache } from "@/utils/platform/cache-invalidation";
+import { requireStoreApi, STORE_ROLES } from "@/utils/store/auth";
 import {
   WASHING_OPTIONS,
   BLEACHING_OPTIONS,
@@ -206,17 +206,10 @@ async function cleanupDraftRecord(supabase, draftId, storeId, userId, imageManif
 export async function POST(request) {
   let productId = null;
   let uploadedStoragePaths = [];
+  let adminClient = null;
 
   try {
-    const supabase = await createClient();
-
-    // 1. Auth
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !user) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
-
-    // 2. Parse
+    // 1. Parse
     const formData = await request.formData();
     const raw = formData.get("wizard_data");
     if (!raw) {
@@ -231,6 +224,24 @@ export async function POST(request) {
     const baseSku = normalizeText(wd.baseSku);
     if (!baseSku) {
       return NextResponse.json({ success: false, error: "Missing base SKU" }, { status: 400 });
+    }
+
+    const ctx = await requireStoreApi(
+      [STORE_ROLES.OWNER, STORE_ROLES.MANAGER, STORE_ROLES.STAFF],
+      wd.storeId || null
+    );
+    if (!ctx.ok) return ctx.response;
+
+    const { user } = ctx;
+    const store = {
+      id: String(ctx.membership.store_id),
+      slug: ctx.store?.slug || null,
+      name: ctx.store?.name || null,
+    };
+    adminClient = ctx.adminClient;
+
+    if (wd.storeId && String(wd.storeId) !== store.id) {
+      return NextResponse.json({ success: false, error: "Store access denied" }, { status: 403 });
     }
 
     const productName = normalizeText(wd.productName);
@@ -290,7 +301,7 @@ export async function POST(request) {
     const uploadedImageKeys = new Set();
     const persistedImages = normalizeManifest(wd.persistedImages || {});
     const { existing: existingPersistedImages, missingKeys: missingPersistedKeys } =
-      await filterExistingPersistedImages(supabase, persistedImages);
+      await filterExistingPersistedImages(adminClient, persistedImages);
     for (const [key, val] of formData.entries()) {
       if (key === "wizard_data") continue;
       if (val instanceof File && val.size > 0) uploadedImageKeys.add(key);
@@ -305,18 +316,8 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // 3. Validate store — stores.user_id is the owner column (no owner_id column exists)
-    const { data: store } = await supabase
-      .from("stores")
-      .select("id, slug, name")
-      .eq("id", wd.storeId)
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (!store) {
-      return NextResponse.json({ success: false, error: "Store not found or access denied" }, { status: 403 });
-    }
     // 4. SKU uniqueness
-    const { data: dup } = await supabase
+    const { data: dup } = await adminClient
       .from("products_internal").select("product_id").eq("base_sku", baseSku).limit(1);
     if (dup?.length) {
       return NextResponse.json({ success: false, error: `SKU ${baseSku} already exists` }, { status: 409 });
@@ -338,6 +339,7 @@ export async function POST(request) {
     const productRec = {
       product_id: productId,
       seller_id: store.id,
+      store_id: store.id,
       product_name: productName,
       description,
       category,
@@ -350,6 +352,7 @@ export async function POST(request) {
       quantity: totalQty,
       status: "active",
       approval_status: "pending",
+      created_by: user.id,
       image_strategy: imageStrategy,
       notes: buildMergedNotes(wd),
       fiber_composition:          buildFiberComposition(wd),
@@ -364,7 +367,7 @@ export async function POST(request) {
                                     ? wd.flammabilityFlags.join(",") : null,
     };
 
-    const { error: prodErr } = await supabase.from("products_internal").insert(productRec);
+    const { error: prodErr } = await adminClient.from("products_internal").insert(productRec);
     if (prodErr) {
       console.error("[Create] Product insert failed:", prodErr.message);
       return NextResponse.json({ success: false, error: `Product: ${prodErr.message}` }, { status: 500 });
@@ -382,10 +385,10 @@ export async function POST(request) {
     }));
 
     if (varRecs.length > 0) {
-      const { error: varErr } = await supabase.from("product_variants_internal").insert(varRecs);
+      const { error: varErr } = await adminClient.from("product_variants_internal").insert(varRecs);
       if (varErr) {
         console.error("[Create] Variant insert failed:", varErr.message);
-        await supabase.from("products_internal").delete().eq("product_id", productId);
+        await adminClient.from("products_internal").delete().eq("product_id", productId);
         productId = null;
         return NextResponse.json({ success: false, error: `Variants: ${varErr.message}` }, { status: 500 });
       }
@@ -443,18 +446,18 @@ export async function POST(request) {
 
         if (entry.kind === "file") {
           const buffer = Buffer.from(await entry.file.arrayBuffer());
-          const { error: upErr } = await supabase.storage
+          const { error: upErr } = await adminClient.storage
             .from("product-images")
             .upload(storagePath, buffer, { contentType: entry.file.type || "image/jpeg", upsert: true });
           if (upErr) throw new Error(`${key}: ${upErr.message}`);
         } else {
-          const { error: copyErr } = await supabase.storage
+          const { error: copyErr } = await adminClient.storage
             .from("product-images")
             .copy(entry.manifest.storagePath, storagePath);
           if (copyErr) throw new Error(`${key}: ${copyErr.message}`);
         }
 
-        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(storagePath);
+        const { data: urlData } = adminClient.storage.from("product-images").getPublicUrl(storagePath);
 
         return {
           storagePath,
@@ -492,7 +495,7 @@ export async function POST(request) {
     uploadedStoragePaths = imgSuccesses.map(r => r.storagePath);
 
     if (imgErrors.length > 0) {
-      await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+      await cleanupCreatedRecords(adminClient, productId, uploadedStoragePaths);
       productId = null;
       return NextResponse.json({
         success: false,
@@ -502,10 +505,10 @@ export async function POST(request) {
 
     // Batch-insert all image records in one round-trip
     if (imgSuccesses.length > 0) {
-      const { error: imgDbErr } = await supabase.from("product_images").insert(imgSuccesses.map(r => r.record));
+      const { error: imgDbErr } = await adminClient.from("product_images").insert(imgSuccesses.map(r => r.record));
       if (imgDbErr) {
         console.error("[Create] Image DB batch insert failed:", imgDbErr.message);
-        await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+        await cleanupCreatedRecords(adminClient, productId, uploadedStoragePaths);
         productId = null;
         return NextResponse.json({ success: false, error: `Image records: ${imgDbErr.message}` }, { status: 500 });
       }
@@ -518,9 +521,9 @@ export async function POST(request) {
           product_id: productId,
           variant_color: color,
           note_text: text.trim(),
-        }));
+      }));
       if (noteRecs.length) {
-        const { error: noteErr } = await supabase.from("product_variant_notes").insert(noteRecs);
+        const { error: noteErr } = await adminClient.from("product_variant_notes").insert(noteRecs);
         if (noteErr) console.warn("[Create] Notes failed:", noteErr.message);
       }
     }
@@ -554,7 +557,7 @@ export async function POST(request) {
         published_at: null,
       };
 
-      const { data: existingStorefront } = await supabase
+      const { data: existingStorefront } = await adminClient
         .from("products")
         .select("id")
         .eq("store_id", store.id)
@@ -562,13 +565,13 @@ export async function POST(request) {
         .maybeSingle();
 
       if (existingStorefront?.id) {
-        await supabase
+        await adminClient
           .from("products")
           .update(storefrontPayload)
           .eq("id", existingStorefront.id)
           .eq("store_id", store.id);
       } else {
-        await supabase.from("products").insert(storefrontPayload);
+        await adminClient.from("products").insert(storefrontPayload);
       }
     } catch (mirrorErr) {
       console.warn("[Create] Storefront mirror failed:", mirrorErr?.message || mirrorErr);
@@ -576,7 +579,7 @@ export async function POST(request) {
 
     // 11. Print log — column names from R code
     if (wd.printCompleted && wd.printCopies > 0) {
-      const { error: printErr } = await supabase.from("barcode_print_log").insert({
+      const { error: printErr } = await adminClient.from("barcode_print_log").insert({
         print_id: `PRINT_${productId}_${Date.now()}`,
         product_id: productId,
         sku: baseSku,
@@ -589,7 +592,7 @@ export async function POST(request) {
     }
 
     // 12. Verification log — column names from R code
-    const { error: verifyErr } = await supabase.from("product_verification_log").insert({
+    const { error: verifyErr } = await adminClient.from("product_verification_log").insert({
       verification_id: `VERIFY_${productId}`,
       product_id: productId,
       scanned_sku: baseSku,
@@ -605,7 +608,7 @@ export async function POST(request) {
 
     // Generate a unique slug within this store
     let productSlug = String(productName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || baseSku.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-    const { data: slugRows } = await supabase
+    const { data: slugRows } = await adminClient
       .from("products")
       .select("slug")
       .eq("store_id", store.id)
@@ -640,7 +643,7 @@ export async function POST(request) {
       published_at: null,
     };
 
-    const { data: marketplaceProduct, error: marketplaceErr } = await supabase
+    const { data: marketplaceProduct, error: marketplaceErr } = await adminClient
       .from("products")
       .insert(marketplaceRecord)
       .select("id, store_id, slug")
@@ -648,7 +651,7 @@ export async function POST(request) {
 
     if (marketplaceErr) {
       console.error("[Create] Marketplace insert failed:", marketplaceErr.message);
-      await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+      await cleanupCreatedRecords(adminClient, productId, uploadedStoragePaths);
       productId = null;
       return NextResponse.json({ success: false, error: `Failed to publish to marketplace: ${marketplaceErr.message}` }, { status: 500 });
     }
@@ -660,12 +663,12 @@ export async function POST(request) {
         mood_fit_score: 0.7,
         is_active: true,
       }));
-      const { error: moodErr } = await supabase.from("product_mood_tags").insert(moodRecs);
+      const { error: moodErr } = await adminClient.from("product_mood_tags").insert(moodRecs);
       if (moodErr) console.warn("[Create] Mood tags failed:", moodErr.message);
     }
 
     await cleanupDraftRecord(
-      supabase,
+      adminClient,
       normalizeText(wd.draftId),
       store.id,
       user.id,
@@ -684,10 +687,9 @@ export async function POST(request) {
 
   } catch (err) {
     console.error("[Create] ❌ ERROR:", err);
-    if (productId) {
+    if (productId && adminClient) {
       try {
-        const supabase = await createClient();
-        await cleanupCreatedRecords(supabase, productId, uploadedStoragePaths);
+        await cleanupCreatedRecords(adminClient, productId, uploadedStoragePaths);
       } catch {}
     }
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
