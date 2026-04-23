@@ -15,10 +15,10 @@ export async function POST(req) {
       );
     }
 
-    //  Create server-side Supabase client with service role key
+    // Use the public anon key for signup. Privileged admin access is not needed.
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SECRET_SERVICE_ROLE_KEY
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     // 1️⃣ Create Auth user
@@ -36,7 +36,13 @@ export async function POST(req) {
       );
     }
 
-    const userId = signUpData.user.id;
+    const userId = signUpData?.user?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Signup did not return a user record' },
+        { status: 500 }
+      );
+    }
 
     // 2️⃣ Insert profile via RPC
     const { error: rpcError } = await supabase.rpc('insert_user_profile', {

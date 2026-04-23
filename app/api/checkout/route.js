@@ -1,23 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { createClient as createServerClient } from '@/utils/supabase/server';
+import { createAdminClient, createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
 import { calculateBulkPricing } from '@/utils/catalog/bulk-pricing';
-
-function createServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    }
-  );
-}
 
 function toPositiveInt(value) {
   const parsed = Number.parseInt(value, 10);
@@ -220,12 +205,12 @@ export async function POST(request) {
       return NextResponse.json(rateLimitPayload('Too many checkout attempts. Please try again shortly.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
-    const serviceClient = createServiceClient();
-    const authoritativeOrder = await buildAuthoritativeOrder(serviceClient, items);
+    const authoritativeOrder = await buildAuthoritativeOrder(authClient, items);
     const normalizedDeliveryAddress = normalizeDeliveryAddress(deliveryAddress);
     validateDeliveryAddress(normalizedDeliveryAddress);
+    const adminClient = await createAdminClient();
 
-    const { data: orderId, error } = await serviceClient.rpc('checkout_transaction', {
+    const { data: orderId, error } = await adminClient.rpc('checkout_transaction', {
       p_user_id: user.id,
       p_items: authoritativeOrder.items,
       p_total: authoritativeOrder.total,
@@ -251,7 +236,7 @@ export async function POST(request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    await saveOrderShippingAddress(serviceClient, orderId, user.id, normalizedDeliveryAddress);
+    await saveOrderShippingAddress(authClient, orderId, user.id, normalizedDeliveryAddress);
 
     await writeAnalyticsEvent({
       eventName: 'begin_checkout',

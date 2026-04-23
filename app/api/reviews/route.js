@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient, createClient } from '@/utils/supabase/server';
+import { createClient } from '@/utils/supabase/server';
 import { invalidateReviewCache } from '@/utils/platform/cache-invalidation';
 
 export const dynamic = 'force-dynamic';
@@ -23,11 +23,11 @@ async function getAuthedUser() {
   const supabase = await createClient();
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return null;
-  return user;
+  return { user, supabase };
 }
 
-async function findVerifiedPurchase(adminClient, { userId, productId }) {
-  const { data: orderItems, error } = await adminClient
+async function findVerifiedPurchase(supabase, { userId, productId }) {
+  const { data: orderItems, error } = await supabase
     .from('order_items')
     .select('order_id, product_id')
     .eq('product_id', productId)
@@ -40,7 +40,7 @@ async function findVerifiedPurchase(adminClient, { userId, productId }) {
   const orderIds = [...new Set((orderItems || []).map((row) => row.order_id).filter(Boolean))];
   if (orderIds.length === 0) return null;
 
-  const { data: orders, error: ordersError } = await adminClient
+  const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select('id, user_id, status, fulfillment_status')
     .eq('user_id', userId)
@@ -61,12 +61,12 @@ async function findVerifiedPurchase(adminClient, { userId, productId }) {
 
 export async function POST(request) {
   try {
-    const user = await getAuthedUser();
-    if (!user) {
+    const auth = await getAuthedUser();
+    if (!auth?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
-    const adminClient = await createAdminClient();
     const body = await request.json().catch(() => ({}));
     const productId = Number(body?.productId);
     const rating = Number(body?.rating);
@@ -80,7 +80,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
     }
 
-    const verifiedOrder = await findVerifiedPurchase(adminClient, {
+    const verifiedOrder = await findVerifiedPurchase(supabase, {
       userId: user.id,
       productId,
     });
@@ -89,7 +89,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Only verified buyers can review this product after delivery.' }, { status: 403 });
     }
 
-    const existingResult = await adminClient
+    const existingResult = await supabase
       .from('reviews')
       .select('id, deleted_at')
       .eq('product_id', productId)
@@ -127,8 +127,8 @@ export async function POST(request) {
     };
 
     const query = existingResult.data?.id
-      ? adminClient.from('reviews').update(payload).eq('id', existingResult.data.id)
-      : adminClient.from('reviews').insert(payload);
+      ? supabase.from('reviews').update(payload).eq('id', existingResult.data.id)
+      : supabase.from('reviews').insert(payload);
 
     const saveResult = await query
       .select('id, product_id, user_id, rating, comment, status, is_verified_purchase, purchase_order_id, seller_reply, seller_replied_at, created_at, edited_at')
@@ -142,18 +142,12 @@ export async function POST(request) {
       return NextResponse.json({ error: saveResult.error.message || 'Failed to submit review' }, { status: 500 });
     }
 
-    const { data: profile } = await adminClient
-      .from('users')
-      .select('full_name')
-      .eq('id', user.id)
-      .maybeSingle();
-
     invalidateReviewCache(saveResult.data);
 
     return NextResponse.json({
       ...saveResult.data,
       user: {
-        full_name: profile?.full_name || user.user_metadata?.full_name || null,
+        full_name: user.user_metadata?.full_name || null,
       },
     }, { status: 201 });
   } catch (err) {
@@ -163,12 +157,12 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    const user = await getAuthedUser();
-    if (!user) {
+    const auth = await getAuthedUser();
+    if (!auth?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
-    const adminClient = await createAdminClient();
     const body = await request.json().catch(() => ({}));
     const reviewId = String(body?.reviewId || '').trim();
     const rating = body?.rating === undefined ? null : Number(body.rating);
@@ -190,7 +184,7 @@ export async function PATCH(request) {
     }
     updates.edited_at = new Date().toISOString();
 
-    const result = await adminClient
+    const result = await supabase
       .from('reviews')
       .update(updates)
       .eq('id', reviewId)
@@ -217,12 +211,12 @@ export async function PATCH(request) {
 
 export async function DELETE(request) {
   try {
-    const user = await getAuthedUser();
-    if (!user) {
+    const auth = await getAuthedUser();
+    if (!auth?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const { user, supabase } = auth;
 
-    const adminClient = await createAdminClient();
     const { searchParams } = new URL(request.url);
     const reviewId = String(searchParams.get('reviewId') || '').trim();
 
@@ -230,7 +224,7 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'reviewId is required' }, { status: 400 });
     }
 
-    const result = await adminClient
+    const result = await supabase
       .from('reviews')
       .update({
         deleted_at: new Date().toISOString(),
