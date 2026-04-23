@@ -4,18 +4,19 @@ import ProductImpressionTracker from "@/components/catalog/ProductImpressionTrac
 import { useFilters } from "@/contexts/filter/FilterContext";
 import { FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  green:       '#2E6417',
-  greenDark:   '#245213',
-  greenTint:   '#EDF5E6',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenTint:   'var(--zova-green-soft)',
   greenBorder: '#B8D4A0',
   white:       '#FFFFFF',
-  pageBg:      '#F9FAFB',
-  charcoal:    '#111111',
-  medGray:     '#666666',
-  mutedText:   '#999999',
-  border:      '#E8E8E8',
-  softGray:    '#F5F5F5',
+  pageBg:      'var(--zova-linen)',
+  charcoal:    'var(--zova-ink)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
+  border:      'var(--zova-border)',
+  softGray:    'var(--zova-surface-alt)',
 };
 
 // ─── SKELETON CARD ────────────────────────────────────────────────────────────

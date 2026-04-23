@@ -522,15 +522,15 @@ export default function CartPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 bg-[#f8f5f2]">
+      <div className="zova-page min-h-[60vh] flex flex-col items-center justify-center p-6">
         <div className="w-24 h-24 md:w-32 md:h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-gray-100">
             <FiShoppingBag className="w-10 h-10 md:w-12 md:h-12 text-gray-300" />
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 text-center">Your cart is empty</h1>
-        <p className="text-gray-500 mb-8 text-center max-w-sm md:max-w-md text-sm md:text-base leading-relaxed">
+        <h1 className="zova-title text-2xl md:text-4xl font-black text-gray-900 mb-3 text-center">Your cart is empty</h1>
+        <p className="zova-copy mb-8 text-center max-w-sm md:max-w-md text-sm md:text-base leading-relaxed">
           Looks like you haven't added anything to your cart yet. Discover your next favorite item in our shop!
         </p>
-        <Link href="/shop" className="px-8 py-3.5 bg-[#2E6417] text-white font-bold rounded-full hover:bg-[#245213] hover:-translate-y-0.5 transition-all shadow-[0_4px_12px_rgba(46,100,23,0.3)]">
+        <Link href="/shop" className="zova-btn zova-btn-primary px-8 py-3.5">
           Start Shopping
         </Link>
       </div>
@@ -538,7 +538,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f5f2] py-8 md:py-16">
+    <div className="zova-page py-8 md:py-16">
       <PaymentSuccessModal
         isOpen={successModal.open}
         orderId={successModal.orderId}
@@ -580,8 +580,8 @@ export default function CartPage() {
             <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-5 sm:px-7">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#2E6417]">Step 2</p>
-                <h2 className="mt-1 text-xl font-bold text-gray-900">Delivery details</h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <h2 className="zova-title mt-1 text-xl font-black text-gray-900">Delivery details</h2>
+                <p className="mt-1 text-sm zova-copy">
                   Choose a saved address or add a delivery address for this order.
                 </p>
               </div>
@@ -762,7 +762,7 @@ export default function CartPage() {
                     setCheckoutError('');
                     setDeliveryStepOpen(false);
                   }}
-                  className="flex-1 rounded-xl bg-[#2E6417] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#245213]"
+                  className="zova-btn zova-btn-primary flex-1 rounded-xl px-4 py-3 text-sm font-semibold"
                 >
                   Save delivery details
                 </button>
@@ -772,8 +772,13 @@ export default function CartPage() {
         </div>
       ) : null}
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart ({cart.length})</h1>
+      <div className="zova-shell max-w-6xl mx-auto">
+        <div className="zova-section-header mb-8">
+          <div>
+            <span className="zova-eyebrow">Checkout ready</span>
+            <h1 className="zova-title mt-3 text-3xl font-black text-gray-900">Shopping Cart ({cart.length})</h1>
+          </div>
+        </div>
         {checkoutError && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {checkoutError}
@@ -784,7 +789,7 @@ export default function CartPage() {
           {/* Cart Items List */}
           <div className="flex-1 space-y-4">
             {cart.map((item) => (
-              <div key={`${item.id}-${item.variant_id ?? 'base'}`} className="bg-white p-3 md:p-5 rounded-2xl border border-gray-100 flex gap-4 transition-all hover:shadow-md">
+              <div key={`${item.id}-${item.variant_id ?? 'base'}`} className="zova-panel p-3 md:p-5 flex gap-4 transition-all hover:shadow-md">
                 {(() => {
                   const pricing = pricingMap.get(`${item.id}-${item.variant_id ?? 'base'}`) || calculateBulkPricing(item, item.quantity);
                   return (
@@ -915,7 +920,7 @@ export default function CartPage() {
             
             <button 
                 onClick={clearCart}
-                className="text-sm font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded-lg transition-all mt-4 flex items-center gap-2 w-fit mx-auto md:mx-0"
+                className="zova-btn zova-btn-destructive text-sm px-4 py-2 rounded-lg transition-all mt-4 flex items-center gap-2 w-fit mx-auto md:mx-0"
             >
                 <FiTrash2 /> Clear Cart
             </button>
@@ -923,8 +928,8 @@ export default function CartPage() {
 
           {/* Order Summary */}
           <div className="lg:w-[400px] shrink-0">
-             <div className="bg-white p-6 md:p-8 rounded-3xl border border-gray-100 shadow-sm sticky top-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+             <div className="zova-panel p-6 md:p-8 sticky top-8">
+                <h2 className="zova-title text-xl font-black text-gray-900 mb-6">Order Summary</h2>
                 
                 <div className="space-y-4 mb-6">
                     <div className="flex justify-between text-gray-600">
@@ -971,7 +976,7 @@ export default function CartPage() {
                         <button
                           type="button"
                           onClick={() => setDeliveryStepOpen(true)}
-                          className="w-full rounded-xl border border-[#E8E4DC] bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:border-[#2E6417] hover:text-[#2E6417]"
+                          className="zova-btn zova-btn-secondary w-full rounded-xl px-4 py-3 text-sm font-semibold text-gray-700 transition"
                         >
                           Change delivery address
                         </button>
@@ -987,7 +992,7 @@ export default function CartPage() {
                           setDeliveryStepOpen(true);
                           setCheckoutError('');
                         }}
-                        className="w-full rounded-xl border border-dashed border-[#B8D4A0] bg-white px-4 py-4 text-sm font-semibold text-[#2E6417] transition hover:border-[#2E6417] hover:bg-[#f7fbf8]"
+                        className="zova-btn zova-btn-secondary w-full rounded-xl border-dashed px-4 py-4 text-sm font-semibold text-[#2E6417] transition"
                       >
                         Add delivery address
                       </button>
@@ -1008,7 +1013,7 @@ export default function CartPage() {
                         loadingAddresses ||
                         !authUser
                     }
-                    className={`w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
+                    className={`w-full py-4 text-white font-bold rounded-full shadow-lg transition-all flex items-center justify-center gap-2 ${
                         isCheckingOut 
                         ? 'bg-gray-400 cursor-not-allowed' 
                         : 'bg-[#2E6417] hover:bg-[#245213] shadow-[#2E6417]/20'

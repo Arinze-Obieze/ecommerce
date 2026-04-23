@@ -5,56 +5,55 @@ import { FiStar, FiUsers, FiCheckCircle, FiTrendingUp, FiPackage, FiArrowRight }
 import SectionCarousel from '@/components/shared/SectionCarousel';
 import { getTopStores } from '@/features/storefront/home/api/client';
 
-// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
   // Card
-  cardBg:          "#FFFFFF",
-  cardBorder:      "#E8E4DC",
-  cardShadow:      "0 1px 4px rgba(46,100,23,0.05)",
-  cardHoverShadow: "0 8px 24px rgba(46,100,23,0.10)",
-  cardHoverBorder: "#B8D4A0",
+  cardBg:          '#FFFFFF',
+  cardBorder:      'var(--zova-border)',
+  cardShadow:      '0 1px 4px rgba(46,100,23,0.05)',
+  cardHoverShadow: '0 8px 24px rgba(46,100,23,0.10)',
+  cardHoverBorder: '#B8D4A0',
 
   // Logo placeholder
-  logoBg:          "#EDF5E6",
-  logoBorder:      "#B8D4A0",
-  logoText:        "#2E6417",
+  logoBg:          'var(--zova-green-soft)',
+  logoBorder:      '#B8D4A0',
+  logoText:        'var(--zova-primary-action)',
 
   // Text
-  nameText:        "#191B19",   // Onyx Black
-  nameHover:       "#2E6417",   // Zova Forest
-  descText:        "#6B6B6B",
-  metaText:        "#999999",
+  nameText:        'var(--zova-ink)',
+  nameHover:       'var(--zova-primary-action)',
+  descText:        'var(--zova-text-body)',
+  metaText:        'var(--zova-text-muted)',
 
   // Verified badge
-  verifiedColor:   "#2E6417",
+  verifiedColor:   'var(--zova-primary-action)',
 
   // Stats
-  statsBorder:     "#F0EDE6",
-  ratingBg:        "#FEF6E4",   // warm gold tint
-  ratingIcon:      "#EC9C00",   // Gold Harvest
-  ratingText:      "#191B19",
-  followerBg:      "#F5F1EA",   // Soft Linen
-  followerIcon:    "#999999",
-  followerText:    "#191B19",
-  productsBg:      "#EDF5E6",   // green tint
-  productsText:    "#2E6417",
-  productsIcon:    "#2E6417",
+  statsBorder:     'var(--zova-border)',
+  ratingBg:        'var(--zova-accent-soft)',
+  ratingIcon:      'var(--zova-accent-emphasis)',
+  ratingText:      'var(--zova-ink)',
+  followerBg:      'var(--zova-linen)',
+  followerIcon:    'var(--zova-text-muted)',
+  followerText:    'var(--zova-ink)',
+  productsBg:      'var(--zova-green-soft)',
+  productsText:    'var(--zova-primary-action)',
+  productsIcon:    'var(--zova-primary-action)',
 
   // Visit button
-  btnBg:           "#2E6417",   // Zova Forest
-  btnHover:        "#245213",
-  btnText:         "#FFFFFF",
+  btnBg:           'var(--zova-primary-action)',
+  btnHover:        'var(--zova-primary-action-hover)',
+  btnText:         '#FFFFFF',
 
   // Trending badge
-  trendingBg:      "#FEF6E4",
-  trendingText:    "#B87800",
-  trendingBorder:  "#F5D88A",
+  trendingBg:      'var(--zova-accent-soft)',
+  trendingText:    'var(--zova-warning)',
+  trendingBorder:  '#F5D88A',
 
   // Skeleton
-  skeletonBg:      "#EDE9E0",
-  skeletonShine:   "#F5F1EA",
+  skeletonBg:      'var(--zova-surface-alt)',
+  skeletonShine:   'var(--zova-linen)',
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
 function formatCount(n) {
   if (!n && n !== 0) return '0';

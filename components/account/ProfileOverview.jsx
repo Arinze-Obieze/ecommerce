@@ -6,27 +6,27 @@ import Link from 'next/link';
 import { FiPackage, FiHeart, FiMapPin, FiClock, FiArrowRight, FiShoppingBag } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 
-// ─── THEME ────────────────────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  green:       '#2E6417',
-  greenDark:   '#245213',
-  greenDeep:   '#191B19',
-  greenTint:   '#EDF5E6',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenDeep:   'var(--zova-text-strong)',
+  greenTint:   'var(--zova-green-soft)',
   greenBorder: '#B8D4A0',
   white:       '#FFFFFF',
-  pageBg:      '#F9FAFB',
-  charcoal:    '#111111',
-  medGray:     '#666666',
-  mutedText:   '#999999',
-  border:      '#E8E8E8',
-  softGray:    '#F5F5F5',
+  pageBg:      'var(--zova-linen)',
+  charcoal:    'var(--zova-ink)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
+  border:      'var(--zova-border)',
+  softGray:    'var(--zova-surface-alt)',
 };
 
 const STATUS = {
-  completed:  { label: 'Completed', color: '#2E6417', bg: '#EDF5E6', border: '#B8D4A0' },
+  completed:  { label: 'Completed', color: 'var(--zova-primary-action)', bg: 'var(--zova-green-soft)', border: '#B8D4A0' },
   processing: { label: 'Processing', color: '#EA580C', bg: '#FFF7ED', border: '#FED7AA' },
   pending:    { label: 'Pending', color: '#666666', bg: '#F5F5F5', border: '#E8E8E8' },
-  cancelled:  { label: 'Cancelled', color: '#E53935', bg: '#FEF2F2', border: '#FECACA' },
+  cancelled:  { label: 'Cancelled', color: 'var(--zova-error)', bg: '#FEF2F2', border: '#FECACA' },
 };
 
 function formatDate(value) {

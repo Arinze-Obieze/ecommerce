@@ -3,21 +3,22 @@
 import { FiX } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
+// Brand tokens — sourced from app/globals.css
 const THEME = {
   colors: {
-    primary: '#2E6417',
-    primaryHover: '#245213',
-    deepEmerald: '#191B19',
-    white: '#FFFFFF',
-    pageBg: '#F9FAFB',
-    softGray: '#F5F5F5',
-    darkCharcoal: '#111111',
-    mediumGray: '#666666',
-    mutedText: '#888888',
-    border: '#F0F0F0',
-    cardBorder: '#EFEFEF',
-    greenTint: '#EDF5E6',
-    greenBorder: '#B8D4A0',
+    primary:      'var(--zova-primary-action)',
+    primaryHover: 'var(--zova-primary-action-hover)',
+    deepEmerald:  'var(--zova-text-strong)',
+    white:        '#FFFFFF',
+    pageBg:       'var(--zova-linen)',
+    softGray:     'var(--zova-surface-alt)',
+    darkCharcoal: 'var(--zova-ink)',
+    mediumGray:   'var(--zova-text-body)',
+    mutedText:    'var(--zova-text-muted)',
+    border:       'var(--zova-border)',
+    cardBorder:   'var(--zova-border)',
+    greenTint:    'var(--zova-green-soft)',
+    greenBorder:  '#B8D4A0',
   },
   shadows: {
     cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',

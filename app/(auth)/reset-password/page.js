@@ -6,20 +6,21 @@ import { useRouter } from 'next/navigation';
 import { FiAlertCircle, FiCheck, FiLock, FiLoader, FiArrowLeft } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 
+// Brand tokens — sourced from app/globals.css
 const T = {
-  green: '#2E6417',
-  greenDark: '#245213',
-  greenTint: '#EDF5E6',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenTint:   'var(--zova-green-soft)',
   greenBorder: '#B8D4A0',
-  pageBg: '#F9FAFB',
-  panelBg: '#FFFFFF',
-  softGray: '#F5F5F5',
-  border: '#E8E8E8',
-  text: '#111111',
-  medGray: '#666666',
-  mutedText: '#999999',
-  red: '#E53935',
-  redLight: '#FEF2F2',
+  pageBg:      'var(--zova-linen)',
+  panelBg:     '#FFFFFF',
+  softGray:    'var(--zova-surface-alt)',
+  border:      'var(--zova-border)',
+  text:        'var(--zova-ink)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
+  red:         'var(--zova-error)',
+  redLight:    '#FEF2F2',
 };
 
 function getPasswordChecks(password) {
@@ -182,7 +183,7 @@ export default function ResetPasswordPage() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
-        fontFamily: 'Outfit, sans-serif',
+        fontFamily: 'var(--zova-font-sans)',
       }}
     >
       <div

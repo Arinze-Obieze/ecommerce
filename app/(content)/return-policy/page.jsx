@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Head from "next/head";
 
 // ─── Brand tokens (ZOVA Green theme) ────────────────────────
 const B = {
@@ -237,13 +236,8 @@ export default function ReturnPolicyPage() {
 
   return (
     <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-      </Head>
 
-      <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+      <div style={{ background: B.cream, minHeight: "100vh" }}>
 
         {/* ── HERO ── */}
         <div style={{ background: `linear-gradient(135deg, ${B.greenDark} 0%, ${B.greenMid} 100%)`, padding: "64px 24px 56px", textAlign: "center", position: "relative", overflow: "hidden" }}>

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Head from "next/head";
 import Link from "next/link";
 
 // ─── Brand tokens ────────────────────────────────────────────
@@ -291,32 +290,8 @@ export default function ShippingInfoPage() {
 
   return (
     <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
-        <style>{`
-          * { box-sizing: border-box; }
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(18px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(46,100,23,0.4); }
-            50%       { box-shadow: 0 0 0 8px rgba(46,100,23,0); }
-          }
-          .fade-up { animation: fadeUp 0.6s cubic-bezier(0.22,1,0.36,1) both; }
-          .fade-up-1 { animation-delay: 0.1s; }
-          .fade-up-2 { animation-delay: 0.2s; }
-          .fade-up-3 { animation-delay: 0.3s; }
-          .step-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(46,100,23,0.12) !important; }
-          .pkg-card:hover { transform: translateY(-3px); }
-          .zone-pulse { animation: pulse 2s infinite; }
-          .faq-row:hover { background: #F7FDF9; }
-        `}</style>
-      </Head>
 
-      <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+      <div style={{ background: B.cream, minHeight: "100vh" }}>
 
         {/* ══ HERO ══════════════════════════════════════════════ */}
         <div style={{ background: `linear-gradient(150deg, ${B.greenDark} 0%, ${B.greenMid} 100%)`, padding: "72px 24px 64px", position: "relative", overflow: "hidden" }}>
@@ -330,7 +305,7 @@ export default function ShippingInfoPage() {
               🚚 Shipping & Delivery
             </div>
 
-            <h1 className="fade-up fade-up-2" style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 800, color: B.white, lineHeight: 1.15, marginBottom: 16, letterSpacing: -0.5 }}>
+            <h1 className="fade-up fade-up-2" style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 800, color: B.white, lineHeight: 1.15, marginBottom: 16, letterSpacing: -0.5 }}>
               Fast. Tracked.{" "}
               <em style={{ color: B.green, fontStyle: "italic" }}>Guaranteed.</em>
             </h1>
@@ -379,7 +354,7 @@ export default function ShippingInfoPage() {
           <div style={{ marginBottom: 68 }}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Delivery Zones</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 10 }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 10 }}>
                 How fast will it reach you?
               </h2>
               <p style={{ fontSize: 15, color: B.g600, maxWidth: 480, margin: "0 auto" }}>
@@ -415,7 +390,7 @@ export default function ShippingInfoPage() {
           <div style={{ marginBottom: 68 }}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>The Journey</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 10 }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 10 }}>
                 From seller to your door
               </h2>
               <p style={{ fontSize: 15, color: B.g600, maxWidth: 480, margin: "0 auto" }}>
@@ -476,7 +451,7 @@ export default function ShippingInfoPage() {
           <div style={{ marginBottom: 68 }}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Packaging</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 10 }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 10 }}>
                 Packaged with care
               </h2>
               <p style={{ fontSize: 15, color: B.g600, maxWidth: 440, margin: "0 auto" }}>
@@ -503,7 +478,7 @@ export default function ShippingInfoPage() {
           <div style={{ marginBottom: 68 }}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Delivery Fees</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal }}>
                 Clear, flat-rate pricing
               </h2>
             </div>
@@ -548,7 +523,7 @@ export default function ShippingInfoPage() {
 
           {/* ══ IMPORTANT NOTES ═════════════════════════════════ */}
           <div style={{ marginBottom: 68 }}>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 800, color: B.charcoal, marginBottom: 20 }}>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 800, color: B.charcoal, marginBottom: 20 }}>
               Important shipping notes
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -577,7 +552,7 @@ export default function ShippingInfoPage() {
           <div style={{ marginBottom: 64 }}>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Got Questions?</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal }}>
                 Shipping FAQs
               </h2>
             </div>
@@ -600,7 +575,7 @@ export default function ShippingInfoPage() {
             <div style={{ position: "absolute", bottom: -30, left: -30, width: 160, height: 160, borderRadius: "50%", background: "rgba(46,100,23,0.1)" }} />
             <div style={{ position: "relative", zIndex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 14 }}>Ready?</div>
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 800, color: B.white, marginBottom: 12, lineHeight: 1.25 }}>
+              <h3 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 800, color: B.white, marginBottom: 12, lineHeight: 1.25 }}>
                 Shop now. We handle the rest.
               </h3>
               <p style={{ fontSize: 15, color: B.greenSub, lineHeight: 1.75, maxWidth: 420, margin: "0 auto 28px" }}>

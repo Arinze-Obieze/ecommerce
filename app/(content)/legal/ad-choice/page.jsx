@@ -106,7 +106,7 @@ export default function AdChoicePage() {
           <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
             <button
               onClick={handleSave}
-              style={{ padding: "10px 22px", borderRadius: 8, background: "#2E6417", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}
+              style={{ padding: "10px 22px", borderRadius: 8, background: "#2E6417", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "var(--zova-font-sans)" }}
             >
               {saved ? "✓ Preferences Saved!" : "Save My Preferences"}
             </button>

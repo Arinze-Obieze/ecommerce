@@ -8,24 +8,24 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCheck } from 'react-ic
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
-// ─── BRAND THEME (Zova) ───────────────────────────────────────
+// Brand tokens — sourced from app/globals.css CSS custom properties
 const T = {
-  green:        '#2E6417',   // Zova Forest
-  greenDark:    '#245213',
-  greenDeep:    '#245213',
-  greenTint:    '#EDF5E6',
-  greenBorder:  '#B8D4A0',
-  gold:         '#EC9C00',   // Gold Harvest
-  goldDark:     '#d48c00',
-  charcoal:     '#191B19',   // Onyx Black
-  softGray:     '#EDE9E0',   // warm linen gray
-  pageBg:       '#F5F1EA',   // Soft Linen
-  border:       '#E8E4DC',
-  medGray:      '#6B6B6B',
-  mutedText:    '#999999',
-  white:        '#FFFFFF',
-  red:          '#E53935',
-  redLight:     '#FEF2F2',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenDeep:   'var(--zova-primary-action-hover)',
+  greenTint:   'var(--zova-green-soft)',
+  greenBorder: '#B8D4A0',
+  gold:        'var(--zova-accent-emphasis)',
+  goldDark:    'var(--zova-warning)',
+  charcoal:    'var(--zova-ink)',
+  softGray:    'var(--zova-surface-alt)',
+  pageBg:      'var(--zova-linen)',
+  border:      'var(--zova-border)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
+  white:       '#FFFFFF',
+  red:         'var(--zova-error)',
+  redLight:    '#FEF2F2',
 };
 
 // ─── SLIDES ───────────────────────────────────────────────────
@@ -155,7 +155,6 @@ export default function LoginPage() {
     border: `1.5px solid ${hasError ? T.red : focused ? T.green : hovered ? T.greenBorder : T.border}`,
     background: hasError ? T.redLight : focused ? T.white : T.pageBg,
     fontSize: 14,
-    fontFamily: 'inherit',
     color: T.charcoal,
     outline: 'none',
     boxSizing: 'border-box',
@@ -166,11 +165,9 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
-        .lp-root { font-family: 'Outfit', sans-serif; }
-        .serif   { font-family: 'Cormorant Garamond', Georgia, serif; }
-
+                * { box-sizing: border-box; }
+        .lp-root { font-family: var(--zova-font-sans); }
+        
         @keyframes fadeUp   { from { opacity:0; transform:translateY(20px); }   to { opacity:1; transform:none; } }
         @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); }  to { opacity:1; transform:none; } }
         @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
@@ -252,12 +249,12 @@ export default function LoginPage() {
                 overflow: 'hidden',
               }}>
                 {!logoError ? (
-                  <Image src="/brand/icon-only.png" alt="ZOVA" width={100} height={100} className="object-contain" onError={() => setLogoError(true)} />
+                  <Image src="/brand/logo.svg" alt="ZOVA" width={100} height={100} className="object-contain" onError={() => setLogoError(true)} />
                 ) : (
-                  <span style={{ fontSize: 16, fontWeight: 800, color: T.green, fontFamily: 'Outfit,sans-serif' }}>Z</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: T.green, fontFamily: "var(--zova-font-sans)" }}>Z</span>
                 )}
               </div>
-              <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em', fontFamily: 'Outfit,sans-serif' }}>ZOVA</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em', fontFamily: "var(--zova-font-sans)" }}>ZOVA</span>
             </div>
 
             {/* Headline */}
@@ -390,7 +387,7 @@ export default function LoginPage() {
                   onMouseEnter={() => setSubmitHov(true)} onMouseLeave={() => setSubmitHov(false)}
                   style={{
                     width: '100%', padding: '14px', border: 'none', borderRadius: 13,
-                    fontSize: 15, fontWeight: 700, fontFamily: 'inherit', cursor: loading ? 'not-allowed' : 'pointer',
+                    fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     background: loading ? T.border : submitHov ? T.greenDark : T.green,
                     color: loading ? T.mutedText : T.white,
@@ -429,7 +426,7 @@ export default function LoginPage() {
                       padding: '11px 16px', borderRadius: 12, cursor: 'pointer',
                       border: `1.5px solid ${T.border}`,
                       background: btn.hov ? T.softGray : T.white,
-                      fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', color: T.charcoal,
+                      fontSize: 13.5, fontWeight: 600, color: T.charcoal,
                       transition: 'all 0.15s',
                       boxShadow: btn.hov ? '0 3px 10px rgba(46,100,23,0.08)' : 'none',
                       transform: btn.hov ? 'translateY(-1px)' : 'none',
@@ -529,7 +526,7 @@ export default function LoginPage() {
               border: '1px solid rgba(255,255,255,0.2)', overflow: 'hidden',
             }}>
               {!logoError ? (
-                <Image src="/brand/icon-only.png" alt="ZOVA" width={50} height={50} className="object-contain" onError={() => setLogoError(true)} />
+                <Image src="/brand/logo.svg" alt="ZOVA" width={50} height={50} className="object-contain" onError={() => setLogoError(true)} />
               ) : (
                 <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Z</span>
               )}

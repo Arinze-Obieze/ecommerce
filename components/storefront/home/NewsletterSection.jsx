@@ -3,51 +3,50 @@ import React, { useState } from 'react';
 import { FiMail, FiArrowRight, FiX, FiGift, FiChevronLeft, FiShield, FiCheckCircle } from 'react-icons/fi';
 import { useToast } from '@/contexts/toast/ToastContext';
 
-// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  tabBg:            "#2E6417",   // Zova Forest
-  tabText:          "#FFFFFF",
+  tabBg:            'var(--zova-primary-action)',
+  tabText:          '#FFFFFF',
 
-  panelBg:          "#FFFFFF",
-  panelBorder:      "#E8E4DC",
-  shadow:           "0 25px 60px rgba(46,100,23,0.16)",
+  panelBg:          '#FFFFFF',
+  panelBorder:      'var(--zova-border)',
+  shadow:           '0 25px 60px rgba(46,100,23,0.16)',
 
-  headingBg:        "#FFFFFF",
-  headingText:      "#191B19",   // Onyx Black
-  headingSubText:   "#6B6B6B",
+  headingBg:        '#FFFFFF',
+  headingText:      'var(--zova-ink)',
+  headingSubText:   'var(--zova-text-body)',
 
-  badgeBg:          "#EDF5E6",   // green tint
-  badgeBorder:      "#B8D4A0",
-  badgeText:        "#2E6417",
+  badgeBg:          'var(--zova-green-soft)',
+  badgeBorder:      '#B8D4A0',
+  badgeText:        'var(--zova-primary-action)',
 
-  highlight:        "#2E6417",   // Zova Forest
-  highlightText:    "#FFFFFF",
+  highlight:        'var(--zova-primary-action)',
+  highlightText:    '#FFFFFF',
 
-  accentBg:         "#EC9C00",   // Gold Harvest (for key highlight word)
-  accentText:       "#FFFFFF",
+  accentBg:         'var(--zova-accent-emphasis)',
+  accentText:       '#FFFFFF',
 
-  acronymBg:        "#F5F1EA",   // Soft Linen
-  acronymBorder:    "#E8E4DC",
+  acronymBg:        'var(--zova-linen)',
+  acronymBorder:    'var(--zova-border)',
 
-  inputBorder:      "#E8E4DC",
-  inputFocus:       "#2E6417",
-  inputText:        "#191B19",
-  inputPlaceholder: "#999999",
+  inputBorder:      'var(--zova-border)',
+  inputFocus:       'var(--zova-primary-action)',
+  inputText:        'var(--zova-ink)',
+  inputPlaceholder: 'var(--zova-text-muted)',
 
-  btnBg:            "#2E6417",   // Zova Forest
-  btnHover:         "#245213",
-  btnText:          "#FFFFFF",
+  btnBg:            'var(--zova-primary-action)',
+  btnHover:         'var(--zova-primary-action-hover)',
+  btnText:          '#FFFFFF',
 
-  closeBtn:         "#F5F1EA",
-  closeBtnHover:    "#E8E4DC",
+  closeBtn:         'var(--zova-linen)',
+  closeBtnHover:    'var(--zova-border)',
 
-  checkColor:       "#2E6417",
-  legalText:        "#999999",
-  successBg:        "#EDF5E6",
-  successBorder:    "#B8D4A0",
-  successText:      "#2E6417",
+  checkColor:       'var(--zova-primary-action)',
+  legalText:        'var(--zova-text-muted)',
+  successBg:        'var(--zova-green-soft)',
+  successBorder:    '#B8D4A0',
+  successText:      'var(--zova-primary-action)',
 };
-// ─────────────────────────────────────────────────────────────────────────────
 
 const NewsletterSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);

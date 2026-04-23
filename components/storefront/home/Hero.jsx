@@ -76,7 +76,7 @@ const HeroMoodCard = () => (
       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', marginBottom: 14 }}>{HERO_MOOD.subtitle}</div>
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
-        background: '#EC9C00', color: '#fff', borderRadius: 24,
+        background: 'var(--zova-accent-emphasis)', color: '#fff', borderRadius: 24,
         padding: '8px 17px', fontSize: 12, fontWeight: 700,
       }}>Shop now ›</span>
     </div>
@@ -162,7 +162,7 @@ const Hero = () => {
   const hasBgImage = !!banner?.background_image;
 
   return (
-    <div className="w-full bg-[#F5F1EA]">
+    <div className="w-full zova-page">
       <style jsx global>{`
         .mood-img-zoom:hover .mood-img { transform: scale(1.05); }
         .chips-row::-webkit-scrollbar  { display: none; }
@@ -174,8 +174,8 @@ const Hero = () => {
       `}</style>
 
       {/* ── Nav ── */}
-      <div className="border-b border-[#2E6417]/10 bg-white/80 backdrop-blur-md relative z-40">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-40">
+        <div className="zova-shell zova-topbar mt-3 rounded-full px-3 sm:px-5">
           <div className="flex items-center justify-center gap-6 md:gap-10 overflow-x-auto py-3 no-scrollbar">
             {navItems.map((item) => {
               const isActive = activeTab === item.name;
@@ -183,13 +183,13 @@ const Hero = () => {
               if (item.name === 'Categories') return (
                 <button key={item.name} onClick={() => { setActiveTab(item.name); setIsModalOpen(true); }} className={cls}>
                   {item.name}
-                  <span className={`absolute bottom-0 left-0 h-[2px] bg-[#EC9C00] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`} />
+                  <span className={`absolute bottom-0 left-0 h-[2px] bg-[var(--zova-accent-emphasis)] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`} />
                 </button>
               );
               return (
                 <Link key={item.name} href={item.href} onClick={() => { setActiveTab(item.name); setIsModalOpen(false); }} className={cls}>
                   {item.name}
-                  <span className={`absolute bottom-0 left-0 h-[2px] bg-[#EC9C00] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`} />
+                  <span className={`absolute bottom-0 left-0 h-[2px] bg-[var(--zova-accent-emphasis)] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`} />
                 </Link>
               );
             })}
@@ -199,11 +199,14 @@ const Hero = () => {
       </div>
 
       {/* ── Main content ── */}
-      <div className="w-full pt-3 pb-2">
+      <div className="w-full pt-5 pb-3">
 
         {/* Header row */}
-        <div className="flex items-center justify-between mb-2.5 px-4 sm:px-6 lg:px-5">
-          <span className="text-[16px] font-bold text-[#191B19]">Shop by mood</span>
+        <div className="zova-shell flex items-center justify-between mb-3">
+          <div>
+            <span className="zova-eyebrow">Curated discovery</span>
+            <h2 className="zova-title mt-3 text-[1.35rem] font-black">Shop by mood</h2>
+          </div>
           <Link href="/mood" className="text-[12px] font-semibold text-[#2E6417] hover:text-[#EC9C00] transition-colors flex items-center gap-1">
             See all moods <FiArrowRight className="w-3 h-3" />
           </Link>
@@ -234,19 +237,18 @@ const Hero = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#EC9C00]" style={{ animation: 'pulseDot 2s ease infinite' }} />
                 New on Zova
               </div>
-              <h1 className="text-white font-extrabold leading-[1.08] tracking-tight mb-3 drop-shadow text-[2rem] xl:text-[2.5rem] max-w-md">
+              <h1 className="zova-title text-white font-extrabold leading-[1.04] tracking-tight mb-3 drop-shadow text-[2rem] xl:text-[2.7rem] max-w-md">
                 {banner?.title || 'Discover Your Style'}
               </h1>
               <p className="text-white/70 text-[13px] mb-6 max-w-xs leading-relaxed">
                 {banner?.subtitle || 'Shop the latest fashion from trusted African stores'}
               </p>
               <div className="flex items-center gap-3 mb-6">
-                <Link href={banner?.cta_link || '/shop'} className="group flex items-center gap-2 px-7 py-3 bg-[#EC9C00] text-white font-bold rounded-xl text-[13px] shadow-[0_4px_18px_rgba(236,156,0,0.4)] hover:bg-[#d48c00] transition-all duration-300 hover:-translate-y-0.5">
+                <Link href={banner?.cta_link || '/shop'} className="zova-btn zova-btn-primary group text-[13px]">
                   {banner?.cta_text || 'Shop Now'}
                   <FiArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
-                {/* Deals button now navigates with onSale=true */}
-                <Link href="/shop?onSale=true" className="flex items-center gap-1.5 px-7 py-3 bg-white/12 backdrop-blur-sm text-white font-semibold rounded-xl text-[13px] border border-white/20 hover:bg-white/22 transition-all duration-300">
+                <Link href="/shop?onSale=true" className="zova-btn flex items-center gap-1.5 px-7 py-3 bg-white/12 backdrop-blur-sm text-white font-semibold rounded-full text-[13px] border border-white/20 hover:bg-white/22 transition-all duration-300">
                   View Deals <FiChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -285,13 +287,13 @@ const Hero = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-[#EC9C00]" style={{ animation: 'pulseDot 2s ease infinite' }} />
                 New on Zova
               </div>
-              <h1 className="text-white text-2xl font-extrabold leading-tight mb-2">{banner?.title || 'Discover Your Style'}</h1>
+              <h1 className="zova-title text-white text-2xl font-extrabold leading-tight mb-2">{banner?.title || 'Discover Your Style'}</h1>
               <p className="text-white/65 text-xs mb-5 max-w-xs">{banner?.subtitle || 'Shop the latest fashion from trusted African stores'}</p>
               <div className="flex items-center gap-2.5">
-                <Link href={banner?.cta_link || '/shop'} className="flex items-center gap-1.5 px-6 py-2.5 bg-[#EC9C00] text-white font-bold rounded-xl text-sm">
+                <Link href={banner?.cta_link || '/shop'} className="zova-btn zova-btn-primary flex items-center gap-1.5 px-6 py-2.5 text-sm">
                   {banner?.cta_text || 'Shop Now'} <FiArrowRight className="w-3.5 h-3.5" />
                 </Link>
-                <Link href="/shop?onSale=true" className="flex items-center gap-1 px-6 py-2.5 bg-white/12 text-white font-semibold rounded-xl text-sm border border-white/20">
+                <Link href="/shop?onSale=true" className="zova-btn flex items-center gap-1 px-6 py-2.5 bg-white/12 text-white font-semibold rounded-full text-sm border border-white/20">
                   Deals <FiChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
@@ -318,7 +320,7 @@ const Hero = () => {
 
         {/* ── Bottom chip row ── */}
         <div
-          className="chips-row hidden lg:flex gap-2.5 mt-2 overflow-x-auto pb-1 px-4"
+          className="chips-row hidden lg:flex gap-2.5 mt-2 overflow-x-auto pb-1 px-4 zova-shell"
           style={{
             maxHeight: expanded ? 180 : 0,
             overflow: expanded ? 'auto' : 'hidden',
@@ -330,18 +332,18 @@ const Hero = () => {
         </div>
 
         {/* Expand toggle */}
-        <div className="hidden lg:block mt-2 px-4">
+        <div className="hidden lg:block mt-2 px-4 zova-shell">
           <button
             onClick={() => setExpanded((p) => !p)}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               width: '100%', padding: 10,
-              border: '1.5px dashed #d0d0d0', borderRadius: 12,
+              border: '1.5px dashed #d0d0d0', borderRadius: 16,
               background: 'none', cursor: 'pointer',
               fontSize: 13, color: '#666', fontWeight: 500,
               transition: 'border-color 0.2s, color 0.2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#2E6417'; e.currentTarget.style.color = '#2E6417'; }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--zova-primary-action)'; e.currentTarget.style.color = 'var(--zova-primary-action)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = '#d0d0d0'; e.currentTarget.style.color = '#666'; }}
           >
             <span style={{ display: 'inline-block', transition: 'transform 0.3s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', fontSize: 11 }}>▼</span>
@@ -351,7 +353,7 @@ const Hero = () => {
       </div>
 
       {/* ── Marquee ── */}
-      <div className="border-t border-b border-[#2E6417]/10 bg-white/60 backdrop-blur-sm overflow-hidden mt-1">
+      <div className="border-t border-b border-[#2E6417]/10 bg-white/60 backdrop-blur-sm overflow-hidden mt-2">
         <div className="py-2.5 relative">
           <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white/95 to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white/95 to-transparent z-10 pointer-events-none" />

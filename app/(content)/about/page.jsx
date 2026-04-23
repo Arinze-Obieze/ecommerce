@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import Head from "next/head";
 
 // ─── Brand tokens ────────────────────────────────────────────
 const B = {
@@ -134,36 +133,8 @@ export default function AboutPage() {
 
   return (
     <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
-        <style>{`
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(32px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to   { opacity: 1; }
-          }
-          @keyframes slideRight {
-            from { transform: scaleX(0); }
-            to   { transform: scaleX(1); }
-          }
-          .fade-up { animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) both; }
-          .fade-up-1 { animation-delay: 0.1s; }
-          .fade-up-2 { animation-delay: 0.22s; }
-          .fade-up-3 { animation-delay: 0.34s; }
-          .fade-up-4 { animation-delay: 0.46s; }
-          .value-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(46,100,23,0.15); }
-          .team-card:hover .team-avatar { transform: scale(1.08); }
-          .timeline-dot { transition: transform 0.2s; }
-          .timeline-item:hover .timeline-dot { transform: scale(1.3); }
-        `}</style>
-      </Head>
 
-      <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+      <div style={{ background: B.cream, minHeight: "100vh" }}>
 
         {/* ══ HERO ══════════════════════════════════════════ */}
         <div style={{ background: `linear-gradient(160deg, ${B.greenDark} 0%, ${B.greenMid} 60%, #1a9e5e 100%)`, padding: "80px 24px 72px", position: "relative", overflow: "hidden" }}>
@@ -183,7 +154,7 @@ export default function AboutPage() {
             </div>
 
             {/* Headline */}
-            <h1 className="fade-up fade-up-2" style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(36px, 6vw, 58px)", fontWeight: 800, color: B.white, lineHeight: 1.1, marginBottom: 20, letterSpacing: -0.5 }}>
+            <h1 className="fade-up fade-up-2" style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(36px, 6vw, 58px)", fontWeight: 800, color: B.white, lineHeight: 1.1, marginBottom: 20, letterSpacing: -0.5 }}>
               We Fixed Online Fashion
               <br />
               <em style={{ color: B.green, fontStyle: "italic" }}>One Item at a Time.</em>
@@ -219,7 +190,7 @@ export default function AboutPage() {
           <div style={{ marginBottom: 72, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 12 }}>Our Mission</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 800, color: B.charcoal, lineHeight: 1.2, marginBottom: 20 }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 800, color: B.charcoal, lineHeight: 1.2, marginBottom: 20 }}>
                 Trust should be the <em style={{ color: B.green }}>default</em>, not the exception.
               </h2>
               <p style={{ fontSize: 15, color: B.g600, lineHeight: 1.85, marginBottom: 16 }}>
@@ -254,7 +225,7 @@ export default function AboutPage() {
           <div style={{ marginBottom: 72 }}>
             <div style={{ textAlign: "center", marginBottom: 44 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>How It Works</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, lineHeight: 1.2 }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, lineHeight: 1.2 }}>
                 Not just a website. A full system.
               </h2>
             </div>
@@ -282,7 +253,7 @@ export default function AboutPage() {
           <div style={{ marginBottom: 72 }}>
             <div style={{ textAlign: "center", marginBottom: 44 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>What We Stand For</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal }}>Our core values</h2>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal }}>Our core values</h2>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               {VALUES.map((v, i) => (
@@ -301,7 +272,7 @@ export default function AboutPage() {
           <div style={{ marginBottom: 72 }}>
             <div style={{ textAlign: "center", marginBottom: 48 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Our Story</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal }}>How ZOVA came to be</h2>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal }}>How ZOVA came to be</h2>
             </div>
             <div style={{ position: "relative" }}>
               {/* vertical line */}
@@ -329,7 +300,7 @@ export default function AboutPage() {
           <div style={{ marginBottom: 72 }}>
             <div style={{ textAlign: "center", marginBottom: 44 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>The Team</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 12 }}>The people behind ZOVA</h2>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 800, color: B.charcoal, marginBottom: 12 }}>The people behind ZOVA</h2>
               <p style={{ fontSize: 15, color: B.g600, maxWidth: 480, margin: "0 auto" }}>A small, focused team with big standards — based in the heart of Nigerian commerce.</p>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
@@ -351,7 +322,7 @@ export default function AboutPage() {
             <div style={{ position: "absolute", bottom: -40, left: -40, width: 180, height: 180, borderRadius: "50%", background: "rgba(46,100,23,0.1)" }} />
             <div style={{ position: "relative", zIndex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 14 }}>Join ZOVA</div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 3.5vw, 36px)", fontWeight: 800, color: B.white, marginBottom: 14, lineHeight: 1.2 }}>
+              <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(24px, 3.5vw, 36px)", fontWeight: 800, color: B.white, marginBottom: 14, lineHeight: 1.2 }}>
                 Ready to sell to thousands<br />of verified buyers?
               </h2>
               <p style={{ fontSize: 15, color: B.greenSub, lineHeight: 1.75, maxWidth: 440, margin: "0 auto 32px" }}>

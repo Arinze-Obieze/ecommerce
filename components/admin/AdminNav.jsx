@@ -42,7 +42,7 @@ export default function AdminNav({ collapsed = false }) {
         <div key={group.label}>
           {!collapsed && (
             <p className="text-[9px] font-bold uppercase tracking-[.14em] px-2 pb-1.5"
-              style={{ color: 'rgba(255,255,255,.2)' }}>
+              style={{ color: 'rgba(255,255,255,.28)' }}>
               {group.label}
             </p>
           )}
@@ -63,16 +63,16 @@ export default function AdminNav({ collapsed = false }) {
                         : 'text-white/40 hover:text-white/75'
                       }`}
                     style={active ? {
-                      background: 'rgba(16,185,129,.15)',
-                      boxShadow: 'inset 0 0 0 1px rgba(16,185,129,.15)'
+                      background: 'rgba(46,100,23,.22)',
+                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)'
                     } : {}}
                   >
                     {/* Active left bar */}
                     {active && !collapsed && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r"
-                        style={{ background: '#10b981' }} />
+                        style={{ background: 'var(--zova-accent-emphasis)' }} />
                     )}
-                    <Icon className={`shrink-0 ${collapsed ? 'w-4.5 h-4.5' : 'w-4 h-4'} ${active ? 'text-emerald-400' : ''}`}
+                    <Icon className={`shrink-0 ${collapsed ? 'w-4.5 h-4.5' : 'w-4 h-4'}`}
                       style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15 }} />
                     {!collapsed && (
                       <span className={`text-[13px] leading-none ${active ? 'font-semibold text-white' : 'font-medium'}`}>

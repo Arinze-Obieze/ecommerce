@@ -72,7 +72,7 @@ export default function FloatingDashboardCTA() {
           // Zova Forest gradient
           accent: 'from-[#245213] to-[#2E6417]',
           ring:   'ring-[#B8D4A0]/70',
-          dot:    '#EC9C00',   // Gold Harvest dot accent
+          dot:    'var(--zova-accent-emphasis)',   // Gold Harvest dot accent
         });
         return;
       }
@@ -98,7 +98,7 @@ export default function FloatingDashboardCTA() {
           // Zova Forest → Gold Harvest gradient
           accent: 'from-[#2E6417] to-[#2E6417]',
           ring:   'ring-[#B8D4A0]/70',
-          dot:    '#EC9C00',
+          dot:    'var(--zova-accent-emphasis)',
         });
         return;
       }

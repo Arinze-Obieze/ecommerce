@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Head from "next/head";
 import Link from "next/link";
 
 const B = {
@@ -258,23 +257,8 @@ export default function HowToTrackPage() {
 
   return (
     <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
-        <style>{`
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-          .method-card { transition: transform 0.2s, box-shadow 0.2s; }
-          .method-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(46,100,23,0.12); }
-          .faq-row { transition: background 0.15s; cursor: pointer; }
-          .faq-row:hover { background: #F7FDF9; }
-        `}</style>
-      </Head>
 
-      <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+      <div style={{ background: B.cream, minHeight: "100vh" }}>
 
         {/* ── HERO ── */}
         <div style={{ background: `linear-gradient(150deg, ${B.greenDark} 0%, ${B.greenMid} 100%)`, padding: "68px 24px 60px", position: "relative", overflow: "hidden" }}>
@@ -285,7 +269,7 @@ export default function HowToTrackPage() {
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 18px", borderRadius: 20, background: "rgba(46,100,23,0.2)", border: "1px solid rgba(46,100,23,0.35)", marginBottom: 20, fontSize: 11, fontWeight: 700, color: "#7FFFC4", letterSpacing: 1.5, textTransform: "uppercase" }}>
               🚚 Order Tracking
             </div>
-            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(34px, 5vw, 52px)", fontWeight: 800, color: B.white, lineHeight: 1.15, marginBottom: 16, letterSpacing: -0.5 }}>
+            <h1 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(34px, 5vw, 52px)", fontWeight: 800, color: B.white, lineHeight: 1.15, marginBottom: 16, letterSpacing: -0.5 }}>
               Track Your Order
               <em style={{ color: B.green, fontStyle: "italic", display: "block" }}>Every Step of the Way</em>
             </h1>
@@ -302,9 +286,9 @@ export default function HowToTrackPage() {
               <input
                 type="text"
                 placeholder="Enter your order number e.g. ZV-2024-08821"
-                style={{ flex: 1, padding: "12px 16px", fontSize: 14, border: "none", outline: "none", color: B.charcoal, background: B.white, fontFamily: "'Poppins', sans-serif" }}
+                style={{ flex: 1, padding: "12px 16px", fontSize: 14, border: "none", outline: "none", color: B.charcoal, background: B.white, fontFamily: "var(--zova-font-sans)" }}
               />
-              <button style={{ padding: "12px 20px", background: B.green, color: B.white, border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>
+              <button style={{ padding: "12px 20px", background: B.green, color: B.white, border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "var(--zova-font-sans)" }}>
                 Track →
               </button>
             </div>
@@ -320,7 +304,7 @@ export default function HowToTrackPage() {
           {/* ── LIVE TRACKER DEMO ── */}
           <div style={{ marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10, textAlign: "center" }}>Interactive Demo</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 6, textAlign: "center" }}>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 6, textAlign: "center" }}>
               What your tracking looks like
             </h2>
             <p style={{ fontSize: 14, color: B.g600, textAlign: "center", marginBottom: 28, maxWidth: 480, margin: "0 auto 28px" }}>
@@ -332,7 +316,7 @@ export default function HowToTrackPage() {
           {/* ── HOW TO TRACK ── */}
           <div style={{ marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10, textAlign: "center" }}>Tracking Methods</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 28, textAlign: "center" }}>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 28, textAlign: "center" }}>
               4 ways to track your order
             </h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -365,7 +349,7 @@ export default function HowToTrackPage() {
           {/* ── STATUS GLOSSARY ── */}
           <div style={{ marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10, textAlign: "center" }}>Status Guide</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 28, textAlign: "center" }}>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 28, textAlign: "center" }}>
               What each status means
             </h2>
             <div style={{ background: B.white, borderRadius: 18, border: `1px solid ${B.greenBorder}`, overflow: "hidden" }}>
@@ -391,7 +375,7 @@ export default function HowToTrackPage() {
             <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(46,100,23,0.15)" }} />
             <div style={{ position: "relative", zIndex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Delivery Times</div>
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: B.white, marginBottom: 24 }}>How fast will it arrive?</h3>
+              <h3 style={{ fontFamily: "var(--zova-font-display)", fontSize: 26, fontWeight: 800, color: B.white, marginBottom: 24 }}>How fast will it arrive?</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
                 {[
                   { zone: "🏙️ Anambra State",   time: "Same day",       detail: "Order before 2 PM for same-day delivery" },
@@ -411,7 +395,7 @@ export default function HowToTrackPage() {
           {/* ── FAQ ── */}
           <div style={{ marginBottom: 52 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10, textAlign: "center" }}>Questions?</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 24, textAlign: "center" }}>Tracking FAQs</h2>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 24, textAlign: "center" }}>Tracking FAQs</h2>
             <div style={{ background: B.white, borderRadius: 18, border: `1px solid ${B.greenBorder}`, overflow: "hidden" }}>
               {FAQS.map((f, i) => (
                 <div
@@ -438,7 +422,7 @@ export default function HowToTrackPage() {
           <div style={{ background: B.white, borderRadius: 20, border: `1px solid ${B.greenBorder}`, padding: "40px 36px", textAlign: "center", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${B.green}, ${B.greenMid})` }} />
             <div style={{ fontSize: 36, marginBottom: 12 }}>💬</div>
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 800, color: B.charcoal, marginBottom: 8 }}>Need help with your order?</h3>
+            <h3 style={{ fontFamily: "var(--zova-font-display)", fontSize: 22, fontWeight: 800, color: B.charcoal, marginBottom: 8 }}>Need help with your order?</h3>
             <p style={{ fontSize: 14, color: B.g600, marginBottom: 24, maxWidth: 380, margin: "0 auto 24px" }}>
               Our support team responds within 2 hours on WhatsApp. Available Monday to Saturday, 8 AM to 8 PM WAT.
             </p>

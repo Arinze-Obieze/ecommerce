@@ -2,16 +2,17 @@
 import React from 'react';
 import { FiCheckCircle, FiShield, FiTruck, FiHeadphones } from 'react-icons/fi';
 
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  bg:           "#FFFFFF",
-  border:       "#F0F0F0",
-  iconBg:       "#EDF5E6",
-  iconColor:    "#2E6417",
-  titleColor:   "#111111",
-  descColor:    "#888888",
-  hoverBg:      "#F9FAFB",
-  divider:      "#F0F0F0",
-  accentBar:    "#2E6417",
+  bg:           '#FFFFFF',
+  border:       'var(--zova-border)',
+  iconBg:       'var(--zova-green-soft)',
+  iconColor:    'var(--zova-primary-action)',
+  titleColor:   'var(--zova-ink)',
+  descColor:    'var(--zova-text-muted)',
+  hoverBg:      'var(--zova-linen)',
+  divider:      'var(--zova-border)',
+  accentBar:    'var(--zova-primary-action)',
 };
 
 const features = [

@@ -21,7 +21,7 @@ export default function StatCard({ label, value, loading = false, tone = 'brand'
   const valueClass = TONE_CLASSES[tone] ?? TONE_CLASSES.brand;
 
   return (
-    <div className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-3 shadow-sm sm:px-4 sm:py-4">
+    <div className="zova-kpi px-3 py-3 sm:px-4 sm:py-4">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">
         {label}
       </p>

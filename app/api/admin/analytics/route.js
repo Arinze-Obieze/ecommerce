@@ -30,7 +30,7 @@ export async function GET(request) {
   const last30Iso = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
   const last90Iso = new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [eventsRes, ordersRes, usersRes, logsRes] = await Promise.all([
+  const [eventsRes, ordersRes, shippingRes, logsRes] = await Promise.all([
     admin.adminClient
       .from('analytics_events')
       .select('id, created_at, event_name, user_id, session_id, anon_id, device_type, state, country, properties')
@@ -40,18 +40,17 @@ export async function GET(request) {
       .select('id, user_id, created_at, status, total_amount')
       .gte('created_at', last90Iso),
     admin.adminClient
-      .from('users')
-      .select('id, created_at, state')
-      .gte('created_at', last90Iso),
+      .from('order_shipping_addresses')
+      .select('order_id, state'),
     admin.adminClient
       .from('activity_logs')
       .select('created_at, action, service, status, level')
       .gte('created_at', last30Iso),
   ]);
 
-  if (eventsRes.error || ordersRes.error || usersRes.error || logsRes.error) {
+  if (eventsRes.error || ordersRes.error || shippingRes.error || logsRes.error) {
     return NextResponse.json(
-      { error: eventsRes.error?.message || ordersRes.error?.message || usersRes.error?.message || logsRes.error?.message },
+      { error: eventsRes.error?.message || ordersRes.error?.message || shippingRes.error?.message || logsRes.error?.message },
       { status: 500 }
     );
   }
@@ -59,7 +58,7 @@ export async function GET(request) {
   const events = eventsRes.data || [];
   const orders = (ordersRes.data || []).filter((o) => new Date(o.created_at).toISOString() >= last30Iso);
   const orders90 = ordersRes.data || [];
-  const users = usersRes.data || [];
+  const shippingAddresses = shippingRes.data || [];
   const logs = logsRes.data || [];
 
   const uniqueUsersByDay = new Map();
@@ -181,9 +180,9 @@ export async function GET(request) {
   }
 
   const ordersByState = new Map();
-  const usersStateById = new Map(users.map((u) => [u.id, u.state || 'Unknown']));
+  const shippingStateByOrderId = new Map(shippingAddresses.map((row) => [row.order_id, row.state || 'Unknown']));
   for (const order of orders.filter((o) => o.status === 'completed')) {
-    const state = usersStateById.get(order.user_id) || 'Unknown';
+    const state = shippingStateByOrderId.get(order.id) || 'Unknown';
     ordersByState.set(state, (ordersByState.get(state) || 0) + 1);
   }
 

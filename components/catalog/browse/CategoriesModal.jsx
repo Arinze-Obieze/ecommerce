@@ -5,26 +5,24 @@ import Link from 'next/link';
 import { FiX, FiChevronRight, FiArrowRight } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
-// ============================================================
-// 🎨 ZOVA BRAND TOKENS — zova.ng brand guidelines 2026
-// ============================================================
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  forest:           "#2E6417",   // Zova Forest — primary
-  forestDark:       "#1e4410",   // darker hover
-  forestLight:      "#e8f0e3",   // tinted bg
-  forestBorder:     "#c2d9b4",
-  gold:             "#EC9C00",   // Gold Harvest — accent
-  goldLight:        "#fef6e0",
-  goldDark:         "#b87800",
-  goldBadgeBorder:  "#f5d06e",
-  linen:            "#F5F1EA",   // Soft Linen — background
-  linenDark:        "#EDE8DF",   // borders / dividers
-  onyx:             "#191B19",   // Onyx Black — headings
-  onyxMid:          "#3d403d",
-  onyxMuted:        "#7a7d7a",
-  white:            "#FFFFFF",
-  overlay:          "rgba(25,27,25,0.55)",
-  modalShadow:      "0 20px 60px rgba(25,27,25,0.22)",
+  forest:           'var(--zova-primary-action)',
+  forestDark:       'var(--zova-primary-action-hover)',
+  forestLight:      'var(--zova-green-soft)',
+  forestBorder:     '#c2d9b4',
+  gold:             'var(--zova-accent-emphasis)',
+  goldLight:        'var(--zova-accent-soft)',
+  goldDark:         'var(--zova-warning)',
+  goldBadgeBorder:  '#f5d06e',
+  linen:            'var(--zova-linen)',
+  linenDark:        'var(--zova-border)',
+  onyx:             'var(--zova-ink)',
+  onyxMid:          'var(--zova-text-body)',
+  onyxMuted:        'var(--zova-text-muted)',
+  white:            '#FFFFFF',
+  overlay:          'rgba(25,27,25,0.55)',
+  modalShadow:      '0 20px 60px rgba(25,27,25,0.22)',
 };
 // ============================================================
 
@@ -83,7 +81,6 @@ const CategoriesModal = ({ onClose }) => {
           boxShadow: THEME.modalShadow,
           maxHeight: 'calc(100vh - 64px)',
           overflowY: 'auto',
-          fontFamily: "'Nunito', sans-serif",
         }}
       >
         <div className="zova-categories-shell" style={{ maxWidth: 1600, margin: '0 auto' }}>
@@ -115,7 +112,7 @@ const CategoriesModal = ({ onClose }) => {
                 backgroundColor: closeBtnHover ? '#ffecec' : THEME.white,
                 color: closeBtnHover ? '#c0392b' : THEME.onyxMuted,
                 fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                transition: 'all 0.14s', fontFamily: "'Nunito', sans-serif",
+                transition: 'all 0.14s',
               }}
             >
               <FiX style={{ width: 12, height: 12 }} />
@@ -296,7 +293,6 @@ const CategoriesModal = ({ onClose }) => {
                         <h2 style={{
                           fontSize: 24, fontWeight: 800, color: THEME.forest,
                           letterSpacing: '-0.01em', lineHeight: 1.1, margin: 0,
-                          fontFamily: "'Nunito', sans-serif",
                         }}>
                           {activeCat.name}
                         </h2>
@@ -395,8 +391,7 @@ const CategoriesModal = ({ onClose }) => {
 
         <style>{`
           @keyframes zova-spin { to { transform: rotate(360deg); } }
-          @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
-
+          
           .zova-categories-modal,
           .zova-categories-modal * {
             box-sizing: border-box;
@@ -513,7 +508,6 @@ const SidebarItem = ({ cat, isActive, isExpanded, onClick, theme }) => {
         width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
         backgroundColor: isActive ? theme.white : hovered ? theme.forestLight : 'transparent',
         transition: 'background 0.12s',
-        fontFamily: "'Nunito', sans-serif",
       }}
     >
       {isActive && (

@@ -7,64 +7,63 @@ import { trackAnalyticsEvent } from '@/utils/telemetry/analytics';
 import { logProductEvent } from '@/utils/telemetry/product-events';
 
 // ============================================================
-// 🎨 ZOVA BRAND TOKENS — zova.ng brand guidelines 2026
+// Brand tokens — sourced from app/globals.css
 // ============================================================
 const THEME = {
   // Card shell
-  cardBg:           "#FFFFFF",
-  cardBorder:       "#EDE8DF",       // Soft Linen dark
-  cardShadow:       "0 1px 3px rgba(25,27,25,0.06)",
-  cardHoverShadow:  "0 6px 20px rgba(25,27,25,0.10)",
+  cardBg:           '#FFFFFF',
+  cardBorder:       'var(--zova-border)',
+  cardShadow:       '0 1px 3px rgba(25,27,25,0.06)',
+  cardHoverShadow:  '0 6px 20px rgba(25,27,25,0.10)',
 
   // Text
-  categoryText:     "#7a7d7a",       // Onyx muted
-  nameText:         "#191B19",       // Onyx Black
-  priceText:        "#191B19",
-  originalPrice:    "#BBBBBB",
-  storeText:        "#7a7d7a",
-  storeHover:       "#191B19",
-  metaText:         "#7a7d7a",
+  categoryText:     'var(--zova-text-muted)',
+  nameText:         'var(--zova-ink)',
+  priceText:        'var(--zova-ink)',
+  originalPrice:    '#BBBBBB',
+  storeText:        'var(--zova-text-muted)',
+  storeHover:       'var(--zova-ink)',
+  metaText:         'var(--zova-text-muted)',
 
   // Badges — system labels
-  newBg:            "#191B19",       // Onyx Black
-  newText:          "#F5F1EA",       // Soft Linen
-  saleBg:           "#C0392B",       // kept red — semantic meaning (sale/discount)
-  saleText:         "#FFFFFF",
+  newBg:            'var(--zova-ink)',
+  newText:          'var(--zova-linen)',
+  saleBg:           '#C0392B',       // kept red — semantic meaning (sale/discount)
+  saleText:         '#FFFFFF',
 
   // Trending — Gold Harvest family
-  trendingBg:       "#fef6e0",
-  trendingText:     "#b87800",
-  trendingBorder:   "#f5d06e",
+  trendingBg:       'var(--zova-accent-soft)',
+  trendingText:     '#b87800',
+  trendingBorder:   '#f5d06e',
 
   // Stats strip
-  statsBg:          "#F5F1EA",       // Soft Linen
-  statsIcon:        "#2E6417",       // Zova Forest
+  statsBg:          'var(--zova-linen)',
+  statsIcon:        'var(--zova-primary-action)',
 
   // Rank badge — Forest family
-  rankBg:           "#e8f0e3",
-  rankText:         "#1e4410",
-  rankBorder:       "#c2d9b4",
+  rankBg:           'var(--zova-green-soft)',
+  rankText:         'var(--zova-primary-action)',
+  rankBorder:       '#c2d9b4',
 
   // Savings pill — Gold Harvest family
-  savingsBg:        "#fef6e0",
-  savingsText:      "#b87800",
-  savingsBorder:    "#f5d06e",
+  savingsBg:        'var(--zova-accent-soft)',
+  savingsText:      '#b87800',
+  savingsBorder:    '#f5d06e',
 
   // Cart button
-  cartBg:           "#2E6417",       // Zova Forest
-  cartHoverBg:      "#1e4410",
-  cartText:         "#FFFFFF",
-  cartSuccessBg:    "#1e4410",
+  cartBg:           'var(--zova-primary-action)',
+  cartHoverBg:      'var(--zova-primary-action-hover)',
+  cartText:         '#FFFFFF',
+  cartSuccessBg:    'var(--zova-primary-action-hover)',
 
   // Quick View pill
-  quickViewBg:      "#FFFFFF",
-  quickViewText:    "#191B19",
-  quickViewHover:   "#F5F1EA",
+  quickViewBg:      '#FFFFFF',
+  quickViewText:    'var(--zova-ink)',
+  quickViewHover:   'var(--zova-linen)',
 
   // Skeleton / image bg
-  skeletonBg:       "#F5F1EA",       // Soft Linen
+  skeletonBg:       'var(--zova-linen)',
 };
-// ============================================================
 
 // Savings pill colours as a style object (reused in multiple places)
 const SAVINGS_STYLE = {
@@ -316,8 +315,8 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
     <>
       {/* ── Card ── */}
       <div
-        className="group h-full flex flex-col bg-white transition-shadow duration-200"
-        style={{ border: `1px solid ${THEME.cardBorder}`, boxShadow: THEME.cardShadow, borderRadius: '12px', overflow: 'hidden' }}
+        className="zova-panel group h-full flex flex-col bg-white transition-shadow duration-200"
+        style={{ border: `1px solid ${THEME.cardBorder}`, boxShadow: THEME.cardShadow, borderRadius: '18px', overflow: 'hidden' }}
         onMouseEnter={(e) => (e.currentTarget.style.boxShadow = THEME.cardHoverShadow)}
         onMouseLeave={(e) => (e.currentTarget.style.boxShadow = THEME.cardShadow)}
       >
@@ -513,10 +512,12 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
             <button
               type="button"
               onClick={handleAddToCart}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold flex-shrink-0 transition-all duration-150"
+              className="zova-btn zova-btn-primary flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold flex-shrink-0 transition-all duration-150"
               style={{
                 backgroundColor: cartState === 'added' ? THEME.cartSuccessBg : THEME.cartBg,
                 color: THEME.cartText,
+                padding: '0.68rem 0.9rem',
+                boxShadow: '0 10px 24px rgba(46,100,23,0.16)',
               }}
               onMouseEnter={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartHoverBg; }}
               onMouseLeave={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartBg; }}
@@ -685,7 +686,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                     <button
                       type="button"
                       onClick={handleQuickViewAddToCart}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-colors"
+                      className="zova-btn zova-btn-primary flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-colors"
                       style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.cartHoverBg)}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.cartBg)}

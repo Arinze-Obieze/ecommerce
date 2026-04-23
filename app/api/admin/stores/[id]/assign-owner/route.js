@@ -125,7 +125,6 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
           email: authEmail,
           full_name: displayName,
           phone: null,
-          state: null,
           avatar: null,
         })
         .select('id, email, full_name')
@@ -178,7 +177,6 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
           email: normalizedEmail,
           full_name: defaultName,
           phone: null,
-          state: null,
           avatar: null,
         },
         { onConflict: 'id' }
@@ -215,7 +213,6 @@ async function resolveOrCreateTargetUser(adminClient, ownerUserId, ownerEmail) {
       id: inviteResult.user.id,
       full_name: defaultName,
       email: normalizedEmail,
-      state: null,
       phone: null,
       avatar: null,
     })
