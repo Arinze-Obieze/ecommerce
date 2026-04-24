@@ -13,17 +13,14 @@ import NewsletterSection from '@/components/storefront/home/NewsletterSection';
 export default function HomePage() {
   return (
     <main>
-      <Hero />
-      <TrustBar />
-      <FeaturedCategories />
-      <NewArrivals />
-      <BestSellers />
-      <PromotionalBanners />
-      <TopStoresCarousel />
-      <RecommendedForYou />
-      <ExploreProducts />
-      <RecentlyViewedProducts />
-      <NewsletterSection />
+      <Hero />                   {/* 1. Immediate impact & value prop */}
+      <BestSellers />            {/* 2. Social proof while attention is high */}
+      <NewArrivals />            {/* 3. Freshness to reward return visitors */}
+      <RecommendedForYou />      {/* 4. Personalization drives engagement */}
+      <TopStoresCarousel />      {/* 5. Brand discovery mid-scroll */}
+      <ExploreProducts />        {/* 6. Broad browsing for undecided shoppers */}
+      <RecentlyViewedProducts /> {/* 7. Re-engagement before exit */}
+      <NewsletterSection />      {/* 8. Capture leads as a last touchpoint */}
     </main>
   );
 }

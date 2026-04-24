@@ -298,6 +298,16 @@ function ColorSearchDropdown({ value, valueHex = "", onChange, idPrefix = "color
   );
 }
 
+const PRODUCT_SLOTS = [
+  { key: "general_front",      label: "Front View",          hint: "Full front shot on a clean/neutral background", badge: "Required",    badgeStyle: "bg-red-50 text-red-600" },
+  { key: "general_back",       label: "Back View",           hint: "Full back of the product",                       badge: "Required",    badgeStyle: "bg-red-50 text-red-600" },
+  { key: "general_label_care", label: "Care & Size Label",   hint: "Tag showing size, fabric & wash instructions",   badge: "Recommended", badgeStyle: "bg-amber-50 text-amber-700" },
+  { key: "general_label_neck", label: "Brand / Neck Label",  hint: "Close-up of the brand tag or neck label",        badge: "Recommended", badgeStyle: "bg-amber-50 text-amber-700" },
+  { key: "general_size_chart", label: "Size Chart",          hint: "Your brand's measurement guide for buyers",      badge: "Recommended", badgeStyle: "bg-amber-50 text-amber-700" },
+  { key: "general_detail",     label: "Detail / Close-up",   hint: "Texture, print, embroidery or key feature",      badge: "Optional",    badgeStyle: "bg-gray-100 text-gray-500" },
+  { key: "general_lifestyle",  label: "Lifestyle / On Model",hint: "Product worn or styled — shows real-world fit",  badge: "Optional",    badgeStyle: "bg-gray-100 text-gray-500" },
+];
+
 export default function Step2() {
   const { state, dispatch, storeContext, goNext, goBack } = useWizard();
   const { error: showError } = useToast();
@@ -316,13 +326,10 @@ export default function Step2() {
     selectedSizes: [],
   });
 
-  const [productImageOrder, setProductImageOrder] = useState([]);
-  const [productImageTags, setProductImageTags] = useState({});
-  const [editingProductTagKey, setEditingProductTagKey] = useState("");
+  const [targetSlotKey, setTargetSlotKey] = useState(null);
 
   const productUploadRef = useRef(null);
   const variantUploadRef = useRef(null);
-  const dragKeyRef = useRef("");
 
   const autoSku = buildAutoSku(storeContext?.slug || storeContext?.name, state.productName);
   const variantSkuPattern = state.variantSkuPattern || "";
@@ -366,33 +373,14 @@ export default function Step2() {
 
   const hasMedia = (key) => Boolean(state.images?.[key] || state.persistedImages?.[key]);
 
-  const productImageKeys = useMemo(() => {
-    const all = Object.keys({ ...(state.persistedImages || {}), ...(state.imagePreviews || {}) });
-    return all.filter((key) => key.startsWith("general_"));
-  }, [state.imagePreviews, state.persistedImages]);
-
-  const productImageCount = productImageKeys.length;
-
-  useEffect(() => {
-    setProductImageOrder((prev) => {
-      const validPrev = prev.filter((key) => productImageKeys.includes(key));
-      const nextKeys = productImageKeys.filter((key) => !validPrev.includes(key));
-      return [...validPrev, ...nextKeys];
-    });
-  }, [productImageKeys]);
-
-  const nextProductImageKey = () => {
-    if (!hasMedia("general_front")) return "general_front";
-    if (!hasMedia("general_back")) return "general_back";
-    let i = 1;
-    while (hasMedia(`general_extra_${i}`)) i += 1;
-    return `general_extra_${i}`;
-  };
-
   const uploadSingle = (key, file, preview) => dispatch({ type: "SET_IMAGE", key, file, preview });
 
-  const handleUploadProductImages = (files) => {
-    uploadImageFiles(files, nextProductImageKey, (key, file, preview) => uploadSingle(key, file, preview), showError);
+  const handleSlotUpload = (files, slotKey) => {
+    const file = files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { showError("Images must be 10 MB or smaller."); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { showError("Upload JPG, PNG, or WebP files only."); return; }
+    uploadSingle(slotKey, file, URL.createObjectURL(file));
   };
 
   const setVariants = (next) => dispatch({ type: "SET_VARIANTS", payload: next });
@@ -577,7 +565,8 @@ export default function Step2() {
       if (!(variant.quantity > 0)) return `Set stock for ${variantDisplayLabel(variant)}.`;
       if (!normalizeToken(variant.color) || variant.color === "Default") return `Select a color for ${variantDisplayLabel(variant)}.`;
     }
-    if (productImageCount < 2) return "Upload at least 2 product images.";
+    if (!hasMedia("general_front")) return "Upload a front view photo (required).";
+    if (!hasMedia("general_back")) return "Upload a back view photo (required).";
     return null;
   };
 
@@ -589,87 +578,85 @@ export default function Step2() {
 
   const totalStock = variants.reduce((sum, v) => sum + (Number.parseInt(v.quantity, 10) || 0), 0);
 
-  const renderProductMediaCard = (extraClassName = "") => (
-    <div className={`bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3.5 ${extraClassName}`}>
-      <h4 className="text-sm font-bold text-gray-800">PRODUCT MEDIA</h4>
-      <div className="rounded-xl border border-[#E8E4DC] bg-[#f8fbf9] px-3 py-2.5">
-        <p className="text-xs text-gray-600">
-          Upload product-level images here.{" "}
-          <span className="font-semibold text-gray-800">Minimum 2 images required</span> before continuing.
-        </p>
-      </div>
-      <p className="text-xs text-gray-500">
-        Uploaded: <span className="font-semibold text-gray-700">{productImageCount}</span> / 2 minimum
-      </p>
+  const renderProductMediaCard = (extraClassName = "") => {
+    const filledCount = PRODUCT_SLOTS.filter((s) => hasMedia(s.key)).length;
+    const requiredFilled = hasMedia("general_front") && hasMedia("general_back");
 
-      <input
-        ref={productUploadRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        className="hidden"
-        onChange={(e) => { handleUploadProductImages(e.target.files); e.target.value = ""; }}
-      />
-
-      <button
-        type="button"
-        onClick={() => productUploadRef.current?.click()}
-        className="px-3 py-2 rounded-xl border border-[#2E6417]/35 text-[#2E6417] text-sm font-semibold hover:bg-[#2E6417]/5"
-      >
-        + Upload images
-      </button>
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {productImageOrder.length === 0 && (
-          <div className="rounded-xl border border-dashed border-gray-200 px-3 py-5 text-sm text-gray-500 min-w-[180px]">
-            No product images yet.
+    return (
+      <div className={`bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-4 ${extraClassName}`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-bold text-gray-800">PRODUCT MEDIA</h4>
+            <p className="text-xs text-gray-500 mt-0.5">Upload each image in the right slot — this helps buyers see exactly what they're getting.</p>
           </div>
-        )}
-        {productImageOrder.map((key) => (
-          <div
-            key={key}
-            draggable
-            onDragStart={() => { dragKeyRef.current = key; }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => {
-              const from = dragKeyRef.current;
-              if (!from || from === key) return;
-              setProductImageOrder((prev) => {
-                const list = [...prev];
-                const fi = list.indexOf(from); const ti = list.indexOf(key);
-                if (fi === -1 || ti === -1) return prev;
-                list.splice(fi, 1); list.splice(ti, 0, from); return list;
-              });
-            }}
-            className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border ${editingProductTagKey === key ? "border-[#2E6417]" : "border-gray-200"}`}
-          >
-            <button type="button" onClick={() => setEditingProductTagKey(key)} className="h-full w-full">
-              <img src={state.imagePreviews[key]} alt={key} className="h-full w-full object-cover" />
-            </button>
-            <button
-              type="button"
-              onClick={() => dispatch({ type: "REMOVE_IMAGE", key })}
-              className="absolute top-1 right-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-white"
-            >
-              x
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {editingProductTagKey && (
-        <div className="max-w-md">
-          <label className="block text-xs font-semibold text-gray-600 mb-1">Image tag (optional)</label>
-          <input
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
-            placeholder="Front, Back, Detail, Size chart"
-            value={productImageTags[editingProductTagKey] || ""}
-            onChange={(e) => setProductImageTags((prev) => ({ ...prev, [editingProductTagKey]: e.target.value }))}
-          />
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${requiredFilled ? "bg-[#2E6417]/10 text-[#2E6417]" : "bg-amber-50 text-amber-700"}`}>
+            {filledCount} / {PRODUCT_SLOTS.length}
+          </span>
         </div>
-      )}
-    </div>
-  );
+
+        <input
+          ref={productUploadRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => { if (targetSlotKey) { handleSlotUpload(e.target.files, targetSlotKey); setTargetSlotKey(null); } e.target.value = ""; }}
+        />
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {PRODUCT_SLOTS.map((slot) => {
+            const preview = state.imagePreviews?.[slot.key] || state.persistedImages?.[slot.key]?.publicUrl;
+            const filled = hasMedia(slot.key);
+
+            if (filled) {
+              return (
+                <div key={slot.key} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
+                  <img src={preview} alt={slot.label} className="h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors" />
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-2">
+                    <p className="text-[10px] text-white font-semibold leading-tight">{slot.label}</p>
+                  </div>
+                  <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      type="button"
+                      onClick={() => { setTargetSlotKey(slot.key); productUploadRef.current?.click(); }}
+                      className="rounded-full bg-black/60 px-2 py-1 text-[10px] text-white font-semibold hover:bg-black/80"
+                    >
+                      Replace
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: "REMOVE_IMAGE", key: slot.key })}
+                      className="rounded-full bg-black/60 px-2 py-1 text-[10px] text-white font-semibold hover:bg-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <button
+                key={slot.key}
+                type="button"
+                onClick={() => { setTargetSlotKey(slot.key); productUploadRef.current?.click(); }}
+                className="aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-[#2E6417]/50 hover:bg-[#2E6417]/5 transition-colors flex flex-col items-center justify-center gap-1.5 p-3 text-center"
+              >
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${slot.badgeStyle}`}>{slot.badge}</span>
+                <span className="text-xs font-bold text-gray-800">{slot.label}</span>
+                <span className="text-[10px] text-gray-400 leading-tight">{slot.hint}</span>
+                <span className="mt-1 text-[10px] font-semibold text-[#2E6417]">+ Upload</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {!requiredFilled && (
+          <p className="text-xs text-amber-700 font-medium">Front and back views are required to continue.</p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <WizardShell
@@ -819,9 +806,72 @@ export default function Step2() {
                       const isColor = selectedName.toLowerCase() === "color";
                       const presets = getPresetOptionsForAttribute(selectedName);
 
+                      const removeBtn = (
+                        <button
+                          type="button"
+                          onClick={() => removeVariantTypeRow(index)}
+                          disabled={variantForm.attributes.length <= 1}
+                          className="self-start shrink-0 px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Remove
+                        </button>
+                      );
+
+                      const isSizeWithPresets = selectedName.toLowerCase() === "size" && presets;
+
+                      if (isSizeWithPresets) {
+                        return (
+                          <div key={`attr-row-${index}`} className="flex items-start gap-2">
+                            <div className="flex-1 space-y-2">
+                              <select
+                                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                                value={selectedName}
+                                onChange={(e) => {
+                                  const nextName = e.target.value;
+                                  setVariantForm((prev) => { const next = [...prev.attributes]; next[index] = { ...next[index], name: nextName, value: "" }; return { ...prev, attributes: next }; });
+                                }}
+                              >
+                                {typeOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                              </select>
+                              <div className="flex flex-wrap gap-1.5">
+                                {presets.map((opt) => {
+                                  const active = (variantForm.selectedSizes || []).includes(opt);
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => setVariantForm((prev) => {
+                                        const cur = prev.selectedSizes || [];
+                                        return { ...prev, selectedSizes: active ? cur.filter((s) => s !== opt) : [...cur, opt] };
+                                      })}
+                                      className="px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all"
+                                      style={{
+                                        background: active ? "#eaf2e3" : "#fff",
+                                        borderColor: active ? "#2E6417" : "#e5e7eb",
+                                        color: active ? "#2E6417" : "#6b7280",
+                                        boxShadow: active ? "0 0 0 1.5px #2E6417" : "none",
+                                      }}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {(variantForm.selectedSizes || []).length > 0 && (
+                                <p className="text-[11px] text-[#2E6417] font-medium">
+                                  {(variantForm.selectedSizes || []).length} size{(variantForm.selectedSizes || []).length > 1 ? "s" : ""} selected
+                                  {formMode === "add" && (variantForm.selectedSizes || []).length > 1 ? " — will create one variant per size" : ""}
+                                </p>
+                              )}
+                            </div>
+                            {removeBtn}
+                          </div>
+                        );
+                      }
+
                       return (
-                        <div key={`attr-row-${index}`} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
-                          <div className="grid grid-cols-2 gap-2">
+                        <div key={`attr-row-${index}`} className="flex items-start gap-2">
+                          <div className="flex-1 grid grid-cols-2 gap-2">
                             <select
                               className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
                               value={selectedName}
@@ -842,39 +892,6 @@ export default function Step2() {
                                   setVariantForm((prev) => { const next = [...prev.attributes]; next[index] = { ...next[index], name: "Color", value: name }; return { ...prev, attributes: next, colorHex: normalizeHex(hex) }; })
                                 }
                               />
-                            ) : selectedName.toLowerCase() === "size" && presets ? (
-                              <div className="col-span-2 mt-1 space-y-1.5">
-                                <div className="flex flex-wrap gap-1.5">
-                                  {presets.map((opt) => {
-                                    const active = (variantForm.selectedSizes || []).includes(opt);
-                                    return (
-                                      <button
-                                        key={opt}
-                                        type="button"
-                                        onClick={() => setVariantForm((prev) => {
-                                          const cur = prev.selectedSizes || [];
-                                          return { ...prev, selectedSizes: active ? cur.filter((s) => s !== opt) : [...cur, opt] };
-                                        })}
-                                        className="px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all"
-                                        style={{
-                                          background: active ? "#eaf2e3" : "#fff",
-                                          borderColor: active ? "#2E6417" : "#e5e7eb",
-                                          color: active ? "#2E6417" : "#6b7280",
-                                          boxShadow: active ? "0 0 0 1.5px #2E6417" : "none",
-                                        }}
-                                      >
-                                        {opt}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                {(variantForm.selectedSizes || []).length > 0 && (
-                                  <p className="text-[11px] text-[#2E6417] font-medium">
-                                    {(variantForm.selectedSizes || []).length} size{(variantForm.selectedSizes || []).length > 1 ? "s" : ""} selected
-                                    {formMode === "add" && (variantForm.selectedSizes || []).length > 1 ? " — will create one variant per size" : ""}
-                                  </p>
-                                )}
-                              </div>
                             ) : presets ? (
                               <select
                                 className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
@@ -893,14 +910,7 @@ export default function Step2() {
                               />
                             )}
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => removeVariantTypeRow(index)}
-                            disabled={variantForm.attributes.length <= 1}
-                            className="px-3 py-2 rounded-lg border border-red-200 bg-white text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                          >
-                            Remove
-                          </button>
+                          {removeBtn}
                         </div>
                       );
                     })}
@@ -995,22 +1005,32 @@ export default function Step2() {
       </div>
 
       {/* ── Mood Tags ── */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm space-y-3">
-        <div>
-          <h3 className="text-sm font-bold text-gray-900">Shop by Mood</h3>
-          <p className="text-xs text-gray-500 mt-0.5">Tag this product with moods so buyers can discover it through mood-based browsing. Select all that apply.</p>
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-gray-900">When would someone wear this?</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Select every occasion that fits. Buyers use these to filter products — the more accurate you are, the more people find you.
+            </p>
+          </div>
+          {(state.moodTags || []).length > 0 && (
+            <span className="shrink-0 rounded-full bg-[#2E6417]/10 px-2.5 py-1 text-xs font-semibold text-[#2E6417]">
+              {(state.moodTags || []).length} selected
+            </span>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           {[
-            { key: "owambe",         emoji: "🎉", label: "Owambe Vibes",    sub: "Party" },
-            { key: "casual_chill",   emoji: "😎", label: "Casual & Chill",  sub: "Everyday" },
-            { key: "office_ready",   emoji: "💼", label: "Office Ready",    sub: "Work" },
-            { key: "date_night",     emoji: "🌙", label: "Date Night",      sub: "Night Out" },
-            { key: "sunday_best",    emoji: "⛪", label: "Sunday Best",     sub: "Sunday" },
-            { key: "street_trendy",  emoji: "🛹", label: "Street Style",    sub: "Trendy" },
-            { key: "soft_luxury",    emoji: "✨", label: "Soft Luxury",     sub: "Elevated" },
-            { key: "travel_weekend", emoji: "✈️", label: "Travel & Weekend", sub: "Outing" },
-          ].map(({ key, emoji, label, sub }) => {
+            { key: "owambe",         emoji: "🎉", label: "Owambe / Party",     desc: "Celebrations, weddings, and owambe events" },
+            { key: "casual_chill",   emoji: "😎", label: "Casual & Everyday",  desc: "Relaxed looks for regular days" },
+            { key: "office_ready",   emoji: "💼", label: "Work & Office",       desc: "Professional or business-casual settings" },
+            { key: "date_night",     emoji: "🌙", label: "Date Night",          desc: "Dinner, night out, or romantic settings" },
+            { key: "sunday_best",    emoji: "⛪", label: "Sunday Best",         desc: "Church, family gatherings, and worship" },
+            { key: "street_trendy",  emoji: "🛹", label: "Street Style",        desc: "Bold, trendy, and fashion-forward looks" },
+            { key: "soft_luxury",    emoji: "✨", label: "Soft Luxury",         desc: "Elevated, polished, and premium feel" },
+            { key: "travel_weekend", emoji: "✈️", label: "Travel & Outings",    desc: "Trips, picnics, and weekend activities" },
+          ].map(({ key, emoji, label, desc }) => {
             const selected = (state.moodTags || []).includes(key);
             return (
               <button
@@ -1021,25 +1041,26 @@ export default function Step2() {
                   const next = selected ? current.filter((t) => t !== key) : [...current, key];
                   dispatch({ type: "SET_MOOD_TAGS", payload: next });
                 }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all"
+                className="relative flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-all"
                 style={{
                   background: selected ? "#eaf2e3" : "#fff",
                   borderColor: selected ? "#2E6417" : "#e5e7eb",
-                  color: selected ? "#2E6417" : "#374151",
                   boxShadow: selected ? "0 0 0 1.5px #2E6417" : "none",
                 }}
               >
-                <span>{emoji}</span>
-                <span className="font-semibold">{label}</span>
-                <span className="text-[11px] font-normal opacity-60">{sub}</span>
+                {selected && (
+                  <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#2E6417] text-white text-[10px] font-bold">✓</span>
+                )}
+                <span className="text-xl leading-none">{emoji}</span>
+                <span className="text-xs font-bold mt-1" style={{ color: selected ? "#2E6417" : "#111827" }}>{label}</span>
+                <span className="text-[11px] leading-snug text-gray-400">{desc}</span>
               </button>
             );
           })}
         </div>
-        {(state.moodTags || []).length > 0 && (
-          <p className="text-xs text-[#2E6417] font-medium">
-            {(state.moodTags || []).length} mood{(state.moodTags || []).length > 1 ? "s" : ""} selected
-          </p>
+
+        {(state.moodTags || []).length === 0 && (
+          <p className="text-xs text-amber-600 font-medium">Tip: products tagged with moods appear in more discovery feeds.</p>
         )}
       </div>
 

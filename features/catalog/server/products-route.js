@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server';
+import { createClient, createAdminClient } from '@/utils/supabase/server';
 import { resolveAdminMembership } from '@/utils/admin/auth';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
 import { attachPromotionsToProducts } from '@/utils/catalog/promotions';
@@ -625,16 +625,16 @@ function buildBaseProductQuery(supabase) {
     .select('*, stores(id, name, slug, logo_url, rating, followers, status, kyc_status, payout_ready, is_verified), product_categories(categories(id, name, slug))', {
       count: 'exact',
     })
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .eq('moderation_status', 'approved');
 }
 
 function transformProducts(data) {
   return (data || []).map((product) => {
-    const categories = product.product_categories?.map((item) => ({
-      id: item.categories.id,
-      name: item.categories.name,
-      slug: item.categories.slug,
-    })) || [];
+    const categories = (product.product_categories || [])
+      .map((item) => item?.categories)
+      .filter(Boolean)
+      .map((cat) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
 
     return {
       ...product,
@@ -652,7 +652,9 @@ export async function GET(request) {
   const startedAt = Date.now();
 
   try {
-    const supabase = await createClient();
+    // db bypasses RLS for public catalog reads (products, stores, categories are public data).
+    // supabase (anon+cookies) is kept only for auth.getUser() to identify the current session.
+    const [db, supabase] = await Promise.all([createAdminClient(), createClient()]);
     const { searchParams } = new URL(request.url);
     const url = new URL(request.url);
 
@@ -705,16 +707,16 @@ export async function GET(request) {
     const sizes = sizesParam ? sizesParam.split(',').filter(Boolean) : [];
     const colors = colorsParam ? colorsParam.split(',').filter(Boolean) : [];
 
-    let query = buildBaseProductQuery(supabase);
+    let query = buildBaseProductQuery(db);
 
     if (!includeOutOfStock || inStock) {
       query = query.gt('stock_quantity', 0);
     }
 
     if (category && category !== 'all') {
-      const categoryIds = await resolveCategoryBranchIds(supabase, category);
+      const categoryIds = await resolveCategoryBranchIds(db, category);
       if (categoryIds.length > 0) {
-        const { data: productIds } = await supabase
+        const { data: productIds } = await db
           .from('product_categories')
           .select('product_id')
           .in('category_id', categoryIds);
@@ -727,14 +729,14 @@ export async function GET(request) {
     }
 
     if (collection) {
-      const { data: collectionData } = await supabase
+      const { data: collectionData } = await db
         .from('collections')
         .select('id')
         .eq('slug', collection)
         .single();
 
       if (collectionData) {
-        const { data: productIds } = await supabase
+        const { data: productIds } = await db
           .from('product_collections')
           .select('product_id')
           .eq('collection_id', collectionData.id);
@@ -771,6 +773,10 @@ export async function GET(request) {
     }
 
     if (hasDiscount === 'true') {
+      // discount_price is kept in sync with active promotions by the
+      // compute_best_discount_price DB trigger, so this single filter captures
+      // both manually discounted products and promotion-covered ones.
+      // Passing a large ID array via .in() caused PostgREST URL-length errors.
       query = query.not('discount_price', 'is', null);
     }
 
@@ -857,8 +863,8 @@ export async function GET(request) {
 
     if (useSmartRanking && transformedData.length > 0 && !idsParam) {
       const candidateIds = transformedData.map((product) => product.id);
-      const aggregateMetrics = await fetchAggregateRecommendationMetrics(supabase, candidateIds);
-      const { globalEvents, actorEvents } = await fetchRecentAnalyticsEvents(supabase, {
+      const aggregateMetrics = await fetchAggregateRecommendationMetrics(db, candidateIds);
+      const { globalEvents, actorEvents } = await fetchRecentAnalyticsEvents(db, {
         candidateIds,
         actorIds,
         skipGlobal: aggregateMetrics.available,
@@ -876,7 +882,7 @@ export async function GET(request) {
       let actorHistoricalProducts = [];
       if (actorProductIds.length > 0) {
         try {
-          const { data: actorProducts } = await buildBaseProductQuery(supabase)
+          const { data: actorProducts } = await buildBaseProductQuery(db)
             .in('id', actorProductIds)
             .range(0, Math.max(0, actorProductIds.length - 1));
           actorHistoricalProducts = transformProducts(actorProducts || []);
@@ -994,7 +1000,7 @@ export async function GET(request) {
       ? rankedData.slice(offset, offset + limit)
       : rankedData;
 
-    pageData = await attachPromotionsToProducts(supabase, pageData);
+    pageData = await attachPromotionsToProducts(db, pageData);
 
     if (search && search.trim()) {
       await writeAnalyticsEvent({
@@ -1072,7 +1078,13 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('Products API Error:', error);
+    console.error('Products API Error:', {
+      message: error?.message,
+      code: error?.code,
+      hint: error?.hint,
+      details: error?.details,
+      stack: error?.stack?.split('\n')[0],
+    });
     await writeActivityLog({
       request,
       level: 'ERROR',

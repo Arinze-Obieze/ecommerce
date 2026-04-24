@@ -130,11 +130,7 @@ const Hero = () => {
 
   const navItems = [
     { name: 'Categories',   href: '#' },
-    // ↓ Uses `sort=new_arrivals` so the route sorts by freshness_score DESC
-    //   (via the product_scores table, not a simple created_at sort).
-    { name: 'New Arrivals', href: '/shop?sort=new_arrivals' },
-    // ↓ `onSale=true` now resolves BOTH discount_price products AND
-    //   any product covered by an active promotion in the promotions table.
+    { name: 'New Arrivals', href: '/shop?sortBy=newest' },
     { name: 'Deals',        href: '/shop?onSale=true' },
     { name: 'Top Stores',   href: '/stores' },
   ];

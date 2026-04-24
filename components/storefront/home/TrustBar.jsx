@@ -5,13 +5,13 @@ import { FiCheckCircle, FiShield, FiTruck, FiHeadphones } from 'react-icons/fi';
 const THEME = {
   bg:           "#FFFFFF",
   border:       "#F0F0F0",
-  iconBg:       "#EDF5E6",
-  iconColor:    "#2E6417",
+  iconBg:       "#F3F4F6",
+  iconColor:    "#4B5563",
   titleColor:   "#111111",
   descColor:    "#888888",
   hoverBg:      "#F9FAFB",
   divider:      "#F0F0F0",
-  accentBar:    "#2E6417",
+  accentBar:    "#E5E7EB",
 };
 
 const features = [

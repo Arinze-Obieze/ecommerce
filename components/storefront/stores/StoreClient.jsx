@@ -7,6 +7,7 @@ import {
 } from "react-icons/fi";
 import ProductGrid from '@/components/catalog/browse/ProductGrid';
 import { getStoreProducts } from "@/features/catalog/api/client";
+import { getRecommendationRequestHeaders } from "@/utils/catalog/recommendation-request";
 
 // ─────────────────────────────────────────────────────────────
 // THEME — Zova Brand 2026
