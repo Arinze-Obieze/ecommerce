@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import Head from "next/head";
 import Link from "next/link";
 
 const B = {
@@ -129,29 +128,8 @@ export default function HowToOrderPage() {
 
   return (
     <>
-      <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet" />
-        <style>{`
-          @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-12px); }
-            to   { opacity: 1; transform: translateX(0); }
-          }
-          .step-btn:hover { background: #F0FBF5 !important; }
-          .step-btn.active { background: #2E6417 !important; }
-          .tip-item { transition: transform 0.15s; }
-          .tip-item:hover { transform: translateX(4px); }
-          .faq-item { transition: background 0.15s; }
-          .faq-item:hover { background: #F7FDF9; }
-        `}</style>
-      </Head>
 
-      <div style={{ background: B.cream, minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+      <div style={{ background: B.cream, minHeight: "100vh" }}>
 
         {/* ── HERO ── */}
         <div style={{ background: `linear-gradient(150deg, ${B.greenDark} 0%, ${B.greenMid} 100%)`, padding: "68px 24px 60px", position: "relative", overflow: "hidden" }}>
@@ -162,7 +140,7 @@ export default function HowToOrderPage() {
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 18px", borderRadius: 20, background: "rgba(46,100,23,0.2)", border: "1px solid rgba(46,100,23,0.35)", marginBottom: 20, fontSize: 11, fontWeight: 700, color: "#7FFFC4", letterSpacing: 1.5, textTransform: "uppercase" }}>
               🛒 Shopping Guide
             </div>
-            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(34px, 5vw, 52px)", fontWeight: 800, color: B.white, lineHeight: 1.15, marginBottom: 16, letterSpacing: -0.5 }}>
+            <h1 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(34px, 5vw, 52px)", fontWeight: 800, color: B.white, lineHeight: 1.15, marginBottom: 16, letterSpacing: -0.5 }}>
               How to Order on
               <em style={{ color: B.green, fontStyle: "italic", display: "block" }}>ZOVA</em>
             </h1>
@@ -229,7 +207,7 @@ export default function HowToOrderPage() {
                         </div>
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 700, color: B.green, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 4 }}>Step {step.num} of {STEPS.length}</div>
-                          <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: B.white, lineHeight: 1.2 }}>{step.title}</h3>
+                          <h3 style={{ fontFamily: "var(--zova-font-display)", fontSize: 26, fontWeight: 800, color: B.white, lineHeight: 1.2 }}>{step.title}</h3>
                         </div>
                       </div>
                       <p style={{ fontSize: 14, color: B.greenSub, lineHeight: 1.75, maxWidth: 520 }}>{step.desc}</p>
@@ -286,7 +264,7 @@ export default function HowToOrderPage() {
           {/* ── QUICK OVERVIEW STRIP ── */}
           <div style={{ marginBottom: 64 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10, textAlign: "center" }}>At a Glance</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 28, textAlign: "center" }}>Your order, step by step</h2>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 28, textAlign: "center" }}>Your order, step by step</h2>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 0, background: B.white, borderRadius: 18, border: `1px solid ${B.greenBorder}`, overflow: "hidden" }}>
               {STEPS.map((s, i) => (
                 <div
@@ -308,7 +286,7 @@ export default function HowToOrderPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10 }}>Payments</div>
-                <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 800, color: B.charcoal, marginBottom: 12 }}>Safe, fast, and flexible</h3>
+                <h3 style={{ fontFamily: "var(--zova-font-display)", fontSize: 24, fontWeight: 800, color: B.charcoal, marginBottom: 12 }}>Safe, fast, and flexible</h3>
                 <p style={{ fontSize: 14, color: B.g600, lineHeight: 1.75, marginBottom: 20 }}>
                   All payments are processed securely through Paystack and held in escrow until your item clears our QC hub. Your money is always protected.
                 </p>
@@ -337,7 +315,7 @@ export default function HowToOrderPage() {
           {/* ── FAQ ── */}
           <div style={{ marginBottom: 52 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: B.green, marginBottom: 10, textAlign: "center" }}>Questions?</div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 24, textAlign: "center" }}>Ordering FAQs</h2>
+            <h2 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(22px, 3vw, 30px)", fontWeight: 800, color: B.charcoal, marginBottom: 24, textAlign: "center" }}>Ordering FAQs</h2>
             <div style={{ background: B.white, borderRadius: 18, border: `1px solid ${B.greenBorder}`, overflow: "hidden" }}>
               {FAQS.map((f, i) => (
                 <div
@@ -364,7 +342,7 @@ export default function HowToOrderPage() {
           <div style={{ background: `linear-gradient(135deg, ${B.greenDark} 0%, ${B.greenMid} 100%)`, borderRadius: 20, padding: "44px 36px", textAlign: "center", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(46,100,23,0.15)" }} />
             <div style={{ position: "relative", zIndex: 1 }}>
-              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 26, fontWeight: 800, color: B.white, marginBottom: 10 }}>Ready to shop with confidence?</h3>
+              <h3 style={{ fontFamily: "var(--zova-font-display)", fontSize: 26, fontWeight: 800, color: B.white, marginBottom: 10 }}>Ready to shop with confidence?</h3>
               <p style={{ fontSize: 14, color: B.greenSub, marginBottom: 24, maxWidth: 400, margin: "0 auto 24px" }}>Every item verified. Every order tracked. Every delivery guaranteed to match what you saw.</p>
               <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
                 <Link href="/shop" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 26px", borderRadius: 10, background: B.green, color: B.white, fontSize: 14, fontWeight: 700, textDecoration: "none", boxShadow: "0 4px 16px rgba(46,100,23,0.4)" }}>

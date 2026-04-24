@@ -45,7 +45,7 @@ export default function StoreNav({ collapsed = false }) {
         <div key={group.label}>
           {!collapsed && (
             <p className="text-[9px] font-bold uppercase tracking-[.14em] px-2 pb-1.5"
-              style={{ color: 'rgba(255,255,255,.2)' }}>
+              style={{ color: 'rgba(255,255,255,.28)' }}>
               {group.label}
             </p>
           )}
@@ -63,16 +63,16 @@ export default function StoreNav({ collapsed = false }) {
                       ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}
                       ${active ? 'text-white' : 'text-white/40 hover:text-white/75'}`}
                     style={active ? {
-                      background: 'rgba(16,185,129,.15)',
-                      boxShadow: 'inset 0 0 0 1px rgba(16,185,129,.15)'
+                      background: 'rgba(46,100,23,.22)',
+                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)'
                     } : {}}
                   >
                     {active && !collapsed && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r"
-                        style={{ background: '#10b981' }} />
+                        style={{ background: 'var(--zova-accent-emphasis)' }} />
                     )}
                     <Icon
-                      className={`shrink-0 ${active ? 'text-emerald-400' : ''}`}
+                      className={`shrink-0`}
                       style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15 }}
                     />
                     {!collapsed && (

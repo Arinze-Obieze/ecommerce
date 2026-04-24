@@ -18,56 +18,52 @@ import { calculateBulkPricing, getBulkDiscountTiers } from '@/utils/catalog/bulk
 import { logProductEvent } from '@/utils/telemetry/product-events';
 import { computeSavingsLabel } from '@/utils/catalog/promotions';
 
-// ─────────────────────────────────────────────────────────────
-// 🎨 ZOVA BRAND TOKENS — zova.ng brand guidelines 2026
-// ─────────────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const T = {
   // Zova Forest — primary / CTAs / icons
-  green:       '#2E6417',
-  greenDark:   '#1e4410',
-  greenDeep:   '#163a0b',
-  greenTint:   '#e8f0e3',
-  greenBorder: '#c2d9b4',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenDeep:   'var(--zova-ink)',
+  greenTint:   'var(--zova-green-soft)',
+  greenBorder: '#B8D4A0',
 
   // Palette
   white:       '#FFFFFF',
-  pageBg:      '#FAF8F5',      // Soft Linen tint — warm page background
-  linen:       '#F5F1EA',      // Soft Linen — panels / cards
-  linenDark:   '#EDE8DF',      // borders / dividers
+  pageBg:      'var(--zova-linen)',
+  linen:       'var(--zova-linen)',
+  linenDark:   'var(--zova-border)',
 
   // Onyx typography scale
-  ink:         '#191B19',      // Onyx Black — headings
-  inkMid:      '#3d403d',      // body text
-  inkLight:    '#5a5d5a',      // secondary text
-  inkMuted:    '#7a7d7a',      // captions / labels
+  ink:         'var(--zova-ink)',
+  inkMid:      'var(--zova-text-body)',
+  inkLight:    '#5a5d5a',
+  inkMuted:    'var(--zova-text-muted)',
 
-  // Semantic — keep red for sale/error (universal)
+  // Semantic — red for sale/error (universal)
   saleRed:     '#C0392B',
   salePink:    '#FEF2F2',
 
   // Gold Harvest — accent / star rating / savings
-  starGold:    '#EC9C00',      // replaces F59E0B — uses ZOVA Gold Harvest
+  starGold:    'var(--zova-accent-emphasis)',
   goldLight:   '#fef6e0',
   goldDark:    '#b87800',
   goldBorder:  '#f5d06e',
 
   // Structural
-  line:        '#EDE8DF',      // Linen Dark — all borders / dividers
-  softBg:      '#F5F1EA',      // Soft Linen — skeleton / hover bg
+  line:        'var(--zova-border)',
+  softBg:      'var(--zova-surface-alt)',
 
   // Shadows — Onyx-tinted
   shadow:      '0 2px 16px rgba(25,27,25,0.06)',
   shadowMd:    '0 8px 32px rgba(25,27,25,0.10)',
   shadowLg:    '0 24px 56px rgba(25,27,25,0.14)',
 };
-// ─────────────────────────────────────────────────────────────
 
 const GLOBAL_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&family=Nunito:wght@400;500;600;700;800&display=swap');
-
+  
   .pdp-root * { box-sizing: border-box; }
-  .pdp-root { font-family: 'Nunito', sans-serif; }
-  .pdp-heading { font-family: 'Fraunces', Georgia, serif; }
+  .pdp-root { font-family: var(--zova-font-sans); }
+  .pdp-heading { font-family: var(--zova-font-display); }
 
   .pdp-img-zoom { transition: transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94); }
   .pdp-img-zoom:hover { transform: scale(1.04); }
@@ -613,7 +609,7 @@ function ReviewsPanel({ product, user, onReviewAdded, isDesktop }) {
               <textarea rows={4} value={comment} onChange={e => setComment(e.target.value)}
                 onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
                 placeholder="What did you think of this product?"
-                style={{ width:'100%',padding:'10px 12px',borderRadius:10,resize:'vertical',border:`1.5px solid ${focused?T.green:T.line}`,background:T.white,fontSize:13,color:T.ink,outline:'none',boxSizing:'border-box',fontFamily:'inherit',transition:'border-color 0.15s' }} />
+                style={{ width:'100%',padding:'10px 12px',borderRadius:10,resize:'vertical',border:`1.5px solid ${focused?T.green:T.line}`,background:T.white,fontSize:13,color:T.ink,outline:'none',boxSizing:'border-box',transition:'border-color 0.15s' }} />
             </div>
             {err && <p style={{ fontSize:12,color:T.saleRed,background:T.salePink,padding:'8px 12px',borderRadius:8,margin:0 }}>{err}</p>}
             {ok  && <p style={{ fontSize:12,color:T.green,background:T.greenTint,padding:'8px 12px',borderRadius:8,margin:0,fontWeight:600 }}>✓ Review submitted!</p>}
@@ -642,7 +638,7 @@ function ReturnPolicyPanel({ policy }) {
   return (
     <div style={{ display:'grid',gap:20 }}>
       <div>
-        <p style={{ fontSize:20,fontWeight:900,color:T.ink,margin:'0 0 6px',fontFamily:"'Fraunces', Georgia, serif" }}>
+        <p style={{ fontSize:20, fontWeight:900, color:T.ink, margin:'0 0 6px', fontFamily:'var(--zova-font-display)' }}>
           {policy?.title || DEFAULT_RETURN_POLICY.title}
         </p>
         <p style={{ fontSize:14,color:T.inkLight,lineHeight:1.75,margin:0 }}>{policy?.subtitle || DEFAULT_RETURN_POLICY.subtitle}</p>
@@ -921,7 +917,7 @@ export default function ProductPage({ params }) {
 
   // ── LOADING ──
   if (loading) return (
-    <div className="pdp-root" style={{ minHeight:'100vh',background:T.white,padding:'60px 24px' }}>
+    <div className="pdp-root zova-page" style={{ minHeight:'100vh',padding:'60px 24px' }}>
       <style>{GLOBAL_STYLES}</style>
       <div style={{ maxWidth:1200,margin:'0 auto',display:'grid',gap:48 }} className="lg:grid-cols-2">
         {[['100%'],['100%','60%','80%','40%']].map((widths,gi) => (
@@ -943,7 +939,7 @@ export default function ProductPage({ params }) {
   );
 
   if (!product) return (
-    <div className="pdp-root" style={{ minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16 }}>
+    <div className="pdp-root zova-page" style={{ minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16 }}>
       <style>{GLOBAL_STYLES}</style>
       <p style={{ fontSize:18,fontWeight:800,color:T.ink }}>Product not found</p>
       <Link href="/shop" style={{ color:T.green,fontWeight:600,fontSize:14 }}>← Back to Shop</Link>
@@ -951,7 +947,7 @@ export default function ProductPage({ params }) {
   );
 
   return (
-    <div className="pdp-root" style={{ minHeight:'100vh',background:T.white }}>
+    <div className="pdp-root zova-page" style={{ minHeight:'100vh' }}>
       <style>{GLOBAL_STYLES}</style>
 
       {/* TOAST — Onyx Black */}

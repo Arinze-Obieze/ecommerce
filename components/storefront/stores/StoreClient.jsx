@@ -9,36 +9,36 @@ import ProductGrid from '@/components/catalog/browse/ProductGrid';
 import { getStoreProducts } from "@/features/catalog/api/client";
 import { getRecommendationRequestHeaders } from "@/utils/catalog/recommendation-request";
 
-// ─────────────────────────────────────────────────────────────
-// THEME — Zova Brand 2026
-// ─────────────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const T = {
-  green:          "#00B86B",
-  greenDark:      "#0F7A4F",
-  greenDeep:      "#0A3D2E",
-  greenTint:      "#EDFAF3",
-  greenBorder:    "#A8DFC4",
-  white:          "#FFFFFF",
-  pageBg:         "#F5F1EA",
-  charcoal:       "#191B19",
-  medGray:        "#5A5A5A",
-  mutedText:      "#9A9A9A",
-  border:         "#EDE8DF",
-  softGray:       "#F5F1EA",
-  starYellow:     "#F59E0B",
-  starBg:         "#FFFBEB",
-  trendingText:   "#EA580C",
-  trendingBg:     "#FFF7ED",
-  trendingBorder: "#FED7AA",
-  // entrance palette
-  E_bg:           "#050C07",
-  E_bgMid:        "#08140A",
-  E_panelL:       "#0A1C10",
-  E_panelR:       "#091A0E",
-  E_border:       "rgba(0,184,107,0.16)",
-  E_borderHi:     "rgba(0,184,107,0.42)",
-  E_white:        "#F0F7F2",
-  E_dim:          "rgba(240,247,242,0.32)",
+  green:          'var(--zova-primary-action)',
+  greenDark:      'var(--zova-primary-action-hover)',
+  greenDeep:      'var(--zova-ink)',
+  greenTint:      'var(--zova-green-soft)',
+  greenBorder:    '#B8D4A0',
+  white:          '#FFFFFF',
+  pageBg:         'var(--zova-linen)',
+  charcoal:       'var(--zova-ink)',
+  medGray:        'var(--zova-text-body)',
+  mutedText:      'var(--zova-text-muted)',
+  border:         'var(--zova-border)',
+  softGray:       'var(--zova-surface-alt)',
+  starYellow:     '#F59E0B',
+  starBg:         '#FFFBEB',
+  trendingText:   '#EA580C',
+  trendingBg:     '#FFF7ED',
+  trendingBorder: '#FED7AA',
+  // entrance palette — dark immersive overlay values, intentionally not tokenised
+  E_bg:           '#050C07',
+  E_bgMid:        '#08140A',
+  E_panelL:       '#0A1C10',
+  E_panelR:       '#091A0E',
+  E_border:       'rgba(46,100,23,0.16)',
+  E_borderHi:     'rgba(46,100,23,0.42)',
+  E_gold:         'var(--zova-gold)',
+  E_goldDim:      'rgba(236,156,0,0.36)',
+  E_white:        '#F0F7F2',
+  E_dim:          'rgba(240,247,242,0.32)',
 };
 
 // ═════════════════════════════════════════════════════════════
@@ -106,19 +106,20 @@ function TopBar({ show, storeName }) {
         <div style={{ width:22, height:22, borderRadius:5, border:`1.5px solid ${T.E_gold}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
           <div style={{ width:9, height:9, borderRadius:2, background:T.E_gold }}/>
         </div>
-        <span style={{ fontSize:14, fontWeight:900, color:T.E_white, letterSpacing:"0.14em", fontFamily:"'Georgia', serif", textTransform:"uppercase" }}>
+        <span style={{ fontSize:14, fontWeight:900, color:T.E_white, letterSpacing:"0.14em", fontFamily: "var(--zova-font-display)", textTransform:"uppercase" }}>
           ZOVA
         </span>
       </div>
-      <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+      {/* Store name (small) */}
+      <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
         {storeName}
       </span>
       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
           Onitsha Main Market
         </span>
         <div style={{ width:1, height:14, background:T.E_border }}/>
-        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
           Nigeria
         </span>
       </div>
@@ -136,15 +137,16 @@ function CentreLockup({ storeName, show, fading }) {
       opacity:fading ? 0 : (show ? 1 : 0),
       transition:fading ? "opacity 0.8s ease" : "opacity 1s ease 0.1s",
     }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:18, opacity:show ? 1 : 0, transition:"opacity 1s ease 0.1s" }}>
-        <div style={{ flex:1, height:1, background:`linear-gradient(to right, transparent, ${T.E_goldDim})` }}/>
-        <span style={{ fontSize:9, fontWeight:700, color:T.E_gold, letterSpacing:"0.3em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+      {/* Rule + label */}
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:18, opacity: show ? 1 : 0, transition:"opacity 1s ease 0.1s" }}>
+        <div style={{ flex:1, height:1, background:`linear-gradient(to right, transparent, ${T.E_borderHi})` }}/>
+        <span style={{ fontSize:9, fontWeight:700, color:T.green, letterSpacing:"0.3em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
           Welcome to
         </span>
-        <div style={{ flex:1, height:1, background:`linear-gradient(to left, transparent, ${T.E_goldDim})` }}/>
+        <div style={{ flex:1, height:1, background:`linear-gradient(to left, transparent, ${T.E_borderHi})` }}/>
       </div>
       <div style={{
-        fontFamily:"'Georgia', 'Times New Roman', serif",
+        fontFamily: "var(--zova-font-display)",
         fontSize:"clamp(46px, 9.5vw, 88px)",
         fontWeight:700, color:T.E_white,
         letterSpacing:"-0.015em", lineHeight:0.95,
@@ -162,9 +164,8 @@ function CentreLockup({ storeName, show, fading }) {
       }}/>
       <div style={{
         marginTop:14, fontSize:10, fontWeight:600, color:T.E_dim,
-        letterSpacing:"0.24em", textTransform:"uppercase",
-        fontFamily:"'Helvetica Neue', sans-serif",
-        opacity:show ? 1 : 0, transition:"opacity 1s ease 0.85s",
+        letterSpacing:"0.24em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)",
+        opacity: show ? 1 : 0, transition:"opacity 1s ease 0.85s",
       }}>
         Opening the store
       </div>
@@ -235,8 +236,8 @@ function ArchFrame() {
         <path d="M13,114 L13,62 Q13,-2 245,-2 Q477,-2 477,62 L477,114" fill="none" stroke="rgba(0,184,107,0.32)" strokeWidth="1.5"/>
         <path d="M0,122 L0,70 Q0,-14 245,-14 Q490,-14 490,70 L490,122" fill="none" stroke="rgba(0,184,107,0.08)" strokeWidth="1"/>
         {/* Keystone */}
-        <rect x="221" y="-13" width="48" height="22" rx="2" fill="#08140A" stroke="rgba(0,184,107,0.46)" strokeWidth="1"/>
-        <text x="245" y="5" textAnchor="middle" fill="rgba(0,184,107,0.65)" fontSize="7.5" fontFamily="'Helvetica Neue', sans-serif" fontWeight="800" letterSpacing="3.5">ZOVA</text>
+        <rect x="221" y="-13" width="48" height="22" rx="2" fill="#08140A" stroke="rgba(46,100,23,0.46)" strokeWidth="1"/>
+        <text x="245" y="5" textAnchor="middle" fill="rgba(46,100,23,0.65)" fontSize="7.5" fontFamily="var(--zova-font-sans)" fontWeight="800" letterSpacing="3.5">ZOVA</text>
       </svg>
       {/* Left pillar */}
       <div style={{ position:"absolute", left:0, top:"19%", bottom:0, width:13, background:"linear-gradient(to right, #020604, #0C1C10)", borderTop:"1.5px solid rgba(0,184,107,0.28)" }}>
@@ -280,7 +281,7 @@ function BottomRow({ show, storeName, onSkip }) {
           <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:T.E_gold, animation:"e_pulse 2s ease-in-out infinite" }}/>
           <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:T.E_gold, opacity:0.3, animation:"e_ring 2s ease-in-out infinite" }}/>
         </div>
-        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.22em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.22em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
           Entering {storeName}
         </span>
       </div>
@@ -292,8 +293,7 @@ function BottomRow({ show, storeName, onSkip }) {
           background: hov ? "rgba(0,184,107,0.1)" : "transparent",
           color: hov ? T.E_white : T.E_dim,
           fontSize:10, fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase",
-          cursor:"pointer", transition:"all 0.18s",
-          fontFamily:"'Helvetica Neue', sans-serif",
+          cursor:"pointer", transition:"all 0.18s", fontFamily: "var(--zova-font-sans)",
         }}
       >
         Enter now
@@ -346,10 +346,10 @@ function StoreEntranceOverlay({ storeName, onDone }) {
       `}</style>
       <div style={{
         position:"fixed", inset:0, zIndex:9999, overflow:"hidden",
-        opacity:fadeOut ? 0 : 1,
-        transition:fadeOut ? "opacity 0.9s ease" : "none",
-        background:T.E_bg,
-        fontFamily:"'Helvetica Neue', 'Segoe UI', sans-serif",
+        opacity: fadeOut ? 0 : 1,
+        transition: fadeOut ? "opacity 0.9s ease" : "none",
+        background: T.E_bg,
+        fontFamily: "var(--zova-font-sans)",
       }}>
         <div style={{ position:"absolute", inset:0, zIndex:1, background:`radial-gradient(ellipse 75% 65% at 50% 50%, ${T.E_bgMid} 0%, ${T.E_bg} 100%)` }}/>
         <GridLines/>
@@ -403,7 +403,7 @@ function Avatar({ store, size = 96 }) {
     }}>
       {store.logo_url
         ? <img src={store.logo_url} alt={store.name} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-        : <span style={{ fontSize:size * 0.38, fontWeight:900, color:T.green, fontFamily:"'Georgia', serif" }}>{store.name?.charAt(0).toUpperCase()}</span>
+        : <span style={{ fontSize:size * 0.38, fontWeight:900, color:T.green, fontFamily: "var(--zova-font-display)" }}>{store.name?.charAt(0).toUpperCase()}</span>
       }
     </div>
   );
@@ -478,7 +478,7 @@ function StoreHeader({ store, productCount, loading, activeTab, onTabChange }) {
           <Avatar store={store}/>
           <div style={{ flex:1, minWidth:200 }}>
             <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:6 }}>
-              <h1 style={{ fontSize:22, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily:"'Georgia', serif" }}>
+              <h1 style={{ fontSize:22, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily: "var(--zova-font-display)" }}>
                 {store.name}
               </h1>
               {store.kyc_status === "verified" && <VerifiedBadge/>}
@@ -1123,13 +1123,11 @@ export default function StoreClient({ store }) {
           {/* ── Top bar: title + mobile filter btn ── */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
             <div>
-              <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:T.mutedText, margin:"0 0 4px", fontFamily:"'Helvetica Neue', sans-serif" }}>
-                Browse
-              </p>
-              <h2 style={{ fontSize:20, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily:"'Georgia', serif", display:"flex", alignItems:"center", gap:10 }}>
+              <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:T.mutedText, margin:"0 0 4px", fontFamily: "var(--zova-font-sans)" }}>Browse</p>
+              <h2 style={{ fontSize:20, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily: "var(--zova-font-display)", display:"flex", alignItems:"center", gap:10 }}>
                 {TABS.find(t => t.id === activeTab)?.label || "All Products"}
                 {!loading && products.length > 0 && (
-                  <span style={{ fontSize:12, fontWeight:700, color:T.green, background:T.greenTint, padding:"2px 10px", borderRadius:100, border:`1px solid ${T.greenBorder}`, fontFamily:"'Helvetica Neue', sans-serif", letterSpacing:0 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:T.green, background:T.greenTint, padding:"2px 10px", borderRadius:100, border:`1px solid ${T.greenBorder}`, fontFamily: "var(--zova-font-sans)", letterSpacing:0 }}>
                     {products.length}
                   </span>
                 )}

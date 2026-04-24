@@ -12,38 +12,38 @@ import { trackAnalyticsEvent } from "@/utils/telemetry/analytics";
 import { createClient } from "@/utils/supabase/client";
 
 // ============================================================
-// 🎨 THEME — ZOVA brand colors
+// Brand tokens — sourced from app/globals.css
 // ============================================================
 const THEME = {
   colors: {
     // Brand
-    primary: '#2E6417',            // ZOVA Forest
-    primaryHover: '#245213',
-    deepEmerald: '#191B19',        // Onyx Black header background
-    gradientEnd: '#245213',
-    greenTint: '#EDF5E6',
-    greenBorder: '#B8D4A0',
-    
+    primary:        'var(--zova-primary-action)',
+    primaryHover:   'var(--zova-primary-action-hover)',
+    deepEmerald:    'var(--zova-ink)',
+    gradientEnd:    'var(--zova-primary-action-hover)',
+    greenTint:      'var(--zova-green-soft)',
+    greenBorder:    '#B8D4A0',
+
     // Neutrals
-    white: '#FFFFFF',
-    pageBg: '#F9FAFB',
-    softGray: '#F5F5F5',
-    darkCharcoal: '#111111',
-    mediumGray: '#666666',
-    mutedText: '#888888',
-    border: '#E8E8E8',
-    cardBorder: '#EFEFEF',
-    
+    white:          '#FFFFFF',
+    pageBg:         'var(--zova-linen)',
+    softGray:       'var(--zova-surface-alt)',
+    darkCharcoal:   'var(--zova-ink)',
+    mediumGray:     'var(--zova-text-body)',
+    mutedText:      'var(--zova-text-muted)',
+    border:         'var(--zova-border)',
+    cardBorder:     'var(--zova-border)',
+
     // Accent colors
-    saleRed: '#E53935',
+    saleRed:        'var(--zova-error)',
     trendingOrange: '#EA580C',
-    starYellow: '#F59E0B',
-    whatsappGreen: '#25D366',
+    starYellow:     '#F59E0B',
+    whatsappGreen:  '#25D366',
   },
   shadows: {
-    header: '0 4px 20px rgba(0, 0, 0, 0.15)',
+    header:    '0 4px 20px rgba(0, 0, 0, 0.15)',
     cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',
-    dropdown: '0 12px 32px rgba(0, 0, 0, 0.15)',
+    dropdown:  '0 12px 32px rgba(0, 0, 0, 0.15)',
   },
   transitions: {
     default: 'all 0.2s ease',
@@ -56,46 +56,27 @@ const HeaderLogo = () => {
 
   return (
     <Link href="/" className="shrink-0 group">
-      <div className="flex items-center gap-3">
-        {/* Logo image with fallback - increased size */}
-        <div className="relative w-14 h-14 shrink-0 transition-transform duration-300 group-hover:scale-110">
+      <div className="flex items-center">
+        {/* Logo image with fallback */}
+        <div className="relative w-[140px] h-[45px] shrink-0 transition-transform duration-300 group-hover:scale-105">
           {!logoError ? (
             <Image
-              src="/brand/logo.png"
+              src="/brand/logo.svg"
               alt="ZOVA"
               fill
-              className="object-contain"
+              className="object-contain object-left"
               priority
               onError={() => setLogoError(true)}
             />
           ) : (
             // Fallback when logo fails to load
             <div 
-              className="w-full h-full rounded-xl flex items-center justify-center"
+              className="w-full h-full rounded-xl flex items-center justify-center p-2"
               style={{ backgroundColor: THEME.colors.primary }}
             >
-              <span className="text-white font-bold text-xl">Z</span>
+              <span className="text-white font-bold text-lg tracking-wider">ZOVA</span>
             </div>
           )}
-        </div>
-        {/* Wordmark - White on dark background - increased size */}
-        <div className="flex flex-col leading-none">
-          <span
-            className="text-3xl font-black tracking-tight"
-            style={{
-              color: THEME.colors.darkCharcoal,
-              fontFamily: "'Poppins', sans-serif",
-              letterSpacing: '-0.02em'
-            }}
-          >
-            ZOVA
-          </span>
-          <span
-            className="text-[11px] font-medium tracking-[0.12em] uppercase hidden sm:block"
-            style={{ color: THEME.colors.mediumGray }}
-          >
-            Verified Quality
-          </span>
         </div>
       </div>
     </Link>
@@ -111,10 +92,10 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
       <div
         className="flex items-center rounded-full transition-all duration-200"
         style={{
-          backgroundColor: THEME.colors.softGray,
+          backgroundColor: 'rgba(255,253,249,0.96)',
           backdropFilter: 'blur(10px)',
-          border: `1.5px solid ${focused ? THEME.colors.primary : THEME.colors.border}`,
-          boxShadow: focused ? `0 0 0 3px rgba(46, 100, 23, 0.3)` : "none",
+          border: `1.5px solid ${focused ? THEME.colors.primary : '#d9d1c4'}`,
+          boxShadow: focused ? `0 0 0 4px rgba(46, 100, 23, 0.14)` : "0 8px 24px rgba(25,27,25,0.06)",
         }}
       >
         <FiSearch
@@ -151,19 +132,10 @@ const SearchBar = ({ searchQuery, setSearchQuery, onSubmit, isMobile = false }) 
         )}
         <button
           onClick={onSubmit}
-          className="mr-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 shrink-0"
+          className="zova-btn zova-btn-primary mr-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 shrink-0"
           style={{ 
-            backgroundColor: THEME.colors.primary, 
-            color: THEME.colors.white,
-            boxShadow: '0 2px 8px rgba(46, 100, 23, 0.4)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = THEME.colors.primaryHover;
-            e.currentTarget.style.transform = 'scale(1.02)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = THEME.colors.primary;
-            e.currentTarget.style.transform = 'scale(1)';
+            padding: '0.72rem 1rem',
+            fontSize: '0.72rem',
           }}
         >
           Search
@@ -200,14 +172,16 @@ const IconButton = ({ onClick, children, label }) => (
     type="button"
     aria-label={label}
     className="relative p-2.5 rounded-xl transition-all duration-200"
-    style={{ color: THEME.colors.darkCharcoal }}
+    style={{ color: THEME.colors.darkCharcoal, border: '1px solid transparent' }}
     onMouseEnter={(e) => {
-      e.currentTarget.style.backgroundColor = THEME.colors.softGray;
+      e.currentTarget.style.backgroundColor = 'rgba(245,241,234,0.84)';
+      e.currentTarget.style.borderColor = 'rgba(217,209,196,0.9)';
       e.currentTarget.style.color = THEME.colors.primary;
       e.currentTarget.style.transform = 'scale(1.05)';
     }}
     onMouseLeave={(e) => {
       e.currentTarget.style.backgroundColor = "transparent";
+      e.currentTarget.style.borderColor = 'transparent';
       e.currentTarget.style.color = THEME.colors.darkCharcoal;
       e.currentTarget.style.transform = 'scale(1)';
     }}
@@ -493,12 +467,13 @@ const Header = () => {
     <header
       className="sticky top-0 z-100 transition-all duration-300"
       style={{
-        backgroundColor: THEME.colors.white,
-        borderBottom: `1px solid ${scrolled ? THEME.colors.primary : THEME.colors.border}`,
-        boxShadow: scrolled ? THEME.shadows.header : "none",
+        backgroundColor: 'rgba(255,252,246,0.9)',
+        borderBottom: `1px solid ${scrolled ? 'rgba(46,100,23,0.18)' : 'rgba(217,209,196,0.82)'}`,
+        boxShadow: scrolled ? "0 10px 34px rgba(25,27,25,0.08)" : "none",
+        backdropFilter: 'blur(14px)',
       }}
     >
-      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div className="zova-shell w-full mx-auto py-3">
         <div className="flex items-center justify-between gap-4 lg:gap-6">
 
           <HeaderLogo />

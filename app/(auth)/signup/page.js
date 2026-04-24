@@ -4,29 +4,27 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiPhone, FiMapPin, FiCheck, FiX, FiArrowRight } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiUser, FiPhone, FiCheck, FiX, FiArrowRight } from 'react-icons/fi';
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
-// ─────────────────────────────────────────────────────────────
-// THEME
-// ─────────────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css CSS custom properties
 const T = {
-  green:       '#2E6417',
-  greenDark:   '#245213',
-  greenDeep:   '#191B19',
-  greenTint:   '#EDF5E6',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenDeep:   'var(--zova-text-strong)',
+  greenTint:   'var(--zova-green-soft)',
   greenBorder: '#B8D4A0',
-  charcoal:    '#111111',
-  softGray:    '#F5F5F5',
-  pageBg:      '#F9FAFB',
-  border:      '#E8E8E8',
-  medGray:     '#666666',
-  mutedText:   '#999999',
+  charcoal:    'var(--zova-ink)',
+  softGray:    'var(--zova-surface-alt)',
+  pageBg:      'var(--zova-linen)',
+  border:      'var(--zova-border)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
   white:       '#FFFFFF',
-  red:         '#E53935',
+  red:         'var(--zova-error)',
   redLight:    '#FEF2F2',
-  gold:        '#F59E0B',
+  gold:        'var(--zova-accent-emphasis)',
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -48,17 +46,6 @@ const SLIDES = [
     caption: 'Shop. Save.\nRepeat.',
     sub:     'Exclusive deals for ZOVA members every day',
   },
-];
-
-// ─────────────────────────────────────────────────────────────
-// NIGERIAN STATES
-// ─────────────────────────────────────────────────────────────
-const NG_STATES = [
-  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
-  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo',
-  'Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa',
-  'Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba',
-  'Yobe','Zamfara',
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -100,6 +87,10 @@ function FieldWrap({ label, icon, children, style }) {
   );
 }
 
+function sanitizePhoneInput(value) {
+  return String(value || '').replace(/[^\d+\s()-]/g, '');
+}
+
 // ─────────────────────────────────────────────────────────────
 // MAIN
 // ─────────────────────────────────────────────────────────────
@@ -109,7 +100,6 @@ export default function SignupPage() {
   const [fullName, setFullName]           = useState('');
   const [email, setEmail]                 = useState('');
   const [phone, setPhone]                  = useState('');
-  const [state, setState]                   = useState('');
   const [password, setPassword]           = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass]           = useState(false);
@@ -169,7 +159,7 @@ export default function SignupPage() {
       const res  = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, email, phone, state, password }),
+        body: JSON.stringify({ fullName, email, phone, password }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to create account'); setLoading(false); return; }
@@ -196,7 +186,6 @@ export default function SignupPage() {
     border: `1.5px solid ${foc[key] ? T.green : hov[key] ? T.greenBorder : T.border}`,
     background: foc[key] ? T.white : T.softGray,
     fontSize: 14,
-    fontFamily: 'inherit',
     color: T.charcoal,
     outline: 'none',
     boxSizing: 'border-box',
@@ -208,11 +197,9 @@ export default function SignupPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
-        .sp-root  { font-family: 'Outfit', sans-serif; }
-        .serif    { font-family: 'Cormorant Garamond', Georgia, serif; }
-
+                * { box-sizing: border-box; }
+        .sp-root  { font-family: var(--zova-font-sans); }
+        
         @keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
         @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:none; } }
         @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
@@ -246,9 +233,6 @@ export default function SignupPage() {
         .sp-scroll::-webkit-scrollbar { width: 0; }
         .sp-scroll { scrollbar-width: none; }
 
-        /* State dropdown reset */
-        .state-select { appearance: none; -webkit-appearance: none; cursor: pointer; }
-        .state-select option { color: #111; background: #fff; }
       `}</style>
 
       <div className="sp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: T.pageBg }}>
@@ -308,7 +292,7 @@ export default function SignupPage() {
                 }}>
                   {!logoError ? (
                     <Image
-                      src="/brand/icon-only.png"
+                      src="/brand/logo.svg"
                       alt="ZOVA"
                       width={100}
                       height={100}
@@ -316,7 +300,7 @@ export default function SignupPage() {
                       onError={() => setLogoError(true)}
                     />
                   ) : (
-                    <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: 'Outfit,sans-serif' }}>Z</span>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: "var(--zova-font-sans)" }}>Z</span>
                   )}
                 </div>
                 <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em' }}>ZOVA</span>
@@ -351,7 +335,7 @@ export default function SignupPage() {
                         padding: '11px 12px', borderRadius: 12, cursor: 'pointer',
                         border: `1.5px solid ${T.border}`,
                         background: hov[btn.k] ? T.softGray : T.white,
-                        fontSize: 13.5, fontWeight: 600, fontFamily: 'inherit', color: T.charcoal,
+                        fontSize: 13.5, fontWeight: 600, color: T.charcoal,
                         transition: 'all 0.15s',
                         boxShadow: hov[btn.k] ? '0 3px 10px rgba(0,0,0,0.07)' : 'none',
                         transform: hov[btn.k] ? 'translateY(-1px)' : 'none',
@@ -394,31 +378,13 @@ export default function SignupPage() {
                   </div>
 
                   {/* Phone */}
-                  <div className="fu-6">
+                  <div className="fu-6" style={{ gridColumn: '1 / -1' }}>
                     <FieldWrap label="Phone" icon={<FiPhone size={15} color={foc.phone ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
-                      <input type="tel" value={phone} placeholder="+234 801 234 5678"
-                        onChange={e => setPhone(e.target.value)}
+                      <input type="tel" inputMode="numeric" pattern="[0-9+()\\-\\s]*" value={phone} placeholder="+234 801 234 5678"
+                        onChange={e => setPhone(sanitizePhoneInput(e.target.value))}
                         onFocus={() => focusField('phone')} onBlur={() => blurField('phone')}
                         onMouseEnter={() => enterField('phone')} onMouseLeave={() => leaveField('phone')}
                         style={inputStyle('phone')} />
-                    </FieldWrap>
-                  </div>
-
-                  {/* State dropdown */}
-                  <div className="fu-6">
-                    <FieldWrap label="State" icon={<FiMapPin size={15} color={foc.state ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
-                      <select value={state} onChange={e => setState(e.target.value)}
-                        onFocus={() => focusField('state')} onBlur={() => blurField('state')}
-                        onMouseEnter={() => enterField('state')} onMouseLeave={() => leaveField('state')}
-                        className="state-select"
-                        style={{ ...inputStyle('state'), paddingRight: 14 }}>
-                        <option value="">Select state</option>
-                        {NG_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      {/* Custom chevron */}
-                      <svg style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M3 5l4 4 4-4" stroke={T.mutedText} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
                     </FieldWrap>
                   </div>
 
@@ -520,7 +486,7 @@ export default function SignupPage() {
                     onMouseEnter={() => setSubmitHov(true)} onMouseLeave={() => setSubmitHov(false)}
                     style={{
                       width: '100%', padding: 14, border: 'none', borderRadius: 13,
-                      fontSize: 15, fontWeight: 700, fontFamily: 'inherit', letterSpacing: '-0.01em',
+                      fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       cursor: loading || !agreeTerms ? 'not-allowed' : 'pointer',
                       background: loading || !agreeTerms ? T.border : submitHov ? T.greenDark : T.green,
@@ -623,7 +589,7 @@ export default function SignupPage() {
             }}>
               {!logoError ? (
                 <Image
-                  src="/brand/icon-only.png"
+                  src="/brand/logo.svg"
                   alt="ZOVA"
                   width={50}
                   height={50}

@@ -36,7 +36,7 @@ export async function GET() {
 
     const { data: profile, error: profileError } = await authClient
       .from('users')
-      .select('id, full_name, email, phone, state')
+      .select('id, full_name, email, phone')
       .eq('id', user.id)
       .maybeSingle();
 
@@ -50,7 +50,6 @@ export async function GET() {
         fullName: profile?.full_name || user.user_metadata?.full_name || '',
         email: profile?.email || user.email || '',
         phone: profile?.phone || '',
-        state: profile?.state || '',
       },
     });
   } catch (error) {
@@ -71,7 +70,6 @@ export async function PATCH(request) {
 
     const fullName = sanitizeOptionalText(body?.fullName, 120);
     const phone = sanitizeOptionalText(body?.phone, 32);
-    const state = sanitizeOptionalText(body?.state, 120);
 
     if (!fullName) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
@@ -85,11 +83,10 @@ export async function PATCH(request) {
           full_name: fullName,
           email: user.email,
           phone,
-          state,
         },
         { onConflict: 'id' }
       )
-      .select('id, full_name, email, phone, state');
+      .select('id, full_name, email, phone');
 
     if (upsertError) {
       return NextResponse.json({ error: upsertError.message }, { status: 500 });
@@ -123,7 +120,6 @@ export async function PATCH(request) {
         fullName: saved?.full_name || fullName,
         email: saved?.email || user.email || '',
         phone: saved?.phone || '',
-        state: saved?.state || '',
       },
     });
   } catch (error) {

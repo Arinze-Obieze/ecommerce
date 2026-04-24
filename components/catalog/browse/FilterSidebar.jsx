@@ -4,22 +4,22 @@ import { useState, useEffect, Suspense } from 'react';
 import { FiChevronDown, FiX, FiSliders, FiTrash2 } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
-// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
   colors: {
-    primary:      '#2E6417',
-    primaryHover: '#245213',
-    gold:         '#EC9C00',
+    primary:      'var(--zova-primary-action)',
+    primaryHover: 'var(--zova-primary-action-hover)',
+    gold:         'var(--zova-accent-emphasis)',
     white:        '#FFFFFF',
-    pageBg:       '#F5F1EA',
-    softGray:     '#EDE9E0',
-    darkCharcoal: '#191B19',
-    mediumGray:   '#6B6B6B',
-    mutedText:    '#999999',
-    border:       '#E8E4DC',
-    greenTint:    '#EDF5E6',
+    pageBg:       'var(--zova-linen)',
+    softGray:     'var(--zova-surface-alt)',
+    darkCharcoal: 'var(--zova-ink)',
+    mediumGray:   'var(--zova-text-body)',
+    mutedText:    'var(--zova-text-muted)',
+    border:       'var(--zova-border)',
+    greenTint:    'var(--zova-green-soft)',
     greenBorder:  '#B8D4A0',
-    saleRed:      '#E53935',
+    saleRed:      'var(--zova-error)',
   },
   shadows: {
     sidebar: '0 2px 16px rgba(46,100,23,0.08)',

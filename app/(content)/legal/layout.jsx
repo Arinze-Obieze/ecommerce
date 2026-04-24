@@ -32,7 +32,7 @@ export default function LegalLayout({ children }) {
   const pathname = usePathname();
 
   return (
-    <div style={{ background: B.bg, minHeight: "100vh", fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif" }}>
+    <div style={{ background: B.bg, minHeight: "100vh" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
         

@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   FaFacebook, FaInstagram, FaTwitter, FaYoutube,
   FaPinterest, FaSnapchat, FaTiktok,
@@ -9,41 +10,41 @@ import {
 } from 'react-icons/fa';
 import { FiArrowUp, FiCheckCircle, FiHeadphones, FiShield } from 'react-icons/fi';
 
-// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  footerBg:        "#FFFFFF",
-  sectionAltBg:    "#F5F1EA",   // Soft Linen
-  divider:         "#E8E4DC",
-  logoAccent:      "#2E6417",   // Zova Forest
-  logoText:        "#191B19",   // Onyx Black
-  taglineText:     "#2E6417",
-  bodyText:        "#6B6B6B",
-  navHeading:      "#191B19",
-  navLink:         "#6B6B6B",
-  navLinkHover:    "#2E6417",
-  socialBg:        "#F5F1EA",
-  socialBorder:    "#E8E4DC",
-  socialIcon:      "#6B6B6B",
-  socialHoverBg:   "#2E6417",
-  socialHoverIcon: "#FFFFFF",
-  appBg:           "#191B19",   // Onyx Black
-  appHoverBg:      "#2E6417",   // Zova Forest
-  appText:         "#FFFFFF",
-  paymentBg:       "#F5F1EA",
-  paymentBorder:   "#E8E4DC",
-  paymentIcon:     "#6B6B6B",
-  trustBg:         "#EDF5E6",   // light green tint
-  trustBorder:     "#B8D4A0",
-  trustText:       "#2E6417",
-  trustIcon:       "#2E6417",
-  bottomBg:        "#191B19",   // Onyx Black
-  bottomText:      "#888888",
-  bottomLinkHover: "#EC9C00",   // Gold Harvest
-  copyrightText:   "#888888",
-  backTopBg:       "#EC9C00",   // Gold Harvest
-  backTopHover:    "#d48c00",
-  backTopText:     "#FFFFFF",
-  headingUnderline:"#EC9C00",   // Gold Harvest accent under section headings
+  footerBg:        '#FFFFFF',
+  sectionAltBg:    'var(--zova-linen)',
+  divider:         'var(--zova-border)',
+  logoAccent:      'var(--zova-primary-action)',
+  logoText:        'var(--zova-ink)',
+  taglineText:     'var(--zova-primary-action)',
+  bodyText:        'var(--zova-text-body)',
+  navHeading:      'var(--zova-ink)',
+  navLink:         'var(--zova-text-body)',
+  navLinkHover:    'var(--zova-primary-action)',
+  socialBg:        'var(--zova-linen)',
+  socialBorder:    'var(--zova-border)',
+  socialIcon:      'var(--zova-text-body)',
+  socialHoverBg:   'var(--zova-primary-action)',
+  socialHoverIcon: '#FFFFFF',
+  appBg:           'var(--zova-ink)',
+  appHoverBg:      'var(--zova-primary-action)',
+  appText:         '#FFFFFF',
+  paymentBg:       'var(--zova-linen)',
+  paymentBorder:   'var(--zova-border)',
+  paymentIcon:     'var(--zova-text-body)',
+  trustBg:         'var(--zova-green-soft)',
+  trustBorder:     '#B8D4A0',
+  trustText:       'var(--zova-primary-action)',
+  trustIcon:       'var(--zova-primary-action)',
+  bottomBg:        'var(--zova-ink)',
+  bottomText:      '#888888',
+  bottomLinkHover: 'var(--zova-accent-emphasis)',
+  copyrightText:   '#888888',
+  backTopBg:       'var(--zova-accent-emphasis)',
+  backTopHover:    'var(--zova-warning)',
+  backTopText:     '#FFFFFF',
+  headingUnderline:'var(--zova-accent-emphasis)',
 };
 
 const NAV_SECTIONS = [
@@ -108,7 +109,7 @@ const BOTTOM_LINKS = [
 
 export default function Footer() {
   return (
-    <footer className="zova-footer" style={{ backgroundColor: THEME.footerBg, fontFamily: "'Poppins', sans-serif" }}>
+    <footer className="zova-footer" style={{ backgroundColor: THEME.footerBg, fontFamily: "var(--zova-font-sans)" }}>
       <style>{`
         @media (max-width: 640px) {
           .zova-footer-main {
@@ -232,14 +233,21 @@ export default function Footer() {
             {/* Brand column */}
             <div className="zova-footer-brand sm:col-span-2 lg:col-span-2 flex flex-col gap-7">
               <div>
-                <p className="text-2xl font-black tracking-tight" style={{ color: THEME.logoText }}>
-                  ZO<span style={{ color: THEME.logoAccent }}>VA</span>
+                <Link href="/" aria-label="ZOVA home" className="inline-flex">
+                  <Image
+                    src="/brand/logo.svg"
+                    alt="ZOVA"
+                    width={136}
+                    height={40}
+                    className="h-auto w-[136px]"
+                    priority
+                  />
+                </Link>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] mt-3" style={{ color: THEME.taglineText }}>
+                  Where trust meets the market
                 </p>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] mt-0.5" style={{ color: THEME.taglineText }}>
-                  Where Trust Meets the Market.
-                </p>
-                <p className="zova-footer-brand-copy text-sm mt-3 leading-relaxed" style={{ color: THEME.bodyText, maxWidth: 220 }}>
-                  Premium fashion for those who move with intention. Quality you feel, style you keep.
+                <p className="zova-footer-brand-copy text-sm mt-3 leading-relaxed" style={{ color: THEME.bodyText, maxWidth: 260 }}>
+                  Verified fashion from trusted sellers, with quality checks that keep shopping modern, clear, and dependable.
                 </p>
               </div>
 

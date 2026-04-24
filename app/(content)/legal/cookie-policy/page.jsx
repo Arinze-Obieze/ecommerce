@@ -74,7 +74,7 @@ export default function CookiePolicyPage() {
                 const tc = TYPE_COLORS[row.type];
                 return (
                   <tr key={i} style={{ borderBottom: "1px solid #E5E7EB", background: i % 2 === 0 ? "#fff" : "#F9FAFB" }}>
-                    <td style={{ padding: "10px 14px", fontFamily: "monospace", fontSize: 12, color: "#1F2937" }}>{row.name}</td>
+                    <td style={{ padding: "10px 14px", fontSize: 12, color: "#1F2937" }}>{row.name}</td>
                     <td style={{ padding: "10px 14px" }}>
                       <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: tc.color, background: tc.bg, border: `1px solid ${tc.border}` }}>{row.type}</span>
                     </td>
@@ -142,7 +142,7 @@ export default function CookiePolicyPage() {
           <div style={{ padding: "16px clamp(12px, 4vw, 24px)", display: "flex", alignItems: "center", gap: 16, background: B.bg, borderTop: `1px solid ${B.border}` }}>
             <button
               onClick={handleSave}
-              style={{ padding: "8px 24px", borderRadius: 4, background: B.green, color: "#fff", border: "none", fontWeight: 600, fontSize: 14, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s ease", boxShadow: "0 2px 4px rgba(46,100,23,0.1)" }}
+              style={{ padding: "8px 24px", borderRadius: 4, background: B.green, color: "#fff", border: "none", fontWeight: 600, fontSize: 14, cursor: "pointer", transition: "all 0.15s ease", boxShadow: "0 2px 4px rgba(46,100,23,0.1)" }}
               onMouseOver={(e) => e.currentTarget.style.background = B.greenDark}
               onMouseOut={(e) => e.currentTarget.style.background = B.green}
             >

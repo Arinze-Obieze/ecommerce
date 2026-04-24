@@ -7,21 +7,21 @@ import ProductCard from '@/components/catalog/ProductCard';
 import ProductImpressionTracker from '@/components/catalog/ProductImpressionTracker';
 import { getExploreProducts } from '@/features/catalog/api/client';
 
-// ─── BRAND THEME (Zova) ───────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  green:      '#2E6417',   // Zova Forest
-  greenDark:  '#245213',
-  greenTint:  '#EDF5E6',
+  green:      'var(--zova-primary-action)',
+  greenDark:  'var(--zova-primary-action-hover)',
+  greenTint:  'var(--zova-green-soft)',
   greenBorder:'#B8D4A0',
-  gold:       '#EC9C00',   // Gold Harvest
-  goldDark:   '#d48c00',
-  charcoal:   '#191B19',   // Onyx Black
-  pageBg:     '#F5F1EA',   // Soft Linen
+  gold:       'var(--zova-accent-emphasis)',
+  goldDark:   'var(--zova-warning)',
+  charcoal:   'var(--zova-ink)',
+  pageBg:     'var(--zova-linen)',
   white:      '#FFFFFF',
-  border:     '#E8E4DC',
-  medGray:    '#6B6B6B',
-  mutedText:  '#999999',
-  softGray:   '#EDE9E0',
+  border:     'var(--zova-border)',
+  medGray:    'var(--zova-text-body)',
+  mutedText:  'var(--zova-text-muted)',
+  softGray:   'var(--zova-surface-alt)',
 };
 
 // ─── SKELETON CARD ────────────────────────────────────────────────────────────

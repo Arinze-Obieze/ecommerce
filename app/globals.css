@@ -56,6 +56,10 @@ button {
 }
 
 :root {
+  color-scheme: light;
+}
+
+:root {
   --zova-font-sans: "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
   --zova-font-display: "Panton", "Fraunces", "Playfair Display", Georgia, serif;
   --zova-green: #2E6417;
@@ -66,13 +70,242 @@ button {
   --zova-muted: #6B6B6B;
   --zova-linen: #F5F1EA;
   --zova-border: #E8E4DC;
+  --zova-line-strong: #d9d1c4;
+  --zova-surface-base: #ffffff;
+  --zova-surface-alt: #f8f4ed;
+  --zova-surface-raised: #fffdf9;
+  --zova-surface-strong: #182117;
+  --zova-text-strong: #191b19;
+  --zova-text-body: #424641;
+  --zova-text-muted: #73766f;
+  --zova-primary-action: #2E6417;
+  --zova-primary-action-hover: #245213;
+  --zova-accent-emphasis: #EC9C00;
+  --zova-accent-soft: #fff3cf;
+  --zova-focus: rgba(46, 100, 23, 0.2);
+  --zova-success: #1f7a4c;
+  --zova-warning: #b87800;
+  --zova-error: #c0392b;
+  --zova-info: #2e63a5;
   --zova-radius-sm: 8px;
   --zova-radius-md: 12px;
   --zova-radius-lg: 16px;
+  --zova-radius-xl: 24px;
   --zova-shadow-card: 0 1px 4px rgba(46, 100, 23, 0.05);
   --zova-shadow-card-hover: 0 8px 24px rgba(46, 100, 23, 0.10);
+  --zova-shadow-soft: 0 14px 40px rgba(25, 27, 25, 0.08);
+  --zova-shadow-strong: 0 24px 60px rgba(25, 27, 25, 0.16);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
+  margin: 0;
   font-family: var(--zova-font-sans);
+  background: var(--zova-linen);
+  color: var(--zova-ink);
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--zova-gold) 30%, white);
+  color: var(--zova-ink);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--zova-green) 70%, white);
+  outline-offset: 2px;
+}
+
+.serif {
+  font-family: var(--zova-font-display);
+}
+
+.zova-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(236, 156, 0, 0.08), transparent 24%),
+    linear-gradient(180deg, #fbf8f1 0%, #f5f1ea 100%);
+}
+
+.zova-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 2.4vw, 2rem);
+}
+
+.zova-topbar {
+  background: rgba(255, 253, 249, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(217, 209, 196, 0.7);
+  box-shadow: 0 10px 30px rgba(25, 27, 25, 0.06);
+}
+
+.zova-panel {
+  background: var(--zova-surface-raised);
+  border: 1px solid rgba(217, 209, 196, 0.8);
+  border-radius: var(--zova-radius-xl);
+  box-shadow: var(--zova-shadow-soft);
+}
+
+.zova-panel-soft {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 244, 237, 0.92));
+  border: 1px solid rgba(217, 209, 196, 0.82);
+  border-radius: var(--zova-radius-xl);
+}
+
+.zova-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.zova-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 999px;
+  background: var(--zova-green-soft);
+  border: 1px solid color-mix(in srgb, var(--zova-green) 24%, white);
+  color: var(--zova-primary-action);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.zova-title {
+  font-family: var(--zova-font-display);
+  color: var(--zova-text-strong);
+  letter-spacing: -0.04em;
+}
+
+.zova-copy {
+  color: var(--zova-text-body);
+  line-height: 1.7;
+}
+
+.zova-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.82rem;
+  border-radius: 999px;
+  background: var(--zova-accent-soft);
+  color: var(--zova-warning);
+  border: 1px solid color-mix(in srgb, var(--zova-accent-emphasis) 34%, white);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.zova-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.9rem 1.25rem;
+  font-family: var(--zova-font-sans);
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
+}
+
+.zova-btn:hover {
+  transform: translateY(-1px);
+}
+
+.zova-btn-primary {
+  background: linear-gradient(180deg, #336e1a 0%, var(--zova-primary-action) 100%);
+  color: white;
+  box-shadow: 0 12px 28px rgba(46, 100, 23, 0.24);
+}
+
+.zova-btn-primary:hover {
+  background: linear-gradient(180deg, #2c5d18 0%, var(--zova-primary-action-hover) 100%);
+}
+
+.zova-btn-secondary {
+  background: rgba(255, 253, 249, 0.78);
+  border-color: rgba(217, 209, 196, 0.9);
+  color: var(--zova-text-strong);
+}
+
+.zova-btn-secondary:hover {
+  border-color: rgba(46, 100, 23, 0.28);
+  background: white;
+}
+
+.zova-btn-ghost {
+  background: transparent;
+  color: var(--zova-primary-action);
+}
+
+.zova-btn-destructive {
+  background: rgba(192, 57, 43, 0.08);
+  border-color: rgba(192, 57, 43, 0.16);
+  color: var(--zova-error);
+}
+
+.zova-input,
+.zova-select {
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(217, 209, 196, 0.9);
+  background: rgba(255, 253, 249, 0.96);
+  color: var(--zova-text-strong);
+  padding: 0.95rem 1rem;
+  font: inherit;
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.zova-input:focus,
+.zova-select:focus {
+  border-color: var(--zova-primary-action);
+  box-shadow: 0 0 0 4px var(--zova-focus);
+  outline: none;
+  background: white;
+}
+
+.zova-kpi {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,244,237,0.98));
+  border: 1px solid rgba(217, 209, 196, 0.82);
+  border-radius: 22px;
+  box-shadow: var(--zova-shadow-soft);
+}
+
+.zova-ops-shell {
+  background:
+    radial-gradient(circle at top left, rgba(236, 156, 0, 0.08), transparent 22%),
+    linear-gradient(180deg, #f7f2e8 0%, #f1ebe0 100%);
+}
+
+.zova-ops-sidebar {
+  background: linear-gradient(180deg, #171e15 0%, #10150f 100%);
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+.zova-ops-card {
+  background: rgba(255, 252, 246, 0.97);
+  border: 1px solid rgba(217, 209, 196, 0.82);
+  border-radius: 24px;
+  box-shadow: 0 14px 36px rgba(25, 27, 25, 0.08);
+}
+
+.zova-ops-topbar {
+  background: rgba(255, 250, 243, 0.92);
+  border-bottom: 1px solid rgba(217, 209, 196, 0.8);
+  backdrop-filter: blur(14px);
 }

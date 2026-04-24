@@ -12,11 +12,11 @@ import { getBrowseProducts } from "@/features/catalog/api/client";
 // 🎨 THEME
 // ============================================================
 const THEME = {
-  pageBg:         "#FFFFFF",
-  sidebarWidth:   "272px",
-  skeletonBg:     "#F0F0F0",
-  skeletonRadius: "12px",
-  divider:        "#F0F0F0",
+  pageBg:         '#FFFFFF',
+  sidebarWidth:   '272px',
+  skeletonBg:     'var(--zova-surface-alt)',
+  skeletonRadius: '12px',
+  divider:        'var(--zova-border)',
 };
 
 // ── Loading skeleton ──────────────────────────────────────────

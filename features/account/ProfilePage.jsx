@@ -26,7 +26,7 @@ export default function ProfilePage() {
     }
   }, [searchParams]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#2E6417]">Loading...</div>;
+  if (loading) return <div className="zova-page min-h-screen flex items-center justify-center text-[#2E6417] font-semibold">Loading your account...</div>;
   if (!user) return null; // Handled by auth protection/middleware usually
 
   const renderContent = () => {
@@ -49,8 +49,15 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div className="zova-page">
+      <main className="zova-shell py-8 lg:py-12">
+        <div className="zova-section-header mb-8">
+          <div>
+            <span className="zova-eyebrow">Account centre</span>
+            <h1 className="zova-title mt-3 text-[2rem] font-black">Your ZOVA account</h1>
+            <p className="zova-copy mt-2 max-w-2xl">Manage orders, saved addresses, wishlist items, and account preferences from one calm, trusted workspace.</p>
+          </div>
+        </div>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
           <aside className="w-full lg:w-72 shrink-0">

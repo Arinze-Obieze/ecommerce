@@ -7,25 +7,26 @@ import { FiArrowLeft, FiCheckCircle, FiClock, FiHome, FiMapPin, FiPackage, FiSho
 import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  green: '#2E6417',
-  greenDark: '#245213',
-  greenTint: '#EDF5E6',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenTint:   'var(--zova-green-soft)',
   greenBorder: '#B8D4A0',
-  white: '#FFFFFF',
-  pageBg: '#F9FAFB',
-  charcoal: '#111111',
-  medGray: '#666666',
-  mutedText: '#999999',
-  border: '#E8E8E8',
-  softGray: '#F5F5F5',
+  white:       '#FFFFFF',
+  pageBg:      'var(--zova-linen)',
+  charcoal:    'var(--zova-ink)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
+  border:      'var(--zova-border)',
+  softGray:    'var(--zova-surface-alt)',
 };
 
 const STATUS = {
-  completed: { label: 'Completed', color: '#2E6417', bg: '#EDF5E6', border: '#B8D4A0' },
+  completed:  { label: 'Completed',  color: 'var(--zova-primary-action)', bg: 'var(--zova-green-soft)', border: '#B8D4A0' },
   processing: { label: 'Processing', color: '#EA580C', bg: '#FFF7ED', border: '#FED7AA' },
-  pending: { label: 'Pending', color: '#666666', bg: '#F5F5F5', border: '#E8E8E8' },
-  cancelled: { label: 'Cancelled', color: '#E53935', bg: '#FEF2F2', border: '#FECACA' },
+  pending:    { label: 'Pending',    color: 'var(--zova-text-body)', bg: 'var(--zova-surface-alt)', border: 'var(--zova-border)' },
+  cancelled:  { label: 'Cancelled',  color: 'var(--zova-error)', bg: '#FEF2F2', border: '#FECACA' },
 };
 
 function formatDateTime(value) {
@@ -127,6 +128,7 @@ export default function ProfileOrderDetailPage() {
   const [returnRequest, setReturnRequest] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [returnReason, setReturnReason] = useState('');
   const [returnDetails, setReturnDetails] = useState('');
   const [returnBusy, setReturnBusy] = useState(false);
@@ -265,6 +267,7 @@ export default function ProfileOrderDetailPage() {
       if (!res.ok) throw new Error(json.error || 'Failed to submit cancellation request');
       setCancellationRequest(json.data || null);
       setCancelReason('');
+      setCancelModalOpen(false);
     } catch (requestError) {
       setError(requestError.message || 'Failed to submit cancellation request');
     } finally {
@@ -366,11 +369,117 @@ export default function ProfileOrderDetailPage() {
           </Link>
         </div>
 
-        {error ? (
+      {error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+      ) : null}
+
+      {cancelModalOpen ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(17, 17, 17, 0.45)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            zIndex: 60,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 520,
+              background: THEME.white,
+              border: `1px solid ${THEME.border}`,
+              borderRadius: 24,
+              padding: 24,
+              boxShadow: '0 24px 80px rgba(17, 17, 17, 0.18)',
+            }}
+          >
+            <div className="space-y-3">
+              <div>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText }}>
+                  Cancellation Request
+                </p>
+                <h2 style={{ margin: '8px 0 0', fontSize: 24, fontWeight: 900, color: THEME.charcoal }}>
+                  Why do you want to cancel this order?
+                </h2>
+              </div>
+
+              <p style={{ margin: 0, fontSize: 14, color: THEME.medGray, lineHeight: 1.7 }}>
+                Share a short reason and the operations team will review it before dispatch progresses further.
+              </p>
+
+              <textarea
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+                placeholder="Tell us why you need this order cancelled"
+                style={{
+                  width: '100%',
+                  minHeight: 140,
+                  borderRadius: 16,
+                  border: `1px solid ${THEME.border}`,
+                  padding: '14px 16px',
+                  fontSize: 14,
+                  color: THEME.charcoal,
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
+              />
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (cancelBusy) return;
+                    setCancelModalOpen(false);
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 999,
+                    border: `1px solid ${THEME.border}`,
+                    background: THEME.white,
+                    color: THEME.charcoal,
+                    fontSize: 14,
+                    fontWeight: 800,
+                    padding: '12px 16px',
+                    cursor: cancelBusy ? 'not-allowed' : 'pointer',
+                    opacity: cancelBusy ? 0.6 : 1,
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={submitCancellationRequest}
+                  disabled={cancelBusy || !cancelReason.trim()}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 999,
+                    border: 'none',
+                    background: THEME.green,
+                    color: THEME.white,
+                    fontSize: 14,
+                    fontWeight: 800,
+                    padding: '12px 18px',
+                    cursor: cancelBusy || !cancelReason.trim() ? 'not-allowed' : 'pointer',
+                    opacity: cancelBusy || !cancelReason.trim() ? 0.6 : 1,
+                  }}
+                >
+                  {cancelBusy ? 'Submitting...' : 'Submit cancellation request'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
         {order ? (
           <div className="space-y-6">
@@ -427,6 +536,91 @@ export default function ProfileOrderDetailPage() {
                   >
                     {itemCount} {itemCount === 1 ? 'item' : 'items'}
                   </span>
+                </div>
+              </div>
+            </section>
+
+            <section
+              style={{
+                background: THEME.white,
+                border: `1px solid ${THEME.border}`,
+                borderRadius: 24,
+                padding: 20,
+              }}
+              className="sm:p-7"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText }}>
+                    Cancellation
+                  </p>
+                  {cancellationRequest ? (
+                    <>
+                      <p style={{ margin: '8px 0 0', fontSize: 15, fontWeight: 800, color: THEME.charcoal }}>
+                        Cancellation request submitted
+                      </p>
+                      <p style={{ margin: '8px 0 0', fontSize: 14, color: THEME.medGray, lineHeight: 1.7 }}>
+                        We have your request and the operations team will review it before dispatch progresses further.
+                      </p>
+                    </>
+                  ) : canRequestCancellation ? (
+                    <>
+                      <p style={{ margin: '8px 0 0', fontSize: 15, fontWeight: 800, color: THEME.charcoal }}>
+                        Need to stop this order?
+                      </p>
+                      <p style={{ margin: '8px 0 0', fontSize: 14, color: THEME.medGray, lineHeight: 1.7 }}>
+                        Start a cancellation request here and share the reason in a quick confirmation modal.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ margin: '8px 0 0', fontSize: 15, fontWeight: 800, color: THEME.charcoal }}>
+                        Cancellation unavailable
+                      </p>
+                      <p style={{ margin: '8px 0 0', fontSize: 14, color: THEME.medGray, lineHeight: 1.7 }}>
+                        This order is no longer in a stage where a new cancellation request can be submitted.
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {cancellationRequest ? (
+                    <div className="inline-flex items-center rounded-full border border-[#E8E8E8] bg-[#F5F5F5] px-4 py-2 text-sm font-semibold text-[#111111]">
+                      {String(cancellationRequest.status || 'pending').replace(/_/g, ' ')}
+                    </div>
+                  ) : canRequestCancellation ? (
+                    <button
+                      type="button"
+                      onClick={() => setCancelModalOpen(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: 999,
+                        border: 'none',
+                        background: THEME.green,
+                        color: THEME.white,
+                        fontSize: 14,
+                        fontWeight: 800,
+                        padding: '12px 18px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Request cancellation
+                    </button>
+                  ) : (
+                    <div
+                      className="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold"
+                      style={{
+                        color: THEME.medGray,
+                        background: THEME.softGray,
+                        border: `1px solid ${THEME.border}`,
+                      }}
+                    >
+                      Not available
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -585,74 +779,6 @@ export default function ProfileOrderDetailPage() {
                       <strong style={{ color: THEME.charcoal, fontSize: 18 }}>{formatMoney(order.total_amount)}</strong>
                     </div>
                   </div>
-                </DetailCard>
-
-                <DetailCard title="Cancellation">
-                  {cancellationRequest ? (
-                    <div className="space-y-3 text-sm">
-                      <div className="inline-flex items-center rounded-full border border-[#E8E8E8] bg-[#F5F5F5] px-3 py-1 font-semibold text-[#111111]">
-                        {String(cancellationRequest.status || 'pending').replace(/_/g, ' ')}
-                      </div>
-                      <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
-                        Reason: {cancellationRequest.reason}
-                      </p>
-                      {cancellationRequest.resolution_note ? (
-                        <p style={{ margin: 0, color: THEME.medGray, lineHeight: 1.7 }}>
-                          Resolution: {cancellationRequest.resolution_note}
-                        </p>
-                      ) : null}
-                      <p style={{ margin: 0, fontSize: 12, color: THEME.mutedText }}>
-                        Submitted {formatDateTime(cancellationRequest.created_at)}
-                      </p>
-                    </div>
-                  ) : canRequestCancellation ? (
-                    <div className="space-y-3">
-                      <p style={{ margin: 0, fontSize: 13, color: THEME.medGray, lineHeight: 1.7 }}>
-                        Need to stop this order before it moves further? Send a cancellation request and the operations team can review it before dispatch progresses.
-                      </p>
-                      <textarea
-                        value={cancelReason}
-                        onChange={(event) => setCancelReason(event.target.value)}
-                        placeholder="Tell us why you need this order cancelled"
-                        style={{
-                          width: '100%',
-                          minHeight: 110,
-                          borderRadius: 14,
-                          border: `1px solid ${THEME.border}`,
-                          padding: '12px 14px',
-                          fontSize: 13,
-                          color: THEME.charcoal,
-                          resize: 'vertical',
-                          outline: 'none',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={submitCancellationRequest}
-                        disabled={cancelBusy || !cancelReason.trim()}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 999,
-                          border: 'none',
-                          background: THEME.green,
-                          color: THEME.white,
-                          fontSize: 13,
-                          fontWeight: 800,
-                          padding: '11px 16px',
-                          cursor: cancelBusy || !cancelReason.trim() ? 'not-allowed' : 'pointer',
-                          opacity: cancelBusy || !cancelReason.trim() ? 0.6 : 1,
-                        }}
-                      >
-                        {cancelBusy ? 'Submitting...' : 'Request cancellation'}
-                      </button>
-                    </div>
-                  ) : (
-                    <p style={{ margin: 0, fontSize: 13, color: THEME.medGray, lineHeight: 1.7 }}>
-                      This order is no longer in a stage where a new cancellation request can be submitted.
-                    </p>
-                  )}
                 </DetailCard>
 
                 <DetailCard title="Return & Refund">

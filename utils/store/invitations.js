@@ -78,7 +78,6 @@ export async function ensureUserProfile(adminClient, { userId, email, fullName =
       email: normalizedEmail,
       full_name: name,
       phone: null,
-      state: null,
       avatar: null,
     })
     .select('id, email, full_name')

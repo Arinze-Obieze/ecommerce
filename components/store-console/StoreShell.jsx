@@ -26,8 +26,7 @@ export default function StoreShell({ storeName, role, children }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
-        .store-root { font-family: 'Geist', system-ui, sans-serif; }
+        .store-root { font-family: var(--zova-font-sans); }
         .store-sidebar { transition: width 280ms cubic-bezier(.4,0,.2,1); }
         .store-content { transition: margin-left 280ms cubic-bezier(.4,0,.2,1); }
         .store-tooltip { opacity:0; transform:translateX(-6px); pointer-events:none; transition: opacity 150ms, transform 150ms; }
@@ -37,27 +36,24 @@ export default function StoreShell({ storeName, role, children }) {
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 99px; }
       `}</style>
 
-      <div className="store-root flex min-h-screen bg-[#f4f5f7]">
+      <div className="store-root zova-ops-shell flex min-h-screen">
 
         {/* ══ DESKTOP SIDEBAR ══════════════════════════════════════════ */}
         <aside
-          className={`store-sidebar hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 overflow-hidden
-            ${collapsed ? 'w-[64px]' : 'w-[220px]'}`}
-          style={{ background: 'linear-gradient(180deg, #111827 0%, #0d1420 100%)', borderRight: '1px solid rgba(255,255,255,.06)' }}
+          className={`zova-ops-sidebar store-sidebar hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 overflow-hidden
+            ${collapsed ? 'w-[72px]' : 'w-[248px]'}`}
         >
           {/* Brand */}
           <div className={`flex items-center h-14 border-b shrink-0 ${collapsed ? 'justify-center px-0' : 'gap-2.5 px-4'}`}
             style={{ borderColor: 'rgba(255,255,255,.06)' }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M7 2l5 5-5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'linear-gradient(135deg, #2E6417, #245213)', boxShadow: '0 10px 20px rgba(46,100,23,0.22)' }}>
+              <span className="text-white font-black text-xs tracking-[0.18em]">Z</span>
             </div>
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-white font-semibold text-sm leading-none tracking-tight truncate">{storeName || 'My Store'}</p>
-                <p className="text-[10px] font-medium mt-0.5" style={{ color: '#10b981' }}>Store Console</p>
+                <p className="text-[10px] font-medium mt-1 uppercase tracking-[0.18em]" style={{ color: 'var(--zova-accent-emphasis)' }}>Store Console</p>
               </div>
             )}
           </div>
@@ -72,7 +68,7 @@ export default function StoreShell({ storeName, role, children }) {
             {!collapsed ? (
               <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,.04)' }}>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                  style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
                   {initials}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -83,7 +79,7 @@ export default function StoreShell({ storeName, role, children }) {
             ) : (
               <div className="flex justify-center py-1">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                  style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
                   {initials}
                 </div>
               </div>
@@ -111,16 +107,13 @@ export default function StoreShell({ storeName, role, children }) {
         {mobileOpen && (
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
         )}
-        <aside className={`fixed inset-y-0 left-0 z-50 w-[220px] flex flex-col lg:hidden transition-transform duration-300
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
-          style={{ background: 'linear-gradient(180deg, #111827 0%, #0d1420 100%)', borderRight: '1px solid rgba(255,255,255,.06)' }}>
+        <aside className={`zova-ops-sidebar fixed inset-y-0 left-0 z-50 w-[248px] flex flex-col lg:hidden transition-transform duration-300
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex items-center justify-between h-14 px-4 border-b shrink-0" style={{ borderColor: 'rgba(255,255,255,.06)' }}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M2 7h10M7 2l5 5-5 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
+                <span className="text-white font-black text-xs tracking-[0.18em]">Z</span>
               </div>
               <p className="text-white font-semibold text-sm truncate">{storeName || 'My Store'}</p>
             </div>
@@ -134,7 +127,7 @@ export default function StoreShell({ storeName, role, children }) {
           <div className="shrink-0 border-t p-3 space-y-2" style={{ borderColor: 'rgba(255,255,255,.06)' }}>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
                 {initials}
               </div>
               <div className="min-w-0">
@@ -151,11 +144,10 @@ export default function StoreShell({ storeName, role, children }) {
 
         {/* ══ MAIN ═════════════════════════════════════════════════════ */}
         <div className={`store-content flex-1 flex flex-col min-h-screen min-w-0
-          ${collapsed ? 'lg:ml-[64px]' : 'lg:ml-[220px]'}`}>
+          ${collapsed ? 'lg:ml-[72px]' : 'lg:ml-[248px]'}`}>
 
           {/* Top bar */}
-          <header className="h-14 bg-white border-b border-black/[.06] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0"
-            style={{ boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+          <header className="zova-ops-topbar h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0">
             <div className="flex items-center gap-3">
               <button onClick={() => setMobileOpen(true)}
                 className="lg:hidden p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
@@ -163,17 +155,17 @@ export default function StoreShell({ storeName, role, children }) {
               </button>
               <div>
                 <h1 className="text-sm font-semibold text-gray-900 leading-tight">{storeName || 'My Store'}</h1>
-                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest hidden sm:block">Store Console</p>
+                <p className="text-[10px] text-[#6B6B6B] font-medium uppercase tracking-[0.18em] hidden sm:block">Seller workspace</p>
               </div>
             </div>
             <div className="flex items-center gap-2.5">
               <div className="hidden sm:flex items-center gap-1.5 rounded-full px-2.5 py-1"
-                style={{ background: 'rgba(16,185,129,.08)', border: '1px solid rgba(16,185,129,.2)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse block" />
-                <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide">{formatRole(role)}</span>
+                style={{ background: 'rgba(236,156,0,.12)', border: '1px solid rgba(236,156,0,.24)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#EC9C00] animate-pulse block" />
+                <span className="text-[10px] font-semibold text-[#b87800] uppercase tracking-wide">{formatRole(role)}</span>
               </div>
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
                 {initials}
               </div>
             </div>

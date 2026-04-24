@@ -1,21 +1,21 @@
 "use client";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FiGrid, FiShoppingBag, FiHeart, FiMapPin, FiSettings, FiLogOut, FiChevronDown, FiHome, FiCompass, FiBell } from 'react-icons/fi';
 import { useAuth } from '@/components/auth/AuthProvider';
 
-// ─── THEME ────────────────────────────────────────────────────────────────────
+// Brand tokens — sourced from app/globals.css
 const THEME = {
-  green:      '#2E6417',
-  greenDark:  '#245213',
-  greenTint:  '#EDF5E6',
-  greenBorder:'#B8D4A0',
-  white:      '#FFFFFF',
-  charcoal:   '#111111',
-  medGray:    '#666666',
-  mutedText:  '#999999',
-  border:     '#E8E8E8',
-  softGray:   '#F5F5F5',
+  green:       'var(--zova-primary-action)',
+  greenDark:   'var(--zova-primary-action-hover)',
+  greenTint:   'var(--zova-green-soft)',
+  greenBorder: '#B8D4A0',
+  white:       '#FFFFFF',
+  charcoal:    'var(--zova-ink)',
+  medGray:     'var(--zova-text-body)',
+  mutedText:   'var(--zova-text-muted)',
+  border:      'var(--zova-border)',
+  softGray:    'var(--zova-surface-alt)',
 };
 
 const menuItems = [
@@ -103,30 +103,50 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const activeItem = menuItems.find((item) => item.id === activeTab) || menuItems[0];
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+    const syncMenuState = (event) => {
+      setMenuOpen(event.matches);
+    };
+
+    setMenuOpen(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncMenuState);
+      return () => mediaQuery.removeEventListener('change', syncMenuState);
+    }
+
+    mediaQuery.addListener(syncMenuState);
+    return () => mediaQuery.removeListener(syncMenuState);
+  }, []);
+
   return (
     <div
       style={{
-        background: THEME.white,
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,244,237,0.94))',
         border: `1px solid ${THEME.border}`,
-        borderRadius: 20,
+        borderRadius: 24,
         overflow: 'hidden',
+        boxShadow: '0 14px 36px rgba(25,27,25,0.08)',
       }}
     >
       {/* Label */}
-      <div style={{ padding: '18px 20px 14px', borderBottom: `1px solid ${THEME.border}` }}>
+      <div style={{ padding: '22px 22px 16px', borderBottom: `1px solid ${THEME.border}` }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <p style={{
               fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.1em',
+              fontWeight: 800,
+              letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: THEME.mutedText,
+              color: THEME.green,
               margin: 0,
             }}>
               My Account
             </p>
-            <p style={{ margin: '6px 0 0', fontSize: 14, fontWeight: 700, color: THEME.charcoal }}>
+            <p style={{ margin: '8px 0 0', fontSize: 18, fontWeight: 800, color: THEME.charcoal, letterSpacing: '-0.03em' }}>
               {activeItem.label}
             </p>
           </div>
@@ -161,7 +181,7 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
           <Link
             href="/"
             style={{
@@ -206,7 +226,7 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
 
       {/* Nav */}
       {menuOpen ? (
-        <nav style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <nav style={{ padding: '12px 12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {menuItems.map((item) => (
             <NavItem
               key={item.id}
@@ -214,7 +234,9 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
               isActive={activeTab === item.id}
               onClick={() => {
                 setActiveTab(item.id);
-                setMenuOpen(false);
+                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                  setMenuOpen(false);
+                }
               }}
             />
           ))}

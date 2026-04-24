@@ -82,7 +82,7 @@ export function LegalPageContainer({ title, icon, subtitle, lastUpdated, tocItem
           <div style={{ maxWidth: 860, margin: "0 auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 12 }}>
               <div style={{ width: 48, height: 48, borderRadius: 6, background: B.greenLight, color: B.greenDark, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, border: `1px solid ${B.greenBorder}` }}>{icon}</div>
-              <h1 style={{ fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 600, color: B.charcoal, margin: 0, letterSpacing: "-0.01em" }}>{title}</h1>
+              <h1 style={{ fontFamily: "var(--zova-font-display)", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 600, color: B.charcoal, margin: 0, letterSpacing: "-0.01em" }}>{title}</h1>
             </div>
             <p style={{ fontSize: 16, color: B.textSubtle, lineHeight: 1.6, maxWidth: 640, marginBottom: 20 }}>{subtitle}</p>
             <div style={{ fontSize: 13, color: B.textSubtle, fontWeight: 400 }}>Last updated: {lastUpdated} &nbsp;·&nbsp; ZOVA Limited &nbsp;·&nbsp; Onitsha, Anambra State, Nigeria</div>

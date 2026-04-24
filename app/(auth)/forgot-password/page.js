@@ -6,21 +6,22 @@ import Image from 'next/image';
 import { FiArrowLeft, FiCheck, FiMail } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 
+// Brand tokens are in app/globals.css — use CSS vars via inline style strings
 const T = {
-  green: '#2E6417',
-  greenDark: '#245213',
-  greenDeep: '#191B19',
-  greenTint: '#EDF5E6',
-  greenBorder: '#B8D4A0',
-  charcoal: '#111111',
-  softGray: '#F5F5F5',
-  pageBg: '#F9FAFB',
-  border: '#E8E8E8',
-  medGray: '#666666',
-  mutedText: '#999999',
-  white: '#FFFFFF',
-  red: '#E53935',
-  redLight: '#FEF2F2',
+  green:      'var(--zova-primary-action)',
+  greenDark:  'var(--zova-primary-action-hover)',
+  greenDeep:  'var(--zova-text-strong)',
+  greenTint:  'var(--zova-green-soft)',
+  greenBorder:'#B8D4A0',
+  charcoal:   'var(--zova-ink)',
+  softGray:   '#F5F5F5',
+  pageBg:     'var(--zova-linen)',
+  border:     'var(--zova-border)',
+  medGray:    'var(--zova-text-body)',
+  mutedText:  'var(--zova-text-muted)',
+  white:      '#FFFFFF',
+  red:        'var(--zova-error)',
+  redLight:   '#FEF2F2',
 };
 
 const SLIDES = [
@@ -92,7 +93,6 @@ export default function ForgotPasswordPage() {
     border: `1.5px solid ${error ? T.red : emailFocused ? T.green : emailHovered ? T.greenBorder : T.border}`,
     background: error ? T.redLight : emailFocused ? T.white : T.softGray,
     fontSize: 14,
-    fontFamily: 'inherit',
     color: T.charcoal,
     outline: 'none',
     boxSizing: 'border-box',
@@ -103,12 +103,9 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
+        
         * { box-sizing: border-box; }
-        .fp-root { font-family: 'Outfit', sans-serif; }
-        .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
-
+                
         @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.82); } to { opacity: 1; transform: scale(1); } }
@@ -190,7 +187,7 @@ export default function ForgotPasswordPage() {
               >
                 {!logoError ? (
                   <Image
-                    src="/brand/logo.png"
+                    src="/brand/logo.svg"
                     alt="Zova"
                     width={118}
                     height={34}

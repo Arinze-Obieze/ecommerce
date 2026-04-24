@@ -114,7 +114,7 @@ const HeroCard = ({ mood }) => (
         display: 'inline-flex',
         alignItems: 'center',
         gap: 5,
-        background: '#2E6417',
+        background: 'var(--zova-primary-action)',
         color: '#fff',
         borderRadius: 24,
         padding: '8px 18px',
@@ -246,7 +246,7 @@ const ShopByMood = () => {
       {/* Header */}
       <div className="mood-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', padding: '0 1rem' }}>
         <span style={{ fontSize: 20, fontWeight: 600, color: '#111' }}>Shop by mood</span>
-        <Link href="/mood" style={{ fontSize: 13, fontWeight: 500, color: '#2E6417', textDecoration: 'none' }}>
+        <Link href="/mood" style={{ fontSize: 13, fontWeight: 500, color: 'var(--zova-primary-action)', textDecoration: 'none' }}>
           See all moods →
         </Link>
       </div>
