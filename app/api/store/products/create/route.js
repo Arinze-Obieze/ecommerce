@@ -339,7 +339,6 @@ export async function POST(request) {
     const productRec = {
       product_id: productId,
       seller_id: store.id,
-      store_id: store.id,
       product_name: productName,
       description,
       category,
@@ -605,7 +604,7 @@ export async function POST(request) {
     if (verifyErr) console.warn("[Create] Verify log failed:", verifyErr.message);
 
     // 12. Fetch the marketplace row created by step 10
-    const { data: marketplaceProduct, error: fetchErr } = await supabase
+    const { data: marketplaceProduct, error: fetchErr } = await adminClient
       .from("products")
       .select("id")
       .eq("store_id", store.id)
