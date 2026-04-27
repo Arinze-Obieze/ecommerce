@@ -1,5 +1,3 @@
-//StoreNav.jsx
-
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,29 +10,32 @@ const groups = [
   {
     label: 'Main',
     items: [
-      { href: '/store/dashboard',            label: 'Overview',   icon: FiGrid },
-      { href: '/store/dashboard/products',   label: 'Products',   icon: FiPackage },
-      { href: '/store/dashboard/orders',     label: 'Orders',     icon: FiShoppingBag },
-      { href: '/store/dashboard/inventory',  label: 'Inventory',  icon: FiPackage },
-      { href: '/store/dashboard/promotions', label: 'Promotions', icon: FiTag },
+      { href: '/store/dashboard',            label: 'Overview',       icon: FiGrid },
+      { href: '/store/dashboard/products',   label: 'Products',       icon: FiPackage },
+      { href: '/store/dashboard/orders',     label: 'Orders',         icon: FiShoppingBag },
+      { href: '/store/dashboard/inventory',  label: 'Inventory',      icon: FiPackage },
+      { href: '/store/dashboard/promotions', label: 'Promotions',     icon: FiTag },
     ],
   },
   {
     label: 'Finance',
     items: [
-      { href: '/store/dashboard/analytics',  label: 'Analytics',  icon: FiBarChart2 },
-      { href: '/store/dashboard/payouts',    label: 'Payouts',    icon: FiCreditCard },
+      { href: '/store/dashboard/analytics',  label: 'Analytics',      icon: FiBarChart2 },
+      { href: '/store/dashboard/payouts',    label: 'Payouts',        icon: FiCreditCard },
     ],
   },
   {
     label: 'Account',
     items: [
       { href: '/store/dashboard/notifications', label: 'Notifications', icon: FiBell },
-      { href: '/store/dashboard/settings',   label: 'Settings',   icon: FiSettings },
-      { href: '/store/dashboard/team',       label: 'Team',       icon: FiUsers },
+      { href: '/store/dashboard/settings',   label: 'Settings',       icon: FiSettings },
+      { href: '/store/dashboard/team',       label: 'Team',           icon: FiUsers },
     ],
   },
 ];
+
+const COLOR_INACTIVE = 'rgba(255,255,255,0.82)';
+const COLOR_ACTIVE   = '#ffffff';
 
 export default function StoreNav({ collapsed = false }) {
   const pathname = usePathname();
@@ -45,7 +46,7 @@ export default function StoreNav({ collapsed = false }) {
         <div key={group.label}>
           {!collapsed && (
             <p className="text-[9px] font-bold uppercase tracking-[.14em] px-2 pb-1.5"
-              style={{ color: 'rgba(255,255,255,.28)' }}>
+              style={{ color: '#fb923c' }}>
               {group.label}
             </p>
           )}
@@ -60,23 +61,24 @@ export default function StoreNav({ collapsed = false }) {
                   <Link
                     href={item.href}
                     className={`flex items-center rounded-lg transition-all duration-150 relative
-                      ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}
-                      ${active ? 'text-white' : 'text-white/40 hover:text-white/75'}`}
+                      ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}`}
                     style={active ? {
+                      color: COLOR_ACTIVE,
                       background: 'rgba(46,100,23,.22)',
-                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)'
-                    } : {}}
+                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)',
+                    } : {
+                      color: COLOR_INACTIVE,
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.color = COLOR_ACTIVE; }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.color = COLOR_INACTIVE; }}
                   >
                     {active && !collapsed && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r"
                         style={{ background: 'var(--zova-accent-emphasis)' }} />
                     )}
-                    <Icon
-                      className={`shrink-0`}
-                      style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15 }}
-                    />
+                    <Icon style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15, flexShrink: 0 }} />
                     {!collapsed && (
-                      <span className={`text-[13px] leading-none ${active ? 'font-semibold text-white' : 'font-medium'}`}>
+                      <span className="text-[13px] leading-none" style={{ fontWeight: active ? 600 : 400 }}>
                         {item.label}
                       </span>
                     )}

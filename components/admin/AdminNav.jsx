@@ -10,29 +10,32 @@ const groups = [
   {
     label: 'Main',
     items: [
-      { href: '/admin',           label: 'Overview',    icon: FiGrid },
-      { href: '/admin/stores',    label: 'Stores',      icon: FiUsers },
-      { href: '/admin/orders',    label: 'Orders',      icon: FiShoppingBag },
-      { href: '/admin/products',  label: 'Products',    icon: FiPackage },
-      { href: '/admin/reviews',   label: 'Reviews',     icon: FiStar },
+      { href: '/admin',           label: 'Overview',      icon: FiGrid },
+      { href: '/admin/stores',    label: 'Stores',        icon: FiUsers },
+      { href: '/admin/orders',    label: 'Orders',        icon: FiShoppingBag },
+      { href: '/admin/products',  label: 'Products',      icon: FiPackage },
+      { href: '/admin/reviews',   label: 'Reviews',       icon: FiStar },
     ],
   },
   {
     label: 'Finance',
     items: [
-      { href: '/admin/escrow',    label: 'Escrow',      icon: FiCreditCard },
+      { href: '/admin/escrow',    label: 'Escrow',        icon: FiCreditCard },
     ],
   },
   {
     label: 'System',
     items: [
-      { href: '/admin/return-policy', label: 'Return Policy', icon: FiRefreshCw },
-      { href: '/admin/logs',      label: 'System Logs', icon: FiFileText },
-      { href: '/admin/analytics', label: 'Analytics',   icon: FiBarChart2 },
-      { href: '/admin/ranking-debug', label: 'Ranking Debug', icon: FiSliders },
+      { href: '/admin/return-policy',   label: 'Return Policy',  icon: FiRefreshCw },
+      { href: '/admin/logs',            label: 'System Logs',    icon: FiFileText },
+      { href: '/admin/analytics',       label: 'Analytics',      icon: FiBarChart2 },
+      { href: '/admin/ranking-debug',   label: 'Ranking Debug',  icon: FiSliders },
     ],
   },
 ];
+
+const COLOR_INACTIVE = 'rgba(255,255,255,0.82)';
+const COLOR_ACTIVE   = '#ffffff';
 
 export default function AdminNav({ collapsed = false }) {
   const pathname = usePathname();
@@ -43,7 +46,7 @@ export default function AdminNav({ collapsed = false }) {
         <div key={group.label}>
           {!collapsed && (
             <p className="text-[9px] font-bold uppercase tracking-[.14em] px-2 pb-1.5"
-              style={{ color: 'rgba(255,255,255,.28)' }}>
+              style={{ color: '#fb923c' }}>
               {group.label}
             </p>
           )}
@@ -58,31 +61,29 @@ export default function AdminNav({ collapsed = false }) {
                   <Link
                     href={item.href}
                     className={`flex items-center rounded-lg transition-all duration-150 relative
-                      ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}
-                      ${active
-                        ? 'text-white'
-                        : 'text-white/40 hover:text-white/75'
-                      }`}
+                      ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}`}
                     style={active ? {
+                      color: COLOR_ACTIVE,
                       background: 'rgba(46,100,23,.22)',
-                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)'
-                    } : {}}
+                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)',
+                    } : {
+                      color: COLOR_INACTIVE,
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.color = COLOR_ACTIVE; }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.color = COLOR_INACTIVE; }}
                   >
-                    {/* Active left bar */}
                     {active && !collapsed && (
                       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r"
                         style={{ background: 'var(--zova-accent-emphasis)' }} />
                     )}
-                    <Icon className={`shrink-0 ${collapsed ? 'w-4.5 h-4.5' : 'w-4 h-4'}`}
-                      style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15 }} />
+                    <Icon style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15, flexShrink: 0 }} />
                     {!collapsed && (
-                      <span className={`text-[13px] leading-none ${active ? 'font-semibold text-white' : 'font-medium'}`}>
+                      <span className="text-[13px] leading-none" style={{ fontWeight: active ? 600 : 400 }}>
                         {item.label}
                       </span>
                     )}
                   </Link>
 
-                  {/* Tooltip when collapsed */}
                   {collapsed && (
                     <div className="nav-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50">
                       <div className="px-2.5 py-1.5 rounded-lg text-white text-xs font-medium whitespace-nowrap shadow-xl"
