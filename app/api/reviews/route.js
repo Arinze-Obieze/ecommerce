@@ -4,6 +4,8 @@ import { invalidateReviewCache } from '@/utils/platform/cache-invalidation';
 
 export const dynamic = 'force-dynamic';
 
+const REVIEW_WINDOW_DAYS = 90;
+
 const REVIEWS_MIGRATION_HINT =
   'Database is missing the hardened review columns. Apply documentation/migrations/2026-04-10_marketplace_ops_extensions.sql and retry.';
 
@@ -26,6 +28,7 @@ async function getAuthedUser() {
   return { user, supabase };
 }
 
+// Returns the delivered order or null. Also checks the review window.
 async function findVerifiedPurchase(supabase, { userId, productId }) {
   const { data: orderItems, error } = await supabase
     .from('order_items')
@@ -38,11 +41,11 @@ async function findVerifiedPurchase(supabase, { userId, productId }) {
   }
 
   const orderIds = [...new Set((orderItems || []).map((row) => row.order_id).filter(Boolean))];
-  if (orderIds.length === 0) return null;
+  if (orderIds.length === 0) return { order: null, windowExpired: false };
 
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
-    .select('id, user_id, status, fulfillment_status')
+    .select('id, user_id, status, fulfillment_status, delivered_at, buyer_confirmed_at')
     .eq('user_id', userId)
     .in('id', orderIds)
     .limit(200);
@@ -54,9 +57,60 @@ async function findVerifiedPurchase(supabase, { userId, productId }) {
   const deliveredOrder = (orders || []).find((order) =>
     ['delivered', 'delivered_confirmed'].includes(String(order.fulfillment_status || '').toLowerCase()) &&
     String(order.status || '').toLowerCase() !== 'cancelled'
-  );
+  ) || null;
 
-  return deliveredOrder || null;
+  if (!deliveredOrder) return { order: null, windowExpired: false };
+
+  // Check review window using delivered_at, falling back to buyer_confirmed_at.
+  const deliveryTimestamp = deliveredOrder.delivered_at || deliveredOrder.buyer_confirmed_at;
+  if (deliveryTimestamp) {
+    const daysSince = (Date.now() - new Date(deliveryTimestamp).getTime()) / 86_400_000;
+    if (daysSince > REVIEW_WINDOW_DAYS) {
+      return { order: null, windowExpired: true };
+    }
+  }
+
+  return { order: deliveredOrder, windowExpired: false };
+}
+
+// Scores a review submission for suspicious signals (higher = more suspicious).
+// accountCreatedAt comes from auth.getUser() — no extra DB query needed.
+async function suspicionScore(supabase, { userId, comment, accountCreatedAt }) {
+  let score = 0;
+  const signals = [];
+
+  if (comment.trim().length < 20) {
+    score += 1;
+    signals.push('short_comment');
+  }
+
+  if (accountCreatedAt) {
+    const ageDays = (Date.now() - new Date(accountCreatedAt).getTime()) / 86_400_000;
+    if (ageDays < 3) {
+      score += 2;
+      signals.push('very_new_account');
+    } else if (ageDays < 7) {
+      score += 1;
+      signals.push('new_account');
+    }
+  }
+
+  const since = new Date(Date.now() - 86_400_000).toISOString();
+  const { count } = await supabase
+    .from('reviews')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .gte('created_at', since);
+
+  if ((count || 0) >= 5) {
+    score += 2;
+    signals.push('review_burst');
+  } else if ((count || 0) >= 3) {
+    score += 1;
+    signals.push('review_burst_mild');
+  }
+
+  return { score, signals };
 }
 
 export async function POST(request) {
@@ -80,15 +134,45 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
     }
 
-    const verifiedOrder = await findVerifiedPurchase(supabase, {
+    // Self-review guard: store owner cannot review their own product.
+    const { data: productStore } = await supabase
+      .from('products')
+      .select('id, stores!inner(user_id)')
+      .eq('id', productId)
+      .maybeSingle();
+
+    const storeOwnerId = Array.isArray(productStore?.stores)
+      ? productStore.stores[0]?.user_id
+      : productStore?.stores?.user_id;
+
+    if (storeOwnerId && storeOwnerId === user.id) {
+      return NextResponse.json(
+        { error: "Store owners can't review their own products." },
+        { status: 403 }
+      );
+    }
+
+    // Verified purchase + review-window check.
+    const { order: verifiedOrder, windowExpired } = await findVerifiedPurchase(supabase, {
       userId: user.id,
       productId,
     });
 
-    if (!verifiedOrder) {
-      return NextResponse.json({ error: 'Only verified buyers can review this product after delivery.' }, { status: 403 });
+    if (windowExpired) {
+      return NextResponse.json(
+        { error: `The review window for this order has closed (${REVIEW_WINDOW_DAYS} days after delivery).` },
+        { status: 403 }
+      );
     }
 
+    if (!verifiedOrder) {
+      return NextResponse.json(
+        { error: 'Only verified buyers can review this product after delivery.' },
+        { status: 403 }
+      );
+    }
+
+    // One-review-per-product check.
     const existingResult = await supabase
       .from('reviews')
       .select('id, deleted_at')
@@ -101,24 +185,34 @@ export async function POST(request) {
     }
 
     if (existingResult.error && existingResult.error.code !== 'PGRST116') {
-      return NextResponse.json({ error: existingResult.error.message || 'Failed to check existing review' }, { status: 500 });
+      return NextResponse.json(
+        { error: existingResult.error.message || 'Failed to check existing review' },
+        { status: 500 }
+      );
     }
 
     if (existingResult.data?.id && !existingResult.data.deleted_at) {
-      return NextResponse.json({ error: 'You have already reviewed this product. Edit your review instead.' }, { status: 409 });
+      return NextResponse.json(
+        { error: 'You have already reviewed this product. Edit your review instead.' },
+        { status: 409 }
+      );
     }
+
+    // Suspicious-review detection: flag instead of auto-approve when score >= 2.
+    const { score, signals } = await suspicionScore(supabase, { userId: user.id, comment, accountCreatedAt: user.created_at });
+    const reviewStatus = score >= 2 ? 'flagged' : 'approved';
 
     const payload = {
       product_id: productId,
       user_id: user.id,
       rating,
       comment,
-      status: 'approved',
+      status: reviewStatus,
       is_verified_purchase: true,
       purchase_order_id: verifiedOrder.id,
       edited_at: null,
       deleted_at: null,
-      moderation_note: null,
+      moderation_note: signals.length ? signals.join(', ') : null,
       moderated_at: null,
       moderated_by: null,
       seller_reply: null,
@@ -146,6 +240,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       ...saveResult.data,
+      flagged: reviewStatus === 'flagged',
       user: {
         full_name: user.user_metadata?.full_name || null,
       },
@@ -184,6 +279,15 @@ export async function PATCH(request) {
     }
     updates.edited_at = new Date().toISOString();
 
+    // Re-run suspicion check on edited content; re-flag if score rises again.
+    if (comment !== null) {
+      const { score, signals } = await suspicionScore(supabase, { userId: user.id, comment, accountCreatedAt: user.created_at });
+      if (score >= 2) {
+        updates.status = 'flagged';
+        updates.moderation_note = signals.join(', ');
+      }
+    }
+
     const result = await supabase
       .from('reviews')
       .update(updates)
@@ -203,7 +307,11 @@ export async function PATCH(request) {
 
     invalidateReviewCache(result.data);
 
-    return NextResponse.json({ success: true, data: result.data });
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      flagged: result.data.status === 'flagged',
+    });
   } catch (err) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
@@ -226,9 +334,7 @@ export async function DELETE(request) {
 
     const result = await supabase
       .from('reviews')
-      .update({
-        deleted_at: new Date().toISOString(),
-      })
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', reviewId)
       .eq('user_id', user.id)
       .is('deleted_at', null)

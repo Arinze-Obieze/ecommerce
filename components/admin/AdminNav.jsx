@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   FiGrid, FiUsers, FiFileText, FiBarChart2,
-  FiShoppingBag, FiPackage, FiCreditCard, FiRefreshCw, FiSliders
+  FiShoppingBag, FiPackage, FiCreditCard, FiRefreshCw, FiSliders, FiStar
 } from 'react-icons/fi';
 
 const groups = [
@@ -14,6 +14,7 @@ const groups = [
       { href: '/admin/stores',    label: 'Stores',      icon: FiUsers },
       { href: '/admin/orders',    label: 'Orders',      icon: FiShoppingBag },
       { href: '/admin/products',  label: 'Products',    icon: FiPackage },
+      { href: '/admin/reviews',   label: 'Reviews',     icon: FiStar },
     ],
   },
   {

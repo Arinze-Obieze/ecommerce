@@ -532,29 +532,55 @@ function SpecificationsPanel({ entries }) {
 // ─────────────────────────────────────────────────────────────
 // REVIEWS
 // ─────────────────────────────────────────────────────────────
+const INELIGIBLE_MESSAGES = {
+  unauthenticated:  { text: 'Sign in to leave a review', cta: true },
+  not_purchased:    { text: 'Only buyers who have purchased this product can leave a review.' },
+  not_delivered:    { text: 'Your order hasn\'t been marked as delivered yet. You can review once it arrives.' },
+  window_expired:   { text: 'The 90-day review window for this product has closed.' },
+  self_review:      { text: 'Store owners can\'t review their own products.' },
+  already_reviewed: { text: 'You\'ve already reviewed this product.' },
+};
+
 function ReviewsPanel({ product, user, onReviewAdded, isDesktop }) {
-  const [rating, setRating]   = useState(5);
-  const [comment, setComment] = useState('');
-  const [hovStar, setHovStar] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr]         = useState('');
-  const [ok, setOk]           = useState(false);
-  const [focused, setFocused] = useState(false);
+  const [rating, setRating]         = useState(5);
+  const [comment, setComment]       = useState('');
+  const [hovStar, setHovStar]       = useState(0);
+  const [loading, setLoading]       = useState(false);
+  const [err, setErr]               = useState('');
+  const [ok, setOk]                 = useState(false);
+  const [flagged, setFlagged]       = useState(false);
+  const [focused, setFocused]       = useState(false);
+  const [eligibility, setEligibility] = useState(null); // null = checking
   const reviews = product.reviews || [];
+
+  useEffect(() => {
+    if (!user) { setEligibility({ canReview: false, reason: 'unauthenticated' }); return; }
+    fetch(`/api/reviews/eligibility?productId=${product.id}`)
+      .then(r => r.json())
+      .then(setEligibility)
+      .catch(() => setEligibility({ canReview: false, reason: 'error' }));
+  }, [user, product.id]);
 
   const submit = async e => {
     e.preventDefault();
     if (!comment.trim()) { setErr('Please enter a comment.'); return; }
-    setLoading(true); setErr(''); setOk(false);
+    setLoading(true); setErr(''); setOk(false); setFlagged(false);
     try {
       const res  = await fetch('/api/reviews', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ productId:product.id, rating, comment }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to submit review');
-      onReviewAdded({ id:data.id||Date.now(), rating, comment, created_at:new Date().toISOString() });
-      setComment(''); setRating(5); setOk(true);
-      setTimeout(() => setOk(false), 3000);
+      if (!data.flagged) {
+        onReviewAdded({ id:data.id||Date.now(), rating, comment, created_at:new Date().toISOString(), is_verified_purchase:true });
+      }
+      setComment(''); setRating(5); setOk(true); setFlagged(Boolean(data.flagged));
+      setEligibility({ canReview: false, reason: 'already_reviewed' });
+      setTimeout(() => setOk(false), 5000);
     } catch (e) { setErr(e.message); } finally { setLoading(false); }
   };
+
+  const ineligibleMsg = eligibility && !eligibility.canReview
+    ? INELIGIBLE_MESSAGES[eligibility.reason] || { text: 'You\'re not eligible to review this product.' }
+    : null;
 
   return (
     <div style={{ display:'grid',gap:32 }} className={isDesktop ? 'lg:grid-cols-[1fr_340px]' : ''}>
@@ -572,58 +598,105 @@ function ReviewsPanel({ product, user, onReviewAdded, isDesktop }) {
                 <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:10 }}>
                   <div style={{ width:40,height:40,borderRadius:'50%',background:T.greenTint,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0 }}>👤</div>
                   <div>
-                    <StarRow rating={rev.rating} />
+                    <div style={{ display:'flex',alignItems:'center',gap:8,flexWrap:'wrap' }}>
+                      <StarRow rating={rev.rating} />
+                      {rev.is_verified_purchase && (
+                        <span style={{
+                          fontSize:10,fontWeight:700,color:T.green,
+                          background:T.greenTint,border:`1px solid ${T.greenBorder}`,
+                          padding:'2px 8px',borderRadius:100,
+                        }}>✓ Verified Purchase</span>
+                      )}
+                    </div>
                     <span style={{ fontSize:11,color:T.inkMuted,marginTop:2,display:'block' }}>
                       {new Date(rev.created_at).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}
                     </span>
                   </div>
                 </div>
                 <p style={{ fontSize:14,color:T.inkLight,lineHeight:1.75,margin:0 }}>{rev.comment}</p>
+
+                {/* Seller reply */}
+                {rev.seller_reply && (
+                  <div style={{
+                    marginTop:14,padding:'12px 16px',borderRadius:12,
+                    background:T.linen,border:`1px solid ${T.line}`,
+                  }}>
+                    <p style={{ margin:'0 0 4px',fontSize:11,fontWeight:800,color:T.ink,textTransform:'uppercase',letterSpacing:'0.08em' }}>
+                      Seller response
+                    </p>
+                    <p style={{ margin:0,fontSize:13,color:T.inkLight,lineHeight:1.7 }}>{rev.seller_reply}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
+      {/* RIGHT PANEL — write form or ineligible notice */}
       <div style={{ background:T.linen,borderRadius:20,padding:24,border:`1px solid ${T.line}`,alignSelf:'start' }}>
-        <p style={{ fontSize:14,fontWeight:800,color:T.ink,margin:'0 0 18px' }}>Write a Review</p>
-        {!user ? (
-          <div style={{ textAlign:'center',padding:'16px 0' }}>
-            <p style={{ fontSize:13,color:T.inkMuted,marginBottom:16 }}>Sign in to leave a review</p>
-            <Link href="/login" style={{ display:'inline-block',padding:'10px 24px',borderRadius:10,background:T.green,color:T.white,textDecoration:'none',fontSize:13,fontWeight:700 }}>Sign In</Link>
+
+        {/* Checking eligibility */}
+        {eligibility === null && (
+          <p style={{ fontSize:13,color:T.inkMuted,margin:0 }}>Checking review eligibility…</p>
+        )}
+
+        {/* Not eligible — informational notice only */}
+        {ineligibleMsg && (
+          <div style={{ display:'flex',flexDirection:'column',gap:12 }}>
+            <p style={{ fontSize:14,fontWeight:800,color:T.ink,margin:0 }}>Customer Reviews</p>
+            <p style={{ fontSize:13,color:T.inkMuted,lineHeight:1.6,margin:0 }}>{ineligibleMsg.text}</p>
+            {ineligibleMsg.cta && (
+              <Link href="/login" style={{
+                display:'inline-block',padding:'10px 20px',borderRadius:10,
+                background:T.green,color:T.white,textDecoration:'none',fontSize:13,fontWeight:700,
+                alignSelf:'flex-start',
+              }}>Sign In</Link>
+            )}
           </div>
-        ) : (
-          <form onSubmit={submit} style={{ display:'flex',flexDirection:'column',gap:14 }}>
-            <div>
-              <p style={{ fontSize:11,fontWeight:800,color:T.inkMid,textTransform:'uppercase',letterSpacing:'0.08em',margin:'0 0 8px' }}>Rating</p>
-              <div style={{ display:'flex',gap:4 }}>
-                {[1,2,3,4,5].map(s => (
-                  <button key={s} type="button" onMouseEnter={() => setHovStar(s)} onMouseLeave={() => setHovStar(0)} onClick={() => setRating(s)} style={{ background:'none',border:'none',cursor:'pointer',padding:2 }}>
-                    <FiStar size={26} style={{ color:s<=(hovStar||rating)?T.starGold:T.line,fill:s<=(hovStar||rating)?T.starGold:'none',transition:'all 0.1s' }} />
-                  </button>
-                ))}
+        )}
+
+        {/* Eligible — show the write form */}
+        {eligibility?.canReview && (
+          <>
+            <p style={{ fontSize:14,fontWeight:800,color:T.ink,margin:'0 0 18px' }}>Write a Review</p>
+            <form onSubmit={submit} style={{ display:'flex',flexDirection:'column',gap:14 }}>
+              <div>
+                <p style={{ fontSize:11,fontWeight:800,color:T.inkMid,textTransform:'uppercase',letterSpacing:'0.08em',margin:'0 0 8px' }}>Rating</p>
+                <div style={{ display:'flex',gap:4 }}>
+                  {[1,2,3,4,5].map(s => (
+                    <button key={s} type="button" onMouseEnter={() => setHovStar(s)} onMouseLeave={() => setHovStar(0)} onClick={() => setRating(s)} style={{ background:'none',border:'none',cursor:'pointer',padding:2 }}>
+                      <FiStar size={26} style={{ color:s<=(hovStar||rating)?T.starGold:T.line,fill:s<=(hovStar||rating)?T.starGold:'none',transition:'all 0.1s' }} />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <p style={{ fontSize:11,fontWeight:800,color:T.inkMid,textTransform:'uppercase',letterSpacing:'0.08em',margin:'0 0 8px' }}>Your Review</p>
-              <textarea rows={4} value={comment} onChange={e => setComment(e.target.value)}
-                onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-                placeholder="What did you think of this product?"
-                style={{ width:'100%',padding:'10px 12px',borderRadius:10,resize:'vertical',border:`1.5px solid ${focused?T.green:T.line}`,background:T.white,fontSize:13,color:T.ink,outline:'none',boxSizing:'border-box',transition:'border-color 0.15s' }} />
-            </div>
-            {err && <p style={{ fontSize:12,color:T.saleRed,background:T.salePink,padding:'8px 12px',borderRadius:8,margin:0 }}>{err}</p>}
-            {ok  && <p style={{ fontSize:12,color:T.green,background:T.greenTint,padding:'8px 12px',borderRadius:8,margin:0,fontWeight:600 }}>✓ Review submitted!</p>}
-            <button type="submit" disabled={loading} style={{
-              padding:'12px 0',borderRadius:10,border:'none',
-              background:T.green,color:T.white,           // Forest Green CTA
-              fontSize:13,fontWeight:700,
-              cursor:loading?'wait':'pointer',opacity:loading?0.7:1,
-              transition:'background 0.15s',
-            }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = T.greenDark; }}
-            onMouseLeave={e => { e.currentTarget.style.background = T.green; }}
-            >{loading ? 'Submitting…' : 'Submit Review'}</button>
-          </form>
+              <div>
+                <p style={{ fontSize:11,fontWeight:800,color:T.inkMid,textTransform:'uppercase',letterSpacing:'0.08em',margin:'0 0 8px' }}>Your Review</p>
+                <textarea rows={4} value={comment} onChange={e => setComment(e.target.value)}
+                  onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+                  placeholder="What did you think of this product?"
+                  style={{ width:'100%',padding:'10px 12px',borderRadius:10,resize:'vertical',border:`1.5px solid ${focused?T.green:T.line}`,background:T.white,fontSize:13,color:T.ink,outline:'none',boxSizing:'border-box',transition:'border-color 0.15s' }} />
+              </div>
+              {err && <p style={{ fontSize:12,color:T.saleRed,background:T.salePink,padding:'8px 12px',borderRadius:8,margin:0 }}>{err}</p>}
+              {ok && !flagged && <p style={{ fontSize:12,color:T.green,background:T.greenTint,padding:'8px 12px',borderRadius:8,margin:0,fontWeight:600 }}>✓ Review submitted!</p>}
+              {ok && flagged && (
+                <p style={{ fontSize:12,color:'#92400e',background:'#fffbeb',border:'1px solid #fde68a',padding:'8px 12px',borderRadius:8,margin:0,fontWeight:600 }}>
+                  Your review has been submitted and is pending a quick moderation check. It will appear once approved.
+                </p>
+              )}
+              <button type="submit" disabled={loading} style={{
+                padding:'12px 0',borderRadius:10,border:'none',
+                background:T.green,color:T.white,
+                fontSize:13,fontWeight:700,
+                cursor:loading?'wait':'pointer',opacity:loading?0.7:1,
+                transition:'background 0.15s',
+              }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = T.greenDark; }}
+              onMouseLeave={e => { e.currentTarget.style.background = T.green; }}
+              >{loading ? 'Submitting…' : 'Submit Review'}</button>
+            </form>
+          </>
         )}
       </div>
     </div>
