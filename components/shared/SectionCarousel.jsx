@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-const SectionCarousel = ({ children, title, linkText, linkHref }) => {
+const SectionCarousel = ({ children, title, linkText, linkHref, sectionClassName = "" }) => {
   const scrollRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -28,7 +28,7 @@ const SectionCarousel = ({ children, title, linkText, linkHref }) => {
   }, []);
 
   return (
-    <section className="py-8 md:py-12 bg-white border-b border-gray-50">
+    <section className={`py-8 md:py-12 bg-white border-b border-gray-50 ${sectionClassName}`.trim()}>
       <div className="max-w-[1600px] mx-auto relative px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
@@ -67,7 +67,7 @@ const SectionCarousel = ({ children, title, linkText, linkHref }) => {
         >
             {React.Children.map(children, (child) => (
                // Explicit width to prevent expanding to huge sizes
-               <div className="w-[45%] md:w-[260px] lg:w-[280px] snap-center flex-shrink-0">
+               <div className="w-[45%] md:w-[260px] lg:w-[280px] snap-center shrink-0">
                   {child}
                </div>
             ))}

@@ -104,6 +104,30 @@ export default function LoginPage() {
     return () => clearInterval(id);
   }, []);
 
+  const resolveRedirectTarget = async () => {
+    const fallbackTarget = '/';
+
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        continue;
+      }
+
+      const redirectRes = await fetch('/api/auth/post-login-target', { cache: 'no-store' });
+      const redirectJson = await redirectRes.json().catch(() => ({}));
+      const target = typeof redirectJson?.target === 'string' ? redirectJson.target : null;
+
+      if (target && target !== '/login') {
+        return target;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    return fallbackTarget;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -111,11 +135,9 @@ export default function LoginPage() {
     try {
       const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signInErr) { setError(signInErr.message); setLoading(false); return; }
-      const redirectRes  = await fetch('/api/auth/post-login-target', { cache: 'no-store' });
-      const redirectJson = await redirectRes.json().catch(() => ({}));
-      const target       = typeof redirectJson?.target === 'string' ? redirectJson.target : '/';
+      const target = await resolveRedirectTarget();
       setSuccess(true);
-      setTimeout(() => router.push(target), 1800);
+      setTimeout(() => router.replace(target), 1800);
     } catch { setError('An unexpected error occurred'); setLoading(false); }
   };
 

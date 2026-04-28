@@ -5,24 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FiArrowUpRight, FiBriefcase, FiShield } from 'react-icons/fi';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { createClient } from '@/utils/supabase/client';
-
-function rolePriority(role) {
-  const normalized = String(role || '').trim().toLowerCase();
-  if (normalized === 'owner')   return 3;
-  if (normalized === 'manager') return 2;
-  if (normalized === 'staff')   return 1;
-  return 0;
-}
-
-function pickBestStoreMembership(memberships) {
-  if (!Array.isArray(memberships) || memberships.length === 0) return null;
-  return [...memberships].sort((a, b) => {
-    const priorityDiff = rolePriority(b.role) - rolePriority(a.role);
-    if (priorityDiff !== 0) return priorityDiff;
-    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-  })[0];
-}
 
 function shouldHide(pathname) {
   if (!pathname) return true;
@@ -51,59 +33,41 @@ export default function FloatingDashboardCTA() {
         return;
       }
 
-      const supabase = createClient();
+      try {
+        const response = await fetch('/api/auth/post-login-target', { cache: 'no-store' });
+        const payload = await response.json().catch(() => ({}));
+        if (!active) return;
 
-      // Check superadmin
-      const { data: adminMembership, error: adminError } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .maybeSingle();
+        if (payload?.target === '/admin') {
+          setDestination({
+            href:   '/admin',
+            label:  'Back to Admin',
+            detail: 'Open superadmin workspace',
+            icon:   FiShield,
+            accent: 'from-primary-hover to-primary',
+            ring:   'ring-[#B8D4A0]/70',
+            dot:    'var(--zova-accent-emphasis)',
+          });
+          return;
+        }
 
-      if (!active) return;
-
-      if (!adminError && adminMembership?.role) {
-        setDestination({
-          href:   '/admin',
-          label:  'Back to Admin',
-          detail: 'Open superadmin workspace',
-          icon:   FiShield,
-          // Zova Forest gradient
-          accent: 'from-primary-hover to-primary',
-          ring:   'ring-[#B8D4A0]/70',
-          dot:    'var(--zova-accent-emphasis)',   // Gold Harvest dot accent
-        });
-        return;
+        if (payload?.target === '/store/dashboard') {
+          setDestination({
+            href:   '/store/dashboard',
+            label:  'Back to Store',
+            detail: 'Return to seller dashboard',
+            icon:   FiBriefcase,
+            accent: 'from-primary to-primary',
+            ring:   'ring-[#B8D4A0]/70',
+            dot:    'var(--zova-accent-emphasis)',
+          });
+          return;
+        }
+      } catch {
+        // Best effort UI affordance only.
       }
 
-      // Check store membership
-      const { data: storeMemberships, error: storeError } = await supabase
-        .from('store_users')
-        .select('role, created_at')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: true });
-
-      if (!active) return;
-
-      const storeMembership = pickBestStoreMembership(storeMemberships || []);
-
-      if (!storeError && storeMembership?.role) {
-        setDestination({
-          href:   '/store/dashboard',
-          label:  'Back to Store',
-          detail: 'Return to seller dashboard',
-          icon:   FiBriefcase,
-          // Zova Forest → Gold Harvest gradient
-          accent: 'from-primary to-primary',
-          ring:   'ring-[#B8D4A0]/70',
-          dot:    'var(--zova-accent-emphasis)',
-        });
-        return;
-      }
-
-      setDestination(null);
+      if (active) setDestination(null);
     }
 
     resolveDestination();

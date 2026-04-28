@@ -6,11 +6,13 @@ import ProductImpressionTracker from '@/components/catalog/ProductImpressionTrac
 import SectionCarousel from '@/components/shared/SectionCarousel';
 import { getRecommendedProducts } from '@/features/catalog/api/client';
 
-const RecommendedForYou = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+const RecommendedForYou = ({ initialProducts = null }) => {
+  const [products, setProducts] = useState(() => (Array.isArray(initialProducts) ? initialProducts : []));
+  const [loading, setLoading] = useState(() => !Array.isArray(initialProducts));
 
   useEffect(() => {
+    if (Array.isArray(initialProducts)) return undefined;
+
     let active = true;
 
     const load = async () => {
@@ -31,7 +33,7 @@ const RecommendedForYou = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialProducts]);
 
   if (loading) {
     return (

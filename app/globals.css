@@ -119,6 +119,7 @@ button {
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -127,6 +128,7 @@ body {
   background: var(--zova-linen);
   color: var(--zova-ink);
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 a {

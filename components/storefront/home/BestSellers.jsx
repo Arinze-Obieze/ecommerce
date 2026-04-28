@@ -5,31 +5,38 @@ import ProductImpressionTracker from '@/components/catalog/ProductImpressionTrac
 import SectionCarousel from '@/components/shared/SectionCarousel';
 import { getBestSellerProducts } from '@/features/catalog/api/client';
 
-const BestSellers = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+const BestSellers = ({ initialProducts = null }) => {
+  const [products, setProducts] = useState(() => (Array.isArray(initialProducts) ? initialProducts : []));
+  const [loading, setLoading] = useState(() => !Array.isArray(initialProducts));
 
   useEffect(() => {
+    if (Array.isArray(initialProducts)) return undefined;
+
+    let active = true;
+
     const fetchProducts = async () => {
       try {
         const json = await getBestSellerProducts(8);
 
-        if (json.success) {
+        if (active && json.success) {
           setProducts(json.data);
         }
       } catch (error) {
         console.error('Failed to fetch best sellers:', error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchProducts();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [initialProducts]);
 
   if (loading) {
     return (
-      <SectionCarousel title="Best Sellers">
+      <SectionCarousel title="Best Sellers" sectionClassName="pt-4 md:pt-6">
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
@@ -67,6 +74,7 @@ const BestSellers = () => {
       title="Best Sellers"
       linkText="View All"
       linkHref="/shop?collection=best-sellers"
+      sectionClassName="pt-4 md:pt-6"
     >
       {products.map((product, index) => (
         <ProductImpressionTracker
