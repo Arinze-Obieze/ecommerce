@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import HeaderActions from "@/components/layout/header/HeaderActions";
 import HeaderLogo from "@/components/layout/header/HeaderLogo";
@@ -9,6 +10,14 @@ import HeaderSearch from "@/components/layout/header/HeaderSearch";
 import { HIDDEN_HEADER_ROUTES, SEARCH_ENABLED_ROUTES } from "@/components/layout/header/header.constants";
 import useAdminRole from "@/components/layout/header/useAdminRole";
 import { trackAnalyticsEvent } from "@/utils/telemetry/analytics";
+import CategoriesModal from "@/components/catalog/browse/CategoriesModal";
+
+const HOME_NAV = [
+  { name: "Categories", href: "#" },
+  { name: "New Arrivals", href: "/shop?sortBy=newest" },
+  { name: "Deals", href: "/shop?onSale=true" },
+  { name: "Top Stores", href: "/stores" },
+];
 
 export default function Header() {
   const router = useRouter();
@@ -17,6 +26,8 @@ export default function Header() {
   const adminRole = useAdminRole(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const showHomeNav = pathname === "/";
 
   useEffect(() => {
     function onScroll() {
@@ -69,7 +80,34 @@ export default function Header() {
             />
           </div>
         ) : null}
+
+        {showHomeNav && (
+          <nav className="flex items-center justify-center gap-6 md:gap-10 overflow-x-auto pt-2.5 pb-0.5 no-scrollbar border-t border-[rgba(217,209,196,0.5)] mt-2.5">
+            {HOME_NAV.map((item) => {
+              if (item.name === "Categories") return (
+                <button
+                  key={item.name}
+                  onClick={() => setCatModalOpen(true)}
+                  className="relative text-[13px] font-semibold tracking-wide uppercase whitespace-nowrap transition-colors duration-200 pb-1.5 text-gray-500 hover:text-primary"
+                >
+                  {item.name}
+                </button>
+              );
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="relative text-[13px] font-semibold tracking-wide uppercase whitespace-nowrap transition-colors duration-200 pb-1.5 text-gray-500 hover:text-primary"
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
+
+      {catModalOpen && <CategoriesModal onClose={() => setCatModalOpen(false)} />}
     </header>
   );
 }

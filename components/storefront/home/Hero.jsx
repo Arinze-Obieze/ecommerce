@@ -1,12 +1,11 @@
 "use client"
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FiArrowRight, FiChevronRight, FiShield, FiTruck, FiCheck } from 'react-icons/fi';
-import CategoriesModal from '@/components/catalog/browse/CategoriesModal';
+import { FiArrowRight, FiChevronRight, FiShield, FiTruck, FiCheck, FiStar } from 'react-icons/fi';
 import { getHeroBanner } from '@/features/storefront/home/api/client';
 
 /* ─────────────────────────────────────────
-   Static mood data (from ShopByMood)
+   Static mood data
 ───────────────────────────────────────── */
 const HERO_MOOD = {
   title: 'Owambe Vibes',
@@ -41,23 +40,37 @@ const CHIP_MOODS = [
   { title: 'Travel & Weekend', label: 'Outing',    link: '/mood/travel_weekend', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=300&auto=format&fit=crop&q=75' },
 ];
 
-const overlay = 'linear-gradient(to bottom, rgba(0,0,0,0) 25%, rgba(0,0,0,0.75) 100%)';
+const MARQUEE_ITEMS = [
+  { icon: '🛡️', text: 'Buyer Protection on Every Order' },
+  { icon: '🚚', text: 'Fast & Reliable Delivery' },
+  { icon: '✓',  text: 'Verified African Stores' },
+  { icon: '💳', text: 'Secure Payment Methods' },
+  { icon: '🔄', text: 'Easy Returns & Refunds' },
+  { icon: '📦', text: 'Track Your Orders Live' },
+];
 
-/* ── Pill ── */
-const Pill = ({ label, small = false }) => (
+const overlay = 'linear-gradient(to bottom, rgba(0,0,0,0) 15%, rgba(0,0,0,0.82) 100%)';
+const overlayStrong = 'linear-gradient(160deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.85) 100%)';
+
+/* ── Premium Pill ── */
+const Pill = ({ label, small = false, accent = false }) => (
   <span style={{
     display: 'inline-block',
     fontSize: small ? 9 : 10,
-    fontWeight: 700,
-    letterSpacing: '0.06em',
+    fontWeight: 800,
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
-    padding: small ? '2px 7px' : '3px 9px',
+    padding: small ? '2px 8px' : '3px 10px',
     borderRadius: 20,
-    marginBottom: small ? 3 : 6,
-    background: 'rgba(255,255,255,0.2)',
-    color: 'rgba(255,255,255,0.95)',
-    backdropFilter: 'blur(6px)',
-    WebkitBackdropFilter: 'blur(6px)',
+    marginBottom: small ? 4 : 7,
+    background: accent
+      ? 'linear-gradient(135deg, rgba(236,156,0,0.9), rgba(255,180,30,0.85))'
+      : 'rgba(255,255,255,0.18)',
+    color: '#fff',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    boxShadow: accent ? '0 2px 12px rgba(236,156,0,0.35)' : 'none',
   }}>{label}</span>
 );
 
@@ -65,20 +78,36 @@ const Pill = ({ label, small = false }) => (
 const HeroMoodCard = () => (
   <Link href={HERO_MOOD.link} className="mood-img-zoom" style={{
     position: 'relative', display: 'block', height: '100%',
-    borderRadius: 18, overflow: 'hidden', textDecoration: 'none',
+    borderRadius: 20, overflow: 'hidden', textDecoration: 'none',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
   }}>
     <img src={HERO_MOOD.image} alt={HERO_MOOD.title} className="mood-img"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.45s ease' }} />
-    <div style={{ position: 'absolute', inset: 0, background: overlay }} />
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 18px', zIndex: 1 }}>
-      <Pill label={HERO_MOOD.label} />
-      <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 5 }}>{HERO_MOOD.title}</div>
-      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', marginBottom: 14 }}>{HERO_MOOD.subtitle}</div>
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)' }} />
+    <div style={{ position: 'absolute', inset: 0, background: overlayStrong }} />
+    {/* Decorative top-right accent */}
+    <div style={{
+      position: 'absolute', top: 14, right: 14,
+      width: 36, height: 36, borderRadius: '50%',
+      background: 'rgba(255,255,255,0.12)',
+      backdropFilter: 'blur(8px)',
+      border: '1px solid rgba(255,255,255,0.2)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <FiStar size={14} color="rgba(255,255,255,0.85)" />
+    </div>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 20px', zIndex: 1 }}>
+      <Pill label={HERO_MOOD.label} accent />
+      <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 6, letterSpacing: '-0.01em' }}>{HERO_MOOD.title}</div>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 16, lineHeight: 1.4 }}>{HERO_MOOD.subtitle}</div>
       <span style={{
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        background: 'var(--zova-accent-emphasis)', color: '#fff', borderRadius: 24,
-        padding: '8px 17px', fontSize: 12, fontWeight: 700,
-      }}>Shop now ›</span>
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        background: 'var(--zova-accent-emphasis, #EC9C00)',
+        boxShadow: '0 4px 16px rgba(236,156,0,0.45)',
+        color: '#fff', borderRadius: 28,
+        padding: '9px 18px', fontSize: 12, fontWeight: 800,
+        letterSpacing: '0.02em',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+      }}>Shop now <FiArrowRight size={12} /></span>
     </div>
   </Link>
 );
@@ -87,15 +116,27 @@ const HeroMoodCard = () => (
 const SideMoodCard = ({ mood }) => (
   <Link href={mood.link} className="mood-img-zoom" style={{
     position: 'relative', display: 'block', flex: 1, minHeight: 0,
-    borderRadius: 16, overflow: 'hidden', textDecoration: 'none',
+    borderRadius: 18, overflow: 'hidden', textDecoration: 'none',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.14)',
   }}>
     <img src={mood.image} alt={mood.title} className="mood-img"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.45s ease' }} />
-    <div style={{ position: 'absolute', inset: 0, background: overlay }} />
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 13px', zIndex: 1 }}>
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)' }} />
+    <div style={{ position: 'absolute', inset: 0, background: overlayStrong }} />
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px 15px', zIndex: 1 }}>
       <Pill label={mood.label} />
-      <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1.2, marginBottom: 2 }}>{mood.title}</div>
-      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.68)' }}>{mood.subtitle}</div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', lineHeight: 1.15, marginBottom: 3, letterSpacing: '-0.01em' }}>{mood.title}</div>
+      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.01em' }}>{mood.subtitle}</div>
+    </div>
+    {/* Arrow indicator */}
+    <div style={{
+      position: 'absolute', top: 12, right: 12,
+      width: 28, height: 28, borderRadius: '50%',
+      background: 'rgba(255,255,255,0.15)',
+      backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      border: '1px solid rgba(255,255,255,0.2)',
+    }}>
+      <FiArrowRight size={11} color="#fff" />
     </div>
   </Link>
 );
@@ -104,36 +145,72 @@ const SideMoodCard = ({ mood }) => (
 const ChipMoodCard = ({ mood }) => (
   <Link href={mood.link} className="mood-img-zoom" style={{
     position: 'relative', display: 'block',
-    minWidth: 110, width: 110, height: 138,
-    borderRadius: 14, overflow: 'hidden',
+    minWidth: 114, width: 114, height: 142,
+    borderRadius: 16, overflow: 'hidden',
     flexShrink: 0, scrollSnapAlign: 'start', textDecoration: 'none',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
   }}>
     <img src={mood.image} alt={mood.title} className="mood-img"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.35s ease' }} />
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }} />
     <div style={{ position: 'absolute', inset: 0, background: overlay }} />
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 10px', zIndex: 1 }}>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 11px', zIndex: 1 }}>
       <Pill label={mood.label} small />
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{mood.title}</div>
+      <div style={{ fontSize: 12, fontWeight: 800, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.01em' }}>{mood.title}</div>
     </div>
   </Link>
 );
 
 /* ══════════════════════════════════
+   CENTER BANNER BACKGROUND
+══════════════════════════════════ */
+const CenterBannerBg = ({ banner }) => {
+  const hasBgImage = !!banner?.background_image;
+  return (
+    <>
+      {hasBgImage ? (
+        <>
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.background_image})` }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%)' }} />
+        </>
+      ) : (
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)',
+        }}>
+          {/* Noise texture overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+            backgroundRepeat: 'repeat',
+          }} />
+          {/* Dot grid */}
+          <div className="absolute inset-0 opacity-[0.06]" style={{
+            backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)`,
+            backgroundSize: '28px 28px',
+          }} />
+          {/* Glow orbs */}
+          <div style={{
+            position: 'absolute', top: -80, right: -80,
+            width: 340, height: 340, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(236,156,0,0.22) 0%, transparent 70%)',
+            filter: 'blur(1px)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -60, left: -40,
+            width: 280, height: 280, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)',
+          }} />
+        </div>
+      )}
+    </>
+  );
+};
+
+/* ══════════════════════════════════
    HERO
 ══════════════════════════════════ */
 const Hero = () => {
-  const [activeTab, setActiveTab]     = useState('New Arrivals');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [banner, setBanner]           = useState(null);
+  const [banner, setBanner]       = useState(null);
   const [sellerCount, setSellerCount] = useState(0);
-  const [expanded, setExpanded]       = useState(false);
-
-  const navItems = [
-    { name: 'Categories',   href: '#' },
-    { name: 'New Arrivals', href: '/shop?sortBy=newest' },
-    { name: 'Deals',        href: '/shop?onSale=true' },
-    { name: 'Top Stores',   href: '/stores' },
-  ];
+  const [expanded, setExpanded]   = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -155,142 +232,221 @@ const Hero = () => {
     return '';
   };
 
-  const hasBgImage = !!banner?.background_image;
-
   return (
-    <div className="w-full zova-page">
+    <div className="w-full" style={{ background: 'radial-gradient(circle at top right, rgba(236, 156, 0, 0.08), transparent 24%), linear-gradient(180deg, #fbf8f1 0%, #f5f1ea 100%)' }}>
       <style jsx global>{`
-        .mood-img-zoom:hover .mood-img { transform: scale(1.05); }
+        .mood-img-zoom:hover .mood-img { transform: scale(1.06); }
+        .mood-img-zoom:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.28) !important; }
+        .mood-img-zoom { transition: box-shadow 0.35s ease; }
         .chips-row::-webkit-scrollbar  { display: none; }
         .chips-row { -ms-overflow-style: none; scrollbar-width: none; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hero-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(236,156,0,0.5) !important; }
+        .hero-cta-ghost:hover { background: rgba(255,255,255,0.22) !important; }
         @keyframes marquee  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        @keyframes pulseDot { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+        @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.85); } }
+        @keyframes floatBadge { 0%,100% { transform:translateY(0px); } 50% { transform:translateY(-3px); } }
+        .live-badge { animation: floatBadge 3s ease-in-out infinite; }
+        .expand-btn:hover { border-color: var(--zova-primary-action) !important; color: var(--zova-primary-action) !important; }
       `}</style>
 
-      {/* ── Nav ── */}
-      <div className="relative z-40">
-        <div className="zova-shell zova-topbar mt-3 rounded-full px-3 sm:px-5">
-          <div className="flex items-center justify-center gap-6 md:gap-10 overflow-x-auto py-3 no-scrollbar">
-            {navItems.map((item) => {
-              const isActive = activeTab === item.name;
-              const cls = `relative text-[13px] font-semibold tracking-wide uppercase whitespace-nowrap transition-all duration-300 pb-1.5 ${isActive ? 'text-primary' : 'text-gray-500 hover:text-primary'}`;
-              if (item.name === 'Categories') return (
-                <button key={item.name} onClick={() => { setActiveTab(item.name); setIsModalOpen(true); }} className={cls}>
-                  {item.name}
-                  <span className={`absolute bottom-0 left-0 h-[2px] bg-[var(--zova-accent-emphasis)] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`} />
-                </button>
-              );
-              return (
-                <Link key={item.name} href={item.href} onClick={() => { setActiveTab(item.name); setIsModalOpen(false); }} className={cls}>
-                  {item.name}
-                  <span className={`absolute bottom-0 left-0 h-[2px] bg-[var(--zova-accent-emphasis)] transition-all duration-300 ${isActive ? 'w-full' : 'w-0'}`} />
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-        {isModalOpen && <CategoriesModal onClose={() => setIsModalOpen(false)} />}
-      </div>
+      <div className="w-full pt-3 pb-3">
 
-      {/* ── Main content ── */}
-      <div className="w-full pt-5 pb-3">
-
-        {/* Header row */}
+        {/* ── Header row ── */}
         <div className="zova-shell flex items-center justify-between mb-3">
-          <div>
-            <span className="zova-eyebrow">Curated discovery</span>
-            <h2 className="zova-title mt-3 text-[1.35rem] font-black">Shop by mood</h2>
+          <div className="flex flex-col gap-1.5">
+            <span className="zova-eyebrow self-start">Curated discovery</span>
+            <h2 className="zova-title text-[1.35rem] font-black">Shop by mood</h2>
           </div>
-          <Link href="/mood" className="text-[12px] font-semibold text-primary hover:text-accent transition-colors flex items-center gap-1">
+          <Link href="/mood" className="text-[12px] font-semibold text-primary hover:text-accent transition-colors flex items-center gap-1 shrink-0">
             See all moods <FiArrowRight className="w-3 h-3" />
           </Link>
         </div>
 
-        {/* ── 3-column grid (desktop) ── */}
-        <div
-          className="hidden lg:grid gap-2"
-          style={{ gridTemplateColumns: '1fr 1.9fr 1fr', height: 500 }}
-        >
+        {/* ── Desktop 3-column grid ── */}
+        <div className="hidden lg:grid gap-2.5" style={{ gridTemplateColumns: '1fr 1.85fr 1fr', height: 500 }}>
+
           {/* Left — Owambe hero mood card */}
           <HeroMoodCard />
 
-          {/* Center — main banner */}
-          <div className="relative rounded-2xl overflow-hidden">
-            {hasBgImage ? (
-              <>
-                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.background_image})` }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/22 to-black/5" />
-              </>
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-hover via-primary to-primary">
-                <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: `radial-gradient(circle, #EC9C00 1px, transparent 1px)`, backgroundSize: '26px 26px' }} />
-              </div>
-            )}
-            <div className="absolute inset-0 flex flex-col justify-end p-8 xl:p-10">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase mb-4 bg-white/15 text-white/90 border border-white/20 backdrop-blur-sm w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulseDot 2s ease infinite' }} />
-                New on Zova
-              </div>
-              <h1 className="zova-title text-white font-extrabold leading-[1.04] tracking-tight mb-3 drop-shadow text-[2rem] xl:text-[2.7rem] max-w-md">
-                {banner?.title || 'Discover Your Style'}
-              </h1>
-              <p className="text-white/70 text-[13px] mb-6 max-w-xs leading-relaxed">
-                {banner?.subtitle || 'Shop the latest fashion from trusted African stores'}
-              </p>
-              <div className="flex items-center gap-3 mb-6">
-                <Link href={banner?.cta_link || '/shop'} className="zova-btn zova-btn-primary group text-[13px]">
-                  {banner?.cta_text || 'Shop Now'}
-                  <FiArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-                <Link href="/shop?onSale=true" className="zova-btn flex items-center gap-1.5 px-7 py-3 bg-white/12 backdrop-blur-sm text-white font-semibold rounded-full text-[13px] border border-white/20 hover:bg-white/22 transition-all duration-300">
-                  View Deals <FiChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-              <div className="flex items-center gap-3 text-[11px] text-white/55">
-                <div className="flex items-center gap-1.5">
-                  <FiShield className="w-3 h-3 text-accent" />
-                  <span>{sellerCount > 0 ? `${formatCount(sellerCount)} Verified Stores` : 'Verified Stores'}</span>
+          {/* Center — main banner (massively improved) */}
+          <div className="relative rounded-2xl overflow-hidden" style={{ boxShadow: '0 16px 48px rgba(0,0,0,0.22)' }}>
+            <CenterBannerBg banner={banner} />
+
+            <div className="absolute inset-0 flex flex-col justify-between p-8 xl:p-10">
+              {/* Top section */}
+              <div className="flex items-start justify-between">
+                {/* Live badge */}
+                <div className="live-badge inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase bg-white/12 text-white/95 border border-white/20 backdrop-blur-md w-fit"
+                  style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+                  <span className="w-2 h-2 rounded-full bg-green-400" style={{ animation: 'pulseDot 2s ease infinite', boxShadow: '0 0 8px rgba(74,222,128,0.8)' }} />
+                  New on Zova
                 </div>
-                <span className="w-1 h-1 rounded-full bg-white/25" />
-                <div className="flex items-center gap-1.5"><FiTruck className="w-3 h-3" /><span>Secure Delivery</span></div>
-                <span className="w-1 h-1 rounded-full bg-white/25" />
-                <div className="flex items-center gap-1.5"><FiCheck className="w-3 h-3" /><span>Buyer Protection</span></div>
+                {/* Stats pill */}
+                {sellerCount > 0 && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold bg-white/10 text-white/80 border border-white/15 backdrop-blur-sm">
+                    <FiShield size={10} className="text-yellow-400" />
+                    {formatCount(sellerCount)} stores
+                  </div>
+                )}
+              </div>
+
+              {/* Center content */}
+              <div>
+                {/* Eyebrow */}
+                <div style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+                  textTransform: 'uppercase', color: 'rgba(236,156,0,0.9)',
+                  marginBottom: 10,
+                }}>
+                  ✦ African Fashion Marketplace
+                </div>
+
+                {/* Title — massive and bold */}
+                <h1 style={{
+                  fontSize: 'clamp(2rem, 3.2vw, 3rem)',
+                  fontWeight: 900,
+                  color: '#fff',
+                  lineHeight: 1.02,
+                  letterSpacing: '-0.03em',
+                  marginBottom: 14,
+                  maxWidth: 420,
+                }}>
+                  {banner?.title || (
+                    <>Discover Your<br />
+                    <span style={{
+                      background: 'linear-gradient(135deg, #EC9C00, #FFD060)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                    }}>Perfect Style</span></>
+                  )}
+                </h1>
+
+                {/* Subtitle */}
+                <p style={{
+                  color: 'rgba(255,255,255,0.62)',
+                  fontSize: 13,
+                  lineHeight: 1.65,
+                  marginBottom: 24,
+                  maxWidth: 300,
+                }}>
+                  {banner?.subtitle || 'Shop the latest fashion from trusted African stores'}
+                </p>
+
+                {/* CTAs */}
+                <div className="flex items-center gap-3 mb-7">
+                  <Link href={banner?.cta_link || '/shop'}
+                    className="hero-cta-primary group inline-flex items-center gap-2"
+                    style={{
+                      background: 'linear-gradient(135deg, #EC9C00, #FFB830)',
+                      color: '#fff',
+                      borderRadius: 32,
+                      padding: '11px 22px',
+                      fontSize: 13,
+                      fontWeight: 800,
+                      letterSpacing: '0.01em',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 20px rgba(236,156,0,0.4)',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}>
+                    {banner?.cta_text || 'Shop Now'}
+                    <FiArrowRight size={14} style={{ transition: 'transform 0.3s' }} className="group-hover:translate-x-1" />
+                  </Link>
+                  <Link href="/shop?onSale=true"
+                    className="hero-cta-ghost inline-flex items-center gap-1.5"
+                    style={{
+                      background: 'rgba(255,255,255,0.1)',
+                      backdropFilter: 'blur(8px)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      borderRadius: 32,
+                      padding: '11px 22px',
+                      fontSize: 13,
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      textDecoration: 'none',
+                      transition: 'background 0.2s',
+                    }}>
+                    View Deals <FiChevronRight size={14} />
+                  </Link>
+                </div>
+
+                {/* Trust badges — redesigned */}
+                <div style={{
+                  display: 'flex',
+                  gap: 0,
+                  alignItems: 'stretch',
+                  background: 'rgba(255,255,255,0.07)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  width: 'fit-content',
+                }}>
+                  {[
+                    { icon: <FiShield size={12} />, label: 'Buyer Protected' },
+                    { icon: <FiTruck size={12} />, label: 'Fast Delivery' },
+                    { icon: <FiCheck size={12} />, label: 'Verified Stores' },
+                  ].map((item, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '8px 13px',
+                      borderRight: i < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                      color: 'rgba(255,255,255,0.75)',
+                      fontSize: 11,
+                      fontWeight: 600,
+                    }}>
+                      <span style={{ color: 'rgba(236,156,0,0.9)' }}>{item.icon}</span>
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Right — Casual & Chill + Office Ready stacked */}
+          {/* Right — stacked side cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
             {SIDE_MOODS.map((mood) => <SideMoodCard key={mood.link} mood={mood} />)}
           </div>
         </div>
 
-        {/* ── Mobile: banner + small mood strip ── */}
+        {/* ── Mobile banner ── */}
         <div className="lg:hidden">
-          <div className="relative rounded-2xl overflow-hidden h-[320px] sm:h-[380px]">
-            {hasBgImage ? (
-              <>
-                <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.background_image})` }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
-              </>
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-hover via-primary to-primary" />
-            )}
+          <div className="relative rounded-2xl overflow-hidden h-[320px] sm:h-[380px]" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+            <CenterBannerBg banner={banner} />
             <div className="absolute inset-0 flex flex-col justify-end p-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase mb-3 bg-white/15 text-white/90 border border-white/20 backdrop-blur-sm w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulseDot 2s ease infinite' }} />
+              <div className="live-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase mb-3 bg-white/15 text-white/90 border border-white/20 backdrop-blur-sm w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulseDot 2s ease infinite' }} />
                 New on Zova
               </div>
-              <h1 className="zova-title text-white text-2xl font-extrabold leading-tight mb-2">{banner?.title || 'Discover Your Style'}</h1>
-              <p className="text-white/65 text-xs mb-5 max-w-xs">{banner?.subtitle || 'Shop the latest fashion from trusted African stores'}</p>
+              <h1 style={{
+                fontSize: '1.6rem', fontWeight: 900, color: '#fff',
+                lineHeight: 1.05, letterSpacing: '-0.025em',
+                marginBottom: 8,
+              }}>{banner?.title || 'Discover Your Style'}</h1>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 20, lineHeight: 1.55 }}>
+                {banner?.subtitle || 'Shop the latest fashion from trusted African stores'}
+              </p>
               <div className="flex items-center gap-2.5">
-                <Link href={banner?.cta_link || '/shop'} className="zova-btn zova-btn-primary flex items-center gap-1.5 px-6 py-2.5 text-sm">
-                  {banner?.cta_text || 'Shop Now'} <FiArrowRight className="w-3.5 h-3.5" />
+                <Link href={banner?.cta_link || '/shop'}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'linear-gradient(135deg, #EC9C00, #FFB830)',
+                    color: '#fff', borderRadius: 28, padding: '10px 20px',
+                    fontSize: 13, fontWeight: 800, textDecoration: 'none',
+                    boxShadow: '0 4px 16px rgba(236,156,0,0.4)',
+                  }}>
+                  {banner?.cta_text || 'Shop Now'} <FiArrowRight size={13} />
                 </Link>
-                <Link href="/shop?onSale=true" className="zova-btn flex items-center gap-1 px-6 py-2.5 bg-white/12 text-white font-semibold rounded-full text-sm border border-white/20">
-                  Deals <FiChevronRight className="w-3.5 h-3.5" />
+                <Link href="/shop?onSale=true"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    background: 'rgba(255,255,255,0.12)', color: '#fff',
+                    fontWeight: 600, borderRadius: 28, padding: '10px 18px',
+                    fontSize: 13, border: '1px solid rgba(255,255,255,0.2)',
+                    textDecoration: 'none',
+                  }}>
+                  Deals <FiChevronRight size={13} />
                 </Link>
               </div>
             </div>
@@ -300,27 +456,28 @@ const Hero = () => {
           <div className="chips-row flex gap-2.5 mt-2.5 overflow-x-auto pb-1" style={{ scrollSnapType: 'x mandatory' }}>
             {[HERO_MOOD, ...SIDE_MOODS, ...CHIP_MOODS].map((mood) => (
               <Link key={mood.link} href={mood.link} style={{
-                position: 'relative', minWidth: 100, width: 100, height: 125,
-                borderRadius: 13, overflow: 'hidden', flexShrink: 0,
+                position: 'relative', minWidth: 102, width: 102, height: 128,
+                borderRadius: 14, overflow: 'hidden', flexShrink: 0,
                 scrollSnapAlign: 'start', textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.14)',
               }}>
                 <img src={mood.image} alt={mood.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', inset: 0, background: overlay }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '7px 9px', zIndex: 1 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{mood.title}</div>
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 10px', zIndex: 1 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>{mood.title}</div>
                 </div>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* ── Bottom chip row ── */}
+        {/* ── Desktop chip row ── */}
         <div
-          className="chips-row hidden lg:flex gap-2.5 mt-2 overflow-x-auto pb-1 px-4 zova-shell"
+          className="chips-row hidden lg:flex gap-2.5 mt-2.5 overflow-x-auto pb-1 zova-shell"
           style={{
-            maxHeight: expanded ? 180 : 0,
+            maxHeight: expanded ? 200 : 0,
             overflow: expanded ? 'auto' : 'hidden',
-            transition: 'max-height 0.4s ease',
+            transition: 'max-height 0.45s cubic-bezier(0.4,0,0.2,1)',
             scrollSnapType: 'x mandatory',
           }}
         >
@@ -328,44 +485,59 @@ const Hero = () => {
         </div>
 
         {/* Expand toggle */}
-        <div className="hidden lg:block mt-2 px-4 zova-shell">
+        <div className="hidden lg:block mt-2 zova-shell">
           <button
             onClick={() => setExpanded((p) => !p)}
+            className="expand-btn"
             style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              width: '100%', padding: 10,
-              border: '1.5px dashed #d0d0d0', borderRadius: 16,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              width: '100%', padding: '10px 0',
+              border: '1.5px dashed rgba(0,0,0,0.15)', borderRadius: 16,
               background: 'none', cursor: 'pointer',
-              fontSize: 13, color: '#666', fontWeight: 500,
+              fontSize: 12, color: '#888', fontWeight: 600,
               transition: 'border-color 0.2s, color 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--zova-primary-action)'; e.currentTarget.style.color = 'var(--zova-primary-action)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#d0d0d0'; e.currentTarget.style.color = '#666'; }}
-          >
-            <span style={{ display: 'inline-block', transition: 'transform 0.3s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', fontSize: 11 }}>▼</span>
-            {expanded ? 'Show less' : `Show all moods (${CHIP_MOODS.length} more)`}
+              letterSpacing: '0.01em',
+            }}>
+            <span style={{ display: 'inline-block', transition: 'transform 0.35s ease', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', fontSize: 10 }}>▼</span>
+            {expanded ? 'Show fewer moods' : `Explore all moods — ${CHIP_MOODS.length} more`}
           </button>
         </div>
       </div>
 
-      {/* ── Marquee ── */}
-      <div className="border-t border-b border-primary/10 bg-white/60 backdrop-blur-sm overflow-hidden mt-2">
-        <div className="py-2.5 relative">
-          <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white/95 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white/95 to-transparent z-10 pointer-events-none" />
-          <div className="flex whitespace-nowrap" style={{ animation: 'marquee 35s linear infinite' }}>
+      {/* ── Marquee strip (no space after) ── */}
+      <div style={{
+        borderTop: '1px solid rgba(0,0,0,0.07)',
+        borderBottom: '1px solid rgba(0,0,0,0.07)',
+        background: 'rgba(255,255,255,0.7)',
+        backdropFilter: 'blur(8px)',
+        overflow: 'hidden',
+      }}>
+        <div style={{ padding: '10px 0', position: 'relative' }}>
+          <div style={{
+            position: 'absolute', left: 0, top: 0, bottom: 0, width: 64,
+            background: 'linear-gradient(to right, rgba(255,255,255,0.95), transparent)',
+            zIndex: 10, pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', right: 0, top: 0, bottom: 0, width: 64,
+            background: 'linear-gradient(to left, rgba(255,255,255,0.95), transparent)',
+            zIndex: 10, pointerEvents: 'none',
+          }} />
+          <div style={{ display: 'flex', whiteSpace: 'nowrap', animation: 'marquee 32s linear infinite' }}>
             {[0, 1].map((r) => (
-              <div key={r} className="flex items-center shrink-0">
-                {[
-                  { icon: '🛡️', text: 'Buyer Protection on Every Order' },
-                  { icon: '🚚', text: 'Fast & Reliable Delivery' },
-                  { icon: '✓',  text: 'Verified African Stores' },
-                  { icon: '💳', text: 'Secure Payment Methods' },
-                  { icon: '🔄', text: 'Easy Returns & Refunds' },
-                  { icon: '📦', text: 'Track Your Orders Live' },
-                ].map((item, i) => (
-                  <span key={`${r}-${i}`} className="flex items-center gap-2 text-[11px] font-semibold text-gray-500 tracking-wider uppercase mx-6">
-                    <span className="text-sm">{item.icon}</span>{item.text}
+              <div key={r} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                {MARQUEE_ITEMS.map((item, i) => (
+                  <span key={`${r}-${i}`} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 7,
+                    fontSize: 11, fontWeight: 700,
+                    color: '#666',
+                    letterSpacing: '0.07em',
+                    textTransform: 'uppercase',
+                    padding: '0 20px',
+                  }}>
+                    <span style={{ fontSize: 13 }}>{item.icon}</span>
+                    {item.text}
+                    <span style={{ color: 'rgba(0,0,0,0.15)', marginLeft: 20 }}>·</span>
                   </span>
                 ))}
               </div>
