@@ -5,7 +5,18 @@ import Link from 'next/link';
 import { FiX, FiChevronRight, FiArrowRight } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
-// Brand tokens — sourced from app/globals.css
+const THEME = {
+  white:           '#FFFFFF',
+  forest:          'var(--zova-primary-action)',
+  forestLight:     'var(--zova-green-soft)',
+  gold:            'var(--zova-accent-emphasis)',
+  goldLight:       'var(--zova-accent-soft)',
+  goldDark:        'var(--zova-warning)',
+  goldBadgeBorder: '#f5d06e',
+  onyx:            'var(--zova-text-body)',
+  onyxMid:         'var(--zova-text-body)',
+  onyxMuted:       'var(--zova-text-muted)',
+};
 
 // ============================================================
 
@@ -527,7 +538,7 @@ const SidebarItem = ({ cat, isActive, isExpanded, onClick, theme }) => {
   );
 };
 
-const GroupLink = ({ item, group, handleClose, theme }) => {
+const GroupLink = ({ item, handleClose, theme }) => {
   const [hovered, setHovered] = useState(false);
   return (
     <Link

@@ -629,7 +629,7 @@ export async function GET(request) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const requestedSortBy = searchParams.get('sortBy') || 'smart';
-    const allowedSorts = new Set(['smart', 'price_asc', 'price_desc', 'rating', 'name', 'reviewed_at', 'newest']);
+    const allowedSorts = new Set(['smart', 'price_asc', 'price_desc', 'rating', 'name', 'reviewed_at', 'newest', 'best_seller_score', 'discount_rank']);
     const sortBy = allowedSorts.has(requestedSortBy) ? requestedSortBy : 'smart';
     const search = sanitizeSearch(searchParams.get('search'));
     const sizesParam = searchParams.get('sizes');

@@ -164,9 +164,9 @@ export default function ActiveFilters() {
             onClick={clearAllFilters}
             type="button"
             className="ml-2 px-3 py-1.5 text-sm font-medium transition-colors"
-            style={{ color: THEME.colors.primary }}
+            style={{ color: 'var(--color-primary)' }}
             onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary-hover)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.primary}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
           >
             Clear all
           </button>
