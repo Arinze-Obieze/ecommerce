@@ -4,29 +4,7 @@ import { FiX } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  colors: {
-    primary:      'var(--zova-primary-action)',
-    primaryHover: 'var(--zova-primary-action-hover)',
-    deepEmerald:  'var(--zova-text-strong)',
-    white:        '#FFFFFF',
-    pageBg:       'var(--zova-linen)',
-    softGray:     'var(--zova-surface-alt)',
-    darkCharcoal: 'var(--zova-ink)',
-    mediumGray:   'var(--zova-text-body)',
-    mutedText:    'var(--zova-text-muted)',
-    border:       'var(--zova-border)',
-    cardBorder:   'var(--zova-border)',
-    greenTint:    'var(--zova-green-soft)',
-    greenBorder:  '#B8D4A0',
-  },
-  shadows: {
-    cardHover: '0 4px 16px rgba(0, 0, 0, 0.08)',
-  },
-  transitions: {
-    default: 'all 0.2s ease',
-  }
-};
+
 
 export default function ActiveFilters() {
   const {
@@ -47,7 +25,7 @@ export default function ActiveFilters() {
   return (
     <div className="mb-6">
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-sm mr-2" style={{ color: THEME.colors.mediumGray }}>
+        <span className="text-sm mr-2" style={{ color: 'var(--color-text-light)' }}>
           Active filters:
         </span>
         
@@ -56,10 +34,10 @@ export default function ActiveFilters() {
           <div 
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm"
             style={{ 
-              backgroundColor: THEME.colors.greenTint,
-              borderColor: THEME.colors.greenBorder,
+              backgroundColor: 'var(--color-primary-soft)',
+              borderColor: 'rgba(46,100,23,0.18)',
               borderWidth: '1px',
-              color: THEME.colors.deepEmerald
+              color: 'var(--color-primary)'
             }}
           >
             <span>Search: "{filters.search}"</span>
@@ -67,9 +45,9 @@ export default function ActiveFilters() {
               onClick={() => setSearch('')}
               type="button"
               className="ml-1"
-              style={{ color: THEME.colors.mediumGray }}
-              onMouseEnter={(e) => e.currentTarget.style.color = THEME.colors.deepEmerald}
-              onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.mediumGray}
+              style={{ color: 'var(--color-text-light)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-light)'}
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -81,10 +59,10 @@ export default function ActiveFilters() {
           <div 
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm"
             style={{ 
-              backgroundColor: THEME.colors.greenTint,
-              borderColor: THEME.colors.greenBorder,
+              backgroundColor: 'var(--color-primary-soft)',
+              borderColor: 'rgba(46,100,23,0.18)',
               borderWidth: '1px',
-              color: THEME.colors.deepEmerald
+              color: 'var(--color-primary)'
             }}
           >
             <span>Category: {filters.category}</span>
@@ -92,9 +70,9 @@ export default function ActiveFilters() {
               onClick={() => setCategory('')}
               type="button"
               className="ml-1"
-              style={{ color: THEME.colors.mediumGray }}
-              onMouseEnter={(e) => e.currentTarget.style.color = THEME.colors.deepEmerald}
-              onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.mediumGray}
+              style={{ color: 'var(--color-text-light)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-light)'}
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -106,10 +84,10 @@ export default function ActiveFilters() {
           <div 
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm"
             style={{ 
-              backgroundColor: THEME.colors.greenTint,
-              borderColor: THEME.colors.greenBorder,
+              backgroundColor: 'var(--color-primary-soft)',
+              borderColor: 'rgba(46,100,23,0.18)',
               borderWidth: '1px',
-              color: THEME.colors.deepEmerald
+              color: 'var(--color-primary)'
             }}
           >
             <span>
@@ -119,9 +97,9 @@ export default function ActiveFilters() {
               onClick={() => setPriceRange(null, null)}
               type="button"
               className="ml-1"
-              style={{ color: THEME.colors.mediumGray }}
-              onMouseEnter={(e) => e.currentTarget.style.color = THEME.colors.deepEmerald}
-              onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.mediumGray}
+              style={{ color: 'var(--color-text-light)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-light)'}
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -134,10 +112,10 @@ export default function ActiveFilters() {
             key={size} 
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm"
             style={{ 
-              backgroundColor: THEME.colors.greenTint,
-              borderColor: THEME.colors.greenBorder,
+              backgroundColor: 'var(--color-primary-soft)',
+              borderColor: 'rgba(46,100,23,0.18)',
               borderWidth: '1px',
-              color: THEME.colors.deepEmerald
+              color: 'var(--color-primary)'
             }}
           >
             <span>Size: {size}</span>
@@ -145,9 +123,9 @@ export default function ActiveFilters() {
               onClick={() => toggleSize(size)}
               type="button"
               className="ml-1"
-              style={{ color: THEME.colors.mediumGray }}
-              onMouseEnter={(e) => e.currentTarget.style.color = THEME.colors.deepEmerald}
-              onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.mediumGray}
+              style={{ color: 'var(--color-text-light)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-light)'}
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -160,10 +138,10 @@ export default function ActiveFilters() {
             key={color} 
             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm"
             style={{ 
-              backgroundColor: THEME.colors.greenTint,
-              borderColor: THEME.colors.greenBorder,
+              backgroundColor: 'var(--color-primary-soft)',
+              borderColor: 'rgba(46,100,23,0.18)',
               borderWidth: '1px',
-              color: THEME.colors.deepEmerald
+              color: 'var(--color-primary)'
             }}
           >
             <span>Color: {color}</span>
@@ -171,9 +149,9 @@ export default function ActiveFilters() {
               onClick={() => toggleColor(color)}
               type="button"
               className="ml-1"
-              style={{ color: THEME.colors.mediumGray }}
-              onMouseEnter={(e) => e.currentTarget.style.color = THEME.colors.deepEmerald}
-              onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.mediumGray}
+              style={{ color: 'var(--color-text-light)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-light)'}
             >
               <FiX className="w-4 h-4" />
             </button>
@@ -187,7 +165,7 @@ export default function ActiveFilters() {
             type="button"
             className="ml-2 px-3 py-1.5 text-sm font-medium transition-colors"
             style={{ color: THEME.colors.primary }}
-            onMouseEnter={(e) => e.currentTarget.style.color = THEME.colors.primaryHover}
+            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary-hover)'}
             onMouseLeave={(e) => e.currentTarget.style.color = THEME.colors.primary}
           >
             Clear all

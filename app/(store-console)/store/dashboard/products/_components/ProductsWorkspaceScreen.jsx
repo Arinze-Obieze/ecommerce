@@ -111,7 +111,7 @@ export default function ProductsWorkspaceScreen({
         /{row.slug}
       </span>
       {row.sku ? (
-        <span className="rounded-full bg-[#EDF5E6] px-2.5 py-1 font-mono text-[11px] font-medium text-[#2E6417]">
+        <span className="rounded-full bg-primary-soft px-2.5 py-1 font-mono text-[11px] font-medium text-primary">
           {row.sku}
         </span>
       ) : null}
@@ -215,7 +215,7 @@ export default function ProductsWorkspaceScreen({
       {
         label: "Edit",
         onClick: () => router.push(`/store/dashboard/products/${row.id}?mode=edit`),
-        tone: "text-[#2E6417] hover:bg-[#EDF5E6]",
+        tone: "text-primary hover:bg-primary-soft",
       },
     ];
 
@@ -240,7 +240,7 @@ export default function ProductsWorkspaceScreen({
         label: actionBusy && actingType === "resubmit" ? "Submitting..." : "Submit for review",
         onClick: () => handleRowAction(row, "resubmit"),
         disabled: actionBusy,
-        tone: "text-[#2E6417] hover:bg-[#EDF5E6]",
+        tone: "text-primary hover:bg-primary-soft",
       });
     }
 
@@ -429,7 +429,7 @@ export default function ProductsWorkspaceScreen({
                 setPage(1);
                 void load();
               }}
-              className="rounded-xl border border-[#2E6417] px-3 py-2 text-sm font-semibold text-[#2E6417]"
+              className="rounded-xl border border-primary px-3 py-2 text-sm font-semibold text-primary"
             >
               Apply
             </button>
@@ -517,7 +517,7 @@ export default function ProductsWorkspaceScreen({
                 type="button"
                 onClick={() => setMobileViewMode("grid")}
                 aria-label="Grid view"
-                className={`flex flex-1 items-center justify-center rounded-xl px-3 py-2 transition ${mobileViewMode === "grid" ? "bg-[#2E6417] text-white" : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`flex flex-1 items-center justify-center rounded-xl px-3 py-2 transition ${mobileViewMode === "grid" ? "bg-primary text-white" : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}
               >
                 <FiGrid size={16} />
               </button>
@@ -525,7 +525,7 @@ export default function ProductsWorkspaceScreen({
                 type="button"
                 onClick={() => setMobileViewMode("line")}
                 aria-label="Line view"
-                className={`flex flex-1 items-center justify-center rounded-xl px-3 py-2 transition ${mobileViewMode === "line" ? "bg-[#2E6417] text-white" : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}
+                className={`flex flex-1 items-center justify-center rounded-xl px-3 py-2 transition ${mobileViewMode === "line" ? "bg-primary text-white" : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}
               >
                 <FiList size={16} />
               </button>
@@ -543,7 +543,7 @@ export default function ProductsWorkspaceScreen({
                       onClick={() =>
                         router.push(`/store/dashboard/products/${row.id}`)
                       }
-                      className={`w-full rounded-xl border p-3 text-left shadow-sm transition cursor-pointer ${selected ? "border-[#2E6417] bg-[#f7fbf8]" : "border-[#E8E4DC] bg-white hover:border-[#b8d0c4]"}`}
+                      className={`w-full rounded-xl border p-3 text-left shadow-sm transition cursor-pointer ${selected ? "border-primary bg-[#f7fbf8]" : "border-[#E8E4DC] bg-white hover:border-[#b8d0c4]"}`}
                     >
                       <div className="flex items-center gap-3">
                         <button
@@ -552,7 +552,7 @@ export default function ProductsWorkspaceScreen({
                             e.stopPropagation();
                             toggleSelect(row.id);
                           }}
-                          className="text-[#2E6417]"
+                          className="text-primary"
                           aria-label={
                             selected ? "Deselect product" : "Select product"
                           }
@@ -606,13 +606,13 @@ export default function ProductsWorkspaceScreen({
                   return (
                     <div
                       key={row.id}
-                      className={`rounded-2xl border p-4 shadow-sm transition ${selected ? "border-[#2E6417] bg-[#f7fbf8]" : "border-[#E8E4DC] bg-white"}`}
+                      className={`rounded-2xl border p-4 shadow-sm transition ${selected ? "border-primary bg-[#f7fbf8]" : "border-[#E8E4DC] bg-white"}`}
                     >
                       <div className="flex items-start gap-3">
                         <button
                           type="button"
                           onClick={() => toggleSelect(row.id)}
-                          className="mt-0.5 text-[#2E6417]"
+                          className="mt-0.5 text-primary"
                           aria-label={
                             selected ? "Deselect product" : "Select product"
                           }
@@ -628,7 +628,7 @@ export default function ProductsWorkspaceScreen({
                             <div className="min-w-0">
                               <Link
                                 href={`/store/dashboard/products/${row.id}`}
-                                className="block truncate text-sm font-bold text-gray-900 hover:text-[#2E6417]"
+                                className="block truncate text-sm font-bold text-gray-900 hover:text-primary"
                               >
                                 {row.name}
                               </Link>
@@ -724,7 +724,7 @@ export default function ProductsWorkspaceScreen({
                           <button
                             type="button"
                             onClick={() => toggleSelect(row.id)}
-                            className="text-[#2E6417]"
+                            className="text-primary"
                             aria-label={
                               selected ? "Deselect product" : "Select product"
                             }
@@ -750,7 +750,7 @@ export default function ProductsWorkspaceScreen({
                             <div>
                               <Link
                                 href={`/store/dashboard/products/${row.id}`}
-                                className="font-semibold text-gray-900 hover:text-[#2E6417]"
+                                className="font-semibold text-gray-900 hover:text-primary"
                               >
                                 {row.name}
                               </Link>

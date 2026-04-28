@@ -118,7 +118,7 @@ export default function TermsPage() {
           "ZOVA-fault returns (QC miss, hub damage, lost package): Full refund to buyer plus compensation. Seller keeps their payment.",
         ]} />
         <P>The 7-day return window begins on the date of delivery. Items returned after this window will not be accepted except where required by Nigerian consumer protection law.</P>
-        <P>For the full return policy, see our <a href="/return-policy" style={{ color: "#2E6417", fontWeight: 600 }}>Returns &amp; Refund Policy page</a>.</P>
+        <P>For the full return policy, see our <a href="/return-policy" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Returns &amp; Refund Policy page</a>.</P>
       </Section>
 
       <Section title="9. Prohibited Items" id="prohibited">
@@ -138,7 +138,7 @@ export default function TermsPage() {
       <Section title="10. Intellectual Property" id="ip">
         <P>ZOVA and all its content, branding, technology, and platform design are the intellectual property of ZOVA Limited. You may not copy, reproduce, or use any ZOVA materials without prior written consent.</P>
         <P>By uploading product photos or content to ZOVA, sellers grant ZOVA a non-exclusive, royalty-free licence to use those images for marketing, platform operations, and quality control purposes.</P>
-        <P>Sellers warrant that they own or have the right to use all content they upload. For full IP provisions, see our <a href="/legal/ip-notice" style={{ color: "#2E6417", fontWeight: 600 }}>IP Notice</a>.</P>
+        <P>Sellers warrant that they own or have the right to use all content they upload. For full IP provisions, see our <a href="/legal/ip-notice" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>IP Notice</a>.</P>
       </Section>
 
       <Section title="11. Limitation of Liability" id="liability">

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 
 // Microsoft Fluent UI inspired palette mixed with ZOVA brand
 export const B = {
-  green:       "#2E6417",
+  green:       'var(--color-primary)',
   greenDark:   "#1F4210",
   greenLight:  "#F0FBF5",
   greenBorder: "#D4EAE0",
@@ -79,7 +79,7 @@ export default function LegalLayout({ children }) {
           left: 12px;
           right: 12px;
           height: 3px;
-          background: #2E6417; /* ZOVA Green accent */
+          background: var(--color-primary); /* ZOVA Green accent */
           border-radius: 3px 3px 0 0;
         }
         

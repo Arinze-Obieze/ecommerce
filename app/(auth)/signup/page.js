@@ -9,23 +9,7 @@ import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
 // Brand tokens — sourced from app/globals.css CSS custom properties
-const T = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenDeep:   'var(--zova-text-strong)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  charcoal:    'var(--zova-ink)',
-  softGray:    'var(--zova-surface-alt)',
-  pageBg:      'var(--zova-linen)',
-  border:      'var(--zova-border)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  white:       '#FFFFFF',
-  red:         'var(--zova-error)',
-  redLight:    '#FEF2F2',
-  gold:        'var(--zova-accent-emphasis)',
-};
+
 
 // ─────────────────────────────────────────────────────────────
 // PANEL IMAGES — right side fashion slideshow
@@ -56,14 +40,14 @@ function ReqPill({ met, label }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 100,
-      background: met ? T.greenTint : T.softGray,
-      color: met ? T.greenDark : T.mutedText,
-      border: `1px solid ${met ? T.greenBorder : 'transparent'}`,
+      background: met ? 'var(--zova-green-soft)' : 'var(--zova-surface-alt)',
+      color: met ? 'var(--zova-primary-action-hover)' : 'var(--zova-text-muted)',
+      border: `1px solid ${met ? '#B8D4A0' : 'transparent'}`,
       transition: 'all 0.2s',
     }}>
       <div style={{
         width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-        background: met ? T.green : '#DDD',
+        background: met ? 'var(--zova-primary-action)' : '#DDD',
         transition: 'background 0.2s',
       }} />
       {label}
@@ -133,12 +117,12 @@ export default function SignupPage() {
   const passStrength   = Object.values(reqs).filter(Boolean).length;
   const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
   const strengthMeta   = [
-    { label: '',        color: T.border },
-    { label: 'Weak',    color: T.red },
+    { label: '',        color: 'var(--zova-border)' },
+    { label: 'Weak',    color: 'var(--zova-error)' },
     { label: 'Fair',    color: '#F97316' },
-    { label: 'Good',    color: T.gold },
-    { label: 'Strong',  color: T.green },
-    { label: 'Perfect', color: T.greenDark },
+    { label: 'Good',    color: 'var(--zova-accent-emphasis)' },
+    { label: 'Strong',  color: 'var(--zova-primary-action)' },
+    { label: 'Perfect', color: 'var(--zova-primary-action-hover)' },
   ][passStrength];
 
   useEffect(() => { setMounted(true); }, []);
@@ -183,10 +167,10 @@ export default function SignupPage() {
     width: '100%',
     padding: '13px 14px 13px 44px',
     borderRadius: 12,
-    border: `1.5px solid ${foc[key] ? T.green : hov[key] ? T.greenBorder : T.border}`,
-    background: foc[key] ? T.white : T.softGray,
+    border: `1.5px solid ${foc[key] ? 'var(--zova-primary-action)' : hov[key] ? '#B8D4A0' : 'var(--zova-border)'}`,
+    background: foc[key] ? '#FFFFFF' : 'var(--zova-surface-alt)',
     fontSize: 14,
-    color: T.charcoal,
+    color: 'var(--zova-ink)',
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
@@ -235,7 +219,7 @@ export default function SignupPage() {
 
       `}</style>
 
-      <div className="sp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: T.pageBg }}>
+      <div className="sp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--zova-linen)' }}>
 
         {/* ── SUCCESS OVERLAY ── */}
         {success && (
@@ -248,15 +232,15 @@ export default function SignupPage() {
             <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,100,23,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
-                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${T.green},${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(46,100,23,0.4)` }}>
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${'var(--zova-primary-action)'},${'var(--zova-primary-action-hover)'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(46,100,23,0.4)` }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path d="M9 19L16.5 26.5L29 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                       style={{ strokeDasharray: 36, strokeDashoffset: 0, animation: 'checkDraw 0.45s ease 0.2s both' }} />
                   </svg>
                 </div>
               </div>
-              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', lineHeight: 1.1 }}>Account created!</p>
-              <p style={{ fontSize: 14, color: T.mutedText, margin: 0 }}>Redirecting to sign in…</p>
+              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', lineHeight: 1.1 }}>Account created!</p>
+              <p style={{ fontSize: 14, color: 'var(--zova-text-muted)', margin: 0 }}>Redirecting to sign in…</p>
             </div>
           </div>
         )}
@@ -268,11 +252,11 @@ export default function SignupPage() {
           flex: '0 0 min(520px, 100%)',
           display: 'flex', flexDirection: 'column',
           overflowY: 'auto', position: 'relative',
-          background: T.white, zIndex: 2,
+          background: '#FFFFFF', zIndex: 2,
           boxShadow: '2px 0 32px rgba(0,0,0,0.06)',
         }}>
           {/* Green top stripe */}
-          <div style={{ position: 'sticky', top: 0, height: 3, background: `linear-gradient(to right, ${T.green}, ${T.greenDark})`, zIndex: 10, flexShrink: 0 }} />
+          <div style={{ position: 'sticky', top: 0, height: 3, background: `linear-gradient(to right, ${'var(--zova-primary-action)'}, ${'var(--zova-primary-action-hover)'})`, zIndex: 10, flexShrink: 0 }} />
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 52px' }}>
             <div style={{ maxWidth: 400, width: '100%', margin: '0 auto' }}>
@@ -283,7 +267,7 @@ export default function SignupPage() {
                   width: 100, 
                   height: 100, 
                   borderRadius: 10, 
-                  background: `linear-gradient(135deg,${T.greenTint},${T.greenTint})`, 
+                  background: `linear-gradient(135deg,${'var(--zova-green-soft)'},${'var(--zova-green-soft)'})`, 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
@@ -303,21 +287,21 @@ export default function SignupPage() {
                     <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: "var(--zova-font-sans)" }}>Z</span>
                   )}
                 </div>
-                <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em' }}>ZOVA</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--zova-ink)', letterSpacing: '-0.04em' }}>ZOVA</span>
               </div>
 
               {/* Headline */}
               <div className="fu-2" style={{ marginBottom: 32 }}>
-                <h1 className="serif" style={{ fontSize: 38, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                <h1 className="serif" style={{ fontSize: 38, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                   Create your<br />account.
                 </h1>
-                <p style={{ fontSize: 14, color: T.mutedText, margin: 0 }}>Join millions of shoppers on ZOVA</p>
+                <p style={{ fontSize: 14, color: 'var(--zova-text-muted)', margin: 0 }}>Join millions of shoppers on ZOVA</p>
               </div>
 
               <form onSubmit={handleSignup}>
                 {/* Error */}
                 {error && (
-                  <div style={{ padding: '11px 16px', borderRadius: 11, background: T.redLight, border: '1px solid #FECACA', fontSize: 13, color: T.red, fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ padding: '11px 16px', borderRadius: 11, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 13, color: 'var(--zova-error)', fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <FiX size={14} style={{ flexShrink: 0 }} /> {error}
                   </div>
                 )}
@@ -333,9 +317,9 @@ export default function SignupPage() {
                       style={{
                         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                         padding: '11px 12px', borderRadius: 12, cursor: 'pointer',
-                        border: `1.5px solid ${T.border}`,
-                        background: hov[btn.k] ? T.softGray : T.white,
-                        fontSize: 13.5, fontWeight: 600, color: T.charcoal,
+                        border: `1.5px solid ${'var(--zova-border)'}`,
+                        background: hov[btn.k] ? 'var(--zova-surface-alt)' : '#FFFFFF',
+                        fontSize: 13.5, fontWeight: 600, color: 'var(--zova-ink)',
                         transition: 'all 0.15s',
                         boxShadow: hov[btn.k] ? '0 3px 10px rgba(0,0,0,0.07)' : 'none',
                         transform: hov[btn.k] ? 'translateY(-1px)' : 'none',
@@ -347,9 +331,9 @@ export default function SignupPage() {
 
                 {/* Divider */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                  <div style={{ flex: 1, height: 1, background: T.border }} />
+                  <div style={{ flex: 1, height: 1, background: 'var(--zova-border)' }} />
                   <span style={{ fontSize: 11, color: '#CCC', fontWeight: 700, letterSpacing: '0.1em' }}>OR SIGN UP WITH EMAIL</span>
-                  <div style={{ flex: 1, height: 1, background: T.border }} />
+                  <div style={{ flex: 1, height: 1, background: 'var(--zova-border)' }} />
                 </div>
 
                 {/* ── 2-col grid ── */}
@@ -357,7 +341,7 @@ export default function SignupPage() {
 
                   {/* Full Name */}
                   <div className="fu-4" style={{ gridColumn: '1 / -1' }}>
-                    <FieldWrap label="Full Name" icon={<FiUser size={15} color={foc.name ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                    <FieldWrap label="Full Name" icon={<FiUser size={15} color={foc.name ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)'} style={{ transition: 'color 0.2s' }} />}>
                       <input type="text" value={fullName} required placeholder="Chidi Okonkwo"
                         onChange={e => setFullName(e.target.value)}
                         onFocus={() => focusField('name')} onBlur={() => blurField('name')}
@@ -368,7 +352,7 @@ export default function SignupPage() {
 
                   {/* Email */}
                   <div className="fu-5" style={{ gridColumn: '1 / -1' }}>
-                    <FieldWrap label="Email Address" icon={<FiMail size={15} color={foc.email ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                    <FieldWrap label="Email Address" icon={<FiMail size={15} color={foc.email ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)'} style={{ transition: 'color 0.2s' }} />}>
                       <input type="email" value={email} required placeholder="you@example.com"
                         onChange={e => setEmail(e.target.value)}
                         onFocus={() => focusField('email')} onBlur={() => blurField('email')}
@@ -379,7 +363,7 @@ export default function SignupPage() {
 
                   {/* Phone */}
                   <div className="fu-6" style={{ gridColumn: '1 / -1' }}>
-                    <FieldWrap label="Phone" icon={<FiPhone size={15} color={foc.phone ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                    <FieldWrap label="Phone" icon={<FiPhone size={15} color={foc.phone ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)'} style={{ transition: 'color 0.2s' }} />}>
                       <input type="tel" inputMode="numeric" pattern="[0-9+()\\-\\s]*" value={phone} placeholder="+234 801 234 5678"
                         onChange={e => setPhone(sanitizePhoneInput(e.target.value))}
                         onFocus={() => focusField('phone')} onBlur={() => blurField('phone')}
@@ -390,7 +374,7 @@ export default function SignupPage() {
 
                   {/* Password */}
                   <div className="fu-7" style={{ gridColumn: '1 / -1' }}>
-                    <FieldWrap label="Password" icon={<FiLock size={15} color={foc.pass ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />}>
+                    <FieldWrap label="Password" icon={<FiLock size={15} color={foc.pass ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)'} style={{ transition: 'color 0.2s' }} />}>
                       <input type={showPass ? 'text' : 'password'} value={password} required placeholder="Create a password"
                         onChange={e => setPassword(e.target.value)}
                         onFocus={() => { focusField('pass'); setPassFocused(true); }}
@@ -398,7 +382,7 @@ export default function SignupPage() {
                         onMouseEnter={() => enterField('pass')} onMouseLeave={() => leaveField('pass')}
                         style={inputStyle('pass', { paddingRight: 46 })} />
                       <button type="button" onClick={() => setShowPass(v => !v)}
-                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
+                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--zova-text-muted)', padding: 2, display: 'flex', alignItems: 'center' }}>
                         {showPass ? <FiEyeOff size={15} /> : <FiEye size={15} />}
                       </button>
                     </FieldWrap>
@@ -408,7 +392,7 @@ export default function SignupPage() {
                       <div style={{ marginTop: 8 }}>
                         <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
                           {[1,2,3,4,5].map(i => (
-                            <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i <= passStrength ? strengthMeta.color : T.border, transition: 'background 0.3s' }} />
+                            <div key={i} style={{ flex: 1, height: 3, borderRadius: 99, background: i <= passStrength ? strengthMeta.color : 'var(--zova-border)', transition: 'background 0.3s' }} />
                           ))}
                         </div>
                         {strengthMeta.label && <p style={{ fontSize: 11, color: strengthMeta.color, fontWeight: 700, margin: 0 }}>{strengthMeta.label} password</p>}
@@ -433,9 +417,9 @@ export default function SignupPage() {
                       icon={
                         confirmPassword.length > 0
                           ? passwordsMatch
-                            ? <FiCheck size={15} color={T.green} />
-                            : <FiX size={15} color={T.red} />
-                          : <FiLock size={15} color={foc.confirm ? T.green : T.mutedText} style={{ transition: 'color 0.2s' }} />
+                            ? <FiCheck size={15} color={'var(--zova-primary-action)'} />
+                            : <FiX size={15} color={'var(--zova-error)'} />
+                          : <FiLock size={15} color={foc.confirm ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)'} style={{ transition: 'color 0.2s' }} />
                       }>
                       <input type={showConfirm ? 'text' : 'password'} value={confirmPassword} required placeholder="Repeat your password"
                         onChange={e => setConfirmPassword(e.target.value)}
@@ -443,17 +427,17 @@ export default function SignupPage() {
                         onMouseEnter={() => enterField('confirm')} onMouseLeave={() => leaveField('confirm')}
                         style={{
                           ...inputStyle('confirm', { paddingRight: 46 }),
-                          borderColor: confirmPassword.length > 0 ? (passwordsMatch ? T.green : T.red) : foc.confirm ? T.green : hov.confirm ? T.greenBorder : T.border,
-                          background:  confirmPassword.length > 0 ? (passwordsMatch ? T.greenTint : T.redLight) : foc.confirm ? T.white : T.softGray,
+                          borderColor: confirmPassword.length > 0 ? (passwordsMatch ? 'var(--zova-primary-action)' : 'var(--zova-error)') : foc.confirm ? 'var(--zova-primary-action)' : hov.confirm ? '#B8D4A0' : 'var(--zova-border)',
+                          background:  confirmPassword.length > 0 ? (passwordsMatch ? 'var(--zova-green-soft)' : '#FEF2F2') : foc.confirm ? '#FFFFFF' : 'var(--zova-surface-alt)',
                           boxShadow:   confirmPassword.length > 0 ? (passwordsMatch ? `0 0 0 3px rgba(46,100,23,0.12)` : `0 0 0 3px rgba(229,57,53,0.1)`) : foc.confirm ? `0 0 0 3.5px rgba(46,100,23,0.13)` : 'none',
                         }} />
                       <button type="button" onClick={() => setShowConfirm(v => !v)}
-                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
+                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--zova-text-muted)', padding: 2, display: 'flex', alignItems: 'center' }}>
                         {showConfirm ? <FiEyeOff size={15} /> : <FiEye size={15} />}
                       </button>
                     </FieldWrap>
                     {confirmPassword.length > 0 && (
-                      <p style={{ fontSize: 11.5, fontWeight: 600, margin: '6px 0 0', color: passwordsMatch ? T.greenDark : T.red, animation: 'fadeDown 0.2s ease' }}>
+                      <p style={{ fontSize: 11.5, fontWeight: 600, margin: '6px 0 0', color: passwordsMatch ? 'var(--zova-primary-action-hover)' : 'var(--zova-error)', animation: 'fadeDown 0.2s ease' }}>
                         {passwordsMatch ? '✓ Passwords match' : '✗ Passwords do not match'}
                       </p>
                     )}
@@ -465,18 +449,18 @@ export default function SignupPage() {
                   onClick={() => setAgreeTerms(v => !v)}>
                   <div style={{
                     width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
-                    border: `2px solid ${agreeTerms ? T.green : T.border}`,
-                    background: agreeTerms ? T.green : T.white,
+                    border: `2px solid ${agreeTerms ? 'var(--zova-primary-action)' : 'var(--zova-border)'}`,
+                    background: agreeTerms ? 'var(--zova-primary-action)' : '#FFFFFF',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.15s',
                   }}>
                     {agreeTerms && <FiCheck size={10} color="#fff" strokeWidth={3.5} />}
                   </div>
-                  <span style={{ fontSize: 12.5, color: T.medGray, lineHeight: 1.5, userSelect: 'none' }}>
+                  <span style={{ fontSize: 12.5, color: 'var(--zova-text-body)', lineHeight: 1.5, userSelect: 'none' }}>
                     I agree to ZOVA's{' '}
-                    <Link href="/terms" style={{ color: T.green, fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
+                    <Link href="/terms" style={{ color: 'var(--zova-primary-action)', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</Link>
                     {' '}and{' '}
-                    <Link href="/privacy" style={{ color: T.green, fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>
+                    <Link href="/privacy" style={{ color: 'var(--zova-primary-action)', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</Link>
                   </span>
                 </div>
 
@@ -489,8 +473,8 @@ export default function SignupPage() {
                       fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       cursor: loading || !agreeTerms ? 'not-allowed' : 'pointer',
-                      background: loading || !agreeTerms ? T.border : submitHov ? T.greenDark : T.green,
-                      color: loading || !agreeTerms ? T.mutedText : T.white,
+                      background: loading || !agreeTerms ? 'var(--zova-border)' : submitHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
+                      color: loading || !agreeTerms ? 'var(--zova-text-muted)' : '#FFFFFF',
                       boxShadow: !loading && agreeTerms && submitHov ? `0 10px 30px rgba(46,100,23,0.4)` : !loading && agreeTerms ? `0 5px 18px rgba(46,100,23,0.28)` : 'none',
                       transform: !loading && agreeTerms && submitHov ? 'translateY(-1px)' : 'none',
                       transition: 'all 0.18s',
@@ -499,7 +483,7 @@ export default function SignupPage() {
                     {loading
                       ? <><svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width={17} height={17} viewBox="0 0 17 17" fill="none">
                           <circle cx="8.5" cy="8.5" r="6" stroke="rgba(0,0,0,0.18)" strokeWidth="2.5" />
-                          <path d="M8.5 2.5a6 6 0 016 6" stroke={T.medGray} strokeWidth="2.5" strokeLinecap="round" />
+                          <path d="M8.5 2.5a6 6 0 016 6" stroke={'var(--zova-text-body)'} strokeWidth="2.5" strokeLinecap="round" />
                         </svg>Creating account…</>
                       : <>Create Account &nbsp;<FiArrowRight size={15} /></>
                     }
@@ -507,9 +491,9 @@ export default function SignupPage() {
                 </div>
 
                 {/* Sign in */}
-                <p style={{ textAlign: 'center', fontSize: 13.5, color: T.mutedText, margin: 0 }}>
+                <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--zova-text-muted)', margin: 0 }}>
                   Already have an account?{' '}
-                  <Link href="/login" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
+                  <Link href="/login" style={{ color: 'var(--zova-primary-action)', fontWeight: 700, textDecoration: 'none' }}>
                     Sign in →
                   </Link>
                 </p>
@@ -554,7 +538,7 @@ export default function SignupPage() {
             <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 24 }}>
               {['500K+ Members','Free Delivery on Orders','Buyer Protection','Easy Returns'].map(tag => (
                 <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: T.green, boxShadow: `0 0 6px ${T.green}` }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--zova-primary-action)', boxShadow: `0 0 6px ${'var(--zova-primary-action)'}` }} />
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{tag}</span>
                 </div>
               ))}
@@ -566,7 +550,7 @@ export default function SignupPage() {
                 <div key={i} onClick={() => setSlide(i)} style={{
                   height: 3, borderRadius: 99, cursor: 'pointer',
                   width: i === slide ? 28 : 7,
-                  background: i === slide ? T.green : 'rgba(255,255,255,0.35)',
+                  background: i === slide ? 'var(--zova-primary-action)' : 'rgba(255,255,255,0.35)',
                   transition: 'all 0.4s',
                 }} />
               ))}
@@ -610,9 +594,9 @@ export default function SignupPage() {
                 <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{
                     width: 28, height: 28, borderRadius: '50%',
-                    background: i === 0 ? T.green : 'rgba(255,255,255,0.15)',
+                    background: i === 0 ? 'var(--zova-primary-action)' : 'rgba(255,255,255,0.15)',
                     backdropFilter: 'blur(8px)',
-                    border: `1.5px solid ${i === 0 ? T.green : 'rgba(255,255,255,0.25)'}`,
+                    border: `1.5px solid ${i === 0 ? 'var(--zova-primary-action)' : 'rgba(255,255,255,0.25)'}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <span style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>{i + 1}</span>

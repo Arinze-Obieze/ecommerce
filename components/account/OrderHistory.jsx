@@ -6,19 +6,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  pageBg:      'var(--zova-linen)',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 const STATUS = {
   completed:  { label: 'Completed',  color: 'var(--zova-primary-action)', bg: 'var(--zova-green-soft)', border: '#B8D4A0' },
@@ -42,21 +30,21 @@ const SkeletonRow = ({ delay = 0 }) => (
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '18px 24px',
-      borderBottom: `1px solid ${THEME.border}`,
+      borderBottom: `1px solid ${'var(--zova-border)'}`,
       animationDelay: `${delay}ms`,
       gap: 16,
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 10, background: THEME.softGray, flexShrink: 0 }} />
+      <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--zova-surface-alt)', flexShrink: 0 }} />
       <div>
-        <div style={{ width: 100, height: 11, background: THEME.softGray, borderRadius: 4, marginBottom: 8 }} />
-        <div style={{ width: 140, height: 9, background: THEME.softGray, borderRadius: 4 }} />
+        <div style={{ width: 100, height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 8 }} />
+        <div style={{ width: 140, height: 9, background: 'var(--zova-surface-alt)', borderRadius: 4 }} />
       </div>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-      <div style={{ width: 70, height: 22, background: THEME.softGray, borderRadius: 100 }} />
-      <div style={{ width: 80, height: 13, background: THEME.softGray, borderRadius: 4 }} />
+      <div style={{ width: 70, height: 22, background: 'var(--zova-surface-alt)', borderRadius: 100 }} />
+      <div style={{ width: 80, height: 13, background: 'var(--zova-surface-alt)', borderRadius: 4 }} />
     </div>
   </div>
 );
@@ -77,8 +65,8 @@ const OrderRow = ({ order }) => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '18px 24px',
-        borderBottom: `1px solid ${THEME.border}`,
-        background: hov ? THEME.pageBg : THEME.white,
+        borderBottom: `1px solid ${'var(--zova-border)'}`,
+        background: hov ? 'var(--zova-linen)' : '#FFFFFF',
         transition: 'background 0.18s',
         gap: 16,
         flexWrap: 'wrap',
@@ -92,7 +80,7 @@ const OrderRow = ({ order }) => {
             width: 40,
             height: 40,
             borderRadius: 10,
-            background: hov ? THEME.greenTint : THEME.softGray,
+            background: hov ? 'var(--zova-green-soft)' : 'var(--zova-surface-alt)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -100,13 +88,13 @@ const OrderRow = ({ order }) => {
             transition: 'background 0.18s',
           }}
         >
-          <FiPackage size={17} style={{ color: hov ? THEME.green : THEME.mutedText }} />
+          <FiPackage size={17} style={{ color: hov ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)' }} />
         </div>
         <div>
-          <p style={{ fontSize: 13, fontWeight: 800, color: THEME.charcoal, margin: 0, marginBottom: 3, letterSpacing: '0.02em' }}>
+          <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, marginBottom: 3, letterSpacing: '0.02em' }}>
             #{order.id.slice(0, 8).toUpperCase()}
           </p>
-          <p style={{ fontSize: 12, color: THEME.mutedText, margin: 0 }}>
+          <p style={{ fontSize: 12, color: 'var(--zova-text-muted)', margin: 0 }}>
             {formatDate(order.created_at)} &middot; {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </p>
         </div>
@@ -130,7 +118,7 @@ const OrderRow = ({ order }) => {
         >
           {st.label}
         </span>
-        <p style={{ fontSize: 14, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.02em' }}>
+        <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.02em' }}>
           {formatPrice(order.total_amount)}
         </p>
         <span
@@ -140,8 +128,8 @@ const OrderRow = ({ order }) => {
             gap: 6,
             padding: '8px 12px',
             borderRadius: 999,
-            background: hov ? THEME.greenTint : THEME.softGray,
-            color: hov ? THEME.greenDark : THEME.charcoal,
+            background: hov ? 'var(--zova-green-soft)' : 'var(--zova-surface-alt)',
+            color: hov ? 'var(--zova-primary-action-hover)' : 'var(--zova-ink)',
             fontSize: 12,
             fontWeight: 700,
             transition: 'background 0.18s, color 0.18s',
@@ -190,10 +178,10 @@ export default function OrderHistory() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText, margin: 0, marginBottom: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--zova-text-muted)', margin: 0, marginBottom: 4 }}>
             My Account
           </p>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em' }}>
             Order History
           </h2>
         </div>
@@ -207,9 +195,9 @@ export default function OrderHistory() {
               borderRadius: 100,
               fontSize: 12,
               fontWeight: 700,
-              background: THEME.softGray,
-              color: THEME.medGray,
-              border: `1px solid ${THEME.border}`,
+              background: 'var(--zova-surface-alt)',
+              color: 'var(--zova-text-body)',
+              border: `1px solid ${'var(--zova-border)'}`,
             }}
           >
             <FiPackage size={11} />
@@ -221,8 +209,8 @@ export default function OrderHistory() {
       {/* ── Table card ── */}
       <div
         style={{
-          background: THEME.white,
-          border: `1px solid ${THEME.border}`,
+          background: '#FFFFFF',
+          border: `1px solid ${'var(--zova-border)'}`,
           borderRadius: 18,
           overflow: 'hidden',
         }}
@@ -248,19 +236,19 @@ export default function OrderHistory() {
                 width: 58,
                 height: 58,
                 borderRadius: '50%',
-                background: THEME.greenTint,
+                background: 'var(--zova-green-soft)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 16,
               }}
             >
-              <FiShoppingBag size={24} style={{ color: THEME.green }} />
+              <FiShoppingBag size={24} style={{ color: 'var(--zova-primary-action)' }} />
             </div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: THEME.charcoal, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
               No orders yet
             </h3>
-            <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 24px', maxWidth: 280, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 24px', maxWidth: 280, lineHeight: 1.6 }}>
               When you place an order it will appear here.
             </p>
             <Link
@@ -275,8 +263,8 @@ export default function OrderHistory() {
                 borderRadius: 10,
                 fontSize: 13,
                 fontWeight: 700,
-                color: THEME.white,
-                background: ctaHov ? THEME.greenDark : THEME.green,
+                color: '#FFFFFF',
+                background: ctaHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
                 textDecoration: 'none',
                 transition: 'background 0.2s',
               }}

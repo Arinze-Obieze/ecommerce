@@ -3,9 +3,9 @@ import { useState } from "react";
 import Link from "next/link";
 
 const B = {
-  green:       "#2E6417",
-  greenDark:   "#191B19",
-  greenMid:    "#245213",
+  green:       'var(--color-primary)',
+  greenDark:   'var(--color-text)',
+  greenMid:    'var(--color-primary-hover)',
   greenLight:  "#F0FBF5",
   greenBorder: "#D4EAE0",
   greenSub:    "#A8C4B8",
@@ -37,7 +37,7 @@ const STEPS = [
       "All items are pre-verified — everything you see is in stock",
       "Save items to your Wishlist to come back later",
     ],
-    visual: { bg: "#F0FBF5", border: "#D4EAE0", accent: "#2E6417" },
+    visual: { bg: "#F0FBF5", border: "#D4EAE0", accent: 'var(--color-primary)' },
   },
   {
     num: "02",
@@ -93,7 +93,7 @@ const STEPS = [
       "We photograph every item during inspection",
       "You get a notification once your item passes QC",
     ],
-    visual: { bg: "#F0FBF5", border: "#D4EAE0", accent: "#2E6417" },
+    visual: { bg: "#F0FBF5", border: "#D4EAE0", accent: 'var(--color-primary)' },
   },
   {
     num: "06",
@@ -107,7 +107,7 @@ const STEPS = [
       "Track your order anytime from My Orders",
       "SMS updates at every delivery milestone",
     ],
-    visual: { bg: "#F0FBF5", border: "#D4EAE0", accent: "#2E6417" },
+    visual: { bg: "#F0FBF5", border: "#D4EAE0", accent: 'var(--color-primary)' },
   },
 ];
 

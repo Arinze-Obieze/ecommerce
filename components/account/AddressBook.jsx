@@ -4,19 +4,7 @@ import { FiPlus, FiMapPin, FiEdit2, FiTrash2, FiX, FiCheck } from 'react-icons/f
 import { useToast } from '@/contexts/toast/ToastContext';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  pageBg:      'var(--zova-linen)',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 const EMPTY_FORM = {
   type: 'Home', address: '', addressLine2: '',
@@ -27,7 +15,7 @@ const EMPTY_FORM = {
 // ─── FIELD ────────────────────────────────────────────────────────────────────
 const Field = ({ label, children }) => (
   <div>
-    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: THEME.medGray, marginBottom: 6, letterSpacing: '0.02em' }}>
+    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--zova-text-body)', marginBottom: 6, letterSpacing: '0.02em' }}>
       {label}
     </label>
     {children}
@@ -38,9 +26,9 @@ const inputStyle = {
   width: '100%',
   padding: '10px 14px',
   fontSize: 14,
-  color: THEME.charcoal,
-  background: THEME.white,
-  border: `1.5px solid ${THEME.border}`,
+  color: 'var(--zova-ink)',
+  background: '#FFFFFF',
+  border: `1.5px solid ${'var(--zova-border)'}`,
   borderRadius: 10,
   outline: 'none',
   boxSizing: 'border-box',
@@ -56,8 +44,8 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
     <div
       className="p-5 sm:p-6"
       style={{
-        background: THEME.white,
-        border: `1.5px solid ${hov ? THEME.greenBorder : THEME.border}`,
+        background: '#FFFFFF',
+        border: `1.5px solid ${hov ? '#B8D4A0' : 'var(--zova-border)'}`,
         borderRadius: 18,
         position: 'relative',
         transition: 'border-color 0.2s, box-shadow 0.2s',
@@ -85,9 +73,9 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
             fontWeight: 700,
             letterSpacing: '0.06em',
             textTransform: 'uppercase',
-            background: THEME.greenTint,
-            color: THEME.green,
-            border: `1px solid ${THEME.greenBorder}`,
+            background: 'var(--zova-green-soft)',
+            color: 'var(--zova-primary-action)',
+            border: `1px solid ${'#B8D4A0'}`,
           }}
         >
           <FiCheck size={9} /> Default
@@ -101,16 +89,16 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
             width: 38,
             height: 38,
             borderRadius: 10,
-            background: THEME.greenTint,
+            background: 'var(--zova-green-soft)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <FiMapPin size={17} style={{ color: THEME.green }} />
+          <FiMapPin size={17} style={{ color: 'var(--zova-primary-action)' }} />
         </div>
-        <h3 style={{ fontSize: 15, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.01em', wordBreak: 'break-word' }}>
+        <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.01em', wordBreak: 'break-word' }}>
           {addr.type}
         </h3>
       </div>
@@ -123,10 +111,10 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
           `${addr.city}, ${addr.state}`,
           addr.country,
         ].filter(Boolean).map((line, i) => (
-          <p key={i} style={{ fontSize: 13, color: THEME.medGray, margin: 0, lineHeight: 1.5, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{line}</p>
+          <p key={i} style={{ fontSize: 13, color: 'var(--zova-text-body)', margin: 0, lineHeight: 1.5, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{line}</p>
         ))}
         {addr.phone && (
-          <p style={{ fontSize: 13, fontWeight: 600, color: THEME.charcoal, margin: '6px 0 0', overflowWrap: 'anywhere' }}>{addr.phone}</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--zova-ink)', margin: '6px 0 0', overflowWrap: 'anywhere' }}>{addr.phone}</p>
         )}
       </div>
 
@@ -137,16 +125,16 @@ const AddressCard = ({ addr, onEdit, onDelete, onSetDefault, deletingId }) => {
           alignItems: 'center',
           gap: 4,
           paddingTop: 16,
-          borderTop: `1px solid ${THEME.border}`,
+          borderTop: `1px solid ${'var(--zova-border)'}`,
           flexWrap: 'wrap',
         }}
       >
         {!addr.isDefault && (
-          <ActionBtn onClick={() => onSetDefault(addr)} color={THEME.green} hoverBg={THEME.greenTint}>
+          <ActionBtn onClick={() => onSetDefault(addr)} color={'var(--zova-primary-action)'} hoverBg={'var(--zova-green-soft)'}>
             Make Default
           </ActionBtn>
         )}
-        <ActionBtn onClick={() => onEdit(addr)} color={THEME.medGray} hoverBg={THEME.softGray} icon={<FiEdit2 size={12} />}>
+        <ActionBtn onClick={() => onEdit(addr)} color={'var(--zova-text-body)'} hoverBg={'var(--zova-surface-alt)'} icon={<FiEdit2 size={12} />}>
           Edit
         </ActionBtn>
         <ActionBtn
@@ -182,7 +170,7 @@ const ActionBtn = ({ children, onClick, disabled, color, hoverBg, icon }) => {
         cursor: disabled ? 'not-allowed' : 'pointer',
         fontSize: 12,
         fontWeight: 600,
-        color: hov ? color : THEME.medGray,
+        color: hov ? color : 'var(--zova-text-body)',
         background: hov ? hoverBg : 'transparent',
         opacity: disabled ? 0.5 : 1,
         transition: 'background 0.15s, color 0.15s',
@@ -311,10 +299,10 @@ export default function AddressBook() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText, margin: 0, marginBottom: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--zova-text-muted)', margin: 0, marginBottom: 4 }}>
             My Account
           </p>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em' }}>
             Address Book
           </h2>
         </div>
@@ -333,8 +321,8 @@ export default function AddressBook() {
             cursor: 'pointer',
             fontSize: 13,
             fontWeight: 700,
-            color: THEME.white,
-            background: addHov ? THEME.greenDark : THEME.green,
+            color: '#FFFFFF',
+            background: addHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
             transition: 'background 0.2s',
           }}
         >
@@ -346,7 +334,7 @@ export default function AddressBook() {
       {loading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }} className="grid-cols-1 md:grid-cols-2">
           {[...Array(2)].map((_, i) => (
-            <div key={i} className="animate-pulse" style={{ height: 200, borderRadius: 18, background: THEME.softGray, border: `1px solid ${THEME.border}` }} />
+            <div key={i} className="animate-pulse" style={{ height: 200, borderRadius: 18, background: 'var(--zova-surface-alt)', border: `1px solid ${'var(--zova-border)'}` }} />
           ))}
         </div>
 
@@ -360,16 +348,16 @@ export default function AddressBook() {
             justifyContent: 'center',
             padding: '64px 24px',
             textAlign: 'center',
-            background: THEME.white,
-            border: `1.5px dashed ${THEME.border}`,
+            background: '#FFFFFF',
+            border: `1.5px dashed ${'var(--zova-border)'}`,
             borderRadius: 20,
           }}
         >
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: THEME.greenTint, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-            <FiMapPin size={22} style={{ color: THEME.green }} />
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--zova-green-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            <FiMapPin size={22} style={{ color: 'var(--zova-primary-action)' }} />
           </div>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: THEME.charcoal, margin: '0 0 6px', letterSpacing: '-0.02em' }}>No saved addresses</h3>
-          <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 24px' }}>Add a delivery address to speed up checkout.</p>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>No saved addresses</h3>
+          <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 24px' }}>Add a delivery address to speed up checkout.</p>
           <button
             type="button"
             onClick={openCreateModal}
@@ -377,7 +365,7 @@ export default function AddressBook() {
               display: 'inline-flex', alignItems: 'center', gap: 7,
               padding: '10px 20px', borderRadius: 10, border: 'none',
               cursor: 'pointer', fontSize: 13, fontWeight: 700,
-              color: THEME.white, background: THEME.green,
+              color: '#FFFFFF', background: 'var(--zova-primary-action)',
             }}
           >
             <FiPlus size={14} /> Add your first address
@@ -413,9 +401,9 @@ export default function AddressBook() {
           <div
             style={{
               width: '100%', maxWidth: 560,
-              background: THEME.white,
+              background: '#FFFFFF',
               borderRadius: 20,
-              border: `1px solid ${THEME.border}`,
+              border: `1px solid ${'var(--zova-border)'}`,
               boxShadow: '0 24px 60px rgba(0,0,0,0.15)',
               overflow: 'hidden',
             }}
@@ -425,10 +413,10 @@ export default function AddressBook() {
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '20px 24px',
-                borderBottom: `1px solid ${THEME.border}`,
+                borderBottom: `1px solid ${'var(--zova-border)'}`,
               }}
             >
-              <h3 style={{ fontSize: 17, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.02em' }}>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.02em' }}>
                 {editingAddress ? 'Edit Address' : 'Add New Address'}
               </h3>
               <button
@@ -437,7 +425,7 @@ export default function AddressBook() {
                 style={{
                   width: 32, height: 32, borderRadius: 8, border: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: THEME.softGray, color: THEME.medGray, cursor: 'pointer',
+                  background: 'var(--zova-surface-alt)', color: 'var(--zova-text-body)', cursor: 'pointer',
                 }}
               >
                 <FiX size={16} />
@@ -482,7 +470,7 @@ export default function AddressBook() {
                 <label
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10,
-                    fontSize: 13, fontWeight: 500, color: THEME.medGray,
+                    fontSize: 13, fontWeight: 500, color: 'var(--zova-text-body)',
                     cursor: 'pointer', paddingBottom: 2,
                   }}
                 >
@@ -491,21 +479,21 @@ export default function AddressBook() {
                     name="isDefault"
                     checked={form.isDefault}
                     onChange={handleChange}
-                    style={{ accentColor: THEME.green, width: 16, height: 16 }}
+                    style={{ accentColor: 'var(--zova-primary-action)', width: 16, height: 16 }}
                   />
                   Set as default address
                 </label>
               </div>
 
               {/* Modal footer */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 8, borderTop: `1px solid ${THEME.border}`, marginTop: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 8, borderTop: `1px solid ${'var(--zova-border)'}`, marginTop: 4 }}>
                 <button
                   type="button"
                   onClick={closeModal}
                   style={{
                     padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600,
-                    border: `1.5px solid ${THEME.border}`, background: THEME.white,
-                    color: THEME.medGray, cursor: 'pointer',
+                    border: `1.5px solid ${'var(--zova-border)'}`, background: '#FFFFFF',
+                    color: 'var(--zova-text-body)', cursor: 'pointer',
                   }}
                 >
                   Cancel
@@ -518,8 +506,8 @@ export default function AddressBook() {
                   style={{
                     padding: '10px 24px', borderRadius: 10, fontSize: 13, fontWeight: 700,
                     border: 'none', cursor: saving ? 'not-allowed' : 'pointer',
-                    color: THEME.white,
-                    background: saving ? THEME.mutedText : saveHov ? THEME.greenDark : THEME.green,
+                    color: '#FFFFFF',
+                    background: saving ? 'var(--zova-text-muted)' : saveHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
                     opacity: saving ? 0.7 : 1,
                     transition: 'background 0.2s',
                   }}

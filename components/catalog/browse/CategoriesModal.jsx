@@ -6,24 +6,7 @@ import { FiX, FiChevronRight, FiArrowRight } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  forest:           'var(--zova-primary-action)',
-  forestDark:       'var(--zova-primary-action-hover)',
-  forestLight:      'var(--zova-green-soft)',
-  forestBorder:     '#c2d9b4',
-  gold:             'var(--zova-accent-emphasis)',
-  goldLight:        'var(--zova-accent-soft)',
-  goldDark:         'var(--zova-warning)',
-  goldBadgeBorder:  '#f5d06e',
-  linen:            'var(--zova-linen)',
-  linenDark:        'var(--zova-border)',
-  onyx:             'var(--zova-ink)',
-  onyxMid:          'var(--zova-text-body)',
-  onyxMuted:        'var(--zova-text-muted)',
-  white:            '#FFFFFF',
-  overlay:          'rgba(25,27,25,0.55)',
-  modalShadow:      '0 20px 60px rgba(25,27,25,0.22)',
-};
+
 // ============================================================
 
 const CategoriesModal = ({ onClose }) => {
@@ -60,7 +43,7 @@ const CategoriesModal = ({ onClose }) => {
       <div
         aria-hidden="true"
         onClick={handleClose}
-        style={{ position: 'fixed', inset: 0, zIndex: 9998, backgroundColor: THEME.overlay }}
+        style={{ position: 'fixed', inset: 0, zIndex: 9998, backgroundColor: 'rgba(25,27,25,0.55)' }}
       />
 
       {/* Modal panel */}
@@ -76,9 +59,9 @@ const CategoriesModal = ({ onClose }) => {
           left: 0,
           right: 0,
           zIndex: 9999,
-          backgroundColor: THEME.white,
-          borderBottom: `1px solid ${THEME.linenDark}`,
-          boxShadow: THEME.modalShadow,
+          backgroundColor: '#FFFFFF',
+          borderBottom: `1px solid ${'var(--zova-border)'}`,
+          boxShadow: '0 20px 60px rgba(25,27,25,0.22)',
           maxHeight: 'calc(100vh - 64px)',
           overflowY: 'auto',
         }}
@@ -89,13 +72,13 @@ const CategoriesModal = ({ onClose }) => {
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '10px 24px',
-            backgroundColor: THEME.linen,
-            borderBottom: `1px solid ${THEME.linenDark}`,
+            backgroundColor: 'var(--zova-linen)',
+            borderBottom: `1px solid ${'var(--zova-border)'}`,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               {/* Gold Harvest stripe — from brand identity */}
-              <span style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: THEME.gold, display: 'inline-block', flexShrink: 0 }} />
-              <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: THEME.onyxMuted }}>
+              <span style={{ width: 14, height: 3, borderRadius: 2, backgroundColor: 'var(--zova-accent-emphasis)', display: 'inline-block', flexShrink: 0 }} />
+              <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--zova-text-muted)' }}>
                 Browse Categories
               </span>
             </div>
@@ -108,9 +91,9 @@ const CategoriesModal = ({ onClose }) => {
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '6px 13px', borderRadius: 6,
-                border: `1px solid ${closeBtnHover ? '#f5c6c6' : THEME.linenDark}`,
-                backgroundColor: closeBtnHover ? '#ffecec' : THEME.white,
-                color: closeBtnHover ? '#c0392b' : THEME.onyxMuted,
+                border: `1px solid ${closeBtnHover ? '#f5c6c6' : 'var(--zova-border)'}`,
+                backgroundColor: closeBtnHover ? '#ffecec' : '#FFFFFF',
+                color: closeBtnHover ? '#c0392b' : 'var(--zova-text-muted)',
                 fontSize: 11, fontWeight: 600, cursor: 'pointer',
                 transition: 'all 0.14s',
               }}
@@ -125,7 +108,7 @@ const CategoriesModal = ({ onClose }) => {
             <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
               <div style={{
                 width: 26, height: 26, borderRadius: '50%',
-                border: `2px solid ${THEME.forest}`,
+                border: `2px solid ${'var(--zova-primary-action)'}`,
                 borderTopColor: 'transparent',
                 animation: 'zova-spin 0.7s linear infinite',
               }} />
@@ -133,7 +116,7 @@ const CategoriesModal = ({ onClose }) => {
 
           ) : !hierarchicalCategories?.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '80px 0' }}>
-              <p style={{ fontSize: 13, color: THEME.onyxMuted }}>No categories found.</p>
+              <p style={{ fontSize: 13, color: 'var(--zova-text-muted)' }}>No categories found.</p>
             </div>
 
           ) : (
@@ -142,15 +125,15 @@ const CategoriesModal = ({ onClose }) => {
               {/* ── Sidebar ── */}
               <div className="zova-categories-sidebar" style={{
                 width: 206, flexShrink: 0,
-                backgroundColor: THEME.linen,
-                borderRight: `1px solid ${THEME.linenDark}`,
+                backgroundColor: 'var(--zova-linen)',
+                borderRight: `1px solid ${'var(--zova-border)'}`,
                 display: 'flex', flexDirection: 'column',
               }}>
                 <p style={{
                   padding: '13px 16px 7px', margin: 0,
                   fontSize: 9, fontWeight: 700,
                   textTransform: 'uppercase', letterSpacing: '0.22em',
-                  color: THEME.onyxMuted,
+                  color: 'var(--zova-text-muted)',
                 }}>
                   Departments
                 </p>
@@ -171,14 +154,14 @@ const CategoriesModal = ({ onClose }) => {
 
                         {/* ── Mobile accordion — hidden on md+ ── */}
                         {isExpanded && (
-                          <div className="md:hidden" style={{ backgroundColor: THEME.white, borderBottom: `1px solid ${THEME.linenDark}` }}>
+                          <div className="md:hidden" style={{ backgroundColor: '#FFFFFF', borderBottom: `1px solid ${'var(--zova-border)'}` }}>
                             <div style={{ padding: '12px 16px 16px' }}>
                               <Link
                                 href={`/shop/${cat.slug}`}
                                 onClick={handleClose}
                                 style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                                  fontSize: 11, fontWeight: 700, color: THEME.forest,
+                                  fontSize: 11, fontWeight: 700, color: 'var(--zova-primary-action)',
                                   textDecoration: 'none', marginBottom: 14,
                                 }}
                               >
@@ -194,12 +177,12 @@ const CategoriesModal = ({ onClose }) => {
                                       style={{
                                         display: 'block', fontSize: 9, fontWeight: 700,
                                         textTransform: 'uppercase', letterSpacing: '0.18em',
-                                        color: THEME.onyxMuted, marginBottom: 8, textDecoration: 'none',
+                                        color: 'var(--zova-text-muted)', marginBottom: 8, textDecoration: 'none',
                                       }}
                                     >
                                       {group.name}
                                     </Link>
-                                    <div style={{ width: 16, height: 2, backgroundColor: THEME.gold, opacity: 0.6, borderRadius: 2, marginBottom: 8 }} />
+                                    <div style={{ width: 16, height: 2, backgroundColor: 'var(--zova-accent-emphasis)', opacity: 0.6, borderRadius: 2, marginBottom: 8 }} />
                                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
                                       {group.children?.map((item, itemIdx) => (
                                         <li key={item.id || itemIdx}>
@@ -208,7 +191,7 @@ const CategoriesModal = ({ onClose }) => {
                                             onClick={handleClose}
                                             style={{
                                               display: 'inline-flex', alignItems: 'center', gap: 5,
-                                              fontSize: 12, color: THEME.onyxMid, textDecoration: 'none',
+                                              fontSize: 12, color: 'var(--zova-text-body)', textDecoration: 'none',
                                             }}
                                           >
                                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</span>
@@ -216,8 +199,8 @@ const CategoriesModal = ({ onClose }) => {
                                               <span style={{
                                                 fontSize: 8, fontWeight: 800,
                                                 padding: '2px 5px', borderRadius: 20, flexShrink: 0,
-                                                backgroundColor: THEME.goldLight, color: THEME.goldDark,
-                                                border: `1px solid ${THEME.goldBadgeBorder}`,
+                                                backgroundColor: 'var(--zova-accent-soft)', color: 'var(--zova-warning)',
+                                                border: `1px solid ${'#f5d06e'}`,
                                                 textTransform: 'uppercase', letterSpacing: '0.06em',
                                               }}>New</span>
                                             )}
@@ -232,11 +215,11 @@ const CategoriesModal = ({ onClose }) => {
                               <div style={{
                                 marginTop: 18, borderRadius: 10, padding: '12px 14px',
                                 display: 'flex', flexDirection: 'column', gap: 10,
-                                backgroundColor: THEME.forestLight, border: `1px solid ${THEME.forestBorder}`,
+                                backgroundColor: 'var(--zova-green-soft)', border: `1px solid ${'#c2d9b4'}`,
                               }}>
                                 <div>
-                                  <p style={{ fontSize: 13, fontWeight: 700, color: THEME.forest, margin: 0 }}>New Arrivals</p>
-                                  <p style={{ fontSize: 11, color: THEME.onyxMuted, marginTop: 2 }}>Fresh styles in {cat.name}</p>
+                                  <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--zova-primary-action)', margin: 0 }}>New Arrivals</p>
+                                  <p style={{ fontSize: 11, color: 'var(--zova-text-muted)', marginTop: 2 }}>Fresh styles in {cat.name}</p>
                                 </div>
                                 <Link
                                   href={`/shop/${cat.slug}?filter=new`}
@@ -244,7 +227,7 @@ const CategoriesModal = ({ onClose }) => {
                                   style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                                     padding: '9px', borderRadius: 8,
-                                    backgroundColor: THEME.forest, color: THEME.white,
+                                    backgroundColor: 'var(--zova-primary-action)', color: '#FFFFFF',
                                     fontSize: 11, fontWeight: 700, textDecoration: 'none',
                                   }}
                                 >
@@ -259,19 +242,19 @@ const CategoriesModal = ({ onClose }) => {
                   })}
                 </div>
 
-                <div style={{ padding: '10px', borderTop: `1px solid ${THEME.linenDark}`, flexShrink: 0 }}>
+                <div style={{ padding: '10px', borderTop: `1px solid ${'var(--zova-border)'}`, flexShrink: 0 }}>
                   <Link
                     href="/shop"
                     onClick={handleClose}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                       padding: '9px', borderRadius: 8,
-                      backgroundColor: THEME.forest, color: THEME.white,
+                      backgroundColor: 'var(--zova-primary-action)', color: '#FFFFFF',
                       fontSize: 11, fontWeight: 700, textDecoration: 'none',
                       transition: 'background 0.14s', letterSpacing: '0.03em',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.forestDark)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.forest)}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-primary-action-hover)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-primary-action)')}
                   >
                     All Products <FiArrowRight style={{ width: 12, height: 12 }} />
                   </Link>
@@ -279,7 +262,7 @@ const CategoriesModal = ({ onClose }) => {
               </div>
 
               {/* ── Right Panel ── */}
-              <div className="zova-categories-desktop-panel" style={{ flex: 1, overflowY: 'auto', backgroundColor: THEME.white, maxHeight: 520 }}>
+              <div className="zova-categories-desktop-panel" style={{ flex: 1, overflowY: 'auto', backgroundColor: '#FFFFFF', maxHeight: 520 }}>
                 {activeCat && (
                   <div className="zova-categories-content" style={{ padding: '22px 28px' }}>
 
@@ -287,16 +270,16 @@ const CategoriesModal = ({ onClose }) => {
                     <div className="zova-categories-content-header" style={{
                       display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
                       marginBottom: 20, paddingBottom: 16,
-                      borderBottom: `1px solid ${THEME.linenDark}`,
+                      borderBottom: `1px solid ${'var(--zova-border)'}`,
                     }}>
                       <div>
                         <h2 style={{
-                          fontSize: 24, fontWeight: 800, color: THEME.forest,
+                          fontSize: 24, fontWeight: 800, color: 'var(--zova-primary-action)',
                           letterSpacing: '-0.01em', lineHeight: 1.1, margin: 0,
                         }}>
                           {activeCat.name}
                         </h2>
-                        <p style={{ fontSize: 11, color: THEME.onyxMuted, marginTop: 4 }}>
+                        <p style={{ fontSize: 11, color: 'var(--zova-text-muted)', marginTop: 4 }}>
                           {activeCat.children?.reduce((acc, g) => acc + (g.children?.length || 0), 0)} styles
                           across {activeCat.children?.length} groups
                         </p>
@@ -307,12 +290,12 @@ const CategoriesModal = ({ onClose }) => {
                         onClick={handleClose}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 4,
-                          fontSize: 11, fontWeight: 700, color: THEME.forest,
+                          fontSize: 11, fontWeight: 700, color: 'var(--zova-primary-action)',
                           textDecoration: 'none', marginTop: 3, flexShrink: 0,
                           transition: 'color 0.12s',
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = THEME.goldDark)}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = THEME.forest)}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--zova-warning)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--zova-primary-action)')}
                       >
                         View All <FiArrowRight style={{ width: 12, height: 12 }} />
                       </Link>
@@ -328,17 +311,17 @@ const CategoriesModal = ({ onClose }) => {
                             style={{
                               display: 'block', fontSize: 10, fontWeight: 700,
                               textTransform: 'uppercase', letterSpacing: '0.17em',
-                              color: THEME.onyxMuted, marginBottom: 8, textDecoration: 'none',
+                              color: 'var(--zova-text-muted)', marginBottom: 8, textDecoration: 'none',
                               transition: 'color 0.12s',
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = THEME.forest)}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = THEME.onyxMuted)}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--zova-primary-action)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--zova-text-muted)')}
                           >
                             {group.name}
                           </Link>
 
                           {/* Gold Harvest divider */}
-                          <div style={{ width: 18, height: 2, backgroundColor: THEME.gold, opacity: 0.6, borderRadius: 2, marginBottom: 9 }} />
+                          <div style={{ width: 18, height: 2, backgroundColor: 'var(--zova-accent-emphasis)', opacity: 0.6, borderRadius: 2, marginBottom: 9 }} />
 
                           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                             {group.children?.map((item, itemIdx) => (
@@ -355,12 +338,12 @@ const CategoriesModal = ({ onClose }) => {
                     <div className="zova-categories-banner" style={{
                       marginTop: 22, borderRadius: 10, padding: '13px 18px',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      backgroundColor: THEME.forestLight,
-                      border: `1px solid ${THEME.forestBorder}`,
+                      backgroundColor: 'var(--zova-green-soft)',
+                      border: `1px solid ${'#c2d9b4'}`,
                     }}>
                       <div>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: THEME.forest, margin: 0 }}>New Season Arrivals</p>
-                        <p style={{ fontSize: 11, color: THEME.onyxMuted, marginTop: 2 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--zova-primary-action)', margin: 0 }}>New Season Arrivals</p>
+                        <p style={{ fontSize: 11, color: 'var(--zova-text-muted)', marginTop: 2 }}>
                           Fresh styles just landed in {activeCat.name}
                         </p>
                       </div>
@@ -370,12 +353,12 @@ const CategoriesModal = ({ onClose }) => {
                         style={{
                           display: 'flex', alignItems: 'center', gap: 6,
                           padding: '8px 16px', borderRadius: 7,
-                          backgroundColor: THEME.forest, color: THEME.white,
+                          backgroundColor: 'var(--zova-primary-action)', color: '#FFFFFF',
                           fontSize: 11, fontWeight: 700, textDecoration: 'none',
                           flexShrink: 0, transition: 'background 0.14s', letterSpacing: '0.02em',
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.forestDark)}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.forest)}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-primary-action-hover)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-primary-action)')}
                       >
                         Shop Now <FiArrowRight style={{ width: 12, height: 12 }} />
                       </Link>

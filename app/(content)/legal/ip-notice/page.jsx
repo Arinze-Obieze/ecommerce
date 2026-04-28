@@ -96,7 +96,7 @@ export default function IPNoticePage() {
           "A statement under penalty of perjury that the information provided is accurate and you are authorised to act on behalf of the rights holder",
           "Your physical or electronic signature",
         ]} />
-        <P>Send your notice to: <a href="mailto:ip@zova.ng" style={{ color: "#2E6417", fontWeight: 600 }}>ip@zova.ng</a></P>
+        <P>Send your notice to: <a href="mailto:ip@zova.ng" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>ip@zova.ng</a></P>
         <P>We will acknowledge receipt within 2 business days and aim to act on valid notices within 5 business days.</P>
       </Section>
 
@@ -107,7 +107,7 @@ export default function IPNoticePage() {
           "Notify the seller whose content has been removed",
           "Provide the seller with the opportunity to submit a counter-notice if they believe the removal was in error",
         ]} />
-        <P><strong>Counter-notices:</strong> If a seller believes their content was removed by mistake, they may submit a counter-notice to <a href="mailto:ip@zova.ng" style={{ color: "#2E6417", fontWeight: 600 }}>ip@zova.ng</a> including their contact details, identification of the removed content, a statement under penalty of perjury that the removal was a mistake, and their consent to jurisdiction of the relevant Nigerian court.</P>
+        <P><strong>Counter-notices:</strong> If a seller believes their content was removed by mistake, they may submit a counter-notice to <a href="mailto:ip@zova.ng" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>ip@zova.ng</a> including their contact details, identification of the removed content, a statement under penalty of perjury that the removal was a mistake, and their consent to jurisdiction of the relevant Nigerian court.</P>
         <P>If a valid counter-notice is received, ZOVA may restore the content after 14 business days unless the original complainant initiates legal proceedings.</P>
         <P><strong>False notices:</strong> Submitting a false infringement notice or counter-notice is a serious matter. ZOVA reserves the right to pursue legal action against any person who knowingly submits false IP claims.</P>
       </Section>
@@ -124,7 +124,7 @@ export default function IPNoticePage() {
           "General legal: legal@zova.ng",
           "Post: ZOVA Limited, Onitsha Main Market, Anambra State, Nigeria",
         ]} />
-        <P>For urgent matters such as large-scale counterfeiting operations, please email <a href="mailto:ip@zova.ng" style={{ color: "#2E6417", fontWeight: 600 }}>ip@zova.ng</a> and mark your email as URGENT.</P>
+        <P>For urgent matters such as large-scale counterfeiting operations, please email <a href="mailto:ip@zova.ng" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>ip@zova.ng</a> and mark your email as URGENT.</P>
       </Section>
 
     </LegalPageContainer>

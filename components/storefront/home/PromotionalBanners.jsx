@@ -43,7 +43,7 @@ const PromotionalBanners = () => {
                <p className="text-xl text-white/90 mb-6">UP TO 50% OFF</p>
                <Link
                  href="/shop?hasDiscount=true"
-                 className="inline-block px-6 py-2.5 bg-[#2E6417] text-white font-medium rounded-lg hover:bg-[#245213] transition-colors shadow-lg"
+                 className="inline-block px-6 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-lg"
                >
                  Shop Deals &gt;
                </Link>
@@ -60,12 +60,12 @@ const PromotionalBanners = () => {
 
              <div className="inset-0 p-8 flex flex-col justify-center items-start relative z-10">
                <h3 className="text-3xl md:text-4xl font-bold text-[#1a382b] mb-2">BEST SELLERS</h3>
-               <Link href="/shop?sortBy=rating" className="flex items-center gap-1 text-gray-700 font-medium mb-6 hover:text-[#2E6417]">
+               <Link href="/shop?sortBy=rating" className="flex items-center gap-1 text-gray-700 font-medium mb-6 hover:text-primary">
                   Shop Now <FiChevronRight />
                </Link>
                <Link
                  href="/shop?sortBy=rating"
-                 className="inline-block px-6 py-2.5 bg-[#2E6417] text-white font-medium rounded-lg hover:bg-[#245213] transition-colors shadow-lg"
+                 className="inline-block px-6 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-lg"
                >
                  View All &gt;
                </Link>
@@ -86,7 +86,7 @@ const PromotionalBanners = () => {
                     : 0;
 
                   return (
-                    <div key={item.id} className="w-[86vw] max-w-[380px] bg-[#F5F1EA] rounded-xl p-5 flex items-center justify-between border border-gray-100">
+                    <div key={item.id} className="w-[86vw] max-w-[380px] bg-background-alt rounded-xl p-5 flex items-center justify-between border border-gray-100">
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-gray-900 mb-1 truncate">{item.name}</h4>
                         <div className="flex items-center gap-2 mb-2">
@@ -96,7 +96,7 @@ const PromotionalBanners = () => {
                               : `₦${(item.price).toLocaleString()}`}
                           </span>
                           {discountPercent > 0 && (
-                            <span className="text-xs font-bold text-white bg-[#2E6417] px-1.5 py-0.5 rounded">-{discountPercent}%</span>
+                            <span className="text-xs font-bold text-white bg-primary px-1.5 py-0.5 rounded">-{discountPercent}%</span>
                           )}
                         </div>
                         {item.discount_price && (
@@ -105,14 +105,14 @@ const PromotionalBanners = () => {
 
                         <div className="flex items-end justify-between mt-2">
                           <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                            <FiCheckCircle className="text-[#2E6417]" /> Verified Store
+                            <FiCheckCircle className="text-primary" /> Verified Store
                           </div>
                           <button
                             onClick={(e) => {
                               e.preventDefault();
                               addToCart(item);
                             }}
-                            className="w-8 h-8 flex items-center justify-center bg-[#2E6417]/10 text-[#2E6417] rounded-full"
+                            className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-full"
                             title="Add to Cart"
                           >
                             <FiShoppingCart className="w-4 h-4" />
@@ -136,7 +136,7 @@ const PromotionalBanners = () => {
                   : 0;
 
                 return (
-                  <div key={item.id} className="bg-[#F5F1EA] rounded-xl p-6 flex items-center justify-between border border-gray-100 hover:border-[#2E6417]/30 transition-colors">
+                  <div key={item.id} className="bg-background-alt rounded-xl p-6 flex items-center justify-between border border-gray-100 hover:border-primary/30 transition-colors">
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-gray-900 mb-1 truncate">{item.name}</h4>
                       <div className="flex items-center gap-2 mb-2">
@@ -146,7 +146,7 @@ const PromotionalBanners = () => {
                             : `₦${(item.price).toLocaleString()}`}
                         </span>
                         {discountPercent > 0 && (
-                          <span className="text-xs font-bold text-white bg-[#2E6417] px-1.5 py-0.5 rounded">-{discountPercent}%</span>
+                          <span className="text-xs font-bold text-white bg-primary px-1.5 py-0.5 rounded">-{discountPercent}%</span>
                         )}
                       </div>
                       {item.discount_price && (
@@ -155,14 +155,14 @@ const PromotionalBanners = () => {
 
                       <div className="flex items-end justify-between mt-2">
                         <div className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <FiCheckCircle className="text-[#2E6417]" /> Verified Store
+                          <FiCheckCircle className="text-primary" /> Verified Store
                         </div>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             addToCart(item);
                           }}
-                          className="w-8 h-8 flex items-center justify-center bg-[#2E6417]/10 text-[#2E6417] rounded-full hover:bg-[#2E6417] hover:text-white transition-all shadow-sm"
+                          className="w-8 h-8 flex items-center justify-center bg-primary/10 text-primary rounded-full hover:bg-primary hover:text-white transition-all shadow-sm"
                           title="Add to Cart"
                         >
                           <FiShoppingCart className="w-4 h-4" />

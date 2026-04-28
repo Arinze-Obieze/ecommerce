@@ -4,19 +4,7 @@ import { FiChevronDown, FiSearch, FiSliders } from "react-icons/fi";
 import { useFilters } from "@/contexts/filter/FilterContext";
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  pageBg:      'var(--zova-linen)',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 export default function BrowseHeader({
   productsLength,
@@ -48,9 +36,9 @@ export default function BrowseHeader({
             width: '100%',
             padding: '11px 20px',
             borderRadius: 12,
-            border: `1.5px solid ${btnHov ? THEME.greenBorder : THEME.border}`,
-            background: btnHov ? THEME.greenTint : THEME.white,
-            color: btnHov ? THEME.green : THEME.charcoal,
+            border: `1.5px solid ${btnHov ? '#B8D4A0' : 'var(--zova-border)'}`,
+            background: btnHov ? 'var(--zova-green-soft)' : '#FFFFFF',
+            color: btnHov ? 'var(--zova-primary-action)' : 'var(--zova-ink)',
             fontSize: 14,
             fontWeight: 700,
             cursor: 'pointer',
@@ -70,8 +58,8 @@ export default function BrowseHeader({
                 borderRadius: 100,
                 fontSize: 10,
                 fontWeight: 800,
-                background: THEME.green,
-                color: THEME.white,
+                background: 'var(--zova-primary-action)',
+                color: '#FFFFFF',
                 padding: '0 5px',
               }}
             >
@@ -93,11 +81,11 @@ export default function BrowseHeader({
         }}
       >
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
             All Products
           </h2>
-          <p style={{ fontSize: 13, color: THEME.mutedText, margin: '4px 0 0' }}>
-            Showing <span style={{ fontWeight: 600, color: THEME.charcoal }}>{productsLength}</span> of <span style={{ fontWeight: 600, color: THEME.charcoal }}>{totalItems}</span> items
+          <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '4px 0 0' }}>
+            Showing <span style={{ fontWeight: 600, color: 'var(--zova-ink)' }}>{productsLength}</span> of <span style={{ fontWeight: 600, color: 'var(--zova-ink)' }}>{totalItems}</span> items
           </p>
         </div>
 
@@ -111,9 +99,9 @@ export default function BrowseHeader({
             style={{
               padding: '9px 36px 9px 14px',
               borderRadius: 10,
-              border: `1.5px solid ${selectHov ? THEME.greenBorder : THEME.border}`,
-              background: THEME.white,
-              color: THEME.charcoal,
+              border: `1.5px solid ${selectHov ? '#B8D4A0' : 'var(--zova-border)'}`,
+              background: '#FFFFFF',
+              color: 'var(--zova-ink)',
               fontSize: 13,
               fontWeight: 600,
               cursor: 'pointer',
@@ -137,7 +125,7 @@ export default function BrowseHeader({
               top: '50%',
               transform: 'translateY(-50%)',
               pointerEvents: 'none',
-              color: THEME.medGray,
+              color: 'var(--zova-text-body)',
             }}
           />
         </div>
@@ -148,8 +136,8 @@ export default function BrowseHeader({
         style={{
           position: 'relative',
           borderRadius: 12,
-          border: `1.5px solid ${searchFocused ? THEME.green : THEME.border}`,
-          background: searchFocused ? THEME.white : THEME.softGray,
+          border: `1.5px solid ${searchFocused ? 'var(--zova-primary-action)' : 'var(--zova-border)'}`,
+          background: searchFocused ? '#FFFFFF' : 'var(--zova-surface-alt)',
           transition: 'border-color 0.18s, background 0.18s',
           overflow: 'hidden',
         }}
@@ -161,7 +149,7 @@ export default function BrowseHeader({
             left: 14,
             top: '50%',
             transform: 'translateY(-50%)',
-            color: searchFocused ? THEME.green : THEME.mutedText,
+            color: searchFocused ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)',
             transition: 'color 0.18s',
             pointerEvents: 'none',
           }}
@@ -177,7 +165,7 @@ export default function BrowseHeader({
             width: '100%',
             padding: '12px 14px 12px 40px',
             fontSize: 14,
-            color: THEME.charcoal,
+            color: 'var(--zova-ink)',
             background: 'transparent',
             border: 'none',
             outline: 'none',
@@ -197,8 +185,8 @@ export default function BrowseHeader({
               height: 20,
               borderRadius: '50%',
               border: 'none',
-              background: THEME.border,
-              color: THEME.medGray,
+              background: 'var(--zova-border)',
+              color: 'var(--zova-text-body)',
               fontSize: 11,
               fontWeight: 700,
               cursor: 'pointer',

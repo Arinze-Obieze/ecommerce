@@ -191,7 +191,7 @@ const ShopByMood = () => {
         .mood-hero-card:hover .mood-img,
         .mood-side-card:hover .mood-img,
         .mood-chip-card:hover .mood-img { transform: scale(1.04); }
-        .mood-expand-btn:hover { border-color: #2E6417 !important; color: #2E6417 !important; }
+        .mood-expand-btn:hover { border-color: var(--color-primary) !important; color: var(--color-primary) !important; }
         .mood-chips-row::-webkit-scrollbar { display: none; }
 
         @media (max-width: 640px) {

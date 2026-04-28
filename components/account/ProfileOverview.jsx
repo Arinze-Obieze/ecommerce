@@ -7,20 +7,7 @@ import { FiPackage, FiHeart, FiMapPin, FiClock, FiArrowRight, FiShoppingBag } fr
 import { createClient } from '@/utils/supabase/client';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenDeep:   'var(--zova-text-strong)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  pageBg:      'var(--zova-linen)',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 const STATUS = {
   completed:  { label: 'Completed', color: 'var(--zova-primary-action)', bg: 'var(--zova-green-soft)', border: '#B8D4A0' },
@@ -55,8 +42,8 @@ const StatCard = ({ label, value, icon: Icon, loading }) => {
   return (
     <div
       style={{
-        background: THEME.white,
-        border: `1px solid ${hov ? THEME.greenBorder : THEME.border}`,
+        background: '#FFFFFF',
+        border: `1px solid ${hov ? '#B8D4A0' : 'var(--zova-border)'}`,
         borderRadius: 16,
         padding: '20px 22px',
         display: 'flex',
@@ -74,23 +61,23 @@ const StatCard = ({ label, value, icon: Icon, loading }) => {
           width: 46,
           height: 46,
           borderRadius: 12,
-          background: THEME.greenTint,
+          background: 'var(--zova-green-soft)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <Icon size={20} style={{ color: THEME.green }} />
+        <Icon size={20} style={{ color: 'var(--zova-primary-action)' }} />
       </div>
       <div>
-        <p style={{ fontSize: 12, color: THEME.mutedText, fontWeight: 600, margin: 0, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <p style={{ fontSize: 12, color: 'var(--zova-text-muted)', fontWeight: 600, margin: 0, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           {label}
         </p>
         {loading ? (
-          <div style={{ width: 32, height: 22, background: THEME.softGray, borderRadius: 6, marginTop: 2 }} className="animate-pulse" />
+          <div style={{ width: 32, height: 22, background: 'var(--zova-surface-alt)', borderRadius: 6, marginTop: 2 }} className="animate-pulse" />
         ) : (
-          <h3 style={{ fontSize: 26, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.03em', lineHeight: 1 }}>
+          <h3 style={{ fontSize: 26, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.03em', lineHeight: 1 }}>
             {value}
           </h3>
         )}
@@ -158,8 +145,8 @@ export default function ProfileOverview() {
       <div
         className="p-5 sm:p-7"
         style={{
-          background: THEME.white,
-          border: `1px solid ${THEME.border}`,
+          background: '#FFFFFF',
+          border: `1px solid ${'var(--zova-border)'}`,
           borderRadius: 20,
           display: 'flex',
           alignItems: 'center',
@@ -175,13 +162,13 @@ export default function ProfileOverview() {
               width: 58,
               height: 58,
               borderRadius: '50%',
-              background: `linear-gradient(135deg, ${THEME.green}, ${THEME.greenDark})`,
+              background: `linear-gradient(135deg, ${'var(--zova-primary-action)'}, ${'var(--zova-primary-action-hover)'})`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 20,
               fontWeight: 800,
-              color: THEME.white,
+              color: '#FFFFFF',
               flexShrink: 0,
               letterSpacing: '-0.02em',
             }}
@@ -189,13 +176,13 @@ export default function ProfileOverview() {
             {initials}
           </div>
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 12, color: THEME.mutedText, fontWeight: 600, margin: 0, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <p style={{ fontSize: 12, color: 'var(--zova-text-muted)', fontWeight: 600, margin: 0, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Welcome back
             </p>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em', wordBreak: 'break-word' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em', wordBreak: 'break-word' }}>
               {userName}
             </h1>
-            <p style={{ fontSize: 13, color: THEME.medGray, margin: '3px 0 0', wordBreak: 'break-word' }}>
+            <p style={{ fontSize: 13, color: 'var(--zova-text-body)', margin: '3px 0 0', wordBreak: 'break-word' }}>
               {user?.email}
             </p>
           </div>
@@ -213,8 +200,8 @@ export default function ProfileOverview() {
             borderRadius: 10,
             fontSize: 13,
             fontWeight: 700,
-            background: linkHov ? THEME.greenDark : THEME.green,
-            color: THEME.white,
+            background: linkHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
+            color: '#FFFFFF',
             textDecoration: 'none',
             transition: 'background 0.2s',
           }}
@@ -237,13 +224,13 @@ export default function ProfileOverview() {
       <div
         className="p-5 sm:p-7"
         style={{
-          background: THEME.white,
-          border: `1px solid ${THEME.border}`,
+          background: '#FFFFFF',
+          border: `1px solid ${'var(--zova-border)'}`,
           borderRadius: 20,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.02em' }}>
             Recent Activity
           </h2>
           <Link
@@ -251,7 +238,7 @@ export default function ProfileOverview() {
             style={{
               fontSize: 12,
               fontWeight: 700,
-              color: THEME.green,
+              color: 'var(--zova-primary-action)',
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
@@ -271,7 +258,7 @@ export default function ProfileOverview() {
             }}
           >
             {[...Array(3)].map((_, index) => (
-              <div key={index} className="animate-pulse" style={{ height: 76, borderRadius: 14, background: THEME.softGray }} />
+              <div key={index} className="animate-pulse" style={{ height: 76, borderRadius: 14, background: 'var(--zova-surface-alt)' }} />
             ))}
           </div>
         ) : recentOrders.length > 0 ? (
@@ -290,9 +277,9 @@ export default function ProfileOverview() {
                     gap: 14,
                     padding: '14px 16px',
                     borderRadius: 14,
-                    border: `1px solid ${THEME.border}`,
+                    border: `1px solid ${'var(--zova-border)'}`,
                     textDecoration: 'none',
-                    background: THEME.white,
+                    background: '#FFFFFF',
                     flexWrap: 'wrap',
                   }}
                 >
@@ -302,20 +289,20 @@ export default function ProfileOverview() {
                         width: 40,
                         height: 40,
                         borderRadius: 12,
-                        background: THEME.greenTint,
+                        background: 'var(--zova-green-soft)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         flexShrink: 0,
                       }}
                     >
-                      <FiClock size={16} style={{ color: THEME.green }} />
+                      <FiClock size={16} style={{ color: 'var(--zova-primary-action)' }} />
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: THEME.charcoal }}>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: 'var(--zova-ink)' }}>
                         Order #{String(order.id).slice(0, 8).toUpperCase()}
                       </p>
-                      <p style={{ margin: '4px 0 0', fontSize: 12, color: THEME.medGray }}>
+                      <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--zova-text-body)' }}>
                         {formatDate(order.created_at)} · {itemCount} {itemCount === 1 ? 'item' : 'items'}
                       </p>
                     </div>
@@ -338,7 +325,7 @@ export default function ProfileOverview() {
                     >
                       {status.label}
                     </span>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: THEME.charcoal }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--zova-ink)' }}>
                       {formatPrice(order.total_amount)}
                     </span>
                     <span
@@ -348,8 +335,8 @@ export default function ProfileOverview() {
                         gap: 6,
                         padding: '8px 12px',
                         borderRadius: 999,
-                        background: THEME.greenTint,
-                        color: THEME.greenDark,
+                        background: 'var(--zova-green-soft)',
+                        color: 'var(--zova-primary-action-hover)',
                         fontSize: 12,
                         fontWeight: 700,
                       }}
@@ -371,9 +358,9 @@ export default function ProfileOverview() {
               justifyContent: 'center',
               padding: '36px 24px',
               textAlign: 'center',
-              background: THEME.pageBg,
+              background: 'var(--zova-linen)',
               borderRadius: 14,
-              border: `1.5px dashed ${THEME.border}`,
+              border: `1.5px dashed ${'var(--zova-border)'}`,
             }}
           >
             <div
@@ -381,19 +368,19 @@ export default function ProfileOverview() {
                 width: 48,
                 height: 48,
                 borderRadius: '50%',
-                background: THEME.softGray,
+                background: 'var(--zova-surface-alt)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 12,
               }}
             >
-              <FiClock size={20} style={{ color: THEME.mutedText }} />
+              <FiClock size={20} style={{ color: 'var(--zova-text-muted)' }} />
             </div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: THEME.charcoal, margin: 0, marginBottom: 4 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--zova-ink)', margin: 0, marginBottom: 4 }}>
               No recent activity yet
             </p>
-            <p style={{ fontSize: 13, color: THEME.mutedText, margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: 0 }}>
               Your newest orders will appear here after checkout.
             </p>
           </div>

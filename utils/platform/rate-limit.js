@@ -1,13 +1,29 @@
 import redis from '@/utils/platform/redis';
 
-export function getRequestIp(request) {
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    return forwardedFor.split(',')[0]?.trim() || 'unknown';
+// In-process fallback used when Redis is unavailable.
+// Entries: key → { count, resetAt }
+const _fallbackCounters = new Map();
+
+function _fallbackCheck(key, limit, windowMs) {
+  const now = Date.now();
+  let entry = _fallbackCounters.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + windowMs };
   }
+  entry.count += 1;
+  _fallbackCounters.set(key, entry);
+  // Use 10 % of normal limit so the fallback is conservative.
+  const fallbackLimit = Math.max(1, Math.floor(limit * 0.1));
+  return entry.count <= fallbackLimit;
+}
+
+// F005: prefer cf-connecting-ip (set by Cloudflare, cannot be spoofed by clients).
+// Only fall back to x-forwarded-for when Cloudflare is not in the path.
+export function getRequestIp(request) {
+  const cfIp = request.headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp;
 
   return (
-    request.headers.get('cf-connecting-ip') ||
     request.headers.get('x-real-ip') ||
     'unknown'
   );
@@ -20,14 +36,17 @@ export async function enforceRateLimit({
   limit,
   windowSeconds = 60,
 }) {
-  if (!redis) {
-    return { allowed: true, remaining: null, retryAfter: null };
-  }
-
   const safeScope = String(scope || 'api');
   const safeIdentifier = String(identifier || 'anon');
   const ip = getRequestIp(request);
   const key = `ratelimit:${safeScope}:${safeIdentifier}:${ip}`;
+
+  // F002: when Redis is not configured, fall back to conservative in-process counters.
+  if (!redis) {
+    console.warn('[rate-limit] Redis unavailable — using in-process fallback for key:', key);
+    const allowed = _fallbackCheck(key, limit, windowSeconds * 1000);
+    return { allowed, remaining: null, retryAfter: allowed ? null : windowSeconds };
+  }
 
   try {
     const count = await redis.incr(key);
@@ -51,9 +70,10 @@ export async function enforceRateLimit({
       retryAfter: allowed ? null : windowSeconds,
     };
   } catch (error) {
-    console.error('Rate limit error:', error);
-    // Fail-open if redis is unavailable to avoid full checkout outage.
-    return { allowed: true, remaining: null, retryAfter: null };
+    // F002: Redis connection error — fall back to conservative in-process counters.
+    console.error('[rate-limit] Redis error, switching to fallback:', error);
+    const allowed = _fallbackCheck(key, limit, windowSeconds * 1000);
+    return { allowed, remaining: null, retryAfter: allowed ? null : windowSeconds };
   }
 }
 

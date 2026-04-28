@@ -9,67 +9,13 @@ import { logProductEvent } from '@/utils/telemetry/product-events';
 // ============================================================
 // Brand tokens — sourced from app/globals.css
 // ============================================================
-const THEME = {
-  // Card shell
-  cardBg:           '#FFFFFF',
-  cardBorder:       'var(--zova-border)',
-  cardShadow:       '0 1px 3px rgba(25,27,25,0.06)',
-  cardHoverShadow:  '0 6px 20px rgba(25,27,25,0.10)',
 
-  // Text
-  categoryText:     'var(--zova-text-muted)',
-  nameText:         'var(--zova-ink)',
-  priceText:        'var(--zova-ink)',
-  originalPrice:    '#BBBBBB',
-  storeText:        'var(--zova-text-muted)',
-  storeHover:       'var(--zova-ink)',
-  metaText:         'var(--zova-text-muted)',
-
-  // Badges — system labels
-  newBg:            'var(--zova-ink)',
-  newText:          'var(--zova-linen)',
-  saleBg:           '#C0392B',       // kept red — semantic meaning (sale/discount)
-  saleText:         '#FFFFFF',
-
-  // Trending — Gold Harvest family
-  trendingBg:       'var(--zova-accent-soft)',
-  trendingText:     '#b87800',
-  trendingBorder:   '#f5d06e',
-
-  // Stats strip
-  statsBg:          'var(--zova-linen)',
-  statsIcon:        'var(--zova-primary-action)',
-
-  // Rank badge — Forest family
-  rankBg:           'var(--zova-green-soft)',
-  rankText:         'var(--zova-primary-action)',
-  rankBorder:       '#c2d9b4',
-
-  // Savings pill — Gold Harvest family
-  savingsBg:        'var(--zova-accent-soft)',
-  savingsText:      '#b87800',
-  savingsBorder:    '#f5d06e',
-
-  // Cart button
-  cartBg:           'var(--zova-primary-action)',
-  cartHoverBg:      'var(--zova-primary-action-hover)',
-  cartText:         '#FFFFFF',
-  cartSuccessBg:    'var(--zova-primary-action-hover)',
-
-  // Quick View pill
-  quickViewBg:      '#FFFFFF',
-  quickViewText:    'var(--zova-ink)',
-  quickViewHover:   'var(--zova-linen)',
-
-  // Skeleton / image bg
-  skeletonBg:       'var(--zova-linen)',
-};
 
 // Savings pill colours as a style object (reused in multiple places)
 const SAVINGS_STYLE = {
-  backgroundColor: THEME.savingsBg,
-  color:           THEME.savingsText,
-  border:          `1px solid ${THEME.savingsBorder}`,
+  backgroundColor: 'var(--zova-accent-soft)',
+  color:           '#b87800',
+  border:          `1px solid ${'#f5d06e'}`,
 };
 
 const QUICK_VIEW_DESCRIPTION_LIMIT = 180;
@@ -117,7 +63,7 @@ function PromotionTags({ promo, price, compact = false }) {
     <div
       className={`flex flex-wrap items-center gap-1 ${compact ? 'mt-0' : 'mt-2'}`}
       style={{
-        borderLeft: `2px solid ${promo.badge_bg_color || THEME.newBg}`,
+        borderLeft: `2px solid ${promo.badge_bg_color || 'var(--zova-ink)'}`,
         paddingLeft: 6,
       }}
     >
@@ -125,14 +71,14 @@ function PromotionTags({ promo, price, compact = false }) {
       <span
         className="inline-flex items-center text-[10px] font-black px-2 py-0.5 rounded-[4px] tracking-wide leading-none"
         style={{
-          backgroundColor: promo.badge_bg_color  || THEME.newBg,
-          color:           promo.badge_text_color || THEME.newText,
+          backgroundColor: promo.badge_bg_color  || 'var(--zova-ink)',
+          color:           promo.badge_text_color || 'var(--zova-linen)',
         }}
       >
         {promo.owner_type === 'seller' && (
           <span
             className="w-1.5 h-1.5 rounded-full mr-1 flex-shrink-0"
-            style={{ backgroundColor: promo.badge_text_color || THEME.newText, opacity: 0.5 }}
+            style={{ backgroundColor: promo.badge_text_color || 'var(--zova-linen)', opacity: 0.5 }}
           />
         )}
         {promo.display_name}
@@ -174,7 +120,7 @@ function RankBadge({ rank }) {
   return (
     <span
       className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-      style={{ backgroundColor: THEME.rankBg, color: THEME.rankText, border: `1px solid ${THEME.rankBorder}` }}
+      style={{ backgroundColor: 'var(--zova-green-soft)', color: 'var(--zova-primary-action)', border: `1px solid ${'#c2d9b4'}` }}
     >
       {medals[rank] || <FiAward className="w-2.5 h-2.5" />}
       #{rank} in category
@@ -186,7 +132,7 @@ function TrendingBadge({ velocity }) {
   return (
     <span
       className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-      style={{ backgroundColor: THEME.trendingBg, color: THEME.trendingText, border: `1px solid ${THEME.trendingBorder}` }}
+      style={{ backgroundColor: 'var(--zova-accent-soft)', color: '#b87800', border: `1px solid ${'#f5d06e'}` }}
     >
       <FiTrendingUp className="w-3 h-3" />
       Trending {velocity ? `· ${velocity}` : ''}
@@ -316,13 +262,13 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
       {/* ── Card ── */}
       <div
         className="zova-panel group h-full flex flex-col bg-white transition-shadow duration-200"
-        style={{ border: `1px solid ${THEME.cardBorder}`, boxShadow: THEME.cardShadow, borderRadius: '18px', overflow: 'hidden' }}
-        onMouseEnter={(e) => (e.currentTarget.style.boxShadow = THEME.cardHoverShadow)}
-        onMouseLeave={(e) => (e.currentTarget.style.boxShadow = THEME.cardShadow)}
+        style={{ border: `1px solid ${'var(--zova-border)'}`, boxShadow: '0 1px 3px rgba(25,27,25,0.06)', borderRadius: '18px', overflow: 'hidden' }}
+        onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 6px 20px rgba(25,27,25,0.10)')}
+        onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 1px 3px rgba(25,27,25,0.06)')}
       >
         {/* ── Image ── */}
         <Link href={`/products/${product.slug}`} className="relative block shrink-0" onClick={handleProductClick}>
-          <div className="aspect-[3/4] overflow-hidden relative" style={{ backgroundColor: THEME.skeletonBg }}>
+          <div className="aspect-[3/4] overflow-hidden relative" style={{ backgroundColor: 'var(--zova-linen)' }}>
             <img
               src={product.image_urls?.[0] || 'https://placehold.co/600x800?text=No+Image'}
               alt={product.name}
@@ -336,9 +282,9 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                 type="button"
                 onClick={handleOpenQuickView}
                 className="text-xs font-semibold px-5 py-2 rounded-full shadow-lg transition-colors"
-                style={{ backgroundColor: THEME.quickViewBg, color: THEME.quickViewText, border: `1px solid ${THEME.cardBorder}` }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.quickViewHover)}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.quickViewBg)}
+                style={{ backgroundColor: '#FFFFFF', color: 'var(--zova-ink)', border: `1px solid ${'var(--zova-border)'}` }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-linen)')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FFFFFF')}
               >
                 Quick View
               </button>
@@ -349,7 +295,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
               {product.is_featured && (
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-sm tracking-wide"
-                  style={{ backgroundColor: THEME.newBg, color: THEME.newText }}
+                  style={{ backgroundColor: 'var(--zova-ink)', color: 'var(--zova-linen)' }}
                 >
                   NEW
                 </span>
@@ -357,7 +303,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
               {discountPercent && !primaryPromo && (
                 <span
                   className="text-[10px] font-bold px-2 py-0.5 rounded-sm"
-                  style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}
+                  style={{ backgroundColor: '#C0392B', color: '#FFFFFF' }}
                 >
                   -{discountPercent}%
                 </span>
@@ -382,30 +328,30 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
         {/* ── Body ── */}
         <div className="px-3 pt-3 pb-3.5 sm:px-3.5 sm:pt-3.5 sm:pb-4 flex-1 flex flex-col gap-2">
 
-          <p className="text-[10px] uppercase tracking-widest line-clamp-1" style={{ color: THEME.categoryText }}>
+          <p className="text-[10px] uppercase tracking-widest line-clamp-1" style={{ color: 'var(--zova-text-muted)' }}>
             {product.categories?.[0]?.name || 'Collection'}
           </p>
 
           <Link href={`/products/${product.slug}`} onClick={handleProductClick}>
-            <h3 className="text-sm font-medium leading-snug line-clamp-2 hover:underline" style={{ color: THEME.nameText }}>
+            <h3 className="text-sm font-medium leading-snug line-clamp-2 hover:underline" style={{ color: 'var(--zova-ink)' }}>
               {product.name}
             </h3>
           </Link>
 
           {/* Price row */}
           <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
-            <span className="text-base sm:text-sm font-bold" style={{ color: THEME.priceText }}>
+            <span className="text-base sm:text-sm font-bold" style={{ color: 'var(--zova-ink)' }}>
               ₦{(product.discount_price || product.price).toLocaleString()}
             </span>
             {product.discount_price && (
-              <span className="text-xs line-through" style={{ color: THEME.originalPrice }}>
+              <span className="text-xs line-through" style={{ color: '#BBBBBB' }}>
                 ₦{product.price.toLocaleString()}
               </span>
             )}
             {discountPercent && (
               <span
                 className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm"
-                style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}
+                style={{ backgroundColor: '#C0392B', color: '#FFFFFF' }}
               >
                 -{discountPercent}%
               </span>
@@ -428,14 +374,14 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                 <span
                   className="inline-flex items-center text-[10px] font-black px-2 py-0.5 rounded-[4px] tracking-wide leading-none"
                   style={{
-                    backgroundColor: primaryPromo.badge_bg_color  || THEME.newBg,
-                    color:           primaryPromo.badge_text_color || THEME.newText,
+                    backgroundColor: primaryPromo.badge_bg_color  || 'var(--zova-ink)',
+                    color:           primaryPromo.badge_text_color || 'var(--zova-linen)',
                   }}
                 >
                   {primaryPromo.owner_type === 'seller' && (
                     <span
                       className="w-1.5 h-1.5 rounded-full mr-1 flex-shrink-0"
-                      style={{ backgroundColor: primaryPromo.badge_text_color || THEME.newText, opacity: 0.5 }}
+                      style={{ backgroundColor: primaryPromo.badge_text_color || 'var(--zova-linen)', opacity: 0.5 }}
                     />
                   )}
                   {primaryPromo.display_name}
@@ -467,16 +413,16 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
           {salesFormatted && (
             <div
               className="flex items-center gap-1.5 px-2 py-1 rounded-md"
-              style={{ backgroundColor: THEME.statsBg }}
+              style={{ backgroundColor: 'var(--zova-linen)' }}
             >
-              <FiTrendingUp className="w-3 h-3 flex-shrink-0" style={{ color: THEME.statsIcon }} />
-              <span className="text-[11px]" style={{ color: THEME.metaText }}>
-                <span className="font-semibold" style={{ color: THEME.priceText }}>{salesFormatted}</span> sold
+              <FiTrendingUp className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--zova-primary-action)' }} />
+              <span className="text-[11px]" style={{ color: 'var(--zova-text-muted)' }}>
+                <span className="font-semibold" style={{ color: 'var(--zova-ink)' }}>{salesFormatted}</span> sold
               </span>
               {product.store_is_trending && (
                 <>
-                  <span style={{ color: THEME.cardBorder }}>·</span>
-                  <span className="text-[11px]" style={{ color: THEME.trendingText }}>🔥 Hot store</span>
+                  <span style={{ color: 'var(--zova-border)' }}>·</span>
+                  <span className="text-[11px]" style={{ color: '#b87800' }}>🔥 Hot store</span>
                 </>
               )}
             </div>
@@ -494,12 +440,12 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
               >
                 <span
                   className="text-[11px] sm:text-[10px] truncate block transition-colors"
-                  style={{ color: THEME.storeText }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = THEME.storeHover)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = THEME.storeText)}
+                  style={{ color: 'var(--zova-text-muted)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--zova-ink)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--zova-text-muted)')}
                 >
                   {product.store_is_trending && (
-                    <span className="mr-1" style={{ color: THEME.trendingText }}>●</span>
+                    <span className="mr-1" style={{ color: '#b87800' }}>●</span>
                   )}
                   {product.stores.name}
                 </span>
@@ -514,13 +460,13 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
               onClick={handleAddToCart}
               className="zova-btn zova-btn-primary flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold flex-shrink-0 transition-all duration-150"
               style={{
-                backgroundColor: cartState === 'added' ? THEME.cartSuccessBg : THEME.cartBg,
-                color: THEME.cartText,
+                backgroundColor: cartState === 'added' ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
+                color: '#FFFFFF',
                 padding: '0.68rem 0.9rem',
                 boxShadow: '0 10px 24px rgba(46,100,23,0.16)',
               }}
-              onMouseEnter={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartHoverBg; }}
-              onMouseLeave={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = THEME.cartBg; }}
+              onMouseEnter={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = 'var(--zova-primary-action-hover)'; }}
+              onMouseLeave={(e) => { if (cartState !== 'added') e.currentTarget.style.backgroundColor = 'var(--zova-primary-action)'; }}
             >
               {cartState === 'added'
                 ? <><FiCheck className="w-3.5 h-3.5" /><span className="hidden sm:inline">Added</span></>
@@ -547,7 +493,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
               {/* Image panel */}
               <div
                 className="w-full sm:w-[42%] flex-shrink-0 relative"
-                style={{ backgroundColor: THEME.skeletonBg, aspectRatio: '3/4', maxHeight: '38vh' }}
+                style={{ backgroundColor: 'var(--zova-linen)', aspectRatio: '3/4', maxHeight: '38vh' }}
               >
                 <button
                   type="button"
@@ -565,7 +511,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                   type="button"
                   onClick={() => { setShowImageViewer(true); setImageZoom(1); setImageOffset({ x: 0, y: 0 }); }}
                   className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur"
-                  style={{ color: THEME.nameText }}
+                  style={{ color: 'var(--zova-ink)' }}
                 >
                   <FiZoomIn className="h-3.5 w-3.5" /> Zoom
                 </button>
@@ -577,41 +523,41 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
 
                   {/* Header row */}
                   <div className="flex items-center justify-between gap-3">
-                    <div className="h-1.5 w-12 rounded-full sm:hidden" style={{ backgroundColor: THEME.cardBorder }} />
+                    <div className="h-1.5 w-12 rounded-full sm:hidden" style={{ backgroundColor: 'var(--zova-border)' }} />
                     <button
                       type="button"
                       onClick={() => setShowQuickView(false)}
                       className="ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
-                      style={{ color: THEME.categoryText }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.quickViewHover)}
+                      style={{ color: 'var(--zova-text-muted)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-linen)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       <FiX className="w-4 h-4" /> Close
                     </button>
                   </div>
 
-                  <p className="text-[10px] uppercase tracking-widest" style={{ color: THEME.categoryText }}>
+                  <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--zova-text-muted)' }}>
                     {product.categories?.[0]?.name || 'Collection'}
                   </p>
 
-                  <h2 className="text-[15px] sm:text-lg font-bold leading-snug" style={{ color: THEME.nameText }}>
+                  <h2 className="text-[15px] sm:text-lg font-bold leading-snug" style={{ color: 'var(--zova-ink)' }}>
                     {product.name}
                   </h2>
 
                   {/* Price */}
                   <div className="flex items-baseline gap-2 flex-wrap">
-                    <span className="text-2xl font-black" style={{ color: THEME.priceText }}>
+                    <span className="text-2xl font-black" style={{ color: 'var(--zova-ink)' }}>
                       ₦{(product.discount_price || product.price).toLocaleString()}
                     </span>
                     {product.discount_price && (
-                      <span className="text-sm line-through" style={{ color: THEME.originalPrice }}>
+                      <span className="text-sm line-through" style={{ color: '#BBBBBB' }}>
                         ₦{product.price.toLocaleString()}
                       </span>
                     )}
                     {discountPercent && (
                       <span
                         className="text-xs font-bold px-2 py-0.5 rounded-sm"
-                        style={{ backgroundColor: THEME.saleBg, color: THEME.saleText }}
+                        style={{ backgroundColor: '#C0392B', color: '#FFFFFF' }}
                       >
                         -{discountPercent}%
                       </span>
@@ -637,15 +583,15 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                   )}
 
                   {salesFormatted && (
-                    <p className="text-xs" style={{ color: THEME.metaText }}>
-                      <span className="font-semibold" style={{ color: THEME.priceText }}>{salesFormatted}</span> units sold
+                    <p className="text-xs" style={{ color: 'var(--zova-text-muted)' }}>
+                      <span className="font-semibold" style={{ color: 'var(--zova-ink)' }}>{salesFormatted}</span> units sold
                     </p>
                   )}
 
                   {product.stores && (
-                    <p className="text-xs" style={{ color: THEME.storeText }}>
+                    <p className="text-xs" style={{ color: 'var(--zova-text-muted)' }}>
                       Sold by{' '}
-                      <span className="font-semibold" style={{ color: THEME.nameText }}>
+                      <span className="font-semibold" style={{ color: 'var(--zova-ink)' }}>
                         {product.stores.name}
                       </span>
                     </p>
@@ -654,15 +600,15 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                   {description && (
                     <div
                       className="rounded-xl p-3"
-                      style={{ border: `1px solid ${THEME.cardBorder}`, backgroundColor: THEME.skeletonBg }}
+                      style={{ border: `1px solid ${'var(--zova-border)'}`, backgroundColor: 'var(--zova-linen)' }}
                     >
                       <p
                         className="text-[11px] font-semibold uppercase tracking-[0.18em]"
-                        style={{ color: THEME.categoryText }}
+                        style={{ color: 'var(--zova-text-muted)' }}
                       >
                         Description
                       </p>
-                      <p className="mt-2 text-sm leading-6" style={{ color: THEME.metaText }}>
+                      <p className="mt-2 text-sm leading-6" style={{ color: 'var(--zova-text-muted)' }}>
                         {quickViewDescription}
                       </p>
                       {hasLongDescription && (
@@ -670,7 +616,7 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                           type="button"
                           onClick={() => setIsQuickViewDescriptionExpanded(c => !c)}
                           className="mt-2 text-sm font-semibold"
-                          style={{ color: THEME.nameText }}
+                          style={{ color: 'var(--zova-ink)' }}
                         >
                           {isQuickViewDescriptionExpanded ? 'Read less' : 'Read more'}
                         </button>
@@ -687,9 +633,9 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                       type="button"
                       onClick={handleQuickViewAddToCart}
                       className="zova-btn zova-btn-primary flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-colors"
-                      style={{ backgroundColor: THEME.cartBg, color: THEME.cartText }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.cartHoverBg)}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = THEME.cartBg)}
+                      style={{ backgroundColor: 'var(--zova-primary-action)', color: '#FFFFFF' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-primary-action-hover)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-primary-action)')}
                     >
                       <FiShoppingCart className="w-4 h-4" /> Add to Cart
                     </button>
@@ -699,8 +645,8 @@ const ProductCard = ({ product, source = 'unknown', position = null }) => {
                       href={`/products/${product.slug}`}
                       onClick={() => setShowQuickView(false)}
                       className="px-4 py-3 rounded-xl text-sm font-semibold border transition-colors flex items-center whitespace-nowrap"
-                      style={{ borderColor: THEME.cardBorder, color: THEME.nameText }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.quickViewHover)}
+                      style={{ borderColor: 'var(--zova-border)', color: 'var(--zova-ink)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-linen)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       View Details

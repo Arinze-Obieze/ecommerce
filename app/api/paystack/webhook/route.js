@@ -364,6 +364,10 @@ export async function POST(request) {
       .select('id')
 
     if (updateError) {
+      // F007: unique constraint violation means a concurrent webhook already completed this order.
+      if (updateError.code === '23505') {
+        return NextResponse.json({ success: true, message: 'Already processed' })
+      }
       await writeActivityLog({
         request,
         level:      'ERROR',
@@ -376,7 +380,7 @@ export async function POST(request) {
         errorCode:  updateError.code || null,
         durationMs: Date.now() - startedAt,
       })
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
+      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
     }
 
     if (!updatedRows || updatedRows.length === 0) {

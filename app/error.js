@@ -7,8 +7,8 @@ export default function Error({ error, reset }) {
 
   return (
     <main className="min-h-[60vh] flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-lg rounded-2xl border border-[#E8E4DC] bg-white p-6 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#2E6417]">Something went wrong</p>
+      <div className="w-full max-w-lg rounded-2xl border border-border bg-white p-6 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Something went wrong</p>
         <h1 className="mt-2 text-xl font-bold text-gray-900">The page crashed unexpectedly.</h1>
         <p className="mt-2 text-sm text-gray-600">
           You can retry this action, or go back to the previous page.
@@ -18,7 +18,7 @@ export default function Error({ error, reset }) {
           <button
             type="button"
             onClick={() => reset()}
-            className="rounded-xl bg-[#2E6417] px-4 py-2 text-sm font-semibold text-white hover:bg-[#245213]"
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
           >
             Retry
           </button>

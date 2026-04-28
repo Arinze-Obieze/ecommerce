@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { redirect } from 'next/navigation';
 import { createAdminClient, createClient } from '@/utils/supabase/server';
 
+async function getAalLevel(authClient) {
+  try {
+    const { data } = await authClient.auth.mfa.getAuthenticatorAssuranceLevel();
+    return data?.currentLevel ?? 'aal1';
+  } catch {
+    return 'aal1';
+  }
+}
+
 export const STORE_ROLES = {
   OWNER: 'owner',
   MANAGER: 'manager',
@@ -43,7 +52,7 @@ export async function resolveStoreMembership(preferredStoreId = null) {
 
   let query = adminClient
     .from('store_users')
-    .select('id, store_id, user_id, role, status, created_at, stores(id, name, slug, status, logo_url)')
+    .select('id, store_id, user_id, role, status, created_at, mfa_enrolled, stores(id, name, slug, status, logo_url)')
     .eq('user_id', user.id)
     .eq('status', 'active');
 
@@ -62,12 +71,19 @@ export async function resolveStoreMembership(preferredStoreId = null) {
     return { user, membership: null, store: null, adminClient, reason: 'not_store' };
   }
 
+  // Plan D: check AAL when the store user has enrolled MFA.
+  const mfaEnrolled = Boolean(membership.mfa_enrolled);
+  const aalLevel = mfaEnrolled ? await getAalLevel(authClient) : 'aal2';
+  const needsMfa = mfaEnrolled && aalLevel !== 'aal2';
+
   return {
     user,
     membership,
     store: membership.stores || null,
     adminClient,
     reason: null,
+    mfaEnrolled,
+    needsMfa,
   };
 }
 
@@ -92,6 +108,17 @@ export async function requireStoreApi(requiredRoles = [], preferredStoreId = nul
     return {
       ok: false,
       response: NextResponse.json({ error: 'Insufficient store permissions' }, { status: 403 }),
+    };
+  }
+
+  // Plan D: store users with MFA enrolled must be at AAL2.
+  if (resolved.needsMfa) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'Two-factor authentication required', require_mfa: true },
+        { status: 403 }
+      ),
     };
   }
 
@@ -120,5 +147,7 @@ export async function requireStorePage(requiredRoles = [], preferredStoreId = nu
     membership: resolved.membership,
     store: resolved.store,
     adminClient: resolved.adminClient,
+    mfaEnrolled: resolved.mfaEnrolled ?? false,
+    needsMfa: resolved.needsMfa ?? false,
   };
 }

@@ -1,550 +1,12 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  FiUser, FiStar, FiPackage, FiCheckCircle, FiMapPin,
-  FiTrendingUp, FiMessageCircle, FiShare2, FiGrid, FiChevronDown,
-  FiFilter, FiX, FiChevronRight, FiTag, FiSliders,
+  FiGrid, FiChevronRight, FiFilter, FiSliders, FiTag, FiX,
 } from "react-icons/fi";
 import ProductGrid from '@/components/catalog/browse/ProductGrid';
 import { getStoreProducts } from "@/features/catalog/api/client";
-import { getRecommendationRequestHeaders } from "@/utils/catalog/recommendation-request";
-
-// Brand tokens — sourced from app/globals.css
-const T = {
-  green:          'var(--zova-primary-action)',
-  greenDark:      'var(--zova-primary-action-hover)',
-  greenDeep:      'var(--zova-ink)',
-  greenTint:      'var(--zova-green-soft)',
-  greenBorder:    '#B8D4A0',
-  white:          '#FFFFFF',
-  pageBg:         'var(--zova-linen)',
-  charcoal:       'var(--zova-ink)',
-  medGray:        'var(--zova-text-body)',
-  mutedText:      'var(--zova-text-muted)',
-  border:         'var(--zova-border)',
-  softGray:       'var(--zova-surface-alt)',
-  starYellow:     '#F59E0B',
-  starBg:         '#FFFBEB',
-  trendingText:   '#EA580C',
-  trendingBg:     '#FFF7ED',
-  trendingBorder: '#FED7AA',
-  // entrance palette — dark immersive overlay values, intentionally not tokenised
-  E_bg:           '#050C07',
-  E_bgMid:        '#08140A',
-  E_panelL:       '#0A1C10',
-  E_panelR:       '#091A0E',
-  E_border:       'rgba(46,100,23,0.16)',
-  E_borderHi:     'rgba(46,100,23,0.42)',
-  E_gold:         'var(--zova-gold)',
-  E_goldDim:      'rgba(236,156,0,0.36)',
-  E_white:        '#F0F7F2',
-  E_dim:          'rgba(240,247,242,0.32)',
-};
-
-// ═════════════════════════════════════════════════════════════
-// TAB CONFIG
-// ═════════════════════════════════════════════════════════════
-const TABS = [
-  { id: "all",          label: "All Products",  sort: null },
-  { id: "top_rated",    label: "Top Rated",     sort: "top_rated" },
-  { id: "new_arrivals", label: "New Arrivals",  sort: "new_arrivals" },
-];
-
-// ═════════════════════════════════════════════════════════════
-// ENTRANCE OVERLAY (unchanged)
-// ═════════════════════════════════════════════════════════════
-
-function GrainSVG() {
-  return (
-    <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", zIndex:30, opacity:0.028, pointerEvents:"none", mixBlendMode:"overlay" }}>
-      <filter id="grain-e">
-        <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch"/>
-        <feColorMatrix type="saturate" values="0"/>
-      </filter>
-      <rect width="100%" height="100%" filter="url(#grain-e)"/>
-    </svg>
-  );
-}
-
-function GridLines() {
-  return (
-    <div style={{ position:"absolute", inset:0, zIndex:2, pointerEvents:"none" }}>
-      {[33.33, 66.66].map(p => (
-        <div key={`v${p}`} style={{ position:"absolute", top:0, bottom:0, left:`${p}%`, width:1, background:"rgba(46,100,23,0.04)" }}/>
-      ))}
-      {[33.33, 66.66].map(p => (
-        <div key={`h${p}`} style={{ position:"absolute", left:0, right:0, top:`${p}%`, height:1, background:"rgba(46,100,23,0.04)" }}/>
-      ))}
-    </div>
-  );
-}
-
-function CornerMarks({ show }) {
-  const SIZE = 20, W = 1.5;
-  const corners = [
-    { top:"5%",    left:"4%",   borderTop:`${W}px solid ${T.E_borderHi}`, borderLeft:`${W}px solid ${T.E_borderHi}` },
-    { top:"5%",    right:"4%",  borderTop:`${W}px solid ${T.E_borderHi}`, borderRight:`${W}px solid ${T.E_borderHi}` },
-    { bottom:"5%", left:"4%",   borderBottom:`${W}px solid ${T.E_borderHi}`, borderLeft:`${W}px solid ${T.E_borderHi}` },
-    { bottom:"5%", right:"4%",  borderBottom:`${W}px solid ${T.E_borderHi}`, borderRight:`${W}px solid ${T.E_borderHi}` },
-  ];
-  return corners.map((c, i) => (
-    <div key={i} style={{ position:"absolute", ...c, width:SIZE, height:SIZE, zIndex:25, opacity:show ? 1 : 0, transition:`opacity 0.7s ease ${0.15 + i * 0.07}s` }}/>
-  ));
-}
-
-function TopBar({ show, storeName }) {
-  return (
-    <div style={{
-      position:"absolute", top:0, left:0, right:0, height:54, zIndex:28,
-      display:"flex", alignItems:"center", justifyContent:"space-between",
-      padding:"0 5%", borderBottom:`1px solid ${T.E_border}`,
-      opacity:show ? 1 : 0,
-      transform:show ? "translateY(0)" : "translateY(-8px)",
-      transition:"opacity 0.9s ease 0.2s, transform 0.9s ease 0.2s",
-    }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div style={{ width:22, height:22, borderRadius:5, border:`1.5px solid ${T.E_gold}`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-          <div style={{ width:9, height:9, borderRadius:2, background:T.E_gold }}/>
-        </div>
-        <span style={{ fontSize:14, fontWeight:900, color:T.E_white, letterSpacing:"0.14em", fontFamily: "var(--zova-font-display)", textTransform:"uppercase" }}>
-          ZOVA
-        </span>
-      </div>
-      {/* Store name (small) */}
-      <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.2em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
-        {storeName}
-      </span>
-      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
-          Onitsha Main Market
-        </span>
-        <div style={{ width:1, height:14, background:T.E_border }}/>
-        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.18em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
-          Nigeria
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function CentreLockup({ storeName, show, fading }) {
-  return (
-    <div style={{
-      position:"absolute", top:"50%", left:"50%",
-      transform:"translate(-50%, -50%)",
-      zIndex:28, textAlign:"center", pointerEvents:"none",
-      width:"90%", maxWidth:520,
-      opacity:fading ? 0 : (show ? 1 : 0),
-      transition:fading ? "opacity 0.8s ease" : "opacity 1s ease 0.1s",
-    }}>
-      {/* Rule + label */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:14, marginBottom:18, opacity: show ? 1 : 0, transition:"opacity 1s ease 0.1s" }}>
-        <div style={{ flex:1, height:1, background:`linear-gradient(to right, transparent, ${T.E_borderHi})` }}/>
-        <span style={{ fontSize:9, fontWeight:700, color:T.green, letterSpacing:"0.3em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
-          Welcome to
-        </span>
-        <div style={{ flex:1, height:1, background:`linear-gradient(to left, transparent, ${T.E_borderHi})` }}/>
-      </div>
-      <div style={{
-        fontFamily: "var(--zova-font-display)",
-        fontSize:"clamp(46px, 9.5vw, 88px)",
-        fontWeight:700, color:T.E_white,
-        letterSpacing:"-0.015em", lineHeight:0.95,
-        opacity:show ? 1 : 0,
-        transform:show ? "translateY(0)" : "translateY(18px)",
-        transition:"opacity 1.1s ease 0.25s, transform 1.1s cubic-bezier(0.22,1,0.36,1) 0.25s",
-      }}>
-        {storeName}
-      </div>
-      <div style={{
-        width:show ? "100%" : "0%", height:1.5,
-        background:`linear-gradient(to right, transparent 0%, ${T.E_gold} 25%, ${T.E_gold} 75%, transparent 100%)`,
-        margin:"16px auto 0", maxWidth:300, borderRadius:1,
-        transition:"width 1.2s cubic-bezier(0.77,0,0.175,1) 0.65s",
-      }}/>
-      <div style={{
-        marginTop:14, fontSize:10, fontWeight:600, color:T.E_dim,
-        letterSpacing:"0.24em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)",
-        opacity: show ? 1 : 0, transition:"opacity 1s ease 0.85s",
-      }}>
-        Opening the store
-      </div>
-    </div>
-  );
-}
-
-function GatePanel({ side, open }) {
-  const isLeft = side === "left";
-  return (
-    <div style={{
-      position:"absolute", top:0,
-      [isLeft ? "left" : "right"]: 0,
-      width:"50%", height:"100%",
-      transformOrigin:isLeft ? "left center" : "right center",
-      transform:open
-        ? `perspective(2000px) rotateY(${isLeft ? "-" : ""}115deg)`
-        : "perspective(2000px) rotateY(0deg)",
-      transition:"transform 2.1s cubic-bezier(0.77, 0, 0.175, 1)",
-      zIndex:20, overflow:"hidden", backfaceVisibility:"hidden", willChange:"transform",
-    }}>
-      <div style={{ position:"absolute", inset:0, background:isLeft
-        ? `linear-gradient(125deg, #030806 0%, ${T.E_panelL} 40%, #0E2416 70%, #060E08 100%)`
-        : `linear-gradient(235deg, #030806 0%, ${T.E_panelR} 40%, #0C2013 70%, #060E08 100%)`
-      }}/>
-      {Array.from({length:7},(_,i)=>(
-        <div key={i} style={{ position:"absolute", top:0, bottom:0, left:`${i*14.3}%`, width:1, background:"rgba(0,184,107,0.022)" }}/>
-      ))}
-      {/* Outer inset frame */}
-      <div style={{ position:"absolute", top:"4.5%", bottom:"4.5%", left:"6%", right:"6%", border:"1px solid rgba(0,184,107,0.1)", borderRadius:2 }}/>
-      {/* Inner inset frame */}
-      <div style={{ position:"absolute", top:"8%",  bottom:"8%",  left:"11%", right:"11%", border:"1px solid rgba(0,184,107,0.05)", borderRadius:2 }}/>
-      {/* Top recessed panel */}
-      <div style={{ position:"absolute", top:"11%", left:"14%", right:"14%", height:"26%", background:"rgba(0,0,0,0.14)", border:"1px solid rgba(0,184,107,0.07)", borderRadius:2 }}/>
-      {/* Bottom recessed panel */}
-      <div style={{ position:"absolute", top:"43%", bottom:"11%", left:"14%", right:"14%", background:"rgba(0,0,0,0.14)", border:"1px solid rgba(0,184,107,0.07)", borderRadius:2 }}/>
-      {/* Mid rail */}
-      <div style={{ position:"absolute", top:"41%", left:"8%", right:"8%", height:1.5, background:"rgba(0,184,107,0.09)" }}/>
-      {/* Handle */}
-      <div style={{
-        position:"absolute",
-        [isLeft ? "right" : "left"]: "17%",
-        top:"50%", transform:"translateY(-50%)",
-        width:8, height:44,
-        background:"linear-gradient(180deg, #1a1200 0%, #2a1e00 50%, #1a1200 100%)",
-        borderRadius:3.5,
-        border:"1px solid rgba(0,184,107,0.22)",
-        display:"flex", alignItems:"center", justifyContent:"center",
-      }}>
-        <div style={{ width:2.5, height:22, borderRadius:1.5, background:"linear-gradient(180deg, rgba(0,184,107,0.45) 0%, rgba(0,184,107,0.85) 50%, rgba(0,184,107,0.45) 100%)", boxShadow:"0 0 5px rgba(0,184,107,0.25)" }}/>
-      </div>
-      {/* Edge depth shadow */}
-      <div style={{ position:"absolute", inset:0, boxShadow: isLeft ? "inset -70px 0 90px rgba(0,0,0,0.55)" : "inset 70px 0 90px rgba(0,0,0,0.55)" }}/>
-      {/* Hinge edge highlight */}
-      <div style={{ position:"absolute", top:0, bottom:0, [isLeft?"left":"right"]:0, width:2, background:"rgba(0,184,107,0.1)" }}/>
-    </div>
-  );
-}
-
-function ArchFrame() {
-  return (
-    <div style={{
-      position:"absolute", top:"11%", left:"50%", transform:"translateX(-50%)",
-      width:"min(490px, 91vw)", height:"min(610px, 79vh)",
-      zIndex:19, pointerEvents:"none",
-    }}>
-      <svg viewBox="0 0 490 125" style={{ position:"absolute", top:0, left:0, width:"100%", height:"20%", overflow:"visible" }}>
-        <path d="M13,114 L13,62 Q13,-2 245,-2 Q477,-2 477,62 L477,114" fill="none" stroke="rgba(0,184,107,0.32)" strokeWidth="1.5"/>
-        <path d="M0,122 L0,70 Q0,-14 245,-14 Q490,-14 490,70 L490,122" fill="none" stroke="rgba(0,184,107,0.08)" strokeWidth="1"/>
-        {/* Keystone */}
-        <rect x="221" y="-13" width="48" height="22" rx="2" fill="#08140A" stroke="rgba(46,100,23,0.46)" strokeWidth="1"/>
-        <text x="245" y="5" textAnchor="middle" fill="rgba(46,100,23,0.65)" fontSize="7.5" fontFamily="var(--zova-font-sans)" fontWeight="800" letterSpacing="3.5">ZOVA</text>
-      </svg>
-      {/* Left pillar */}
-      <div style={{ position:"absolute", left:0, top:"19%", bottom:0, width:13, background:"linear-gradient(to right, #020604, #0C1C10)", borderTop:"1.5px solid rgba(0,184,107,0.28)" }}>
-        <div style={{ position:"absolute", top:-8, left:-3, right:-3, height:8, background:"#0A1A0D", borderTop:"1px solid rgba(0,184,107,0.36)" }}/>
-      </div>
-      {/* Right pillar */}
-      <div style={{ position:"absolute", right:0, top:"19%", bottom:0, width:13, background:"linear-gradient(to left, #020604, #0C1C10)", borderTop:"1.5px solid rgba(0,184,107,0.28)" }}>
-        <div style={{ position:"absolute", top:-8, left:-3, right:-3, height:8, background:"#0A1A0D", borderTop:"1px solid rgba(0,184,107,0.36)" }}/>
-      </div>
-    </div>
-  );
-}
-
-function AmbientGlow({ progress }) {
-  return (
-    <div style={{
-      position:"absolute", inset:0, zIndex:3, pointerEvents:"none",
-      background:`radial-gradient(ellipse 55% 45% at 50% 54%, rgba(46,100,23,${0.05 + progress * 0.13}) 0%, transparent 68%)`,
-    }}/>
-  );
-}
-
-function ProgressBar({ progress }) {
-  return (
-    <div style={{ position:"absolute", bottom:0, left:0, right:0, height:2, zIndex:32, background:"rgba(0,184,107,0.07)" }}>
-      <div style={{ height:"100%", width:`${progress * 100}%`, background:`linear-gradient(to right, ${T.greenDark}, ${T.green})`, transition:"width 0.4s linear", boxShadow:`0 0 7px ${T.green}` }}/>
-    </div>
-  );
-}
-
-function BottomRow({ show, storeName, onSkip }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <div style={{
-      position:"absolute", bottom:22, left:"5%", right:"5%", zIndex:30,
-      display:"flex", alignItems:"center", justifyContent:"space-between",
-      opacity:show ? 1 : 0, transition:"opacity 0.8s ease 1s",
-    }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div style={{ position:"relative", width:8, height:8 }}>
-          <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:T.E_gold, animation:"e_pulse 2s ease-in-out infinite" }}/>
-          <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:T.E_gold, opacity:0.3, animation:"e_ring 2s ease-in-out infinite" }}/>
-        </div>
-        <span style={{ fontSize:10, fontWeight:600, color:T.E_dim, letterSpacing:"0.22em", textTransform:"uppercase", fontFamily: "var(--zova-font-sans)" }}>
-          Entering {storeName}
-        </span>
-      </div>
-      <button type="button" onClick={onSkip}
-        onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-        style={{
-          padding:"7px 18px", borderRadius:2,
-          border:`1px solid ${hov ? T.E_borderHi : T.E_border}`,
-          background: hov ? "rgba(0,184,107,0.1)" : "transparent",
-          color: hov ? T.E_white : T.E_dim,
-          fontSize:10, fontWeight:700, letterSpacing:"0.2em", textTransform:"uppercase",
-          cursor:"pointer", transition:"all 0.18s", fontFamily: "var(--zova-font-sans)",
-        }}
-      >
-        Enter now
-      </button>
-    </div>
-  );
-}
-
-function StoreEntranceOverlay({ storeName, onDone }) {
-  const TOTAL_MS = 5200;
-  const [phase, setPhase]       = useState(0);
-  const [fadeOut, setFadeOut]   = useState(false);
-  const [progress, setProgress] = useState(0);
-  const startRef = useRef(null);
-  const rafRef   = useRef(null);
-
-  useEffect(() => {
-    const tick = ts => {
-      if (!startRef.current) startRef.current = ts;
-      const p = Math.min((ts - startRef.current) / TOTAL_MS, 1);
-      setProgress(p);
-      if (p < 1) rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
-
-  useEffect(() => {
-    const t = [
-      setTimeout(() => setPhase(1), 300),
-      setTimeout(() => setPhase(2), 1400),
-      setTimeout(() => setFadeOut(true), TOTAL_MS - 700),
-      setTimeout(() => onDone(), TOTAL_MS + 300),
-    ];
-    return () => t.forEach(clearTimeout);
-  }, []);
-
-  const skip = useCallback(() => {
-    cancelAnimationFrame(rafRef.current);
-    setFadeOut(true);
-    setTimeout(onDone, 650);
-  }, []);
-
-  return (
-    <>
-      <style>{`
-        @keyframes e_pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(.85);opacity:.7} }
-        @keyframes e_ring  { 0%{transform:scale(1);opacity:.3} 100%{transform:scale(2.6);opacity:0} }
-        @keyframes fadeIn_e { from{opacity:0} to{opacity:1} }
-      `}</style>
-      <div style={{
-        position:"fixed", inset:0, zIndex:9999, overflow:"hidden",
-        opacity: fadeOut ? 0 : 1,
-        transition: fadeOut ? "opacity 0.9s ease" : "none",
-        background: T.E_bg,
-        fontFamily: "var(--zova-font-sans)",
-      }}>
-        <div style={{ position:"absolute", inset:0, zIndex:1, background:`radial-gradient(ellipse 75% 65% at 50% 50%, ${T.E_bgMid} 0%, ${T.E_bg} 100%)` }}/>
-        <GridLines/>
-        <GrainSVG/>
-        <AmbientGlow progress={progress}/>
-        {phase >= 2 && (
-          <div style={{
-            position:"absolute", top:"11%", left:"50%", transform:"translateX(-50%)",
-            width:"min(490px,91vw)", height:"min(610px,79vh)",
-            zIndex:7, pointerEvents:"none",
-            background:"radial-gradient(ellipse 70% 55% at 50% 42%, rgba(0,184,107,0.09) 0%, transparent 65%)",
-            animation:"fadeIn_e 1.2s ease both",
-          }}/>
-        )}
-        {/* Floor reflection */}
-        <div style={{ position:"absolute", bottom:0, left:"50%", transform:"translateX(-50%)", width:"min(490px,91vw)", height:70, zIndex:6, pointerEvents:"none", background:`linear-gradient(to top, rgba(0,184,107,${0.03 + progress * 0.07}) 0%, transparent 100%)` }}/>
-
-        {/* Gate container */}
-        <div style={{
-          position:"absolute",
-          top:"calc(11% + min(610px,79vh) * 0.19 + 12px)",
-          left:"50%", transform:"translateX(-50%)",
-          width:"min(464px, 87.5vw)", height:"min(496px, 64vh)",
-          zIndex:20, overflow:"hidden",
-        }}>
-          <GatePanel side="left"  open={phase >= 2}/>
-          <GatePanel side="right" open={phase >= 2}/>
-        </div>
-        <ArchFrame/>
-        <CornerMarks show={phase >= 1}/>
-        <TopBar show={phase >= 1} storeName={storeName}/>
-        <CentreLockup storeName={storeName} show={phase >= 1} fading={phase >= 2}/>
-        <ProgressBar progress={progress}/>
-        <BottomRow show={phase >= 2} storeName={storeName} onSkip={skip}/>
-      </div>
-    </>
-  );
-}
-
-// ═════════════════════════════════════════════════════════════
-// STORE HEADER
-// ═════════════════════════════════════════════════════════════
-
-function Avatar({ store, size = 96 }) {
-  return (
-    <div style={{
-      width:size, height:size, borderRadius:18, flexShrink:0, overflow:"hidden",
-      border:`1.5px solid ${T.border}`, background:T.softGray,
-      display:"flex", alignItems:"center", justifyContent:"center",
-      boxShadow:"0 2px 16px rgba(0,0,0,0.07)",
-    }}>
-      {store.logo_url
-        ? <img src={store.logo_url} alt={store.name} style={{ width:"100%", height:"100%", objectFit:"cover" }}/>
-        : <span style={{ fontSize:size * 0.38, fontWeight:900, color:T.green, fontFamily: "var(--zova-font-display)" }}>{store.name?.charAt(0).toUpperCase()}</span>
-      }
-    </div>
-  );
-}
-
-function Pill({ children, variant = "neutral" }) {
-  const v = {
-    neutral: { bg:T.softGray,   text:T.medGray   },
-    green:   { bg:T.greenTint,  text:T.greenDeep },
-    star:    { bg:T.starBg,     text:"#92400E"   },
-    trend:   { bg:T.trendingBg, text:T.trendingText },
-  }[variant];
-  return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 11px", borderRadius:100, fontSize:12, fontWeight:700, background:v.bg, color:v.text, border:`1px solid rgba(0,0,0,0.05)`, whiteSpace:"nowrap" }}>
-      {children}
-    </span>
-  );
-}
-
-function ShareBtn({ store }) {
-  const [hov, setHov] = useState(false);
-  const [ok, setOk]   = useState(false);
-  const handle = async () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    if (navigator.share) { try { await navigator.share({ title:store.name, url }); } catch {} }
-    else { try { await navigator.clipboard.writeText(url); setOk(true); setTimeout(()=>setOk(false),1800); } catch {} }
-  };
-  return (
-    <button type="button" onClick={handle}
-      onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-      style={{
-        width:40, height:40, borderRadius:10, cursor:"pointer",
-        border:`1.5px solid ${T.border}`, background:hov ? T.softGray : T.white,
-        display:"flex", alignItems:"center", justifyContent:"center", transition:"background 0.14s", flexShrink:0,
-      }}
-    >
-      {ok ? <span style={{ fontSize:11, fontWeight:800, color:T.green }}>✓</span> : <FiShare2 size={14} style={{ color:T.charcoal }}/>}
-    </button>
-  );
-}
-
-function VerifiedBadge() {
-  return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:11, fontWeight:700, color:T.green, padding:"3px 9px", borderRadius:100, background:T.greenTint, border:`1px solid ${T.greenBorder}` }}>
-      <FiCheckCircle size={10}/> Verified
-    </span>
-  );
-}
-
-function TrendingBadge() {
-  return (
-    <span style={{ display:"inline-flex", alignItems:"center", gap:4, fontSize:11, fontWeight:800, color:T.trendingText, padding:"3px 9px", borderRadius:100, background:T.trendingBg, border:`1px solid ${T.trendingBorder}` }}>
-      <FiTrendingUp size={10}/> Trending
-    </span>
-  );
-}
-
-function StoreHeader({ store, productCount, loading, activeTab, onTabChange }) {
-  const rating    = Number(store.rating    || 4.8);
-  const followers = Number(store.followers || 0);
-  const reviews   = Number(store.reviews   || 0);
-  const [descOpen, setDescOpen] = useState(false);
-  const desc = store.description || "";
-  const longDesc = desc.length > 120;
-
-  return (
-    <header style={{ background:T.white, borderBottom:`1px solid ${T.border}` }}>
-      <div style={{ height:6, background:`repeating-linear-gradient(90deg, ${T.green} 0px, ${T.green} 20px, ${T.greenDeep} 20px, ${T.greenDeep} 40px)` }}/>
-
-      <div style={{ maxWidth:1440, margin:"0 auto", padding:"28px 32px 0" }}>
-        <div style={{ display:"flex", gap:22, alignItems:"flex-start", flexWrap:"wrap", marginBottom:20 }}>
-          <Avatar store={store}/>
-          <div style={{ flex:1, minWidth:200 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:6 }}>
-              <h1 style={{ fontSize:22, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily: "var(--zova-font-display)" }}>
-                {store.name}
-              </h1>
-              {store.kyc_status === "verified" && <VerifiedBadge/>}
-              {store.is_trending && <TrendingBadge/>}
-            </div>
-            {store.location && (
-              <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:10 }}>
-                <FiMapPin size={11} style={{ color:T.mutedText }}/>
-                <span style={{ fontSize:12, color:T.mutedText, fontWeight:500 }}>{store.location}</span>
-              </div>
-            )}
-            {desc && (
-              <div style={{ marginBottom:14 }}>
-                <p style={{ fontSize:13, color:T.medGray, lineHeight:1.7, margin:0, maxWidth:500 }}>
-                  {longDesc && !descOpen ? `${desc.slice(0, 120)}…` : desc}
-                </p>
-                {longDesc && (
-                  <button type="button" onClick={()=>setDescOpen(o=>!o)} style={{ fontSize:12, color:T.green, fontWeight:700, background:"none", border:"none", cursor:"pointer", padding:"4px 0 0", display:"flex", alignItems:"center", gap:3 }}>
-                    {descOpen ? "Show less" : "Read more"}
-                    <FiChevronDown size={12} style={{ transform:descOpen ? "rotate(180deg)" : "none", transition:"transform 0.2s" }}/>
-                  </button>
-                )}
-              </div>
-            )}
-            <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-              <Pill variant="star"><FiStar size={11} style={{ color:T.starYellow }}/> {rating.toFixed(1)} Rating</Pill>
-              {reviews > 0 && <Pill variant="neutral"><FiMessageCircle size={11}/> {reviews.toLocaleString()} Reviews</Pill>}
-              <Pill variant="neutral"><FiUser size={11}/> {followers.toLocaleString()} Followers</Pill>
-              <Pill variant="green"><FiPackage size={11}/> {loading ? "…" : productCount} Products</Pill>
-            </div>
-          </div>
-          <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0, paddingTop:2 }}>
-            <ShareBtn store={store}/>
-          </div>
-        </div>
-
-        {/* Tab bar — now driven by activeTab prop */}
-        <div style={{ display:"flex", gap:0, borderTop:`1px solid ${T.border}`, marginLeft:-28, marginRight:-28, paddingLeft:28 }}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onTabChange(tab.id)}
-                style={{
-                  padding:"12px 18px", fontSize:13,
-                  fontWeight:isActive ? 700 : 500,
-                  color:isActive ? T.green : T.medGray,
-                  background:"transparent", border:"none", cursor:"pointer",
-                  borderBottom:isActive ? `2px solid ${T.green}` : "2px solid transparent",
-                  marginBottom:-1, transition:"all 0.15s", letterSpacing:"-0.01em",
-                  display:"flex", alignItems:"center", gap:6,
-                }}
-              >
-                {tab.id === "top_rated"    && <FiStar    size={12} style={{ color:isActive ? T.starYellow : T.mutedText }}/>}
-                {tab.id === "new_arrivals" && <FiTrendingUp size={12} style={{ color:isActive ? T.trendingText : T.mutedText }}/>}
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </header>
-  );
-}
+import StoreEntranceOverlay from '@/components/storefront/stores/StoreEntranceOverlay';
+import { ActiveFilters, StoreHeader, STORE_TABS } from '@/components/storefront/stores/StoreChrome';
 
 // ═════════════════════════════════════════════════════════════
 // FILTER SIDEBAR
@@ -556,7 +18,7 @@ function CategorySkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} style={{
           height:34, borderRadius:8,
-          background:`linear-gradient(90deg, ${T.border} 0%, #e8e3da 50%, ${T.border} 100%)`,
+          background:`linear-gradient(90deg, ${'var(--zova-border)'} 0%, #e8e3da 50%, ${'var(--zova-border)'} 100%)`,
           backgroundSize:"200% 100%",
           animation:"shimmer 1.4s ease infinite",
           animationDelay:`${i * 0.08}s`,
@@ -603,12 +65,12 @@ function FilterSidebar({
       {/* Sidebar header */}
       <div style={{
         padding:"16px 16px 12px",
-        borderBottom:`1px solid ${T.border}`,
+        borderBottom:`1px solid ${'var(--zova-border)'}`,
         display:"flex", alignItems:"center", justifyContent:"space-between",
       }}>
         <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-          <FiSliders size={14} style={{ color:T.green }}/>
-          <span style={{ fontSize:12, fontWeight:800, color:T.charcoal, letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
+          <FiSliders size={14} style={{ color:'var(--zova-primary-action)' }}/>
+          <span style={{ fontSize:12, fontWeight:800, color:'var(--zova-ink)', letterSpacing:"0.1em", textTransform:"uppercase", fontFamily:"'Helvetica Neue', sans-serif" }}>
             Filter
           </span>
         </div>
@@ -617,8 +79,8 @@ function FilterSidebar({
             type="button"
             onClick={() => onCategoryChange(null)}
             style={{
-              fontSize:10, fontWeight:700, color:T.green,
-              background:T.greenTint, border:`1px solid ${T.greenBorder}`,
+              fontSize:10, fontWeight:700, color:'var(--zova-primary-action)',
+              background:'var(--zova-green-soft)', border:`1px solid ${'#B8D4A0'}`,
               borderRadius:100, padding:"2px 9px", cursor:"pointer",
             }}
           >
@@ -632,12 +94,12 @@ function FilterSidebar({
           style={{
             display:"none", // shown via media query class
             width:28, height:28, borderRadius:7,
-            border:`1px solid ${T.border}`, background:T.white,
+            border:`1px solid ${'var(--zova-border)'}`, background:'#FFFFFF',
             alignItems:"center", justifyContent:"center", cursor:"pointer",
           }}
           className="sidebar-close-btn"
         >
-          <FiX size={14} style={{ color:T.charcoal }}/>
+          <FiX size={14} style={{ color:'var(--zova-ink)' }}/>
         </button>
       </div>
 
@@ -651,8 +113,8 @@ function FilterSidebar({
             padding:"9px 10px",
             borderRadius:9,
             border:"none",
-            background:!selectedCategory ? T.greenTint : "transparent",
-            color:!selectedCategory ? T.green : T.medGray,
+            background:!selectedCategory ? 'var(--zova-green-soft)' : "transparent",
+            color:!selectedCategory ? 'var(--zova-primary-action)' : 'var(--zova-text-body)',
             fontSize:13, fontWeight:!selectedCategory ? 700 : 500,
             cursor:"pointer", transition:"all 0.14s",
             display:"flex", alignItems:"center", justifyContent:"space-between",
@@ -665,7 +127,7 @@ function FilterSidebar({
           {!selectedCategory && (
             <span style={{
               fontSize:10, fontWeight:700,
-              background:T.green, color:T.white,
+              background:'var(--zova-primary-action)', color:'#FFFFFF',
               borderRadius:100, padding:"1px 7px",
             }}>
               {productCount}
@@ -679,7 +141,7 @@ function FilterSidebar({
         {categoriesLoading ? (
           <div style={{ padding:"6px 6px" }}><CategorySkeleton/></div>
         ) : parents.length === 0 ? (
-          <div style={{ padding:"16px 10px", fontSize:12, color:T.mutedText, textAlign:"center" }}>
+          <div style={{ padding:"16px 10px", fontSize:12, color:'var(--zova-text-muted)', textAlign:"center" }}>
             No categories found
           </div>
         ) : (
@@ -703,8 +165,8 @@ function FilterSidebar({
                       padding:"9px 10px 9px 10px",
                       borderRadius:9,
                       border:"none",
-                      background:isParentSel ? T.greenTint : "transparent",
-                      color:isHighlighted ? T.green : T.charcoal,
+                      background:isParentSel ? 'var(--zova-green-soft)' : "transparent",
+                      color:isHighlighted ? 'var(--zova-primary-action)' : 'var(--zova-ink)',
                       fontSize:13, fontWeight:isHighlighted ? 700 : 500,
                       cursor:"pointer", transition:"all 0.14s",
                       display:"flex", alignItems:"center", gap:7,
@@ -723,7 +185,7 @@ function FilterSidebar({
                         width:28, height:28, borderRadius:7, flexShrink:0,
                         border:"none", background:"transparent",
                         display:"flex", alignItems:"center", justifyContent:"center",
-                        cursor:"pointer", color:T.mutedText,
+                        cursor:"pointer", color:'var(--zova-text-muted)',
                       }}
                     >
                       <FiChevronRight size={13} style={{ transform:isExpanded ? "rotate(90deg)" : "none", transition:"transform 0.2s" }}/>
@@ -745,8 +207,8 @@ function FilterSidebar({
                             width:"100%", textAlign:"left",
                             padding:"8px 10px",
                             borderRadius:7, border:"none",
-                            background:isChildSelected ? T.greenTint : "transparent",
-                            color:isChildSelected ? T.green : T.medGray,
+                            background:isChildSelected ? 'var(--zova-green-soft)' : "transparent",
+                            color:isChildSelected ? 'var(--zova-primary-action)' : 'var(--zova-text-body)',
                             fontSize:12, fontWeight:isChildSelected ? 700 : 400,
                             cursor:"pointer", transition:"all 0.14s",
                             display:"flex", alignItems:"center", gap:7,
@@ -754,7 +216,7 @@ function FilterSidebar({
                         >
                           <div style={{
                             width:5, height:5, borderRadius:"50%", flexShrink:0,
-                            background:isChildSelected ? T.green : T.mutedText,
+                            background:isChildSelected ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)',
                           }}/>
                           {child.name}
                         </button>
@@ -772,20 +234,20 @@ function FilterSidebar({
       {selectedCategory && (
         <div style={{
           padding:"12px 16px",
-          borderTop:`1px solid ${T.border}`,
-          background:T.greenTint,
+          borderTop:`1px solid ${'var(--zova-border)'}`,
+          background:'var(--zova-green-soft)',
         }}>
           {(() => {
             const cat = categories.find(c => String(c.id) === selectedCategory);
             return cat ? (
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-                <span style={{ fontSize:11, fontWeight:600, color:T.green }}>
+                <span style={{ fontSize:11, fontWeight:600, color:'var(--zova-primary-action)' }}>
                   Filtered: {cat.name}
                 </span>
                 <button
                   type="button"
                   onClick={() => onCategoryChange(null)}
-                  style={{ background:"none", border:"none", cursor:"pointer", color:T.green, display:"flex", alignItems:"center" }}
+                  style={{ background:"none", border:"none", cursor:"pointer", color:'var(--zova-primary-action)', display:"flex", alignItems:"center" }}
                 >
                   <FiX size={13}/>
                 </button>
@@ -804,8 +266,8 @@ function FilterSidebar({
         <aside style={{
           width:220,
           flexShrink:0,
-          background:T.white,
-          border:`1px solid ${T.border}`,
+          background:'#FFFFFF',
+          border:`1px solid ${'var(--zova-border)'}`,
           borderRadius:14,
           overflow:"hidden",
           alignSelf:"flex-start",
@@ -830,15 +292,15 @@ function FilterSidebar({
           <aside style={{
             position:"fixed", top:0, left:0, bottom:0,
             width:280, zIndex:501,
-            background:T.white,
+            background:'#FFFFFF',
             boxShadow:"4px 0 32px rgba(0,0,0,0.18)",
             display:"flex", flexDirection:"column",
             overflow:"hidden",
           }}>
-            <div style={{ padding:"16px 16px 12px", borderBottom:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div style={{ padding:"16px 16px 12px", borderBottom:`1px solid ${'var(--zova-border)'}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
               <div style={{ display:"flex", alignItems:"center", gap:7 }}>
-                <FiSliders size={14} style={{ color:T.green }}/>
-                <span style={{ fontSize:12, fontWeight:800, color:T.charcoal, letterSpacing:"0.1em", textTransform:"uppercase" }}>
+                <FiSliders size={14} style={{ color:'var(--zova-primary-action)' }}/>
+                <span style={{ fontSize:12, fontWeight:800, color:'var(--zova-ink)', letterSpacing:"0.1em", textTransform:"uppercase" }}>
                   Filter by Category
                 </span>
               </div>
@@ -847,11 +309,11 @@ function FilterSidebar({
                 onClick={onMobileClose}
                 style={{
                   width:30, height:30, borderRadius:8,
-                  border:`1px solid ${T.border}`, background:T.white,
+                  border:`1px solid ${'var(--zova-border)'}`, background:'#FFFFFF',
                   display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer",
                 }}
               >
-                <FiX size={15} style={{ color:T.charcoal }}/>
+                <FiX size={15} style={{ color:'var(--zova-ink)' }}/>
               </button>
             </div>
             <div style={{ flex:1, overflowY:"auto" }}>
@@ -863,8 +325,8 @@ function FilterSidebar({
                   style={{
                     width:"100%", textAlign:"left", padding:"9px 10px",
                     borderRadius:9, border:"none",
-                    background:!selectedCategory ? T.greenTint : "transparent",
-                    color:!selectedCategory ? T.green : T.medGray,
+                    background:!selectedCategory ? 'var(--zova-green-soft)' : "transparent",
+                    color:!selectedCategory ? 'var(--zova-primary-action)' : 'var(--zova-text-body)',
                     fontSize:13, fontWeight:!selectedCategory ? 700 : 500,
                     cursor:"pointer",
                     display:"flex", alignItems:"center", gap:7,
@@ -890,8 +352,8 @@ function FilterSidebar({
                           style={{
                             flex:1, textAlign:"left", padding:"9px 10px",
                             borderRadius:9, border:"none",
-                            background:isParentSel ? T.greenTint : "transparent",
-                            color:(isParentSel||isChildSel) ? T.green : T.charcoal,
+                            background:isParentSel ? 'var(--zova-green-soft)' : "transparent",
+                            color:(isParentSel||isChildSel) ? 'var(--zova-primary-action)' : 'var(--zova-ink)',
                             fontSize:13, fontWeight:(isParentSel||isChildSel) ? 700 : 500,
                             cursor:"pointer",
                             display:"flex", alignItems:"center", gap:7,
@@ -904,7 +366,7 @@ function FilterSidebar({
                           <button
                             type="button"
                             onClick={() => toggleParent(parent.id)}
-                            style={{ width:28, height:28, borderRadius:7, border:"none", background:"transparent", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:T.mutedText }}
+                            style={{ width:28, height:28, borderRadius:7, border:"none", background:"transparent", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:'var(--zova-text-muted)' }}
                           >
                             <FiChevronRight size={13} style={{ transform:isExpanded ? "rotate(90deg)" : "none", transition:"transform 0.2s" }}/>
                           </button>
@@ -922,14 +384,14 @@ function FilterSidebar({
                                 style={{
                                   width:"100%", textAlign:"left", padding:"8px 10px",
                                   borderRadius:7, border:"none",
-                                  background:isSel ? T.greenTint : "transparent",
-                                  color:isSel ? T.green : T.medGray,
+                                  background:isSel ? 'var(--zova-green-soft)' : "transparent",
+                                  color:isSel ? 'var(--zova-primary-action)' : 'var(--zova-text-body)',
                                   fontSize:12, fontWeight:isSel ? 700 : 400,
                                   cursor:"pointer",
                                   display:"flex", alignItems:"center", gap:7,
                                 }}
                               >
-                                <div style={{ width:5, height:5, borderRadius:"50%", flexShrink:0, background:isSel ? T.green : T.mutedText }}/>
+                                <div style={{ width:5, height:5, borderRadius:"50%", flexShrink:0, background:isSel ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)' }}/>
                                 {child.name}
                               </button>
                             );
@@ -951,51 +413,6 @@ function FilterSidebar({
 // ═════════════════════════════════════════════════════════════
 // ACTIVE FILTER BADGE (shown above product grid)
 // ═════════════════════════════════════════════════════════════
-
-function ActiveFilters({ selectedCategory, categories, activeTab, onClearCategory }) {
-  const cat = categories.find(c => String(c.id) === selectedCategory);
-  const tab = TABS.find(t => t.id === activeTab);
-
-  if (!cat && activeTab === "all") return null;
-
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:16 }}>
-      <span style={{ fontSize:11, fontWeight:600, color:T.mutedText, letterSpacing:"0.08em", textTransform:"uppercase" }}>
-        Showing:
-      </span>
-      {activeTab !== "all" && (
-        <span style={{
-          display:"inline-flex", alignItems:"center", gap:5,
-          padding:"4px 11px", borderRadius:100, fontSize:12, fontWeight:700,
-          background: activeTab === "top_rated" ? T.starBg : T.trendingBg,
-          color:       activeTab === "top_rated" ? "#92400E" : T.trendingText,
-          border:`1px solid ${activeTab === "top_rated" ? "#FDE68A" : T.trendingBorder}`,
-        }}>
-          {activeTab === "top_rated" ? <FiStar size={11}/> : <FiTrendingUp size={11}/>}
-          {tab?.label}
-        </span>
-      )}
-      {cat && (
-        <span style={{
-          display:"inline-flex", alignItems:"center", gap:5,
-          padding:"4px 11px", borderRadius:100, fontSize:12, fontWeight:700,
-          background:T.greenTint, color:T.green,
-          border:`1px solid ${T.greenBorder}`,
-        }}>
-          <FiTag size={10}/>
-          {cat.name}
-          <button
-            type="button"
-            onClick={onClearCategory}
-            style={{ background:"none", border:"none", cursor:"pointer", color:T.green, display:"flex", alignItems:"center", padding:0, marginLeft:2 }}
-          >
-            <FiX size={11}/>
-          </button>
-        </span>
-      )}
-    </div>
-  );
-}
 
 // ═════════════════════════════════════════════════════════════
 // MAIN EXPORT
@@ -1043,10 +460,7 @@ export default function StoreClient({ store }) {
     (async () => {
       try {
         setLoading(true);
-        const res  = await fetch(`/api/products?storeId=${store.id}&limit=20&page=${page}`, {
-          headers: getRecommendationRequestHeaders('store_page'),
-        });
-        const data = await res.json();
+        const data = await getStoreProducts(store.id, page, 20);
         if (data.success) {
           setProducts(prev => page === 1 ? data.data : [...prev, ...data.data]);
           setMeta(data.meta || null);
@@ -1105,7 +519,7 @@ export default function StoreClient({ store }) {
 
       <div style={{
         minHeight:"100vh",
-        background:T.pageBg,
+        background:'var(--zova-linen)',
         opacity:entranceDone ? 1 : 0,
         transform:entranceDone ? "translateY(0)" : "translateY(14px)",
         transition:"opacity 0.7s ease, transform 0.7s ease",
@@ -1123,11 +537,11 @@ export default function StoreClient({ store }) {
           {/* ── Top bar: title + mobile filter btn ── */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
             <div>
-              <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:T.mutedText, margin:"0 0 4px", fontFamily: "var(--zova-font-sans)" }}>Browse</p>
-              <h2 style={{ fontSize:20, fontWeight:900, color:T.charcoal, margin:0, letterSpacing:"-0.03em", fontFamily: "var(--zova-font-display)", display:"flex", alignItems:"center", gap:10 }}>
-                {TABS.find(t => t.id === activeTab)?.label || "All Products"}
+              <p style={{ fontSize:10, fontWeight:700, letterSpacing:"0.14em", textTransform:"uppercase", color:'var(--zova-text-muted)', margin:"0 0 4px", fontFamily: "var(--zova-font-sans)" }}>Browse</p>
+              <h2 style={{ fontSize:20, fontWeight:900, color:'var(--zova-ink)', margin:0, letterSpacing:"-0.03em", fontFamily: "var(--zova-font-display)", display:"flex", alignItems:"center", gap:10 }}>
+                {STORE_TABS.find(t => t.id === activeTab)?.label || "All Products"}
                 {!loading && products.length > 0 && (
-                  <span style={{ fontSize:12, fontWeight:700, color:T.green, background:T.greenTint, padding:"2px 10px", borderRadius:100, border:`1px solid ${T.greenBorder}`, fontFamily: "var(--zova-font-sans)", letterSpacing:0 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:'var(--zova-primary-action)', background:'var(--zova-green-soft)', padding:"2px 10px", borderRadius:100, border:`1px solid ${'#B8D4A0'}`, fontFamily: "var(--zova-font-sans)", letterSpacing:0 }}>
                     {products.length}
                   </span>
                 )}
@@ -1143,9 +557,9 @@ export default function StoreClient({ store }) {
                 display:"none", // overridden by CSS
                 alignItems:"center", gap:7,
                 padding:"9px 16px", borderRadius:10,
-                border:`1.5px solid ${selectedCategory ? T.green : T.border}`,
-                background:selectedCategory ? T.greenTint : T.white,
-                color:selectedCategory ? T.green : T.charcoal,
+                border:`1.5px solid ${selectedCategory ? 'var(--zova-primary-action)' : 'var(--zova-border)'}`,
+                background:selectedCategory ? 'var(--zova-green-soft)' : '#FFFFFF',
+                color:selectedCategory ? 'var(--zova-primary-action)' : 'var(--zova-ink)',
                 fontSize:13, fontWeight:600, cursor:"pointer",
               }}
             >

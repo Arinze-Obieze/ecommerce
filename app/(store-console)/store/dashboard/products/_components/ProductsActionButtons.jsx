@@ -9,7 +9,7 @@ export function ActionIconButton({
 }) {
   const tones = {
     default: 'border-gray-200 text-gray-700 hover:bg-gray-50',
-    brand: 'border-[#2E6417]/20 text-[#2E6417] hover:bg-[#EDF5E6]',
+    brand: 'border-primary/20 text-primary hover:bg-primary-soft',
     danger: 'border-red-200 text-red-700 hover:bg-red-50',
   };
 
@@ -33,7 +33,7 @@ export function ActionIconButton({
 export function BulkButton({ onClick, disabled, label, tone = 'default' }) {
   const tones = {
     default: 'border-gray-200 text-gray-700 hover:bg-gray-50',
-    brand: 'border-[#2E6417] text-[#2E6417] hover:bg-[#EDF5E6]',
+    brand: 'border-primary text-primary hover:bg-primary-soft',
     danger: 'border-red-200 text-red-700 hover:bg-red-50',
   };
 

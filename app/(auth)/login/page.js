@@ -9,24 +9,7 @@ import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
 // Brand tokens — sourced from app/globals.css CSS custom properties
-const T = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenDeep:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  gold:        'var(--zova-accent-emphasis)',
-  goldDark:    'var(--zova-warning)',
-  charcoal:    'var(--zova-ink)',
-  softGray:    'var(--zova-surface-alt)',
-  pageBg:      'var(--zova-linen)',
-  border:      'var(--zova-border)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  white:       '#FFFFFF',
-  red:         'var(--zova-error)',
-  redLight:    '#FEF2F2',
-};
+
 
 // ─── SLIDES ───────────────────────────────────────────────────
 const SLIDES = [
@@ -65,14 +48,14 @@ function ReqRow({ met, label }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <div style={{
         width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-        background: met ? T.green : T.border,
+        background: met ? 'var(--zova-primary-action)' : 'var(--zova-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'background 0.2s, transform 0.2s',
         transform: met ? 'scale(1.1)' : 'scale(1)',
       }}>
         {met && <FiCheck size={9} color="#fff" strokeWidth={3.5} />}
       </div>
-      <span style={{ fontSize: 12, color: met ? T.greenDark : T.mutedText, fontWeight: met ? 600 : 400, transition: 'color 0.2s' }}>
+      <span style={{ fontSize: 12, color: met ? 'var(--zova-primary-action-hover)' : 'var(--zova-text-muted)', fontWeight: met ? 600 : 400, transition: 'color 0.2s' }}>
         {label}
       </span>
     </div>
@@ -146,16 +129,16 @@ export default function LoginPage() {
 
   // strength: 0 gray | 1 red | 2 orange | 3 gold | 4 forest | 5 deep forest
   const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Perfect'][passStrength];
-  const strengthColor = ['#E8E4DC', T.red, '#F97316', T.gold, T.green, T.greenDark][passStrength];
+  const strengthColor = ['#E8E4DC', 'var(--zova-error)', '#F97316', 'var(--zova-accent-emphasis)', 'var(--zova-primary-action)', 'var(--zova-primary-action-hover)'][passStrength];
 
   const inputStyle = (focused, hovered, hasError) => ({
     width: '100%',
     padding: '13px 14px 13px 46px',
     borderRadius: 12,
-    border: `1.5px solid ${hasError ? T.red : focused ? T.green : hovered ? T.greenBorder : T.border}`,
-    background: hasError ? T.redLight : focused ? T.white : T.pageBg,
+    border: `1.5px solid ${hasError ? 'var(--zova-error)' : focused ? 'var(--zova-primary-action)' : hovered ? '#B8D4A0' : 'var(--zova-border)'}`,
+    background: hasError ? '#FEF2F2' : focused ? '#FFFFFF' : 'var(--zova-linen)',
     fontSize: 14,
-    color: T.charcoal,
+    color: 'var(--zova-ink)',
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
@@ -200,7 +183,7 @@ export default function LoginPage() {
         .fade-up-8 { animation: fadeUp 0.5s ease 0.54s both; }
       `}</style>
 
-      <div className="lp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: T.pageBg }}>
+      <div className="lp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--zova-linen)' }}>
 
         {/* ── SUCCESS OVERLAY ── */}
         {success && (
@@ -213,15 +196,15 @@ export default function LoginPage() {
             <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,100,23,0.15)', animation: 'pulseRing 1.1s ease-out infinite' }} />
-                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${T.green},${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(46,100,23,0.4)` }}>
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${'var(--zova-primary-action)'},${'var(--zova-primary-action-hover)'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(46,100,23,0.4)` }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path d="M9 19L16.5 26.5L29 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                       style={{ strokeDasharray: 36, strokeDashoffset: 0, animation: 'checkDraw 0.45s ease 0.2s both' }} />
                   </svg>
                 </div>
               </div>
-              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', lineHeight: 1.1 }}>You're in!</p>
-              <p style={{ fontSize: 14, color: T.mutedText, margin: 0 }}>Taking you to the market…</p>
+              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', lineHeight: 1.1 }}>You're in!</p>
+              <p style={{ fontSize: 14, color: 'var(--zova-text-muted)', margin: 0 }}>Taking you to the market…</p>
             </div>
           </div>
         )}
@@ -231,11 +214,11 @@ export default function LoginPage() {
           flex: '0 0 min(468px, 100%)',
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: '0 52px', position: 'relative', overflowY: 'auto',
-          background: T.white, zIndex: 2,
+          background: '#FFFFFF', zIndex: 2,
           boxShadow: '2px 0 32px rgba(46,100,23,0.07)',
         }}>
           {/* Gold top stripe */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${T.green}, ${T.gold})` }} />
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${'var(--zova-primary-action)'}, ${'var(--zova-accent-emphasis)'})` }} />
 
           <div style={{ maxWidth: 360, width: '100%', margin: '0 auto', padding: '56px 0' }}>
 
@@ -243,7 +226,7 @@ export default function LoginPage() {
             <div className="fade-up-1" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
               <div style={{
                 width: 100, height: 100, borderRadius: 10,
-                background: T.greenTint,
+                background: 'var(--zova-green-soft)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: `0 4px 12px rgba(46,100,23,0.18)`,
                 overflow: 'hidden',
@@ -251,18 +234,18 @@ export default function LoginPage() {
                 {!logoError ? (
                   <Image src="/brand/logo.svg" alt="ZOVA" width={100} height={100} className="object-contain" onError={() => setLogoError(true)} />
                 ) : (
-                  <span style={{ fontSize: 16, fontWeight: 800, color: T.green, fontFamily: "var(--zova-font-sans)" }}>Z</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--zova-primary-action)', fontFamily: "var(--zova-font-sans)" }}>Z</span>
                 )}
               </div>
-              <span style={{ fontSize: 20, fontWeight: 800, color: T.charcoal, letterSpacing: '-0.04em', fontFamily: "var(--zova-font-sans)" }}>ZOVA</span>
+              <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--zova-ink)', letterSpacing: '-0.04em', fontFamily: "var(--zova-font-sans)" }}>ZOVA</span>
             </div>
 
             {/* Headline */}
             <div className="fade-up-2" style={{ marginBottom: 36 }}>
-              <h1 className="serif" style={{ fontSize: 40, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+              <h1 className="serif" style={{ fontSize: 40, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
                 Welcome back.
               </h1>
-              <p style={{ fontSize: 14.5, color: T.mutedText, margin: 0, fontWeight: 400 }}>
+              <p style={{ fontSize: 14.5, color: 'var(--zova-text-muted)', margin: 0, fontWeight: 400 }}>
                 Sign in to your ZOVA account to continue
               </p>
             </div>
@@ -271,7 +254,7 @@ export default function LoginPage() {
 
               {/* Error banner */}
               {error && (
-                <div style={{ padding: '11px 16px', borderRadius: 11, background: T.redLight, border: `1px solid #FECACA`, fontSize: 13, color: T.red, fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease' }}>
+                <div style={{ padding: '11px 16px', borderRadius: 11, background: '#FEF2F2', border: `1px solid #FECACA`, fontSize: 13, color: 'var(--zova-error)', fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease' }}>
                   {error}
                 </div>
               )}
@@ -282,7 +265,7 @@ export default function LoginPage() {
                   Email address
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <FiMail size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: emailFocused ? T.green : T.mutedText, transition: 'color 0.2s', pointerEvents: 'none' }} />
+                  <FiMail size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: emailFocused ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)', transition: 'color 0.2s', pointerEvents: 'none' }} />
                   <input
                     type="email" value={email} required autoComplete="email"
                     onChange={e => setEmail(e.target.value)}
@@ -302,12 +285,12 @@ export default function LoginPage() {
                   <label style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                     Password
                   </label>
-                  <Link href="/forgot-password" style={{ fontSize: 12.5, color: T.green, fontWeight: 600, textDecoration: 'none' }}>
+                  <Link href="/forgot-password" style={{ fontSize: 12.5, color: 'var(--zova-primary-action)', fontWeight: 600, textDecoration: 'none' }}>
                     Forgot password?
                   </Link>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <FiLock size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: passFocused ? T.green : T.mutedText, transition: 'color 0.2s', pointerEvents: 'none' }} />
+                  <FiLock size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: passFocused ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)', transition: 'color 0.2s', pointerEvents: 'none' }} />
                   <input
                     type={showPass ? 'text' : 'password'} value={password} required
                     onChange={e => setPassword(e.target.value)}
@@ -319,7 +302,7 @@ export default function LoginPage() {
                     style={{ ...inputStyle(passFocused, passHov, !!error), paddingRight: 46 }}
                   />
                   <button type="button" onClick={() => setShowPass(v => !v)}
-                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.mutedText, padding: 2, display: 'flex', alignItems: 'center' }}>
+                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--zova-text-muted)', padding: 2, display: 'flex', alignItems: 'center' }}>
                     {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                   </button>
                 </div>
@@ -331,7 +314,7 @@ export default function LoginPage() {
                       {[1,2,3,4,5].map(i => (
                         <div key={i} style={{
                           flex: 1, height: 3, borderRadius: 99,
-                          background: i <= passStrength ? strengthColor : T.border,
+                          background: i <= passStrength ? strengthColor : 'var(--zova-border)',
                           transition: 'background 0.3s',
                         }} />
                       ))}
@@ -348,7 +331,7 @@ export default function LoginPage() {
                 {passFocused && password.length > 0 && (
                   <div style={{
                     marginTop: 10, padding: '12px 14px', borderRadius: 12,
-                    background: T.greenTint, border: `1px solid ${T.greenBorder}`,
+                    background: 'var(--zova-green-soft)', border: `1px solid ${'#B8D4A0'}`,
                     display: 'flex', flexDirection: 'column', gap: 7,
                     animation: 'fadeDown 0.2s ease',
                   }}>
@@ -369,14 +352,14 @@ export default function LoginPage() {
               >
                 <div style={{
                   width: 19, height: 19, borderRadius: 6, flexShrink: 0,
-                  border: `2px solid ${rememberMe ? T.green : T.border}`,
-                  background: rememberMe ? T.green : remHov ? T.softGray : T.white,
+                  border: `2px solid ${rememberMe ? 'var(--zova-primary-action)' : 'var(--zova-border)'}`,
+                  background: rememberMe ? 'var(--zova-primary-action)' : remHov ? 'var(--zova-surface-alt)' : '#FFFFFF',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.15s',
                 }}>
                   {rememberMe && <FiCheck size={11} color="#fff" strokeWidth={3.5} />}
                 </div>
-                <span style={{ fontSize: 13.5, color: T.medGray, userSelect: 'none', fontWeight: 400 }}>
+                <span style={{ fontSize: 13.5, color: 'var(--zova-text-body)', userSelect: 'none', fontWeight: 400 }}>
                   Keep me signed in
                 </span>
               </div>
@@ -389,8 +372,8 @@ export default function LoginPage() {
                     width: '100%', padding: '14px', border: 'none', borderRadius: 13,
                     fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: loading ? T.border : submitHov ? T.greenDark : T.green,
-                    color: loading ? T.mutedText : T.white,
+                    background: loading ? 'var(--zova-border)' : submitHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
+                    color: loading ? 'var(--zova-text-muted)' : '#FFFFFF',
                     boxShadow: !loading && submitHov ? `0 10px 30px rgba(46,100,23,0.35)` : !loading ? `0 5px 18px rgba(46,100,23,0.22)` : 'none',
                     transform: !loading && submitHov ? 'translateY(-1px)' : 'none',
                     transition: 'all 0.18s',
@@ -399,7 +382,7 @@ export default function LoginPage() {
                   {loading
                     ? <><svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width={17} height={17} viewBox="0 0 17 17" fill="none">
                         <circle cx="8.5" cy="8.5" r="6" stroke="rgba(0,0,0,0.12)" strokeWidth="2.5" />
-                        <path d="M8.5 2.5a6 6 0 016 6" stroke={T.medGray} strokeWidth="2.5" strokeLinecap="round" />
+                        <path d="M8.5 2.5a6 6 0 016 6" stroke={'var(--zova-text-body)'} strokeWidth="2.5" strokeLinecap="round" />
                       </svg>Signing in…</>
                     : <>Sign In &nbsp;<FiArrowRight size={15} /></>
                   }
@@ -408,9 +391,9 @@ export default function LoginPage() {
 
               {/* Divider */}
               <div className="fade-up-7" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
-                <div style={{ flex: 1, height: 1, background: T.border }} />
+                <div style={{ flex: 1, height: 1, background: 'var(--zova-border)' }} />
                 <span style={{ fontSize: 11, color: '#CCC', fontWeight: 700, letterSpacing: '0.1em' }}>OR</span>
-                <div style={{ flex: 1, height: 1, background: T.border }} />
+                <div style={{ flex: 1, height: 1, background: 'var(--zova-border)' }} />
               </div>
 
               {/* Social buttons */}
@@ -424,9 +407,9 @@ export default function LoginPage() {
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                       padding: '11px 16px', borderRadius: 12, cursor: 'pointer',
-                      border: `1.5px solid ${T.border}`,
-                      background: btn.hov ? T.softGray : T.white,
-                      fontSize: 13.5, fontWeight: 600, color: T.charcoal,
+                      border: `1.5px solid ${'var(--zova-border)'}`,
+                      background: btn.hov ? 'var(--zova-surface-alt)' : '#FFFFFF',
+                      fontSize: 13.5, fontWeight: 600, color: 'var(--zova-ink)',
                       transition: 'all 0.15s',
                       boxShadow: btn.hov ? '0 3px 10px rgba(46,100,23,0.08)' : 'none',
                       transform: btn.hov ? 'translateY(-1px)' : 'none',
@@ -437,9 +420,9 @@ export default function LoginPage() {
               </div>
 
               {/* Sign up link */}
-              <p style={{ textAlign: 'center', fontSize: 13.5, color: T.mutedText, margin: 0 }}>
+              <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--zova-text-muted)', margin: 0 }}>
                 New to ZOVA?{' '}
-                <Link href="/signup" style={{ color: T.green, fontWeight: 700, textDecoration: 'none' }}>
+                <Link href="/signup" style={{ color: 'var(--zova-primary-action)', fontWeight: 700, textDecoration: 'none' }}>
                   Create an account →
                 </Link>
               </p>
@@ -498,7 +481,7 @@ export default function LoginPage() {
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {['50K+ Sellers', '2M+ Products', 'Fast Delivery', 'Buyer Protection'].map(tag => (
                 <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: T.gold, boxShadow: `0 0 6px ${T.gold}` }} />
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--zova-accent-emphasis)', boxShadow: `0 0 6px ${'var(--zova-accent-emphasis)'}` }} />
                   <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{tag}</span>
                 </div>
               ))}
@@ -510,7 +493,7 @@ export default function LoginPage() {
                 <div key={i} onClick={() => setSlide(i)} style={{
                   height: 3, borderRadius: 99, cursor: 'pointer',
                   width: i === slide ? 28 : 7,
-                  background: i === slide ? T.gold : 'rgba(255,255,255,0.35)',
+                  background: i === slide ? 'var(--zova-accent-emphasis)' : 'rgba(255,255,255,0.35)',
                   transition: 'all 0.4s',
                 }} />
               ))}

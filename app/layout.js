@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased bg-[var(--zova-linen)] text-[var(--zova-ink)]">
+      <body className="font-sans antialiased bg-(--zova-linen) text-(--zova-ink)">
         <AppProviders>
           <SiteChrome>{children}</SiteChrome>
         </AppProviders>

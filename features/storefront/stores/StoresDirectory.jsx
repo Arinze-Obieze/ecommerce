@@ -48,7 +48,7 @@ function StoreCard({ store }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <Link href={href} className="min-w-0">
-                <h2 className="truncate text-lg font-bold text-gray-900 transition-colors hover:text-[#2E6417]">
+                <h2 className="truncate text-lg font-bold text-gray-900 transition-colors hover:text-primary">
                   {store.name}
                 </h2>
               </Link>
@@ -79,7 +79,7 @@ function StoreCard({ store }) {
 
         <Link
           href={href}
-          className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#2E6417] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#245213]"
+          className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
         >
           Open Store <FiArrowRight className="h-4 w-4" />
         </Link>
@@ -96,8 +96,8 @@ function PageButton({ page, active, onClick }) {
       aria-current={active ? 'page' : undefined}
       className={`h-9 min-w-9 rounded-lg border px-3 text-sm font-semibold transition-colors ${
         active
-          ? 'border-[#2E6417] bg-[#2E6417] text-white'
-          : 'border-gray-200 bg-white text-gray-700 hover:border-[#2E6417] hover:text-[#2E6417]'
+          ? 'border-primary bg-primary text-white'
+          : 'border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary'
       }`}
     >
       {page}
@@ -207,7 +207,7 @@ export default function StoresDirectory() {
                 type="button"
                 onClick={() => setPage(meta.page - 1)}
                 disabled={!meta.hasPreviousPage}
-                className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:border-[#2E6417] hover:text-[#2E6417] disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <FiChevronLeft className="h-4 w-4" /> Previous
               </button>
@@ -226,7 +226,7 @@ export default function StoresDirectory() {
                 type="button"
                 onClick={() => setPage(meta.page + 1)}
                 disabled={!meta.hasNextPage}
-                className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:border-[#2E6417] hover:text-[#2E6417] disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Next <FiChevronRight className="h-4 w-4" />
               </button>

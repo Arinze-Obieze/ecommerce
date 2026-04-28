@@ -14,6 +14,15 @@ function hasRole(role, requiredRoles) {
   return requiredRoles.includes(role);
 }
 
+async function getAalLevel(authClient) {
+  try {
+    const { data } = await authClient.auth.mfa.getAuthenticatorAssuranceLevel();
+    return data?.currentLevel ?? 'aal1';
+  } catch {
+    return 'aal1';
+  }
+}
+
 export async function resolveAdminMembership() {
   const authClient = await createClient();
   const {
@@ -28,7 +37,7 @@ export async function resolveAdminMembership() {
   const adminClient = await createAdminClient();
   const { data: membership, error: membershipError } = await adminClient
     .from('admin_users')
-    .select('id, user_id, role, is_active')
+    .select('id, user_id, role, is_active, mfa_enrolled')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -40,7 +49,12 @@ export async function resolveAdminMembership() {
     return { user, membership: null, adminClient, reason: 'not_admin' };
   }
 
-  return { user, membership, adminClient, reason: null };
+  // Plan D: check AAL when the admin has enrolled MFA.
+  const mfaEnrolled = Boolean(membership.mfa_enrolled);
+  const aalLevel = mfaEnrolled ? await getAalLevel(authClient) : 'aal2';
+  const needsMfa = mfaEnrolled && aalLevel !== 'aal2';
+
+  return { user, membership, adminClient, reason: null, mfaEnrolled, needsMfa };
 }
 
 export async function requireAdminApi(requiredRoles = []) {
@@ -67,6 +81,17 @@ export async function requireAdminApi(requiredRoles = []) {
     };
   }
 
+  // Plan D: API callers that have MFA enrolled must be at AAL2.
+  if (resolved.needsMfa) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: 'Two-factor authentication required for admin access', require_mfa: true },
+        { status: 403 }
+      ),
+    };
+  }
+
   return {
     ok: true,
     user: resolved.user,
@@ -86,9 +111,12 @@ export async function requireAdminPage(requiredRoles = []) {
     redirect('/');
   }
 
+  // Plan D: return mfa state; the layout/shell decides how to present it.
   return {
     user: resolved.user,
     membership: resolved.membership,
     adminClient: resolved.adminClient,
+    mfaEnrolled: resolved.mfaEnrolled ?? false,
+    needsMfa: resolved.needsMfa ?? false,
   };
 }

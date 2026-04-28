@@ -259,25 +259,25 @@ async function loadInventoryData(ctx, options = {}) {
     variants = variantRows || [];
   }
 
+  // F009: filter by store_id at the DB level so we never pull other stores' data
+  // into this process, and the window is tight enough to always return results.
   let history = [];
   const historyResult = await ctx.adminClient
     .from('activity_logs')
     .select('id, created_at, action, message, user_id, metadata')
     .eq('action', 'INVENTORY_ADJUSTMENT')
+    .filter('metadata->>store_id', 'eq', String(ctx.membership.store_id))
     .order('created_at', { ascending: false })
-    .limit(200);
+    .limit(HISTORY_LIMIT);
 
   if (!historyResult.error) {
-    history = (historyResult.data || [])
-      .filter((entry) => String(entry?.metadata?.store_id || '') === String(ctx.membership.store_id))
-      .slice(0, HISTORY_LIMIT)
-      .map((entry) => ({
-        id: entry.id,
-        created_at: entry.created_at,
-        user_id: entry.user_id,
-        message: entry.message,
-        ...entry.metadata,
-      }));
+    history = (historyResult.data || []).map((entry) => ({
+      id: entry.id,
+      created_at: entry.created_at,
+      user_id: entry.user_id,
+      message: entry.message,
+      ...entry.metadata,
+    }));
   }
 
   return serializeInventory(products || [], variants, history, {
