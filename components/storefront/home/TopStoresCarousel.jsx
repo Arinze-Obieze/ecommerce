@@ -171,22 +171,29 @@ function StoreCard({ store }) {
 }
 
 // ── Main component ────────────────────────────────────────────
-const TopStoresCarousel = () => {
-  const [stores, setStores]   = useState([]);
-  const [loading, setLoading] = useState(true);
+const TopStoresCarousel = ({ initialStores = null }) => {
+  const [stores, setStores]   = useState(() => (Array.isArray(initialStores) ? initialStores : []));
+  const [loading, setLoading] = useState(() => !Array.isArray(initialStores));
 
   useEffect(() => {
+    if (Array.isArray(initialStores)) return undefined;
+
+    let active = true;
+
     (async () => {
       try {
         const json = await getTopStores(8);
-        if (json.success) setStores(json.data);
+        if (active && json.success) setStores(json.data);
       } catch (error) {
         console.error('Failed to fetch top stores:', error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [initialStores]);
 
   if (loading) {
     return (

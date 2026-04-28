@@ -121,11 +121,13 @@ const ChipMoodCard = ({ mood }) => (
 /* ══════════════════════════════════
    HERO
 ══════════════════════════════════ */
-const Hero = () => {
+const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
   const [activeTab, setActiveTab]     = useState('New Arrivals');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [banner, setBanner]           = useState(null);
-  const [sellerCount, setSellerCount] = useState(0);
+  const [banner, setBanner]           = useState(initialBanner);
+  const [sellerCount, setSellerCount] = useState(
+    typeof initialSellerCount === 'number' ? initialSellerCount : 0
+  );
   const [expanded, setExpanded]       = useState(false);
 
   const navItems = [
@@ -136,17 +138,30 @@ const Hero = () => {
   ];
 
   useEffect(() => {
+    const hasInitialBanner = Boolean(initialBanner);
+    const hasInitialSellerCount = typeof initialSellerCount === 'number';
+    if (hasInitialBanner && hasInitialSellerCount) return undefined;
+
+    let active = true;
+
     (async () => {
       try {
         const data = await getHeroBanner();
-        if (data.banner?.length > 0) {
+        if (!hasInitialBanner && data.banner?.length > 0) {
           const b = data.banner[0];
-          setBanner({ ...b, background_image: b.background_image || b.backgroundImage });
+          if (active) {
+            setBanner({ ...b, background_image: b.background_image || b.backgroundImage });
+          }
         }
-        if (data.sellerStats) setSellerCount(data.sellerStats.count || 0);
+        if (!hasInitialSellerCount && active && data.sellerStats) {
+          setSellerCount(data.sellerStats.count || 0);
+        }
       } catch {}
     })();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [initialBanner, initialSellerCount]);
 
   const formatCount = (n) => {
     if (n >= 10000) return Math.floor(n / 1000) + 'K+';

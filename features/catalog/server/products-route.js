@@ -594,26 +594,30 @@ export async function GET(request) {
 
   try {
     // db bypasses RLS for public catalog reads (products, stores, categories are public data).
-    // supabase (anon+cookies) is kept only for auth.getUser() to identify the current session.
-    const [db, supabase] = await Promise.all([createAdminClient(), createClient()]);
+    // Auth is resolved lazily because some public surfaces, like the homepage,
+    // intentionally avoid cookie-bound personalization during static rendering.
+    const db = await createAdminClient();
     const { searchParams } = new URL(request.url);
     const url = new URL(request.url);
+    const skipRateLimit = request.headers.get('x-zova-skip-rate-limit') === '1';
 
-    const rateLimit = await enforceRateLimit({
-      request,
-      scope: 'catalog_products_read',
-      identifier: 'public',
-      limit: 240,
-      windowSeconds: 60,
-    });
+    if (!skipRateLimit) {
+      const rateLimit = await enforceRateLimit({
+        request,
+        scope: 'catalog_products_read',
+        identifier: 'public',
+        limit: 240,
+        windowSeconds: 60,
+      });
 
-    if (!rateLimit.allowed) {
-      return errorJson(
-        'Too many product requests. Please wait a moment and try again.',
-        429,
-        rateLimitPayload(null, rateLimit),
-        rateLimitHeaders(rateLimit)
-      );
+      if (!rateLimit.allowed) {
+        return errorJson(
+          'Too many product requests. Please wait a moment and try again.',
+          429,
+          rateLimitPayload(null, rateLimit),
+          rateLimitHeaders(rateLimit)
+        );
+      }
     }
 
     let page = toPositiveInt(searchParams.get('page'), 1, { min: 1, max: 500 });
@@ -637,6 +641,7 @@ export async function GET(request) {
     const includeOutOfStock = searchParams.get('includeOutOfStock') === 'true';
     const inStock = searchParams.get('inStock') === 'true';
     const collection = sanitizeSlug(searchParams.get('collection'));
+    const skipAuthResolution = request.headers.get('x-zova-skip-auth') === '1';
     const requestedDebugRanking = searchParams.get('debug') === 'true';
     let debugRanking = false;
 
@@ -784,11 +789,17 @@ export async function GET(request) {
 
     const transformedData = transformProducts(data);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
     const actorSignals = getActorSignalsFromHeaders(request);
+    let user = null;
+
+    if (!skipAuthResolution || actorSignals.anonId || actorSignals.sessionId) {
+      const supabase = await createClient();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      user = authUser || null;
+    }
+
     const actorIds = {
       userId: user?.id || null,
       anonId: actorSignals.anonId,

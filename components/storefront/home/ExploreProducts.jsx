@@ -33,24 +33,31 @@ const SkeletonCard = ({ delay = 0 }) => (
 );
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-const ExploreProducts = () => {
-  const [products, setProducts]       = useState([]);
-  const [loading, setLoading]         = useState(true);
+const ExploreProducts = ({ initialProducts = null }) => {
+  const [products, setProducts]       = useState(() => (Array.isArray(initialProducts) ? initialProducts : []));
+  const [loading, setLoading]         = useState(() => !Array.isArray(initialProducts));
   const [linkHovered, setLinkHovered] = useState(false);
   const [ctaHovered,  setCtaHovered]  = useState(false);
 
   useEffect(() => {
+    if (Array.isArray(initialProducts)) return undefined;
+
+    let active = true;
+
     (async () => {
       try {
         const json = await getExploreProducts(12);
-        if (json.success) setProducts(json.data);
+        if (active && json.success) setProducts(json.data);
       } catch (err) {
         console.error('Failed to fetch explore products:', err);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [initialProducts]);
 
   // ── Section header ────────────────────────────────────────────────────────
   const SectionHeader = () => (

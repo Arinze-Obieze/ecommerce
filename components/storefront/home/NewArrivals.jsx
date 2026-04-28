@@ -17,24 +17,31 @@ import ProductImpressionTracker from '@/components/catalog/ProductImpressionTrac
 import SectionCarousel from '@/components/shared/SectionCarousel';
 import { getNewArrivalProducts } from '@/features/catalog/api/client';
 
-const NewArrivals = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading]   = useState(true);
+const NewArrivals = ({ initialProducts = null }) => {
+  const [products, setProducts] = useState(() => (Array.isArray(initialProducts) ? initialProducts : []));
+  const [loading, setLoading]   = useState(() => !Array.isArray(initialProducts));
 
   useEffect(() => {
+    if (Array.isArray(initialProducts)) return undefined;
+
+    let active = true;
+
     const fetchProducts = async () => {
       try {
         const json = await getNewArrivalProducts(8);
-        if (json.success) setProducts(json.data);
+        if (active && json.success) setProducts(json.data);
       } catch (error) {
         console.error('Failed to fetch new arrivals:', error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchProducts();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [initialProducts]);
 
   if (loading) {
     return (
