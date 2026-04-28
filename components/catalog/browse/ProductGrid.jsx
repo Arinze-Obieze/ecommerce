@@ -5,38 +5,26 @@ import { useFilters } from "@/contexts/filter/FilterContext";
 import { FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  pageBg:      'var(--zova-linen)',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 // ─── SKELETON CARD ────────────────────────────────────────────────────────────
 const SkeletonCard = ({ delay = 0 }) => (
   <div
     className="animate-pulse"
     style={{
-      background: THEME.white,
-      border: `1px solid ${THEME.border}`,
+      background: '#FFFFFF',
+      border: `1px solid ${'var(--zova-border)'}`,
       borderRadius: 12,
       overflow: 'hidden',
       animationDelay: `${delay}ms`,
     }}
   >
-    <div style={{ aspectRatio: '3/4', background: THEME.softGray }} />
+    <div style={{ aspectRatio: '3/4', background: 'var(--zova-surface-alt)' }} />
     <div style={{ padding: '10px 12px 14px' }}>
-      <div style={{ height: 8,  background: THEME.softGray, borderRadius: 4, width: '55%', marginBottom: 8 }} />
-      <div style={{ height: 11, background: THEME.softGray, borderRadius: 4, width: '80%', marginBottom: 8 }} />
-      <div style={{ height: 11, background: THEME.softGray, borderRadius: 4, width: '40%', marginBottom: 12 }} />
-      <div style={{ height: 32, background: THEME.softGray, borderRadius: 8 }} />
+      <div style={{ height: 8,  background: 'var(--zova-surface-alt)', borderRadius: 4, width: '55%', marginBottom: 8 }} />
+      <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, width: '80%', marginBottom: 8 }} />
+      <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, width: '40%', marginBottom: 12 }} />
+      <div style={{ height: 32, background: 'var(--zova-surface-alt)', borderRadius: 8 }} />
     </div>
   </div>
 );
@@ -68,8 +56,8 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
           justifyContent: 'center',
           padding: '56px 24px',
           textAlign: 'center',
-          background: THEME.white,
-          border: `1.5px dashed ${THEME.border}`,
+          background: '#FFFFFF',
+          border: `1.5px dashed ${'var(--zova-border)'}`,
           borderRadius: 18,
         }}
       >
@@ -87,10 +75,10 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
         >
           <FiAlertCircle size={22} style={{ color: '#DC2626' }} />
         </div>
-        <h3 style={{ fontSize: 16, fontWeight: 800, color: THEME.charcoal, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
           Something went wrong
         </h3>
-        <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 22px', maxWidth: 280, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 22px', maxWidth: 280, lineHeight: 1.6 }}>
           {error}
         </p>
         <button
@@ -103,8 +91,8 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
             padding: '10px 22px',
             borderRadius: 10,
             border: 'none',
-            background: THEME.charcoal,
-            color: THEME.white,
+            background: 'var(--zova-ink)',
+            color: '#FFFFFF',
             fontSize: 13,
             fontWeight: 700,
             cursor: 'pointer',
@@ -127,8 +115,8 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
           justifyContent: 'center',
           padding: '64px 24px',
           textAlign: 'center',
-          background: THEME.white,
-          border: `1.5px dashed ${THEME.border}`,
+          background: '#FFFFFF',
+          border: `1.5px dashed ${'var(--zova-border)'}`,
           borderRadius: 18,
         }}
       >
@@ -137,19 +125,19 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
             width: 56,
             height: 56,
             borderRadius: '50%',
-            background: THEME.greenTint,
+            background: 'var(--zova-green-soft)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             marginBottom: 16,
           }}
         >
-          <FiSearch size={22} style={{ color: THEME.green }} />
+          <FiSearch size={22} style={{ color: 'var(--zova-primary-action)' }} />
         </div>
-        <h3 style={{ fontSize: 17, fontWeight: 800, color: THEME.charcoal, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+        <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
           No products found
         </h3>
-        <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 24px', maxWidth: 300, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 24px', maxWidth: 300, lineHeight: 1.6 }}>
           Try adjusting your filters or search terms to find what you're looking for.
         </p>
         {hasActiveFilters && (
@@ -163,14 +151,14 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
               padding: '10px 22px',
               borderRadius: 10,
               border: 'none',
-              background: THEME.charcoal,
-              color: THEME.white,
+              background: 'var(--zova-ink)',
+              color: '#FFFFFF',
               fontSize: 13,
               fontWeight: 700,
               cursor: 'pointer',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = '#333333')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = THEME.charcoal)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--zova-ink)')}
           >
             Clear All Filters
           </button>
@@ -216,11 +204,11 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
             marginTop: 44,
           }}
         >
-          <div style={{ height: 1, width: 60, background: THEME.border }} />
-          <span style={{ fontSize: 12, color: THEME.mutedText, fontWeight: 500 }}>
+          <div style={{ height: 1, width: 60, background: 'var(--zova-border)' }} />
+          <span style={{ fontSize: 12, color: 'var(--zova-text-muted)', fontWeight: 500 }}>
             You've seen all {products.length} products
           </span>
-          <div style={{ height: 1, width: 60, background: THEME.border }} />
+          <div style={{ height: 1, width: 60, background: 'var(--zova-border)' }} />
         </div>
       )}
     </div>

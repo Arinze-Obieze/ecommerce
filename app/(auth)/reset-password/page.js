@@ -7,21 +7,7 @@ import { FiAlertCircle, FiCheck, FiLock, FiLoader, FiArrowLeft } from 'react-ico
 import { createClient } from '@/utils/supabase/client';
 
 // Brand tokens — sourced from app/globals.css
-const T = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  pageBg:      'var(--zova-linen)',
-  panelBg:     '#FFFFFF',
-  softGray:    'var(--zova-surface-alt)',
-  border:      'var(--zova-border)',
-  text:        'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  red:         'var(--zova-error)',
-  redLight:    '#FEF2F2',
-};
+
 
 function getPasswordChecks(password) {
   return {
@@ -41,7 +27,7 @@ function RequirementRow({ met, label }) {
           width: 16,
           height: 16,
           borderRadius: '50%',
-          background: met ? T.green : T.border,
+          background: met ? 'var(--zova-primary-action)' : 'var(--zova-border)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -51,7 +37,7 @@ function RequirementRow({ met, label }) {
       >
         {met ? <FiCheck size={10} /> : null}
       </div>
-      <span style={{ fontSize: 12, color: met ? T.greenDark : T.mutedText }}>
+      <span style={{ fontSize: 12, color: met ? 'var(--zova-primary-action-hover)' : 'var(--zova-text-muted)' }}>
         {label}
       </span>
     </div>
@@ -166,10 +152,10 @@ export default function ResetPasswordPage() {
     width: '100%',
     padding: '13px 14px 13px 44px',
     borderRadius: 12,
-    border: `1.5px solid ${error ? T.red : T.border}`,
-    background: T.softGray,
+    border: `1.5px solid ${error ? 'var(--zova-error)' : 'var(--zova-border)'}`,
+    background: 'var(--zova-surface-alt)',
     fontSize: 14,
-    color: T.text,
+    color: 'var(--zova-ink)',
     outline: 'none',
     boxSizing: 'border-box',
   };
@@ -178,7 +164,7 @@ export default function ResetPasswordPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: T.pageBg,
+        background: 'var(--zova-linen)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -190,8 +176,8 @@ export default function ResetPasswordPage() {
         style={{
           width: '100%',
           maxWidth: 480,
-          background: T.panelBg,
-          border: `1px solid ${T.border}`,
+          background: '#FFFFFF',
+          border: `1px solid ${'var(--zova-border)'}`,
           borderRadius: 24,
           padding: 28,
           boxShadow: '0 18px 60px rgba(17,17,17,0.08)',
@@ -204,7 +190,7 @@ export default function ResetPasswordPage() {
             alignItems: 'center',
             gap: 8,
             marginBottom: 20,
-            color: T.medGray,
+            color: 'var(--zova-text-body)',
             textDecoration: 'none',
             fontSize: 13,
             fontWeight: 600,
@@ -222,9 +208,9 @@ export default function ResetPasswordPage() {
               gap: 8,
               padding: '7px 12px',
               borderRadius: 999,
-              background: T.greenTint,
-              border: `1px solid ${T.greenBorder}`,
-              color: T.greenDark,
+              background: 'var(--zova-green-soft)',
+              border: `1px solid ${'#B8D4A0'}`,
+              color: 'var(--zova-primary-action-hover)',
               fontSize: 12,
               fontWeight: 700,
               marginBottom: 14,
@@ -232,10 +218,10 @@ export default function ResetPasswordPage() {
           >
             Secure account setup
           </div>
-          <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.05, color: T.text }}>
+          <h1 style={{ margin: 0, fontSize: 34, lineHeight: 1.05, color: 'var(--zova-ink)' }}>
             Set your new password
           </h1>
-          <p style={{ margin: '10px 0 0', color: T.medGray, fontSize: 14, lineHeight: 1.7 }}>
+          <p style={{ margin: '10px 0 0', color: 'var(--zova-text-body)', fontSize: 14, lineHeight: 1.7 }}>
             Choose a strong password to finish account recovery or complete your invited account setup.
           </p>
         </div>
@@ -248,8 +234,8 @@ export default function ResetPasswordPage() {
               gap: 10,
               padding: 16,
               borderRadius: 14,
-              background: T.softGray,
-              color: T.medGray,
+              background: 'var(--zova-surface-alt)',
+              color: 'var(--zova-text-body)',
             }}
           >
             <FiLoader size={16} style={{ animation: 'spin 0.9s linear infinite' }} />
@@ -262,9 +248,9 @@ export default function ResetPasswordPage() {
             style={{
               padding: 16,
               borderRadius: 14,
-              background: T.redLight,
+              background: '#FEF2F2',
               border: `1px solid rgba(229,57,53,0.18)`,
-              color: T.red,
+              color: 'var(--zova-error)',
               fontSize: 13,
               lineHeight: 1.6,
             }}
@@ -284,9 +270,9 @@ export default function ResetPasswordPage() {
                 style={{
                   padding: 14,
                   borderRadius: 14,
-                  background: T.redLight,
+                  background: '#FEF2F2',
                   border: `1px solid rgba(229,57,53,0.18)`,
-                  color: T.red,
+                  color: 'var(--zova-error)',
                   fontSize: 13,
                 }}
               >
@@ -299,9 +285,9 @@ export default function ResetPasswordPage() {
                 style={{
                   padding: 14,
                   borderRadius: 14,
-                  background: T.greenTint,
-                  border: `1px solid ${T.greenBorder}`,
-                  color: T.greenDark,
+                  background: 'var(--zova-green-soft)',
+                  border: `1px solid ${'#B8D4A0'}`,
+                  color: 'var(--zova-primary-action-hover)',
                   fontSize: 13,
                   fontWeight: 600,
                 }}
@@ -316,7 +302,7 @@ export default function ResetPasswordPage() {
               </label>
               <div style={{ position: 'relative' }}>
                 <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', display: 'flex' }}>
-                  <FiLock size={18} color={T.mutedText} />
+                  <FiLock size={18} color={'var(--zova-text-muted)'} />
                 </div>
                 <input
                   id="password"
@@ -337,7 +323,7 @@ export default function ResetPasswordPage() {
               </label>
               <div style={{ position: 'relative' }}>
                 <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', display: 'flex' }}>
-                  <FiLock size={18} color={T.mutedText} />
+                  <FiLock size={18} color={'var(--zova-text-muted)'} />
                 </div>
                 <input
                   id="confirmPassword"
@@ -356,8 +342,8 @@ export default function ResetPasswordPage() {
               style={{
                 padding: 14,
                 borderRadius: 16,
-                border: `1px solid ${T.border}`,
-                background: T.softGray,
+                border: `1px solid ${'var(--zova-border)'}`,
+                background: 'var(--zova-surface-alt)',
                 display: 'grid',
                 gap: 10,
               }}
@@ -376,7 +362,7 @@ export default function ResetPasswordPage() {
                 border: 'none',
                 borderRadius: 14,
                 padding: '14px 16px',
-                background: submitting || success ? T.greenDark : T.green,
+                background: submitting || success ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
                 color: '#fff',
                 fontSize: 14,
                 fontWeight: 700,

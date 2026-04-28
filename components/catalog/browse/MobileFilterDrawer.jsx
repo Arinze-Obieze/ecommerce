@@ -6,18 +6,7 @@ import FilterSidebar from "./FilterSidebar";
 import { useFilters } from "@/contexts/filter/FilterContext";
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 export default function MobileFilterDrawer({ isOpen, onClose }) {
   const { hasActiveFilters, clearAllFilters, activeFilterCount } = useFilters();
@@ -70,7 +59,7 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
           zIndex: 9999,
           width: 320,
           maxWidth: '90vw',
-          background: THEME.white,
+          background: '#FFFFFF',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '4px 0 32px rgba(0,0,0,0.12)',
@@ -92,9 +81,9 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 20px',
-            borderBottom: `1px solid ${THEME.border}`,
+            borderBottom: `1px solid ${'var(--zova-border)'}`,
             flexShrink: 0,
-            background: THEME.white,
+            background: '#FFFFFF',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -103,15 +92,15 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
                 width: 32,
                 height: 32,
                 borderRadius: 9,
-                background: THEME.greenTint,
+                background: 'var(--zova-green-soft)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FiSliders size={15} style={{ color: THEME.green }} />
+              <FiSliders size={15} style={{ color: 'var(--zova-primary-action)' }} />
             </div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: THEME.charcoal, letterSpacing: '-0.015em' }}>
+            <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--zova-ink)', letterSpacing: '-0.015em' }}>
               Filters
             </span>
             {activeFilterCount > 0 && (
@@ -125,8 +114,8 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
                   borderRadius: 100,
                   fontSize: 10,
                   fontWeight: 800,
-                  background: THEME.green,
-                  color: THEME.white,
+                  background: 'var(--zova-primary-action)',
+                  color: '#FFFFFF',
                   padding: '0 5px',
                 }}
               >
@@ -146,9 +135,9 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
                   gap: 5,
                   padding: '6px 12px',
                   borderRadius: 8,
-                  border: `1px solid ${THEME.border}`,
-                  background: THEME.softGray,
-                  color: THEME.medGray,
+                  border: `1px solid ${'var(--zova-border)'}`,
+                  background: 'var(--zova-surface-alt)',
+                  color: 'var(--zova-text-body)',
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -159,9 +148,9 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
                   e.currentTarget.style.borderColor = '#FECACA';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = THEME.softGray;
-                  e.currentTarget.style.color = THEME.medGray;
-                  e.currentTarget.style.borderColor = THEME.border;
+                  e.currentTarget.style.background = 'var(--zova-surface-alt)';
+                  e.currentTarget.style.color = 'var(--zova-text-body)';
+                  e.currentTarget.style.borderColor = 'var(--zova-border)';
                 }}
               >
                 <FiTrash2 size={11} /> Clear all
@@ -174,9 +163,9 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
                 width: 32,
                 height: 32,
                 borderRadius: 9,
-                border: `1px solid ${THEME.border}`,
-                background: THEME.softGray,
-                color: THEME.medGray,
+                border: `1px solid ${'var(--zova-border)'}`,
+                background: 'var(--zova-surface-alt)',
+                color: 'var(--zova-text-body)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -198,9 +187,9 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
         <div
           style={{
             padding: '14px 16px',
-            borderTop: `1px solid ${THEME.border}`,
+            borderTop: `1px solid ${'var(--zova-border)'}`,
             flexShrink: 0,
-            background: THEME.white,
+            background: '#FFFFFF',
           }}
         >
           <button
@@ -211,15 +200,15 @@ export default function MobileFilterDrawer({ isOpen, onClose }) {
               padding: '13px',
               borderRadius: 12,
               border: 'none',
-              background: THEME.green,
-              color: THEME.white,
+              background: 'var(--zova-primary-action)',
+              color: '#FFFFFF',
               fontSize: 14,
               fontWeight: 700,
               cursor: 'pointer',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = THEME.greenDark)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = THEME.green)}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--zova-primary-action-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--zova-primary-action)')}
           >
             Show Results
           </button>

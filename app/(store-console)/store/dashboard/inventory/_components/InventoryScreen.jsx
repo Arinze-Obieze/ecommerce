@@ -56,7 +56,7 @@ export default function InventoryScreen() {
           type="button"
           onClick={load}
           disabled={loading}
-          className="rounded-xl border border-[#2E6417] px-4 py-2 text-sm font-semibold text-[#2E6417] disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>
@@ -138,7 +138,7 @@ export default function InventoryScreen() {
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
               placeholder="Search product, slug, SKU, variant"
-              className="col-span-2 rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#2E6417] sm:col-span-1"
+              className="col-span-2 rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary sm:col-span-1"
             />
             <select
               value={filter}
@@ -150,7 +150,7 @@ export default function InventoryScreen() {
             >
               {FILTER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
-            <button type="submit" className="rounded-xl bg-[#2E6417] px-4 py-2 text-sm font-semibold text-white hover:bg-[#245213]">
+            <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
               Apply
             </button>
             <button type="button" onClick={resetSearch} className="rounded-xl border border-[#E8E4DC] px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
@@ -168,7 +168,7 @@ export default function InventoryScreen() {
                 setFilter(option.value);
                 setPage(1);
               }}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${filter === option.value ? 'bg-[#2E6417] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${filter === option.value ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {option.label}
             </button>
@@ -216,14 +216,14 @@ export default function InventoryScreen() {
                             <button
                               type="button"
                               onClick={() => openAdjustment(row)}
-                              className="rounded-full border border-[#E8E4DC] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-[#2E6417] hover:text-[#2E6417]"
+                              className="rounded-full border border-[#E8E4DC] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
                             >
                               Adjust
                             </button>
                             <button
                               type="button"
                               onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')}
-                              className="rounded-full border border-[#E8E4DC] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-[#2E6417] hover:text-[#2E6417]"
+                              className="rounded-full border border-[#E8E4DC] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
                             >
                               View details
                             </button>
@@ -272,10 +272,10 @@ export default function InventoryScreen() {
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold capitalize text-gray-600">{row.moderation_status}</span>
                     </div>
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => openAdjustment(row)} className="shrink-0 rounded-full border border-[#2E6417] px-2.5 py-1 font-semibold text-[#2E6417]">
+                      <button type="button" onClick={() => openAdjustment(row)} className="shrink-0 rounded-full border border-primary px-2.5 py-1 font-semibold text-primary">
                         Adjust
                       </button>
-                      <button type="button" onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')} className="shrink-0 rounded-full border border-[#2E6417] px-2.5 py-1 font-semibold text-[#2E6417]">
+                      <button type="button" onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')} className="shrink-0 rounded-full border border-primary px-2.5 py-1 font-semibold text-primary">
                         View
                       </button>
                     </div>

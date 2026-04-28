@@ -8,38 +8,26 @@ import { FiHeart, FiArrowRight } from 'react-icons/fi';
 import { getWishlistProducts } from '@/features/catalog/api/client';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  pageBg:      'var(--zova-linen)',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 // ─── SKELETON ─────────────────────────────────────────────────────────────────
 const SkeletonCard = ({ delay = 0 }) => (
   <div
     className="animate-pulse"
     style={{
-      background: THEME.white,
-      border: `1px solid ${THEME.border}`,
+      background: '#FFFFFF',
+      border: `1px solid ${'var(--zova-border)'}`,
       borderRadius: 14,
       overflow: 'hidden',
       animationDelay: `${delay}ms`,
     }}
   >
-    <div style={{ aspectRatio: '3/4', background: THEME.softGray }} />
+    <div style={{ aspectRatio: '3/4', background: 'var(--zova-surface-alt)' }} />
     <div style={{ padding: '10px 14px 14px' }}>
-      <div style={{ height: 8, background: THEME.softGray, borderRadius: 4, width: '55%', marginBottom: 8 }} />
-      <div style={{ height: 11, background: THEME.softGray, borderRadius: 4, width: '80%', marginBottom: 10 }} />
-      <div style={{ height: 11, background: THEME.softGray, borderRadius: 4, width: '40%', marginBottom: 12 }} />
-      <div style={{ height: 32, background: THEME.softGray, borderRadius: 8 }} />
+      <div style={{ height: 8, background: 'var(--zova-surface-alt)', borderRadius: 4, width: '55%', marginBottom: 8 }} />
+      <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, width: '80%', marginBottom: 10 }} />
+      <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, width: '40%', marginBottom: 12 }} />
+      <div style={{ height: 32, background: 'var(--zova-surface-alt)', borderRadius: 8 }} />
     </div>
   </div>
 );
@@ -75,10 +63,10 @@ export default function ProfileWishlist() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: THEME.mutedText, margin: 0, marginBottom: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--zova-text-muted)', margin: 0, marginBottom: 4 }}>
             My Account
           </p>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: THEME.charcoal, margin: 0, letterSpacing: '-0.025em' }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em' }}>
             Wishlist
           </h2>
         </div>
@@ -93,9 +81,9 @@ export default function ProfileWishlist() {
               borderRadius: 100,
               fontSize: 12,
               fontWeight: 700,
-              background: THEME.greenTint,
-              color: THEME.green,
-              border: `1px solid ${THEME.greenBorder}`,
+              background: 'var(--zova-green-soft)',
+              color: 'var(--zova-primary-action)',
+              border: `1px solid ${'#B8D4A0'}`,
             }}
           >
             <FiHeart size={11} />
@@ -133,8 +121,8 @@ export default function ProfileWishlist() {
             justifyContent: 'center',
             padding: '64px 24px',
             textAlign: 'center',
-            background: THEME.white,
-            border: `1.5px dashed ${THEME.border}`,
+            background: '#FFFFFF',
+            border: `1.5px dashed ${'var(--zova-border)'}`,
             borderRadius: 20,
           }}
         >
@@ -143,19 +131,19 @@ export default function ProfileWishlist() {
               width: 60,
               height: 60,
               borderRadius: '50%',
-              background: THEME.greenTint,
+              background: 'var(--zova-green-soft)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 16,
             }}
           >
-            <FiHeart size={24} style={{ color: THEME.green }} />
+            <FiHeart size={24} style={{ color: 'var(--zova-primary-action)' }} />
           </div>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: THEME.charcoal, margin: 0, marginBottom: 6, letterSpacing: '-0.02em' }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, marginBottom: 6, letterSpacing: '-0.02em' }}>
             Your wishlist is empty
           </h3>
-          <p style={{ fontSize: 13, color: THEME.mutedText, margin: '0 0 24px', maxWidth: 280, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 24px', maxWidth: 280, lineHeight: 1.6 }}>
             Save items you love and come back to them anytime.
           </p>
           <Link
@@ -168,8 +156,8 @@ export default function ProfileWishlist() {
               borderRadius: 10,
               fontSize: 13,
               fontWeight: 700,
-              background: ctaHov ? THEME.greenDark : THEME.green,
-              color: THEME.white,
+              background: ctaHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
+              color: '#FFFFFF',
               textDecoration: 'none',
               transition: 'background 0.2s',
             }}

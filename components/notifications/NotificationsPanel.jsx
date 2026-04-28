@@ -73,7 +73,7 @@ export default function NotificationsPanel({
             type="button"
             disabled={saving || unreadCount === 0}
             onClick={() => updateNotification('', 'read', true)}
-            className="rounded-xl border border-[#2E6417] px-4 py-2 text-sm font-semibold text-[#2E6417] disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             Mark all read
           </button>
@@ -98,7 +98,7 @@ export default function NotificationsPanel({
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-semibold text-gray-900">{row.title}</p>
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${row.status === 'unread' ? 'bg-[#e5f6ec] text-[#2E6417]' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${row.status === 'unread' ? 'bg-[#e5f6ec] text-primary' : 'bg-gray-100 text-gray-600'}`}>
                         {prettify(row.type)}
                       </span>
                     </div>
@@ -109,7 +109,7 @@ export default function NotificationsPanel({
                     {row.action_url ? (
                       <Link
                         href={row.action_url}
-                        className="rounded-xl bg-[#2E6417] px-3 py-2 text-sm font-semibold text-white hover:bg-[#245213]"
+                        className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
                       >
                         Open
                       </Link>

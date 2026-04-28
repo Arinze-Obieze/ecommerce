@@ -77,14 +77,14 @@ export default function ProductQrModal({
           <button
             type="button"
             onClick={onPrint}
-            className="rounded-xl border border-[#2E6417] px-3 py-2 text-sm font-semibold text-[#2E6417] hover:bg-[#EDF5E6]"
+            className="rounded-xl border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary-soft"
           >
             Print
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-[#2E6417] px-3 py-2 text-sm font-semibold text-white hover:bg-[#245213]"
+            className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
           >
             Close
           </button>

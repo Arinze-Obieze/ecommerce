@@ -5,18 +5,7 @@ import { FiGrid, FiShoppingBag, FiHeart, FiMapPin, FiSettings, FiLogOut, FiChevr
 import { useAuth } from '@/components/auth/AuthProvider';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  green:       'var(--zova-primary-action)',
-  greenDark:   'var(--zova-primary-action-hover)',
-  greenTint:   'var(--zova-green-soft)',
-  greenBorder: '#B8D4A0',
-  white:       '#FFFFFF',
-  charcoal:    'var(--zova-ink)',
-  medGray:     'var(--zova-text-body)',
-  mutedText:   'var(--zova-text-muted)',
-  border:      'var(--zova-border)',
-  softGray:    'var(--zova-surface-alt)',
-};
+
 
 const menuItems = [
   { label: 'Overview',   icon: FiGrid,        id: 'overview'   },
@@ -51,11 +40,11 @@ const NavItem = ({ item, isActive, onClick }) => {
         textAlign: 'left',
         transition: 'background 0.18s, color 0.18s',
         background: isActive
-          ? THEME.greenTint
+          ? 'var(--zova-green-soft)'
           : hov
-          ? THEME.softGray
+          ? 'var(--zova-surface-alt)'
           : 'transparent',
-        color: isActive ? THEME.green : hov ? THEME.charcoal : THEME.medGray,
+        color: isActive ? 'var(--zova-primary-action)' : hov ? 'var(--zova-ink)' : 'var(--zova-text-body)',
       }}
     >
       {/* Icon */}
@@ -68,13 +57,13 @@ const NavItem = ({ item, isActive, onClick }) => {
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
-          background: isActive ? THEME.green : hov ? THEME.border : 'transparent',
+          background: isActive ? 'var(--zova-primary-action)' : hov ? 'var(--zova-border)' : 'transparent',
           transition: 'background 0.18s',
         }}
       >
         <item.icon
           size={16}
-          style={{ color: isActive ? THEME.white : hov ? THEME.charcoal : THEME.mutedText }}
+          style={{ color: isActive ? '#FFFFFF' : hov ? 'var(--zova-ink)' : 'var(--zova-text-muted)' }}
         />
       </span>
       {item.label}
@@ -87,7 +76,7 @@ const NavItem = ({ item, isActive, onClick }) => {
             width: 6,
             height: 6,
             borderRadius: '50%',
-            background: THEME.green,
+            background: 'var(--zova-primary-action)',
             flexShrink: 0,
           }}
         />
@@ -126,14 +115,14 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
     <div
       style={{
         background: 'linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,244,237,0.94))',
-        border: `1px solid ${THEME.border}`,
+        border: `1px solid ${'var(--zova-border)'}`,
         borderRadius: 24,
         overflow: 'hidden',
         boxShadow: '0 14px 36px rgba(25,27,25,0.08)',
       }}
     >
       {/* Label */}
-      <div style={{ padding: '22px 22px 16px', borderBottom: `1px solid ${THEME.border}` }}>
+      <div style={{ padding: '22px 22px 16px', borderBottom: `1px solid ${'var(--zova-border)'}` }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <p style={{
@@ -141,12 +130,12 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
               fontWeight: 800,
               letterSpacing: '0.14em',
               textTransform: 'uppercase',
-              color: THEME.green,
+              color: 'var(--zova-primary-action)',
               margin: 0,
             }}>
               My Account
             </p>
-            <p style={{ margin: '8px 0 0', fontSize: 18, fontWeight: 800, color: THEME.charcoal, letterSpacing: '-0.03em' }}>
+            <p style={{ margin: '8px 0 0', fontSize: 18, fontWeight: 800, color: 'var(--zova-ink)', letterSpacing: '-0.03em' }}>
               {activeItem.label}
             </p>
           </div>
@@ -160,9 +149,9 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              border: `1px solid ${menuOpen ? THEME.greenBorder : THEME.border}`,
-              background: menuOpen ? THEME.greenTint : THEME.white,
-              color: menuOpen ? THEME.greenDark : THEME.charcoal,
+              border: `1px solid ${menuOpen ? '#B8D4A0' : 'var(--zova-border)'}`,
+              background: menuOpen ? 'var(--zova-green-soft)' : '#FFFFFF',
+              color: menuOpen ? 'var(--zova-primary-action-hover)' : 'var(--zova-ink)',
               borderRadius: 999,
               padding: '8px 12px',
               fontSize: 12,
@@ -190,12 +179,12 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
               gap: 6,
               padding: '8px 12px',
               borderRadius: 999,
-              border: `1px solid ${THEME.border}`,
+              border: `1px solid ${'var(--zova-border)'}`,
               textDecoration: 'none',
-              color: THEME.medGray,
+              color: 'var(--zova-text-body)',
               fontSize: 12,
               fontWeight: 700,
-              background: THEME.white,
+              background: '#FFFFFF',
             }}
           >
             <FiHome size={13} />
@@ -210,12 +199,12 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
               gap: 6,
               padding: '8px 12px',
               borderRadius: 999,
-              border: `1px solid ${THEME.greenBorder}`,
+              border: `1px solid ${'#B8D4A0'}`,
               textDecoration: 'none',
-              color: THEME.greenDark,
+              color: 'var(--zova-primary-action-hover)',
               fontSize: 12,
               fontWeight: 700,
-              background: THEME.greenTint,
+              background: 'var(--zova-green-soft)',
             }}
           >
             <FiCompass size={13} />
@@ -242,7 +231,7 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
           ))}
 
           {/* Divider */}
-          <div style={{ height: 1, background: THEME.border, margin: '8px 4px' }} />
+          <div style={{ height: 1, background: 'var(--zova-border)', margin: '8px 4px' }} />
 
           {/* Sign Out */}
           <button
@@ -263,7 +252,7 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
               fontWeight: 500,
               textAlign: 'left',
               background: signOutHov ? '#FEF2F2' : 'transparent',
-              color: signOutHov ? '#DC2626' : THEME.medGray,
+              color: signOutHov ? '#DC2626' : 'var(--zova-text-body)',
               transition: 'background 0.18s, color 0.18s',
             }}
           >
@@ -280,7 +269,7 @@ export default function ProfileSidebar({ activeTab, setActiveTab }) {
                 transition: 'background 0.18s',
               }}
             >
-              <FiLogOut size={16} style={{ color: signOutHov ? '#DC2626' : THEME.mutedText }} />
+              <FiLogOut size={16} style={{ color: signOutHov ? '#DC2626' : 'var(--zova-text-muted)' }} />
             </span>
             Sign Out
           </button>

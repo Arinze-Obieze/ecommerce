@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { FiMenu, FiX, FiChevronLeft, FiChevronRight, FiHome } from 'react-icons/fi';
 import StoreNav from '@/components/store-console/StoreNav';
+import BrandMark from '@/components/brand/BrandMark';
+import MfaGate from '@/components/shared/MfaGate';
+
+const MFA_SETUP_PATH = '/store/dashboard/mfa-setup';
 
 function formatRole(role) {
   return String(role || '').split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 }
 
-export default function StoreShell({ storeName, role, children }) {
+export default function StoreShell({ storeName, role, mfaEnrolled = false, needsMfa = false, children }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -46,10 +50,7 @@ export default function StoreShell({ storeName, role, children }) {
           {/* Brand */}
           <div className={`flex items-center h-14 border-b shrink-0 ${collapsed ? 'justify-center px-0' : 'gap-2.5 px-4'}`}
             style={{ borderColor: 'rgba(255,255,255,.06)' }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: 'linear-gradient(135deg, #2E6417, #245213)', boxShadow: '0 10px 20px rgba(46,100,23,0.22)' }}>
-              <span className="text-white font-black text-xs tracking-[0.18em]">Z</span>
-            </div>
+            <BrandMark dark iconOnly={collapsed} className={collapsed ? 'h-9 w-9 shrink-0' : 'h-9 w-[110px] shrink-0'} />
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-white font-semibold text-sm leading-none tracking-tight truncate">{storeName || 'My Store'}</p>
@@ -68,7 +69,7 @@ export default function StoreShell({ storeName, role, children }) {
             {!collapsed ? (
               <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,.04)' }}>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
+                  style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))' }}>
                   {initials}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -79,7 +80,7 @@ export default function StoreShell({ storeName, role, children }) {
             ) : (
               <div className="flex justify-center py-1">
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                  style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
+                  style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))' }}>
                   {initials}
                 </div>
               </div>
@@ -111,10 +112,7 @@ export default function StoreShell({ storeName, role, children }) {
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex items-center justify-between h-14 px-4 border-b shrink-0" style={{ borderColor: 'rgba(255,255,255,.06)' }}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
-                <span className="text-white font-black text-xs tracking-[0.18em]">Z</span>
-              </div>
+              <BrandMark dark iconOnly className="h-9 w-9 shrink-0" />
               <p className="text-white font-semibold text-sm truncate">{storeName || 'My Store'}</p>
             </div>
             <button onClick={() => setMobileOpen(false)} className="text-white/40 hover:text-white/80 p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0">
@@ -127,7 +125,7 @@ export default function StoreShell({ storeName, role, children }) {
           <div className="shrink-0 border-t p-3 space-y-2" style={{ borderColor: 'rgba(255,255,255,.06)' }}>
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
+                style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))' }}>
                 {initials}
               </div>
               <div className="min-w-0">
@@ -161,11 +159,11 @@ export default function StoreShell({ storeName, role, children }) {
             <div className="flex items-center gap-2.5">
               <div className="hidden sm:flex items-center gap-1.5 rounded-full px-2.5 py-1"
                 style={{ background: 'rgba(236,156,0,.12)', border: '1px solid rgba(236,156,0,.24)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#EC9C00] animate-pulse block" />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse block" />
                 <span className="text-[10px] font-semibold text-[#b87800] uppercase tracking-wide">{formatRole(role)}</span>
               </div>
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                style={{ background: 'linear-gradient(135deg, #2E6417, #245213)' }}>
+                style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))' }}>
                 {initials}
               </div>
             </div>
@@ -173,7 +171,17 @@ export default function StoreShell({ storeName, role, children }) {
 
           {/* Page */}
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
-            {children}
+            <MfaGate
+              mode={
+                pathname === MFA_SETUP_PATH ? null
+                  : needsMfa ? 'challenge'
+                  : !mfaEnrolled ? 'enroll'
+                  : null
+              }
+              confirmUrl="/api/store/mfa/confirm-enrollment"
+            >
+              {children}
+            </MfaGate>
           </main>
         </div>
       </div>

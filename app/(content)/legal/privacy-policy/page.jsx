@@ -100,7 +100,7 @@ export default function PrivacyPolicyPage() {
       </Section>
 
       <Section title="6. Cookies" id="cookies">
-        <P>We use cookies and similar technologies to improve your experience. For full details on the cookies we use and how to manage them, see our <a href="/legal/cookie-policy" style={{ color: "#2E6417", fontWeight: 600 }}>Cookie Policy</a>.</P>
+        <P>We use cookies and similar technologies to improve your experience. For full details on the cookies we use and how to manage them, see our <a href="/legal/cookie-policy" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Cookie Policy</a>.</P>
         <P>In summary, we use:</P>
         <Ul items={[
           "Essential cookies: Required for the platform to function (login sessions, cart)",

@@ -29,7 +29,7 @@ async function resolveStore(supabase, idOrSlug) {
 }
 
 export async function GET(request, { params }) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminApi([ADMIN_ROLES.ANALYST, ADMIN_ROLES.SUPPORT_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPER_ADMIN]);
   if (!admin.ok) return admin.response;
 
   const rateLimit = await enforceRateLimit({

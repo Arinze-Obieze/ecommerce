@@ -18,7 +18,7 @@ export function ProductsHeaderCard() {
         </div>
         <Link
           href="./products/new"
-          className="inline-flex items-center justify-center rounded-xl bg-[#2E6417] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#245213]"
+          className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
         >
           Create Product
         </Link>
@@ -34,7 +34,7 @@ export function ProductsPendingDraftBanner({ draftLoading, pendingDraft, onDisca
     <div className="rounded-2xl border border-[#B8D4A0] bg-gradient-to-r from-[#f4fbf7] via-white to-[#eef7f1] p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2E6417]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             Saved draft
           </p>
           <h3 className="mt-1 text-lg font-bold text-gray-900">
@@ -61,7 +61,7 @@ export function ProductsPendingDraftBanner({ draftLoading, pendingDraft, onDisca
           </button>
           <Link
             href="./products/new/step-1"
-            className="rounded-xl bg-[#2E6417] px-4 py-2 text-sm font-semibold text-white hover:bg-[#245213]"
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
           >
             Resume draft
           </Link>
@@ -91,7 +91,7 @@ export function ProductsSummaryCards({ counts, onSelectStatus }) {
           className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-3 text-center shadow-sm transition hover:border-[#b8d0c4]"
         >
           <p className="text-xs uppercase text-gray-500">{label}</p>
-          <p className="mt-1 text-xl font-bold text-[#2E6417]">{value}</p>
+          <p className="mt-1 text-xl font-bold text-primary">{value}</p>
         </button>
       ))}
     </div>
@@ -127,7 +127,7 @@ export function ProductsDraftWorkbench({
           <button
             type="button"
             onClick={onOpenDraftFilter}
-            className="rounded-xl border border-[#2E6417] px-3 py-2 text-sm font-semibold text-[#2E6417] hover:bg-[#EDF5E6]"
+            className="rounded-xl border border-primary px-3 py-2 text-sm font-semibold text-primary hover:bg-primary-soft"
           >
             View all {counts.draft || 0} drafts
           </button>
@@ -160,7 +160,7 @@ export function ProductsDraftWorkbench({
                 <div className="min-w-0">
                   <Link
                     href={`/store/dashboard/products/${row.id}`}
-                    className="block truncate text-sm font-bold text-gray-900 hover:text-[#2E6417]"
+                    className="block truncate text-sm font-bold text-gray-900 hover:text-primary"
                   >
                     {row.name}
                   </Link>
@@ -189,7 +189,7 @@ export function ProductsDraftWorkbench({
                 {renderRowActions(row, true)}
                 <Link
                   href={`/store/dashboard/products/${row.id}`}
-                  className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-[#2E6417] hover:bg-[#EDF5E6]"
+                  className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-primary hover:bg-primary-soft"
                 >
                   View
                   <FiChevronRight size={14} />

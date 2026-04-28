@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   FiGrid, FiUsers, FiFileText, FiBarChart2,
-  FiShoppingBag, FiPackage, FiCreditCard, FiRefreshCw, FiSliders, FiStar
+  FiShoppingBag, FiPackage, FiCreditCard, FiRefreshCw, FiSliders, FiStar, FiShield
 } from 'react-icons/fi';
 
 const groups = [
@@ -32,6 +32,12 @@ const groups = [
       { href: '/admin/ranking-debug',   label: 'Ranking Debug', icon: FiSliders },
     ],
   },
+  {
+    label: 'Account',
+    items: [
+      { href: '/admin/mfa-setup', label: '2FA Setup', icon: FiShield },
+    ],
+  },
 ];
 
 export default function AdminNav({ collapsed = false }) {
@@ -42,7 +48,7 @@ export default function AdminNav({ collapsed = false }) {
       {groups.map((group) => (
         <div key={group.label}>
           {!collapsed && (
-            <p className="admin-nav-label text-[9px] font-bold uppercase tracking-[.14em] px-2 pb-1.5">
+            <p className="zova-admin-nav-group text-[9px] font-bold uppercase tracking-[.14em] px-2 pb-1.5">
               {group.label}
             </p>
           )}
@@ -53,20 +59,15 @@ export default function AdminNav({ collapsed = false }) {
               const Icon = item.icon;
 
               return (
-                <div key={item.href} className="nav-item-wrap relative">
+                <div key={item.href} className="zova-admin-nav-item relative">
                   <Link
                     href={item.href}
-                    className={`admin-nav-link flex items-center rounded-lg transition-all duration-150 relative
-                      ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}`}
-                    style={active ? {
-                      color: '#ffffff',
-                      background: 'rgba(46,100,23,.22)',
-                      boxShadow: 'inset 0 0 0 1px rgba(46,100,23,.24)',
-                    } : {}}
+                    className={`zova-admin-nav-link flex items-center rounded-lg transition-all duration-150 relative
+                      ${collapsed ? 'justify-center w-10 h-10 mx-auto' : 'gap-2.5 px-2.5 py-2'}
+                      ${active ? 'is-active' : ''}`}
                   >
                     {active && !collapsed && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r"
-                        style={{ background: 'var(--zova-accent-emphasis)' }} />
+                      <span className="zova-admin-nav-indicator absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r" />
                     )}
                     <Icon style={{ width: collapsed ? 18 : 15, height: collapsed ? 18 : 15, flexShrink: 0 }} />
                     {!collapsed && (
@@ -77,9 +78,8 @@ export default function AdminNav({ collapsed = false }) {
                   </Link>
 
                   {collapsed && (
-                    <div className="nav-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50">
-                      <div className="px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap shadow-xl"
-                        style={{ background: '#1f2937', border: '1px solid rgba(255,255,255,.1)', color: '#ffffff' }}>
+                    <div className="zova-admin-nav-tooltip absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50">
+                      <div className="zova-admin-nav-tooltip-card px-2.5 py-1.5 rounded-lg text-white text-xs font-medium whitespace-nowrap shadow-xl">
                         {item.label}
                       </div>
                     </div>

@@ -5,6 +5,23 @@ import { writeActivityLog } from '@/utils/telemetry/server';
 
 const EVENT_NAME_REGEX = /^[a-z0-9_]{2,64}$/i;
 
+// F006: allowlist of legitimate client-side event names.
+// Reject anything not on this list so an attacker cannot inject arbitrary
+// event names to pollute dashboards or confuse analytics pipelines.
+const ALLOWED_EVENT_NAMES = new Set([
+  'page_view',
+  'product_view',
+  'add_to_cart',
+  'remove_from_cart',
+  'begin_checkout',
+  'wishlist_add',
+  'wishlist_remove',
+  'search',
+  'store_view',
+  'category_view',
+  'review_view',
+]);
+
 function sanitizeProperties(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return {};
@@ -37,11 +54,14 @@ export async function POST(request) {
   const body = await request.json().catch(() => null);
   const identifier = user?.id || body?.session_id || body?.anon_id || ip;
 
+  // F006: anonymous callers get a much tighter limit to make ranking signal
+  // injection (scripted fake events) economically infeasible.
+  const isAuthenticated = Boolean(user?.id);
   const rateLimit = await enforceRateLimit({
     request,
     scope: 'analytics_events_ingest',
     identifier,
-    limit: 600,
+    limit: isAuthenticated ? 600 : 10,
     windowSeconds: 60,
   });
 
@@ -66,7 +86,8 @@ export async function POST(request) {
 
   const eventName = String(body?.event_name || '').trim();
 
-  if (!EVENT_NAME_REGEX.test(eventName)) {
+  // F006: enforce both format and allowlist.
+  if (!EVENT_NAME_REGEX.test(eventName) || !ALLOWED_EVENT_NAMES.has(eventName)) {
     await writeActivityLog({
       request,
       level: 'WARN',

@@ -70,7 +70,7 @@ export default function FloatingDashboardCTA() {
           detail: 'Open superadmin workspace',
           icon:   FiShield,
           // Zova Forest gradient
-          accent: 'from-[#245213] to-[#2E6417]',
+          accent: 'from-primary-hover to-primary',
           ring:   'ring-[#B8D4A0]/70',
           dot:    'var(--zova-accent-emphasis)',   // Gold Harvest dot accent
         });
@@ -96,7 +96,7 @@ export default function FloatingDashboardCTA() {
           detail: 'Return to seller dashboard',
           icon:   FiBriefcase,
           // Zova Forest → Gold Harvest gradient
-          accent: 'from-[#2E6417] to-[#2E6417]',
+          accent: 'from-primary to-primary',
           ring:   'ring-[#B8D4A0]/70',
           dot:    'var(--zova-accent-emphasis)',
         });

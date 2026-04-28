@@ -3,7 +3,9 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { writeActivityLog } from '@/utils/telemetry/server';
 
-const MISSING_TABLE_HINT = 'Database is missing public.order_cancellation_requests. Apply documentation/migrations/2026-04-09_order_cancellation_requests.sql and retry.';
+// F010: never expose internal migration paths or table names to API callers.
+const MISSING_TABLE_HINT = 'Service temporarily unavailable. Please try again later.';
+const _MISSING_TABLE_HINT_INTERNAL = 'Database is missing public.order_cancellation_requests. Apply documentation/migrations/2026-04-09_order_cancellation_requests.sql and retry.';
 
 function normalizeReason(value) {
   return String(value || '').trim().slice(0, 1000);
@@ -84,6 +86,7 @@ export async function GET(request, { params }) {
     .maybeSingle();
 
   if (isMissingCancellationTableError(requestResult.error)) {
+    console.error('[cancel]', _MISSING_TABLE_HINT_INTERNAL);
     return NextResponse.json({ error: MISSING_TABLE_HINT }, { status: 500 });
   }
 

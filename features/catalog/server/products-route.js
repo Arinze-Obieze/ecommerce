@@ -494,94 +494,35 @@ function generatePageLinks(baseUrl, searchParams, currentPage, totalPages, limit
   return links;
 }
 
-async function fetchRecentAnalyticsEvents(supabase, { candidateIds, actorIds, skipGlobal = false }) {
-  const productMetricsSince = new Date(Date.now() - (1000 * 60 * 60 * 24 * 30)).toISOString();
-  const actorSince = new Date(Date.now() - (1000 * 60 * 60 * 24 * 45)).toISOString();
-
+async function fetchTrustedProductEvents(adminClient, { candidateIds, actorIds }) {
+  const candidateSet = new Set(candidateIds);
+  const since = new Date(Date.now() - (1000 * 60 * 60 * 24 * 45)).toISOString();
   let globalEvents = [];
   let actorEvents = [];
 
-  const relevantEventNames = ['product_impression', 'view_item', 'add_to_cart', 'add_to_wishlist', 'purchase'];
-
-  if (!skipGlobal) {
-    try {
-      const { data } = await supabase
-        .from('analytics_events')
-        .select('event_name, user_id, session_id, anon_id, properties, created_at')
-        .in('event_name', relevantEventNames)
-        .gte('created_at', productMetricsSince)
-        .order('created_at', { ascending: false })
-        .limit(8000);
-
-      const candidateSet = new Set(candidateIds);
-      globalEvents = (data || []).filter((event) => {
-        const productId = Number(event?.properties?.product_id);
-        return Number.isInteger(productId) && candidateSet.has(productId);
-      });
-    } catch (error) {
-      console.error('Failed to fetch recent analytics events:', error);
-    }
-  }
-
-  if (!actorIds.userId && !actorIds.anonId && !actorIds.sessionId) {
-    return { globalEvents, actorEvents };
-  }
-
   try {
-    const actorQueries = [];
+    const { data } = await adminClient
+      .from('product_events')
+      .select('product_id, user_id, event_type, metadata, occurred_at')
+      .eq('event_type', 'order_placed')
+      .gte('occurred_at', since)
+      .order('occurred_at', { ascending: false })
+      .limit(4000);
+
+    globalEvents = (data || [])
+      .filter((event) => candidateSet.has(Number(event?.product_id)))
+      .map((event) => ({
+        event_name: 'purchase',
+        user_id: event.user_id || null,
+        properties: { product_id: Number(event.product_id) },
+        created_at: event.occurred_at,
+      }));
 
     if (actorIds.userId) {
-      actorQueries.push(
-        supabase
-          .from('analytics_events')
-          .select('event_name, properties, created_at')
-          .eq('user_id', actorIds.userId)
-          .in('event_name', relevantEventNames)
-          .gte('created_at', actorSince)
-          .order('created_at', { ascending: false })
-          .limit(250)
-      );
-    }
-
-    if (actorIds.anonId) {
-      actorQueries.push(
-        supabase
-          .from('analytics_events')
-          .select('event_name, properties, created_at')
-          .eq('anon_id', actorIds.anonId)
-          .in('event_name', relevantEventNames)
-          .gte('created_at', actorSince)
-          .order('created_at', { ascending: false })
-          .limit(250)
-      );
-    }
-
-    if (actorIds.sessionId) {
-      actorQueries.push(
-        supabase
-          .from('analytics_events')
-          .select('event_name, properties, created_at')
-          .eq('session_id', actorIds.sessionId)
-          .in('event_name', relevantEventNames)
-          .gte('created_at', actorSince)
-          .order('created_at', { ascending: false })
-          .limit(250)
-      );
-    }
-
-    const results = await Promise.all(actorQueries);
-    const dedupe = new Set();
-
-    for (const result of results) {
-      for (const event of result.data || []) {
-        const key = `${event.created_at}|${event.event_name}|${event.properties?.product_id || ''}`;
-        if (dedupe.has(key)) continue;
-        dedupe.add(key);
-        actorEvents.push(event);
-      }
+      actorEvents = globalEvents.filter((event) => event.user_id === actorIds.userId).slice(0, 250);
     }
   } catch (error) {
-    console.error('Failed to fetch actor analytics events:', error);
+    console.error('Failed to fetch trusted product events:', error);
   }
 
   return { globalEvents, actorEvents };
@@ -864,10 +805,9 @@ export async function GET(request) {
     if (useSmartRanking && transformedData.length > 0 && !idsParam) {
       const candidateIds = transformedData.map((product) => product.id);
       const aggregateMetrics = await fetchAggregateRecommendationMetrics(db, candidateIds);
-      const { globalEvents, actorEvents } = await fetchRecentAnalyticsEvents(db, {
+      const { globalEvents, actorEvents } = await fetchTrustedProductEvents(db, {
         candidateIds,
         actorIds,
-        skipGlobal: aggregateMetrics.available,
       });
       const productEvents = aggregateMetrics.available
         ? aggregateMetrics.metricsMap

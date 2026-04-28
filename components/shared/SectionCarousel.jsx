@@ -35,7 +35,7 @@ const SectionCarousel = ({ children, title, linkText, linkHref }) => {
         <div className="flex items-center justify-between mb-4 md:mb-6">
            <h2 className="text-xl md:text-3xl font-bold text-gray-900">{title}</h2>
            {linkText && linkHref && (
-             <a href={linkHref} className="text-[#2E6417] font-medium hover:underline text-sm md:text-base">
+             <a href={linkHref} className="text-primary font-medium hover:underline text-sm md:text-base">
                {linkText}
              </a>
            )}
@@ -45,7 +45,7 @@ const SectionCarousel = ({ children, title, linkText, linkHref }) => {
         <div className="hidden md:block absolute top-[60%] -translate-y-1/2 left-2 z-10">
             <button 
                 onClick={() => scroll('left')}
-                className="w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#2E6417] hover:text-white transition-all disabled:opacity-50"
+                className="w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all disabled:opacity-50"
             >
                 <FiChevronLeft className="w-5 h-5" />
             </button>
@@ -53,7 +53,7 @@ const SectionCarousel = ({ children, title, linkText, linkHref }) => {
         <div className="hidden md:block absolute top-[60%] -translate-y-1/2 right-2 z-10">
             <button 
                 onClick={() => scroll('right')}
-                className="w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-[#2E6417] hover:text-white transition-all"
+                className="w-10 h-10 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all"
             >
                 <FiChevronRight className="w-5 h-5" />
             </button>
@@ -77,7 +77,7 @@ const SectionCarousel = ({ children, title, linkText, linkHref }) => {
         <div className="flex md:hidden justify-center mt-2 gap-1.5 h-1">
             <div className="w-20 bg-gray-200 rounded-full h-1 overflow-hidden">
                 <div 
-                    className="h-full bg-[#2E6417] transition-all duration-300"
+                    className="h-full bg-primary transition-all duration-300"
                     style={{ width: `${(scrollProgress * 100) || 10}%` }}
                 ></div>
             </div>

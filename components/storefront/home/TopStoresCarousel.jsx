@@ -6,54 +6,7 @@ import SectionCarousel from '@/components/shared/SectionCarousel';
 import { getTopStores } from '@/features/storefront/home/api/client';
 
 // Brand tokens — sourced from app/globals.css
-const THEME = {
-  // Card
-  cardBg:          '#FFFFFF',
-  cardBorder:      'var(--zova-border)',
-  cardShadow:      '0 1px 4px rgba(46,100,23,0.05)',
-  cardHoverShadow: '0 8px 24px rgba(46,100,23,0.10)',
-  cardHoverBorder: '#B8D4A0',
 
-  // Logo placeholder
-  logoBg:          'var(--zova-green-soft)',
-  logoBorder:      '#B8D4A0',
-  logoText:        'var(--zova-primary-action)',
-
-  // Text
-  nameText:        'var(--zova-ink)',
-  nameHover:       'var(--zova-primary-action)',
-  descText:        'var(--zova-text-body)',
-  metaText:        'var(--zova-text-muted)',
-
-  // Verified badge
-  verifiedColor:   'var(--zova-primary-action)',
-
-  // Stats
-  statsBorder:     'var(--zova-border)',
-  ratingBg:        'var(--zova-accent-soft)',
-  ratingIcon:      'var(--zova-accent-emphasis)',
-  ratingText:      'var(--zova-ink)',
-  followerBg:      'var(--zova-linen)',
-  followerIcon:    'var(--zova-text-muted)',
-  followerText:    'var(--zova-ink)',
-  productsBg:      'var(--zova-green-soft)',
-  productsText:    'var(--zova-primary-action)',
-  productsIcon:    'var(--zova-primary-action)',
-
-  // Visit button
-  btnBg:           'var(--zova-primary-action)',
-  btnHover:        'var(--zova-primary-action-hover)',
-  btnText:         '#FFFFFF',
-
-  // Trending badge
-  trendingBg:      'var(--zova-accent-soft)',
-  trendingText:    'var(--zova-warning)',
-  trendingBorder:  '#F5D88A',
-
-  // Skeleton
-  skeletonBg:      'var(--zova-surface-alt)',
-  skeletonShine:   'var(--zova-linen)',
-};
 
 function formatCount(n) {
   if (!n && n !== 0) return '0';
@@ -66,21 +19,21 @@ function StoreCardSkeleton() {
   return (
     <div
       className="rounded-2xl p-5 animate-pulse w-full"
-      style={{ backgroundColor: THEME.cardBg, border: `1px solid ${THEME.cardBorder}` }}
+      style={{ backgroundColor: '#FFFFFF', border: `1px solid ${'var(--zova-border)'}` }}
     >
       <div className="flex items-start gap-3 mb-4">
-        <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ backgroundColor: THEME.skeletonBg }} />
+        <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
         <div className="flex-1 space-y-2 pt-1">
-          <div className="h-4 rounded w-3/4" style={{ backgroundColor: THEME.skeletonBg }} />
-          <div className="h-3 rounded w-full" style={{ backgroundColor: THEME.skeletonBg }} />
-          <div className="h-3 rounded w-2/3" style={{ backgroundColor: THEME.skeletonBg }} />
+          <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+          <div className="h-3 rounded w-full" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+          <div className="h-3 rounded w-2/3" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
         </div>
       </div>
-      <div className="h-px mb-4" style={{ backgroundColor: THEME.statsBorder }} />
+      <div className="h-px mb-4" style={{ backgroundColor: 'var(--zova-border)' }} />
       <div className="flex gap-2">
-        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: THEME.skeletonBg }} />
-        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: THEME.skeletonBg }} />
-        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: THEME.skeletonBg }} />
+        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
       </div>
     </div>
   );
@@ -96,9 +49,9 @@ function StoreCard({ store }) {
         href={`/store/${store.slug}`}
         className="flex flex-col h-full rounded-2xl p-5 transition-all duration-200"
         style={{
-          backgroundColor: THEME.cardBg,
-          border: `1px solid ${hovered ? THEME.cardHoverBorder : THEME.cardBorder}`,
-          boxShadow: hovered ? THEME.cardHoverShadow : THEME.cardShadow,
+          backgroundColor: '#FFFFFF',
+          border: `1px solid ${hovered ? '#B8D4A0' : 'var(--zova-border)'}`,
+          boxShadow: hovered ? '0 8px 24px rgba(46,100,23,0.10)' : '0 1px 4px rgba(46,100,23,0.05)',
         }}
       >
         {/* ── Top row: logo + info ── */}
@@ -107,12 +60,12 @@ function StoreCard({ store }) {
           {/* Logo */}
           <div
             className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-            style={{ backgroundColor: THEME.logoBg, border: `1px solid ${THEME.logoBorder}` }}
+            style={{ backgroundColor: 'var(--zova-green-soft)', border: `1px solid ${'#B8D4A0'}` }}
           >
             {store.logo_url ? (
               <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-xl font-black" style={{ color: THEME.logoText }}>
+              <span className="text-xl font-black" style={{ color: 'var(--zova-primary-action)' }}>
                 {store.name.charAt(0).toUpperCase()}
               </span>
             )}
@@ -123,14 +76,14 @@ function StoreCard({ store }) {
             <div className="flex items-center gap-1.5 mb-1">
               <h3
                 className="text-sm font-bold truncate transition-colors"
-                style={{ color: hovered ? THEME.nameHover : THEME.nameText }}
+                style={{ color: hovered ? 'var(--zova-primary-action)' : 'var(--zova-ink)' }}
               >
                 {store.name}
               </h3>
               {store.kyc_status === 'verified' && (
                 <FiCheckCircle
                   className="w-3.5 h-3.5 flex-shrink-0"
-                  style={{ color: THEME.verifiedColor }}
+                  style={{ color: 'var(--zova-primary-action)' }}
                   title="Verified Store"
                 />
               )}
@@ -140,16 +93,16 @@ function StoreCard({ store }) {
               <span
                 className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full mb-1"
                 style={{
-                  backgroundColor: THEME.trendingBg,
-                  color: THEME.trendingText,
-                  border: `1px solid ${THEME.trendingBorder}`,
+                  backgroundColor: 'var(--zova-accent-soft)',
+                  color: 'var(--zova-warning)',
+                  border: `1px solid ${'#F5D88A'}`,
                 }}
               >
                 <FiTrendingUp className="w-2.5 h-2.5" /> Trending
               </span>
             )}
 
-            <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: THEME.descText }}>
+            <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: 'var(--zova-text-body)' }}>
               {store.description || 'High quality products, delivered to your door.'}
             </p>
           </div>
@@ -158,15 +111,15 @@ function StoreCard({ store }) {
         {/* ── Stats row ── */}
         <div
           className="flex items-center gap-2 pt-3 mt-auto"
-          style={{ borderTop: `1px solid ${THEME.statsBorder}` }}
+          style={{ borderTop: `1px solid ${'var(--zova-border)'}` }}
         >
           {/* Rating */}
           <div
             className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
-            style={{ backgroundColor: THEME.ratingBg }}
+            style={{ backgroundColor: 'var(--zova-accent-soft)' }}
           >
-            <FiStar className="w-3 h-3 fill-current" style={{ color: THEME.ratingIcon }} />
-            <span style={{ color: THEME.ratingText }}>
+            <FiStar className="w-3 h-3 fill-current" style={{ color: 'var(--zova-accent-emphasis)' }} />
+            <span style={{ color: 'var(--zova-ink)' }}>
               {store.rating ? Number(store.rating).toFixed(1) : 'New'}
             </span>
           </div>
@@ -174,20 +127,20 @@ function StoreCard({ store }) {
           {/* Followers */}
           <div
             className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
-            style={{ backgroundColor: THEME.followerBg }}
+            style={{ backgroundColor: 'var(--zova-linen)' }}
           >
-            <FiUsers className="w-3 h-3" style={{ color: THEME.followerIcon }} />
-            <span style={{ color: THEME.followerText }}>{formatCount(store.followers)}</span>
+            <FiUsers className="w-3 h-3" style={{ color: 'var(--zova-text-muted)' }} />
+            <span style={{ color: 'var(--zova-ink)' }}>{formatCount(store.followers)}</span>
           </div>
 
           {/* Product count */}
           {store.product_count != null && (
             <div
               className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
-              style={{ backgroundColor: THEME.productsBg }}
+              style={{ backgroundColor: 'var(--zova-green-soft)' }}
             >
-              <FiPackage className="w-3 h-3" style={{ color: THEME.productsIcon }} />
-              <span style={{ color: THEME.productsText }}>{formatCount(store.product_count)}</span>
+              <FiPackage className="w-3 h-3" style={{ color: 'var(--zova-primary-action)' }} />
+              <span style={{ color: 'var(--zova-primary-action)' }}>{formatCount(store.product_count)}</span>
             </div>
           )}
         </div>
@@ -195,17 +148,17 @@ function StoreCard({ store }) {
         {/* ── Visit CTA ── */}
         <div
           className="flex items-center justify-between mt-3 pt-3"
-          style={{ borderTop: `1px solid ${THEME.statsBorder}` }}
+          style={{ borderTop: `1px solid ${'var(--zova-border)'}` }}
         >
-          <span className="text-xs" style={{ color: THEME.metaText }}>
+          <span className="text-xs" style={{ color: 'var(--zova-text-muted)' }}>
             {store.location || 'Nigeria'}
           </span>
           <span
             className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200"
             style={{
-              backgroundColor: hovered ? THEME.btnBg : 'transparent',
-              color: hovered ? THEME.btnText : THEME.nameHover,
-              border: `1px solid ${hovered ? THEME.btnBg : THEME.nameHover}`,
+              backgroundColor: hovered ? 'var(--zova-primary-action)' : 'transparent',
+              color: hovered ? '#FFFFFF' : 'var(--zova-primary-action)',
+              border: `1px solid ${hovered ? 'var(--zova-primary-action)' : 'var(--zova-primary-action)'}`,
             }}
           >
             Visit <FiArrowRight className="w-3 h-3" />

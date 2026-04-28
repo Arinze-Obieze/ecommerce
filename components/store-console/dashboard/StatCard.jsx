@@ -10,7 +10,7 @@
  *              controls value text color; defaults to 'brand'
  */
 const TONE_CLASSES = {
-  brand: 'text-[#2E6417]',
+  brand: 'text-primary',
   amber: 'text-amber-700',
   red: 'text-red-700',
   slate: 'text-slate-900',

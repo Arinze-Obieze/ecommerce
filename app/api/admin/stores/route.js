@@ -17,7 +17,7 @@ function sanitizeSlug(value) {
 }
 
 export async function GET(request) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminApi([ADMIN_ROLES.ANALYST, ADMIN_ROLES.SUPPORT_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPER_ADMIN]);
   if (!admin.ok) return admin.response;
 
   const rateLimit = await enforceRateLimit({

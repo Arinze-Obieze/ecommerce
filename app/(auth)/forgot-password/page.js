@@ -7,22 +7,7 @@ import { FiArrowLeft, FiCheck, FiMail } from 'react-icons/fi';
 import { createClient } from '@/utils/supabase/client';
 
 // Brand tokens are in app/globals.css — use CSS vars via inline style strings
-const T = {
-  green:      'var(--zova-primary-action)',
-  greenDark:  'var(--zova-primary-action-hover)',
-  greenDeep:  'var(--zova-text-strong)',
-  greenTint:  'var(--zova-green-soft)',
-  greenBorder:'#B8D4A0',
-  charcoal:   'var(--zova-ink)',
-  softGray:   '#F5F5F5',
-  pageBg:     'var(--zova-linen)',
-  border:     'var(--zova-border)',
-  medGray:    'var(--zova-text-body)',
-  mutedText:  'var(--zova-text-muted)',
-  white:      '#FFFFFF',
-  red:        'var(--zova-error)',
-  redLight:   '#FEF2F2',
-};
+
 
 const SLIDES = [
   {
@@ -90,10 +75,10 @@ export default function ForgotPasswordPage() {
     width: '100%',
     padding: '13px 14px 13px 46px',
     borderRadius: 12,
-    border: `1.5px solid ${error ? T.red : emailFocused ? T.green : emailHovered ? T.greenBorder : T.border}`,
-    background: error ? T.redLight : emailFocused ? T.white : T.softGray,
+    border: `1.5px solid ${error ? 'var(--zova-error)' : emailFocused ? 'var(--zova-primary-action)' : emailHovered ? '#B8D4A0' : 'var(--zova-border)'}`,
+    background: error ? '#FEF2F2' : emailFocused ? '#FFFFFF' : '#F5F5F5',
     fontSize: 14,
-    color: T.charcoal,
+    color: 'var(--zova-ink)',
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
@@ -126,7 +111,7 @@ export default function ForgotPasswordPage() {
         .fu-6 { animation: fadeUp 0.48s ease 0.34s both; }
       `}</style>
 
-      <div className="fp-root" style={{ display: 'flex', minHeight: '100vh', background: T.pageBg }}>
+      <div className="fp-root" style={{ display: 'flex', minHeight: '100vh', background: 'var(--zova-linen)' }}>
         {success && (
           <div
             style={{
@@ -144,7 +129,7 @@ export default function ForgotPasswordPage() {
             <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,100,23,0.18)', animation: 'pulseRing 1.1s ease-out infinite' }} />
-                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg, ${T.green}, ${T.greenDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 12px 40px rgba(46,100,23,0.4)' }}>
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg, ${'var(--zova-primary-action)'}, ${'var(--zova-primary-action-hover)'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 12px 40px rgba(46,100,23,0.4)' }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path
                       d="M9 19L16.5 26.5L29 12"
@@ -157,10 +142,10 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
               </div>
-              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: T.charcoal, margin: '0 0 8px', lineHeight: 1.1 }}>
+              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', lineHeight: 1.1 }}>
                 Check your inbox
               </p>
-              <p style={{ fontSize: 14, color: T.mutedText, margin: 0 }}>
+              <p style={{ fontSize: 14, color: 'var(--zova-text-muted)', margin: 0 }}>
                 We sent a secure reset link to {email}.
               </p>
             </div>
@@ -174,7 +159,7 @@ export default function ForgotPasswordPage() {
             flexDirection: 'column',
             justifyContent: 'center',
             padding: '0 52px',
-            background: T.white,
+            background: '#FFFFFF',
             minHeight: '100vh',
           }}
           className="max-md:flex-[1_1_100%] max-md:px-6 max-md:py-10"
@@ -196,7 +181,7 @@ export default function ForgotPasswordPage() {
                     onError={() => setLogoError(true)}
                   />
                 ) : (
-                  <span className="serif" style={{ fontSize: 28, fontWeight: 700, color: T.charcoal }}>Zova</span>
+                  <span className="serif" style={{ fontSize: 28, fontWeight: 700, color: 'var(--zova-ink)' }}>Zova</span>
                 )}
               </Link>
             </div>
@@ -209,9 +194,9 @@ export default function ForgotPasswordPage() {
                   gap: 8,
                   padding: '7px 12px',
                   borderRadius: 100,
-                  background: T.greenTint,
-                  border: `1px solid ${T.greenBorder}`,
-                  color: T.greenDeep,
+                  background: 'var(--zova-green-soft)',
+                  border: `1px solid ${'#B8D4A0'}`,
+                  color: 'var(--zova-text-strong)',
                   fontSize: 12,
                   fontWeight: 700,
                 }}
@@ -221,10 +206,10 @@ export default function ForgotPasswordPage() {
             </div>
 
             <div className="fu-3" style={{ marginBottom: 30 }}>
-              <h1 className="serif" style={{ fontSize: 52, lineHeight: 0.92, letterSpacing: '-0.04em', color: T.charcoal, margin: '0 0 12px' }}>
+              <h1 className="serif" style={{ fontSize: 52, lineHeight: 0.92, letterSpacing: '-0.04em', color: 'var(--zova-ink)', margin: '0 0 12px' }}>
                 Forgot your password?
               </h1>
-              <p style={{ margin: 0, color: T.medGray, fontSize: 14, lineHeight: 1.7 }}>
+              <p style={{ margin: 0, color: 'var(--zova-text-body)', fontSize: 14, lineHeight: 1.7 }}>
                 Enter the email tied to your account and we will send you a reset link so you can get back in quickly.
               </p>
             </div>
@@ -235,10 +220,10 @@ export default function ForgotPasswordPage() {
                   className="fu-4"
                   style={{
                     borderRadius: 14,
-                    background: T.redLight,
+                    background: '#FEF2F2',
                     border: `1px solid rgba(229,57,53,0.18)`,
                     padding: '12px 14px',
-                    color: T.red,
+                    color: 'var(--zova-error)',
                     fontSize: 13,
                     fontWeight: 500,
                   }}
@@ -253,7 +238,7 @@ export default function ForgotPasswordPage() {
                 </label>
                 <div style={{ position: 'relative' }}>
                   <div style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex' }}>
-                    <FiMail size={18} color={error ? T.red : emailFocused ? T.green : '#999'} />
+                    <FiMail size={18} color={error ? 'var(--zova-error)' : emailFocused ? 'var(--zova-primary-action)' : '#999'} />
                   </div>
                   <input
                     id="email"
@@ -281,8 +266,8 @@ export default function ForgotPasswordPage() {
                   marginTop: 6,
                   border: 'none',
                   borderRadius: 12,
-                  background: loading || success ? '#b7c7c0' : submitHovered ? T.greenDark : T.green,
-                  color: T.white,
+                  background: loading || success ? '#b7c7c0' : submitHovered ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
+                  color: '#FFFFFF',
                   fontSize: 14,
                   fontWeight: 700,
                   padding: '14px 18px',
@@ -304,7 +289,7 @@ export default function ForgotPasswordPage() {
                   alignItems: 'center',
                   gap: 8,
                   textDecoration: 'none',
-                  color: T.charcoal,
+                  color: 'var(--zova-ink)',
                   fontSize: 13,
                   fontWeight: 700,
                 }}
@@ -312,7 +297,7 @@ export default function ForgotPasswordPage() {
                 <FiArrowLeft size={15} />
                 Back to login
               </Link>
-              <p style={{ margin: 0, color: T.mutedText, fontSize: 12, lineHeight: 1.7 }}>
+              <p style={{ margin: 0, color: 'var(--zova-text-muted)', fontSize: 12, lineHeight: 1.7 }}>
                 Remembered your password? You can return to sign in right away.
               </p>
             </div>
@@ -357,7 +342,7 @@ export default function ForgotPasswordPage() {
                       height: 8,
                       borderRadius: 999,
                       border: 'none',
-                      background: slide === index ? T.white : 'rgba(255,255,255,0.42)',
+                      background: slide === index ? '#FFFFFF' : 'rgba(255,255,255,0.42)',
                       cursor: 'pointer',
                       transition: 'all 0.28s ease',
                     }}
@@ -366,7 +351,7 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
 
-            <div style={{ maxWidth: 520, color: T.white }}>
+            <div style={{ maxWidth: 520, color: '#FFFFFF' }}>
               <p style={{ margin: '0 0 14px', fontSize: 12, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', opacity: 0.88 }}>
                 Account recovery
               </p>

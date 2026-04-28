@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminApi } from '@/utils/admin/auth';
+import { requireAdminApi, ADMIN_ROLES } from '@/utils/admin/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { getPagination, paginateArray } from '@/utils/platform/pagination';
 import { privateJson } from '@/utils/platform/api-response';
@@ -24,7 +24,7 @@ function getRangeStart(range) {
 }
 
 export async function GET(request) {
-  const admin = await requireAdminApi();
+  const admin = await requireAdminApi([ADMIN_ROLES.ANALYST, ADMIN_ROLES.SUPPORT_ADMIN, ADMIN_ROLES.OPS_ADMIN, ADMIN_ROLES.SUPER_ADMIN]);
   if (!admin.ok) return admin.response;
 
   const rateLimit = await enforceRateLimit({

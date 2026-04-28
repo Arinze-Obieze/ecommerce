@@ -2,10 +2,16 @@ import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import { resolvePostLoginTarget } from '@/utils/auth/post-login-redirect';
 
+// F003: allowlist of hosts that may appear in X-Forwarded-Host.
+// Add staging/preview domains here as needed; never trust the header blindly.
+const ALLOWED_FORWARDED_HOSTS = new Set([
+  'zova.ng',
+  'www.zova.ng',
+]);
+
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/';
 
   if (code) {
@@ -20,19 +26,23 @@ export async function GET(request) {
         targetPath = await resolvePostLoginTarget(supabase, userId);
       }
 
-      const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development';
       if (isLocalEnv) {
-        // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-        return NextResponse.redirect(`${origin}${targetPath}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${targetPath}`);
-      } else {
         return NextResponse.redirect(`${origin}${targetPath}`);
       }
+
+      // F003: only trust X-Forwarded-Host if it's in the explicit allowlist.
+      const forwardedHost = request.headers.get('x-forwarded-host');
+      const safeHost = forwardedHost && ALLOWED_FORWARDED_HOSTS.has(forwardedHost)
+        ? forwardedHost
+        : null;
+
+      if (safeHost) {
+        return NextResponse.redirect(`https://${safeHost}${targetPath}`);
+      }
+      return NextResponse.redirect(`${origin}${targetPath}`);
     }
   }
 
-  // return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/auth/auth-code-error`);
 }

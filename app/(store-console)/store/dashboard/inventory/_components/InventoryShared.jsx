@@ -62,7 +62,7 @@ export function PaginationControls({ pagination, pageSize, setPage, setPageSize,
           type="button"
           disabled={loading || page >= totalPages}
           onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-          className="rounded-xl border border-[#2E6417] px-3 py-2 text-sm font-semibold text-[#2E6417] disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl border border-primary px-3 py-2 text-sm font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
         </button>
@@ -103,7 +103,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             <select
               value={adjustment.variantId}
               onChange={(event) => setAdjustment((current) => ({ ...current, scope: 'variant', variantId: event.target.value }))}
-              className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-[#2E6417]"
+              className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
             >
               {(row.variants || []).map((variant) => (
                 <option key={variant.id} value={variant.id}>{variant.label} · {variant.stock_quantity} in stock</option>
@@ -117,7 +117,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
           <select
             value={adjustment.mode}
             onChange={(event) => setAdjustment((current) => ({ ...current, mode: event.target.value }))}
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-[#2E6417]"
+            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           >
             <option value="add">Add units</option>
             <option value="subtract">Subtract units</option>
@@ -131,7 +131,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             value={adjustment.quantity}
             onChange={(event) => setAdjustment((current) => ({ ...current, quantity: event.target.value }))}
             inputMode="numeric"
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-[#2E6417]"
+            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </label>
 
@@ -140,7 +140,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
           <select
             value={adjustment.reason}
             onChange={(event) => setAdjustment((current) => ({ ...current, reason: event.target.value }))}
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-[#2E6417]"
+            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           >
             {REASON_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -152,7 +152,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             value={adjustment.note}
             onChange={(event) => setAdjustment((current) => ({ ...current, note: event.target.value }))}
             placeholder="Optional"
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-[#2E6417]"
+            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </label>
       </div>
@@ -161,7 +161,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-xl bg-[#2E6417] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#245213] disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? 'Applying...' : 'Apply update'}
         </button>
@@ -170,7 +170,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             key={variant.id}
             type="button"
             onClick={() => setAdjustment((current) => ({ ...current, scope: 'variant', variantId: String(variant.id), mode: 'add', quantity: '5', reason: 'restock' }))}
-            className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:border-[#2E6417] hover:text-[#2E6417]"
+            className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
           >
             Queue +5 for {variant.label}
           </button>

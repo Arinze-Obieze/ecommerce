@@ -2,19 +2,6 @@
 import React from 'react';
 import { FiCheckCircle, FiShield, FiTruck, FiHeadphones } from 'react-icons/fi';
 
-// Brand tokens — sourced from app/globals.css
-const THEME = {
-  bg:           "#FFFFFF",
-  border:       "#F0F0F0",
-  iconBg:       "#EDF5E6",
-  iconColor:    "#2E6417",
-  titleColor:   "#111111",
-  descColor:    "#888888",
-  hoverBg:      "#F9FAFB",
-  divider:      "#F0F0F0",
-  accentBar:    "#2E6417",
-};
-
 const features = [
   {
     icon: FiCheckCircle,
@@ -40,7 +27,7 @@ const features = [
 
 const TrustBar = () => {
   return (
-    <section style={{ backgroundColor: THEME.bg, borderBottom: `1px solid ${THEME.border}` }}>
+    <section style={{ backgroundColor: '#FFFFFF', borderBottom: `1px solid ${'var(--zova-border)'}` }}>
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => {
@@ -51,25 +38,25 @@ const TrustBar = () => {
                 key={index}
                 className="flex items-center gap-4 py-5 px-5 transition-colors duration-150 cursor-default"
                 style={{
-                  borderRight: !isLast ? `1px solid ${THEME.divider}` : 'none',
+                  borderRight: !isLast ? `1px solid ${'var(--zova-border)'}` : 'none',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = THEME.hoverBg)}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--zova-linen)')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 {/* Icon */}
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: THEME.iconBg }}
+                  style={{ backgroundColor: 'var(--zova-green-soft)' }}
                 >
-                  <Icon className="w-5 h-5" style={{ color: THEME.iconColor }} />
+                  <Icon className="w-5 h-5" style={{ color: 'var(--zova-primary-action)' }} />
                 </div>
 
                 {/* Text */}
                 <div>
-                  <h3 className="text-sm font-bold leading-tight" style={{ color: THEME.titleColor }}>
+                  <h3 className="text-sm font-bold leading-tight" style={{ color: 'var(--zova-ink)' }}>
                     {feature.title}
                   </h3>
-                  <p className="text-xs mt-0.5 leading-snug" style={{ color: THEME.descColor }}>
+                  <p className="text-xs mt-0.5 leading-snug" style={{ color: 'var(--zova-text-muted)' }}>
                     {feature.description}
                   </p>
                 </div>

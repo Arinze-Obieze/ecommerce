@@ -218,22 +218,28 @@ export async function POST(request) {
 
     if (error) {
       console.error('Checkout Transaction Error:', error);
+      // F011: map known DB errors to safe user-facing messages; never return raw postgres text.
+      const KNOWN_ERRORS = {
+        'Insufficient stock': 'One or more items in your cart are out of stock.',
+        'Cart is empty': 'Your cart is empty.',
+      };
+      const userMsg = Object.entries(KNOWN_ERRORS)
+        .find(([key]) => error.message?.includes(key))?.[1]
+        ?? 'Checkout failed. Please try again.';
+      const statusCode = error.message?.includes('Insufficient stock') ? 409 : 400;
       await writeActivityLog({
         request,
         level: 'ERROR',
         service: 'checkout-service',
         action: 'CHECKOUT_TRANSACTION_FAILED',
         status: 'failure',
-        statusCode: error.message?.includes('Insufficient stock') ? 409 : 400,
+        statusCode,
         message: error.message,
         userId: user.id,
         errorCode: error.code || null,
         durationMs: Date.now() - startedAt,
       });
-      if (error.message.includes('Insufficient stock')) {
-        return NextResponse.json({ error: error.message }, { status: 409 });
-      }
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json({ error: userMsg }, { status: statusCode });
     }
 
     await saveOrderShippingAddress(authClient, orderId, user.id, normalizedDeliveryAddress);
@@ -269,7 +275,8 @@ export async function POST(request) {
         total: authoritativeOrder.total,
         addressMode: sanitizeText(addressMode, 24) || 'saved',
         saveAddress: Boolean(saveAddress),
-        deliveryAddress: normalizedDeliveryAddress,
+        // F004: delivery address (phone, street) must not appear in logs.
+        // user_id above is sufficient for traceability; join to users/order_shipping_addresses for details.
       },
       durationMs: Date.now() - startedAt,
     });

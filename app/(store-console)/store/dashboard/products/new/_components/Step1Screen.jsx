@@ -79,7 +79,7 @@ export default function Step1Screen() {
     goNext();
   };
 
-  const fc = (f) => `w-full rounded-xl border px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-[#2E6417]/20 focus:border-[#2E6417] ${errors[f] ? "border-red-300 bg-red-50/30" : "border-gray-200 bg-white"}`;
+  const fc = (f) => `w-full rounded-xl border px-3 py-2.5 text-sm font-medium transition-all focus:ring-2 focus:ring-primary/20 focus:border-primary ${errors[f] ? "border-red-300 bg-red-50/30" : "border-gray-200 bg-white"}`;
 
   return (
     <WizardShell title="Core Details" subtitle="Select category and add your product identity details.">
@@ -98,9 +98,9 @@ export default function Step1Screen() {
               {CATEGORIES.map((cat) => {
                 const sel = state.category === cat.value;
                 return (
-                  <button key={cat.value} type="button" onClick={() => setCategory(cat.value)} className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-3.5 transition-all duration-200 lg:p-3 ${sel ? "border-[#2E6417] bg-[#2E6417]/5" : "border-[#E8E4DC] bg-white hover:border-[#2E6417]/40"} ${errors.category && !sel ? "border-red-300 bg-red-50" : ""}`}>
+                  <button key={cat.value} type="button" onClick={() => setCategory(cat.value)} className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-3.5 transition-all duration-200 lg:p-3 ${sel ? "border-primary bg-primary/5" : "border-[#E8E4DC] bg-white hover:border-primary/40"} ${errors.category && !sel ? "border-red-300 bg-red-50" : ""}`}>
                     <span className="text-2xl mb-1">{cat.icon}</span>
-                    <span className={`text-xs font-bold text-center ${sel ? "text-[#2E6417]" : "text-gray-900"}`}>{cat.label}</span>
+                    <span className={`text-xs font-bold text-center ${sel ? "text-primary" : "text-gray-900"}`}>{cat.label}</span>
                   </button>
                 );
               })}
@@ -183,7 +183,7 @@ export default function Step1Screen() {
             <p className="text-sm text-gray-500 mb-5">Drafts are saved automatically, so you can resume later.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowExit(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200">Stay</button>
-              <button onClick={exitWizard} className="flex-1 px-4 py-2.5 rounded-xl bg-[#2E6417] text-white font-semibold text-sm hover:bg-[#245213]">Exit</button>
+              <button onClick={exitWizard} className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary-hover">Exit</button>
             </div>
           </div>
         </div>

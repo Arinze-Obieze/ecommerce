@@ -98,8 +98,8 @@ export default function Step2Products({ state, dispatch, storeId }) {
             {categories.map(cat => {
               const selected = selectedCategories.includes(cat.slug);
               return (
-                <label key={cat.slug} className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-[#2E6417] bg-[#2E6417]/5' : 'border-[#E8E4DC] bg-white hover:border-[#2E6417]/30'}`}>
-                  <input type="checkbox" checked={selected} onChange={() => toggleCategory(cat.slug)} className="w-4 h-4 accent-[#2E6417]" />
+                <label key={cat.slug} className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-primary bg-primary/5' : 'border-[#E8E4DC] bg-white hover:border-primary/30'}`}>
+                  <input type="checkbox" checked={selected} onChange={() => toggleCategory(cat.slug)} className="w-4 h-4 accent-primary" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-900">{cat.name}</p>
                     <p className="text-xs text-gray-400">{cat.count} product{cat.count !== 1 ? 's' : ''}</p>
@@ -120,7 +120,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
                   dispatch({ type: 'SET_PRICE_BAND', min: '', max: '' });
                 }
               }}
-              className="w-4 h-4 accent-[#2E6417]"
+              className="w-4 h-4 accent-primary"
             />
             <span className="text-sm font-medium text-gray-700">Only products within a price range</span>
           </label>
@@ -133,7 +133,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
                   value={priceBandMin}
                   onChange={e => dispatch({ type: 'SET_PRICE_BAND', min: e.target.value, max: priceBandMax })}
                   placeholder="0"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-primary"
                 />
               </div>
               <span className="text-gray-400 mt-5">–</span>
@@ -144,7 +144,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
                   value={priceBandMax}
                   onChange={e => dispatch({ type: 'SET_PRICE_BAND', min: priceBandMin, max: e.target.value })}
                   placeholder="No limit"
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
           {targetingScope === 'single' ? 'Select a product' : 'Select products'}
         </h2>
         {targetingScope === 'bulk' && selectedProductIds.length > 0 && (
-          <p className="text-sm text-[#2E6417] font-semibold mt-1">{selectedProductIds.length} selected</p>
+          <p className="text-sm text-primary font-semibold mt-1">{selectedProductIds.length} selected</p>
         )}
       </div>
 
@@ -172,7 +172,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search products..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2E6417]"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-primary"
         />
       </div>
 
@@ -186,10 +186,10 @@ export default function Step2Products({ state, dispatch, storeId }) {
             const selected = selectedProductIds.includes(p.id);
             const price = p.discount_price || p.price;
             return (
-              <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-[#2E6417] bg-[#2E6417]/5' : 'border-[#E8E4DC] bg-white hover:border-[#2E6417]/30'}`}>
+              <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-primary bg-primary/5' : 'border-[#E8E4DC] bg-white hover:border-primary/30'}`}>
                 {targetingScope === 'single'
-                  ? <input type="radio" checked={selected} onChange={() => toggleProduct(p.id)} className="w-4 h-4 accent-[#2E6417]" />
-                  : <input type="checkbox" checked={selected} onChange={() => toggleProduct(p.id)} className="w-4 h-4 accent-[#2E6417]" />
+                  ? <input type="radio" checked={selected} onChange={() => toggleProduct(p.id)} className="w-4 h-4 accent-primary" />
+                  : <input type="checkbox" checked={selected} onChange={() => toggleProduct(p.id)} className="w-4 h-4 accent-primary" />
                 }
                 <img
                   src={p.image_urls?.[0] || 'https://placehold.co/48x48?text=.'}

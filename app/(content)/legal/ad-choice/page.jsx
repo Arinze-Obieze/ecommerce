@@ -80,7 +80,7 @@ export default function AdChoicePage() {
         {/* Ad preference toggles */}
         <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #D4EAE0", overflow: "hidden", marginTop: 16, marginBottom: 16 }}>
           <div style={{ padding: "16px 20px", background: "#F0FBF5", borderBottom: "1px solid #D4EAE0" }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#191B19" }}>🎛️ My Ad Preferences</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)' }}>🎛️ My Ad Preferences</div>
             <div style={{ fontSize: 12, color: "#4B5563", marginTop: 2 }}>Toggle each advertising type on or off.</div>
           </div>
 
@@ -94,7 +94,7 @@ export default function AdChoicePage() {
                 onClick={() => toggle(pref.key)}
                 style={{
                   width: 44, height: 24, borderRadius: 12, flexShrink: 0, cursor: "pointer",
-                  background: prefs[pref.key] ? "#2E6417" : "#E5E7EB",
+                  background: prefs[pref.key] ? 'var(--color-primary)' : "#E5E7EB",
                   position: "relative", transition: "background 0.2s",
                 }}
               >
@@ -106,7 +106,7 @@ export default function AdChoicePage() {
           <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
             <button
               onClick={handleSave}
-              style={{ padding: "10px 22px", borderRadius: 8, background: "#2E6417", color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "var(--zova-font-sans)" }}
+              style={{ padding: "10px 22px", borderRadius: 8, background: 'var(--color-primary)', color: "#fff", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "var(--zova-font-sans)" }}
             >
               {saved ? "✓ Preferences Saved!" : "Save My Preferences"}
             </button>

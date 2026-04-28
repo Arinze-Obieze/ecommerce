@@ -65,7 +65,7 @@ export default function CookiePolicyPage() {
             <thead>
               <tr style={{ background: "#F0FBF5" }}>
                 {["Cookie Name", "Type", "Purpose", "Duration", "Can Disable"].map((h) => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: "#191B19", borderBottom: "2px solid #D4EAE0", whiteSpace: "nowrap" }}>{h}</th>
+                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: 'var(--color-text)', borderBottom: "2px solid #D4EAE0", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -82,7 +82,7 @@ export default function CookiePolicyPage() {
                     <td style={{ padding: "10px 14px", color: "#4B5563", whiteSpace: "nowrap" }}>{row.duration}</td>
                     <td style={{ padding: "10px 14px", textAlign: "center" }}>
                       {row.canDisable
-                        ? <span style={{ color: "#2E6417", fontWeight: 700, fontSize: 13 }}>Yes</span>
+                        ? <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: 13 }}>Yes</span>
                         : <span style={{ color: "#9CA3AF", fontSize: 13 }}>Required</span>}
                     </td>
                   </tr>
@@ -100,7 +100,7 @@ export default function CookiePolicyPage() {
           "Google Analytics: We use Google Analytics to understand how users navigate ZOVA. This data is anonymised and aggregated.",
           "Meta (Facebook) Pixel: If you consent to marketing cookies, we use the Meta Pixel to measure the effectiveness of our advertising on Facebook and Instagram.",
         ]} />
-        <P>You can opt out of Google Analytics across all websites by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" style={{ color: "#2E6417", fontWeight: 600 }}>Google Analytics Opt-out Browser Add-on</a>.</P>
+        <P>You can opt out of Google Analytics across all websites by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Google Analytics Opt-out Browser Add-on</a>.</P>
       </Section>
 
       <Section title="4. Managing Cookies" id="managing-cookies">
@@ -171,7 +171,7 @@ export default function CookiePolicyPage() {
       </Section>
 
       <Section title="7. Contact" id="contact">
-        <P>If you have questions about our use of cookies, contact us at <a href="mailto:legal@zova.ng" style={{ color: "#2E6417", fontWeight: 600 }}>legal@zova.ng</a> or read our full <a href="/legal/privacy-policy" style={{ color: "#2E6417", fontWeight: 600 }}>Privacy Policy</a>.</P>
+        <P>If you have questions about our use of cookies, contact us at <a href="mailto:legal@zova.ng" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>legal@zova.ng</a> or read our full <a href="/legal/privacy-policy" style={{ color: 'var(--color-primary)', fontWeight: 600 }}>Privacy Policy</a>.</P>
       </Section>
 
     </LegalPageContainer>

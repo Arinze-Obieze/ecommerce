@@ -341,9 +341,10 @@ export function useProductsWorkspace({ initialProducts = [], initialSummary = nu
     const sku = (qrProduct.sku || "No SKU").replace(/</g, "&lt;");
     const value = qrValue.replace(/</g, "&lt;");
     w.document.write(
-      `<html><head><title>Print QR</title><style>body{font-family:Arial,sans-serif;margin:0;padding:24px;text-align:center;color:#111}.card{border:1px solid #ddd;border-radius:12px;padding:16px;max-width:340px;margin:0 auto}img{width:240px;height:240px;display:block;margin:0 auto 12px}h2{font-size:16px;margin:0 0 8px}p{margin:4px 0;font-size:12px;color:#555;word-break:break-all}</style></head><body><div class="card"><img src="${qrImageUrl}" alt="Product QR"/><h2>${name}</h2><p>SKU: ${sku}</p><p>${value}</p></div><script>window.onload=()=>window.print()</script></body></html>`
+      `<html><head><title>Print QR</title><style>body{font-family:Arial,sans-serif;margin:0;padding:24px;text-align:center;color:#111}.card{border:1px solid #ddd;border-radius:12px;padding:16px;max-width:340px;margin:0 auto}img{width:240px;height:240px;display:block;margin:0 auto 12px}h2{font-size:16px;margin:0 0 8px}p{margin:4px 0;font-size:12px;color:#555;word-break:break-all}</style></head><body><div class="card"><img src="${qrImageUrl}" alt="Product QR"/><h2>${name}</h2><p>SKU: ${sku}</p><p>${value}</p></div></body></html>`
     );
     w.document.close();
+    w.addEventListener('load', () => w.print(), { once: true });
   };
 
   return {

@@ -175,7 +175,7 @@ const Hero = () => {
           <div className="flex items-center justify-center gap-6 md:gap-10 overflow-x-auto py-3 no-scrollbar">
             {navItems.map((item) => {
               const isActive = activeTab === item.name;
-              const cls = `relative text-[13px] font-semibold tracking-wide uppercase whitespace-nowrap transition-all duration-300 pb-1.5 ${isActive ? 'text-[#2E6417]' : 'text-gray-500 hover:text-[#2E6417]'}`;
+              const cls = `relative text-[13px] font-semibold tracking-wide uppercase whitespace-nowrap transition-all duration-300 pb-1.5 ${isActive ? 'text-primary' : 'text-gray-500 hover:text-primary'}`;
               if (item.name === 'Categories') return (
                 <button key={item.name} onClick={() => { setActiveTab(item.name); setIsModalOpen(true); }} className={cls}>
                   {item.name}
@@ -203,7 +203,7 @@ const Hero = () => {
             <span className="zova-eyebrow">Curated discovery</span>
             <h2 className="zova-title mt-3 text-[1.35rem] font-black">Shop by mood</h2>
           </div>
-          <Link href="/mood" className="text-[12px] font-semibold text-[#2E6417] hover:text-[#EC9C00] transition-colors flex items-center gap-1">
+          <Link href="/mood" className="text-[12px] font-semibold text-primary hover:text-accent transition-colors flex items-center gap-1">
             See all moods <FiArrowRight className="w-3 h-3" />
           </Link>
         </div>
@@ -224,13 +224,13 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/22 to-black/5" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#245213] via-[#2E6417] to-[#2E6417]">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-hover via-primary to-primary">
                 <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: `radial-gradient(circle, #EC9C00 1px, transparent 1px)`, backgroundSize: '26px 26px' }} />
               </div>
             )}
             <div className="absolute inset-0 flex flex-col justify-end p-8 xl:p-10">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase mb-4 bg-white/15 text-white/90 border border-white/20 backdrop-blur-sm w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#EC9C00]" style={{ animation: 'pulseDot 2s ease infinite' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulseDot 2s ease infinite' }} />
                 New on Zova
               </div>
               <h1 className="zova-title text-white font-extrabold leading-[1.04] tracking-tight mb-3 drop-shadow text-[2rem] xl:text-[2.7rem] max-w-md">
@@ -250,7 +250,7 @@ const Hero = () => {
               </div>
               <div className="flex items-center gap-3 text-[11px] text-white/55">
                 <div className="flex items-center gap-1.5">
-                  <FiShield className="w-3 h-3 text-[#EC9C00]" />
+                  <FiShield className="w-3 h-3 text-accent" />
                   <span>{sellerCount > 0 ? `${formatCount(sellerCount)} Verified Stores` : 'Verified Stores'}</span>
                 </div>
                 <span className="w-1 h-1 rounded-full bg-white/25" />
@@ -276,11 +276,11 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-transparent" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#245213] via-[#2E6417] to-[#2E6417]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-hover via-primary to-primary" />
             )}
             <div className="absolute inset-0 flex flex-col justify-end p-6">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase mb-3 bg-white/15 text-white/90 border border-white/20 backdrop-blur-sm w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#EC9C00]" style={{ animation: 'pulseDot 2s ease infinite' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" style={{ animation: 'pulseDot 2s ease infinite' }} />
                 New on Zova
               </div>
               <h1 className="zova-title text-white text-2xl font-extrabold leading-tight mb-2">{banner?.title || 'Discover Your Style'}</h1>
@@ -349,7 +349,7 @@ const Hero = () => {
       </div>
 
       {/* ── Marquee ── */}
-      <div className="border-t border-b border-[#2E6417]/10 bg-white/60 backdrop-blur-sm overflow-hidden mt-2">
+      <div className="border-t border-b border-primary/10 bg-white/60 backdrop-blur-sm overflow-hidden mt-2">
         <div className="py-2.5 relative">
           <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white/95 to-transparent z-10 pointer-events-none" />
           <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white/95 to-transparent z-10 pointer-events-none" />

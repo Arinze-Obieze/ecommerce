@@ -49,7 +49,7 @@ export const ToastProvider = ({ children }) => {
             className={`
                 pointer-events-auto flex items-center gap-3 p-4 rounded-xl shadow-2xl border
                 transform transition-all duration-300 animate-in slide-in-from-top-4 fade-in
-                ${toast.type === 'success' ? 'bg-[#2E6417] text-white border-[#2E6417]' : ''}
+                ${toast.type === 'success' ? 'bg-primary text-white border-primary' : ''}
                 ${toast.type === 'error' ? 'bg-red-500 text-white border-red-500' : ''}
                 ${toast.type === 'info' ? 'bg-blue-500 text-white border-blue-500' : ''}
                 ${!['success', 'error', 'info'].includes(toast.type) ? 'bg-gray-800 text-white border-gray-700' : ''}

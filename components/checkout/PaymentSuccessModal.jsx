@@ -20,7 +20,7 @@ export default function PaymentSuccessModal({
         left: Math.random() * 100,
         delay: Math.random() * 0.7,
         duration: 1.8 + Math.random() * 1.7,
-        color: ["#2E6417", "#f59e0b", "#ef4444", "#2563eb", "#10b981"][index % 5],
+        color: ['var(--color-primary)', "#f59e0b", "#ef4444", "#2563eb", "#10b981"][index % 5],
       })),
     []
   );
@@ -96,7 +96,7 @@ export default function PaymentSuccessModal({
             <button
               type="button"
               onClick={onPrimaryAction}
-              className="w-full rounded-xl bg-[#2E6417] px-4 py-3 text-sm font-semibold text-white hover:bg-[#245213]"
+              className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary-hover"
             >
               View my order
             </button>

@@ -26,7 +26,7 @@ export default function ProfilePage() {
     }
   }, [searchParams]);
 
-  if (loading) return <div className="zova-page min-h-screen flex items-center justify-center text-[#2E6417] font-semibold">Loading your account...</div>;
+  if (loading) return <div className="zova-page min-h-screen flex items-center justify-center text-primary font-semibold">Loading your account...</div>;
   if (!user) return null; // Handled by auth protection/middleware usually
 
   const renderContent = () => {
