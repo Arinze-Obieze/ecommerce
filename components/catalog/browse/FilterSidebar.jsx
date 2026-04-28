@@ -5,7 +5,17 @@ import { FiChevronDown, FiX, FiSliders, FiTrash2 } from 'react-icons/fi';
 import { useFilters } from '@/contexts/filter/FilterContext';
 
 // Brand tokens — sourced from app/globals.css
-
+const THEME = {
+  colors: {
+    primary:   '#2E6417',
+    gold:      '#EC9C00',
+    mutedText: '#999999',
+    pageBg:    '#F5F1EA',
+  },
+  shadows: {
+    sidebar: '0 4px 24px rgba(25, 27, 25, 0.08)',
+  },
+};
 
 const ALWAYS_OPEN = new Set(['category', 'price']);
 
