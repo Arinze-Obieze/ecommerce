@@ -674,23 +674,72 @@ export async function GET(request) {
       }
     }
 
+    let bestSellerOrderedIds = null;
+    let discountRankOrderedIds = null;
+
     if (collection) {
-      const { data: collectionData } = await db
-        .from('collections')
-        .select('id')
-        .eq('slug', collection)
-        .single();
+      if (collection === 'on-sale') {
+        // Products with an active discount — same as hasDiscount=true
+        query = query.not('discount_price', 'is', null);
+      } else if (collection === 'best-sellers') {
+        // Rank by best_seller_score across all scored products — the badge is a
+        // secondary label and would exclude too many valid products if used as a filter.
+        // Limit to 200 to avoid PostgREST URL-length errors with large .in() arrays.
+        try {
+          const { data: scoreRows } = await db
+            .from('product_scores')
+            .select('product_id')
+            .order('best_seller_score', { ascending: false })
+            .limit(200);
 
-      if (collectionData) {
-        const { data: productIds } = await db
-          .from('product_collections')
-          .select('product_id')
-          .eq('collection_id', collectionData.id);
-
-        const ids = productIds?.map((item) => item.product_id) || [];
-        query = ids.length > 0 ? query.in('id', ids) : query.eq('id', -1);
+          const ids = (scoreRows || []).map((r) => Number(r.product_id)).filter(Boolean);
+          if (ids.length > 0) {
+            query = query.in('id', ids);
+            bestSellerOrderedIds = ids;
+          }
+        } catch {
+          // product_scores unavailable — return all products, smart ranking will surface popular ones
+        }
       } else {
-        query = query.eq('id', -1);
+        // Check mood_definitions first — mood slugs bypass the junction table
+        const { data: moodDef } = await db
+          .from('mood_definitions')
+          .select('mood_key')
+          .eq('mood_key', collection)
+          .eq('is_active', true)
+          .single();
+
+        if (moodDef) {
+          const { data: moodRows } = await db
+            .from('product_mood_tags')
+            .select('product_id')
+            .eq('mood_key', collection)
+            .eq('is_active', true)
+            .order('mood_fit_score', { ascending: false })
+            .limit(200);
+
+          const ids = moodRows?.map((r) => r.product_id) || [];
+          query = ids.length > 0 ? query.in('id', ids) : query.eq('id', -1);
+        } else {
+          // Fall back to product_collections junction table for curated collections
+          const { data: collectionData } = await db
+            .from('collections')
+            .select('id')
+            .eq('slug', collection)
+            .single();
+
+          if (collectionData) {
+            const { data: productIds } = await db
+              .from('product_collections')
+              .select('product_id')
+              .eq('collection_id', collectionData.id);
+
+            const ids = productIds?.map((item) => item.product_id) || [];
+            query = ids.length > 0 ? query.in('id', ids) : query.eq('id', -1);
+          } else {
+            query = query.eq('id', -1);
+          }
+        }
       }
     }
 
@@ -759,10 +808,35 @@ export async function GET(request) {
         .range(0, smartLimit - 1);
 
       const result = await query;
-      if (result.error) throw result.error;
-      data = result.data || [];
-      count = result.count || 0;
+      if (result.error) {
+        if (result.error?.code === 'PGRST103' || result.status === 416) {
+          data = [];
+          count = result.count || 0;
+        } else {
+          throw result.error;
+        }
+      } else {
+        data = result.data || [];
+        count = result.count || 0;
+      }
     } else {
+      if (sortBy === 'best_seller_score' && !bestSellerOrderedIds) {
+        try {
+          const { data: bsRows } = await db
+            .from('product_scores')
+            .select('product_id')
+            .order('best_seller_score', { ascending: false })
+            .limit(200);
+          const bsIds = (bsRows || []).map((r) => Number(r.product_id)).filter(Boolean);
+          if (bsIds.length > 0) {
+            query = query.in('id', bsIds);
+            bestSellerOrderedIds = bsIds;
+          }
+        } catch {
+          // product_scores unavailable — skip best-seller filter, return all products
+        }
+      }
+
       switch (sortBy) {
         case 'price_asc':
           query = query.order('price', { ascending: true });
@@ -776,15 +850,36 @@ export async function GET(request) {
         case 'name':
           query = query.order('name', { ascending: true });
           break;
+        case 'newest':
+          query = query.order('created_at', { ascending: false });
+          break;
+        case 'best_seller_score':
+          // Final order comes from post-fetch reorder via bestSellerOrderedIds;
+          // use rating as a stable DB-side fallback.
+          query = query.order('rating', { ascending: false });
+          break;
+        case 'discount_rank':
+          // Final order comes from post-fetch reorder via discountRankOrderedIds.
+          // Filter to discounted products; DB sort is a stable fallback only.
+          query = query.not('discount_price', 'is', null).order('rating', { ascending: false });
+          break;
         default:
           query = query.order('created_at', { ascending: false });
       }
 
       query = query.order('id', { ascending: true }).range(offset, offset + limit - 1);
       const result = await query;
-      if (result.error) throw result.error;
-      data = result.data || [];
-      count = result.count || 0;
+      if (result.error) {
+        if (result.error?.code === 'PGRST103' || result.status === 416) {
+          data = [];
+          count = result.count || 0;
+        } else {
+          throw result.error;
+        }
+      } else {
+        data = result.data || [];
+        count = result.count || 0;
+      }
     }
 
     const transformedData = transformProducts(data);
@@ -935,6 +1030,49 @@ export async function GET(request) {
         metricsSource: aggregateMetrics.available ? 'aggregate_table' : 'raw_events',
         metricsRefreshedAt: aggregateMetrics.refreshedAt,
       };
+    }
+
+    // Re-sort non-smart best-sellers results to match product_scores.best_seller_score order
+    if (!useSmartRanking && bestSellerOrderedIds && bestSellerOrderedIds.length > 0) {
+      const idOrder = new Map(bestSellerOrderedIds.map((id, i) => [id, i]));
+      rankedData.sort((a, b) => (idOrder.get(a.id) ?? Infinity) - (idOrder.get(b.id) ?? Infinity));
+    }
+
+    // Re-sort on-sale and discount_rank results by product_scores.discount_rank_score.
+    // Fetched lazily here so we never touch product_scores on the smart-ranking path.
+    // Falls back to discount percentage for products not present in product_scores.
+    if (!useSmartRanking && (collection === 'on-sale' || sortBy === 'discount_rank')) {
+      if (!discountRankOrderedIds) {
+        try {
+          const { data: drRows } = await db
+            .from('product_scores')
+            .select('product_id')
+            .order('discount_rank_score', { ascending: false })
+            .limit(500);
+          const drIds = (drRows || []).map((r) => Number(r.product_id)).filter(Boolean);
+          if (drIds.length > 0) discountRankOrderedIds = drIds;
+        } catch {
+          // product_scores unavailable — fall back to discount percentage sort below
+        }
+      }
+
+      if (discountRankOrderedIds && discountRankOrderedIds.length > 0) {
+        const drOrder = new Map(discountRankOrderedIds.map((id, i) => [id, i]));
+        rankedData.sort((a, b) => {
+          const ai = drOrder.has(a.id) ? drOrder.get(a.id) : Infinity;
+          const bi = drOrder.has(b.id) ? drOrder.get(b.id) : Infinity;
+          if (ai !== bi) return ai - bi;
+          const pctA = a.price > 0 && a.discount_price ? (a.price - a.discount_price) / a.price : 0;
+          const pctB = b.price > 0 && b.discount_price ? (b.price - b.discount_price) / b.price : 0;
+          return pctB - pctA;
+        });
+      } else {
+        rankedData.sort((a, b) => {
+          const pctA = a.price > 0 && a.discount_price ? (a.price - a.discount_price) / a.price : 0;
+          const pctB = b.price > 0 && b.discount_price ? (b.price - b.discount_price) / b.price : 0;
+          return pctB - pctA;
+        });
+      }
     }
 
     const totalItems = count || 0;

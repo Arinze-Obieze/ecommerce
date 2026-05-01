@@ -30,7 +30,7 @@ const SkeletonCard = ({ delay = 0 }) => (
 );
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
-export default function ProductGrid({ products, loading, error, meta, surface = null, trackingMeta = null, gridClassName = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5" }) {
+export default function ProductGrid({ products, loading, error, meta, surface = null, trackingMeta = null, gridClassName = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4" }) {
   const { clearAllFilters, hasActiveFilters } = useFilters();
 
   // ── Loading ──
