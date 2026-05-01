@@ -13,7 +13,7 @@ const RecentlyViewedProducts = ({ currentProductId = null }) => {
     const fetchRecentlyViewed = async () => {
       try {
         const storedViews = JSON.parse(localStorage.getItem('recently_viewed_products')) || [];
-        
+
         // Remove current product and keep latest 10
         const idsToFetch = storedViews
           .filter(id => id !== currentProductId)

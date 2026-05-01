@@ -5,7 +5,17 @@ import { createClient } from "@/utils/supabase/client";
 import { useToast } from "@/contexts/toast/ToastContext";
 import { trackAnalyticsEvent } from '@/utils/telemetry/analytics';
 
-const WishlistContext = createContext();
+const noop = () => {};
+const WISHLIST_DEFAULT = {
+  wishlistItems: [],
+  isLoading: false,
+  addToWishlist: noop,
+  removeFromWishlist: noop,
+  toggleWishlist: noop,
+  isInWishlist: () => false,
+};
+
+const WishlistContext = createContext(WISHLIST_DEFAULT);
 
 export const useWishlist = () => useContext(WishlistContext);
 

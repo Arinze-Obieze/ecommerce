@@ -3,7 +3,18 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/contexts/toast/ToastContext';
 import { trackAnalyticsEvent } from '@/utils/telemetry/analytics';
 
-const CartContext = createContext();
+const noop = () => {};
+const CART_DEFAULT = {
+  cart: [],
+  cartCount: 0,
+  addToCart: noop,
+  removeFromCart: noop,
+  updateQuantity: noop,
+  setItemQuantity: noop,
+  clearCart: noop,
+};
+
+const CartContext = createContext(CART_DEFAULT);
 
 export function useCart() {
   return useContext(CartContext);
