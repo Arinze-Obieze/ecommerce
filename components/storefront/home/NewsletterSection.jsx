@@ -22,12 +22,12 @@ export default function NewsletterSection() {
   };
 
   return (
-    <section className="w-full bg-(--zova-onyx) text-(--zova-linen) py-16 sm:py-20">
+    <section className="w-full bg-(--zova-ink) text-(--zova-linen) py-16 sm:py-20">
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
           
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-widest text-(--zova-onyx) bg-(--zova-gold) rounded-sm mb-6">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-widest text-(--zova-ink) bg-(--zova-gold) rounded-sm mb-6">
               <FiShield className="w-3.5 h-3.5" />
               ZOVA VIP Access
             </span>
@@ -62,7 +62,7 @@ export default function NewsletterSection() {
               {status === 'success' ? (
                 <div className="text-center py-6">
                   <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-(--zova-gold) flex items-center justify-center">
-                    <FiCheckCircle className="w-7 h-7 text-(--zova-onyx)" />
+                    <FiCheckCircle className="w-7 h-7 text-(--zova-ink)" />
                   </div>
                   <p className="text-xl font-bold text-white mb-2">
                     You're verified!
@@ -99,7 +99,7 @@ export default function NewsletterSection() {
                   <button
                     type="submit"
                     disabled={status === 'loading'}
-                    className="w-full py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 bg-(--zova-gold) text-(--zova-onyx) hover:bg-(--zova-gold)/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="w-full py-4 rounded-[4px] text-sm font-bold flex items-center justify-center gap-2 bg-(--zova-gold) text-(--zova-ink) hover:bg-(--zova-gold)/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {status === 'loading' ? (
                       <>

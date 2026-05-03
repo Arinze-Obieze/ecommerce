@@ -10,7 +10,7 @@ const ExploreProducts = dynamic(() => import("@/components/storefront/home/Explo
 
 function ExploreSectionPlaceholder() {
   return (
-    <section style={{ background: "var(--zova-linen)", padding: "56px 0" }}>
+    <section style={{ background: "var(--zova-linen)", padding: "16px 0 56px 0" }}>
       <div style={{ maxWidth: 1600, margin: "0 auto", padding: "0 16px" }} className="sm:px-6 lg:px-8">
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div className="mx-auto mb-3 h-4 w-32 rounded bg-gray-100 animate-pulse" />

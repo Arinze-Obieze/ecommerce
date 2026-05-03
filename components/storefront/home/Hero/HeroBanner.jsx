@@ -70,10 +70,10 @@ export default function HeroBanner({ banner, sellerCount }) {
         ))}
       </div>
       <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-transparent lg:from-black/72 lg:via-black/22 lg:to-black/5" />
-      <div className="absolute inset-0 flex flex-col justify-end p-6 lg:p-8 xl:p-10">
+      <div className="absolute inset-0 flex flex-col justify-end items-end text-right p-6 lg:p-8 xl:p-10">
         <BannerEyebrow mobile />
  
-        <div className="mb-0 flex items-center gap-2.5 lg:mb-6 lg:gap-3">
+        <div className="mb-0 flex items-center justify-end gap-2.5 lg:mb-6 lg:gap-3">
           {HERO_BANNER_ACTIONS.map((action) => {
             const Icon = action.icon;
             return (
@@ -85,7 +85,7 @@ export default function HeroBanner({ banner, sellerCount }) {
             );
           })}
         </div>
-        <div className="mt-4 hidden items-center gap-3 text-[11px] text-white/55 lg:flex">
+        <div className="mt-4 hidden items-center justify-end gap-3 text-[11px] text-white/55 lg:flex w-full">
           {HERO_TRUST_ITEMS.map((item, index) => {
             const Icon = item.icon;
             return (
