@@ -29,7 +29,6 @@ const DEFAULT_PROMO_THEME = {
 function ProductCard({ product, source = 'unknown', position = null }) {
   const { addToCart } = useCart();
   const [cartState, setCartState] = useState('idle');
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [variantOptions, setVariantOptions] = useState([]);
   const [variantLoading, setVariantLoading] = useState(false);
   const [variantError, setVariantError] = useState('');
@@ -154,11 +153,11 @@ function ProductCard({ product, source = 'unknown', position = null }) {
       return;
     }
 
-    const nextOpen = !quickAddOpen;
-    setQuickAddOpen(nextOpen);
-    if (nextOpen) {
-      await loadVariantOptions();
-    }
+    // product has variants — open quick view modal instead of inline panel
+    setIsQuickViewDescriptionExpanded(false);
+    setShowQuickView(true);
+    await loadVariantOptions();
+    logProductEvent({ productId: product.id, eventType: 'view', source: 'quick_view', metadata: sharedMeta });
   };
 
   const handleQuickViewAddToCart = (event) => {
@@ -392,77 +391,11 @@ function ProductCard({ product, source = 'unknown', position = null }) {
             <QuickAddButton
               cartState={cartState}
               onClick={handleAddToCart}
-              label={hasVariantChoices ? 'Choose options' : undefined}
+              label={hasVariantChoices ? 'Preview' : 'Add to Cart'}
             />
           </div>
 
-          {quickAddOpen ? (
-            <div className="mt-3 space-y-3 rounded-2xl border border-(--zova-border) bg-(--zova-linen) p-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-(--zova-text-muted)">
-                  Quick add options
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setQuickAddOpen(false)}
-                  className="text-[11px] font-semibold text-(--zova-text-muted)"
-                >
-                  Close
-                </button>
-              </div>
 
-              {variantLoading ? <p className="text-xs text-(--zova-text-muted)">Loading available variants...</p> : null}
-              {variantError ? <p className="text-xs text-(--zova-error)">{variantError}</p> : null}
-
-              {!variantLoading ? (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {colorOptions.length > 0 ? (
-                    <label className="space-y-1">
-                      <span className="text-[11px] font-semibold text-(--zova-text-muted)">Color</span>
-                      <select
-                        value={selectedColor}
-                        onChange={(event) => setSelectedColor(event.target.value)}
-                        className="w-full rounded-xl border border-(--zova-border) bg-white px-3 py-2 text-sm text-(--zova-ink) outline-none"
-                      >
-                        {colorOptions.map((color) => (
-                          <option key={color} value={color}>{color}</option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null}
-
-                  {sizeOptions.length > 0 ? (
-                    <label className="space-y-1">
-                      <span className="text-[11px] font-semibold text-(--zova-text-muted)">Size</span>
-                      <select
-                        value={selectedSize}
-                        onChange={(event) => setSelectedSize(event.target.value)}
-                        className="w-full rounded-xl border border-(--zova-border) bg-white px-3 py-2 text-sm text-(--zova-ink) outline-none"
-                      >
-                        {sizeOptions.map((size) => (
-                          <option key={size} value={size}>{size}</option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null}
-                </div>
-              ) : null}
-
-              <div className="flex items-center gap-2">
-                <QuickAddButton
-                  cartState={cartState}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    addConfiguredProductToCart(selectedVariant, 'card_variant_selector');
-                  }}
-                  fullWidth
-                  label="Add selected option"
-                  disabled={variantLoading || (variantOptions.length > 0 && !selectedVariant)}
-                />
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
 
@@ -580,6 +513,55 @@ function ProductCard({ product, source = 'unknown', position = null }) {
                     </div>
                   ) : null}
 
+                  {hasVariantChoices ? (
+                    <div className="space-y-3 rounded-2xl border border-(--zova-border) bg-(--zova-linen) p-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.16em] text-(--zova-text-muted)">
+                        Select options
+                      </p>
+
+                      {variantLoading ? (
+                        <p className="text-xs text-(--zova-text-muted)">Loading available options...</p>
+                      ) : null}
+                      {variantError ? (
+                        <p className="text-xs text-[var(--zova-error,#C0392B)]">{variantError}</p>
+                      ) : null}
+
+                      {!variantLoading ? (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {colorOptions.length > 0 ? (
+                            <label className="space-y-1">
+                              <span className="text-[11px] font-semibold text-(--zova-text-muted)">Color</span>
+                              <select
+                                value={selectedColor}
+                                onChange={(event) => setSelectedColor(event.target.value)}
+                                className="w-full rounded-xl border border-(--zova-border) bg-white px-3 py-2 text-sm text-(--zova-ink) outline-none"
+                              >
+                                {colorOptions.map((color) => (
+                                  <option key={color} value={color}>{color}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+
+                          {sizeOptions.length > 0 ? (
+                            <label className="space-y-1">
+                              <span className="text-[11px] font-semibold text-(--zova-text-muted)">Size</span>
+                              <select
+                                value={selectedSize}
+                                onChange={(event) => setSelectedSize(event.target.value)}
+                                className="w-full rounded-xl border border-(--zova-border) bg-white px-3 py-2 text-sm text-(--zova-ink) outline-none"
+                              >
+                                {sizeOptions.map((size) => (
+                                  <option key={size} value={size}>{size}</option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   <div className="flex-1" />
 
                   <div className="flex gap-2 pt-1">
@@ -587,7 +569,7 @@ function ProductCard({ product, source = 'unknown', position = null }) {
                       cartState={cartState}
                       onClick={handleQuickViewAddToCart}
                       fullWidth
-                      label={hasVariantChoices ? 'Add Selected Option' : undefined}
+                      label={hasVariantChoices ? 'Add to Cart' : 'Add to Cart'}
                       disabled={hasVariantChoices && variantOptions.length > 0 && !selectedVariant}
                     />
                     <Link
