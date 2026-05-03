@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { LOGIN_SLIDES } from '@/components/auth/login/login.constants';
 import useAuthSlideshow from '@/features/auth/shared/useAuthSlideshow';
-import { getPasswordStrengthMeta } from '@/features/auth/shared/authPassword.utils';
 
 export default function useLoginPage(router) {
   const supabase = useMemo(() => createClient(), []);
@@ -26,8 +25,6 @@ export default function useLoginPage(router) {
   const [facebookHovered, setFacebookHovered] = useState(false);
   const [rememberHovered, setRememberHovered] = useState(false);
   const [mounted, setMounted] = useState(false);
-
-  const strength = getPasswordStrengthMeta(password);
 
   useEffect(() => {
     setMounted(true);
@@ -108,6 +105,5 @@ export default function useLoginPage(router) {
     setRememberHovered,
     handleLogin,
     handleGoogleLogin,
-    ...strength,
   };
 }
