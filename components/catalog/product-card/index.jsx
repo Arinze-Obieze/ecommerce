@@ -391,7 +391,7 @@ function ProductCard({ product, source = 'unknown', position = null }) {
             <QuickAddButton
               cartState={cartState}
               onClick={handleAddToCart}
-              label={hasVariantChoices ? 'Preview' : 'Add to Cart'}
+              label="Add to Cart"
             />
           </div>
 
