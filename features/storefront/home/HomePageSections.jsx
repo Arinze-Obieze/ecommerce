@@ -95,7 +95,7 @@ export function ExploreFallback() {
 
 export function HeroFallback() {
   return (
-    <div className="w-full zova-page">
+    <div className="w-full zova-page-surface">
       <div className="relative z-40">
         <div className="zova-shell zova-topbar mt-3 rounded-full px-3 sm:px-5">
           <div className="flex items-center justify-center gap-6 md:gap-10 overflow-x-auto py-3 no-scrollbar">

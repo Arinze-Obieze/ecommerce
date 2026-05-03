@@ -46,7 +46,7 @@ export default function Hero({ initialBanner = null, initialSellerCount = null }
   }, [initialBanner, initialSellerCount]);
 
   return (
-    <div className="w-full zova-page">
+    <div className="w-full zova-page-surface">
       <HeroNav
         activeTab={activeTab}
         onSelectTab={(tab) => {

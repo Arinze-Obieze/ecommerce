@@ -5,6 +5,12 @@
     linear-gradient(180deg, #fbf8f1 0%, #f5f1ea 100%);
 }
 
+.zova-page-surface {
+  background:
+    radial-gradient(circle at top right, rgba(236, 156, 0, 0.08), transparent 24%),
+    linear-gradient(180deg, #fbf8f1 0%, #f5f1ea 100%);
+}
+
 .zova-shell {
   max-width: 1440px;
   margin: 0 auto;
@@ -226,7 +232,15 @@
   background: rgba(255, 252, 246, 0.92);
   border-bottom: 1px solid rgba(217, 209, 196, 0.82);
   backdrop-filter: blur(14px);
-  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  transition: transform 220ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.zova-header.is-visible {
+  transform: translateY(0);
+}
+
+.zova-header.is-hidden {
+  transform: translateY(calc(-100% - 12px));
 }
 
 .zova-header.is-scrolled {

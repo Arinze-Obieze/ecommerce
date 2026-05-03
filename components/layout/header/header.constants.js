@@ -3,7 +3,6 @@ export const HIDDEN_HEADER_ROUTES = [
   "/signup",
   "/forgot-password",
   "/reset-password",
-  "/cart",
 ];
 
 export const SEARCH_ENABLED_ROUTES = [

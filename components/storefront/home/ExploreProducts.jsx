@@ -1,43 +1,98 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { FiArrowRight, FiGrid } from 'react-icons/fi';
 import ProductCard from '@/components/catalog/ProductCard';
 import ProductImpressionTracker from '@/components/catalog/ProductImpressionTracker';
+import ExploreSectionPlaceholder from '@/components/storefront/home/ExploreSectionPlaceholder';
+import {
+  EXPLORE_PRODUCTS_LIMIT,
+  EXPLORE_PRODUCTS_SECTION,
+  HOME_EXPLORE_TRACKING,
+} from '@/constants/explore-products';
 import { getExploreProducts } from '@/features/catalog/api/client';
 
-// Brand tokens — sourced from app/globals.css
+function ExploreSectionShell({ children }) {
+  return (
+    <section className="bg-(--zova-linen)" style={{ padding: '16px 0 56px' }}>
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">{children}</div>
+    </section>
+  );
+}
 
+function ExploreSectionHeader() {
+  return (
+    <div className="mb-9 text-center">
+      <div className="mb-2.5 flex items-center justify-center gap-2">
+        <div
+          className="h-0.5 w-6 rounded"
+          style={{ background: 'var(--zova-accent-emphasis)' }}
+        />
+        <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-(--zova-primary-action)">
+          {EXPLORE_PRODUCTS_SECTION.eyebrow}
+        </span>
+        <div
+          className="h-0.5 w-6 rounded"
+          style={{ background: 'var(--zova-accent-emphasis)' }}
+        />
+      </div>
 
-// ─── SKELETON CARD ────────────────────────────────────────────────────────────
-const SkeletonCard = ({ delay = 0 }) => (
-  <div
-    style={{
-      background: '#FFFFFF',
-      borderRadius: 12,
-      overflow: 'hidden',
-      border: `1px solid ${'var(--zova-border)'}`,
-      animationDelay: `${delay}ms`,
-    }}
-    className="animate-pulse"
-  >
-    <div style={{ background: 'var(--zova-surface-alt)', aspectRatio: '3/4', width: '100%' }} />
-    <div style={{ padding: '10px 12px 12px' }}>
-      <div style={{ height: 8, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 6, width: '60%' }} />
-      <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 8, width: '85%' }} />
-      <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 10, width: '45%' }} />
-      <div style={{ height: 30, background: 'var(--zova-surface-alt)', borderRadius: 8, width: '100%' }} />
+      <h2
+        className="mb-2 text-[clamp(22px,4vw,32px)] font-extrabold leading-[1.15] tracking-[-0.025em] text-(--zova-ink)"
+      >
+        {EXPLORE_PRODUCTS_SECTION.title}
+      </h2>
+      <p className="mx-auto mb-[18px] max-w-[440px] text-sm leading-[1.6] text-(--zova-text-body)">
+        {EXPLORE_PRODUCTS_SECTION.description}
+      </p>
+
+      <Link
+        href={EXPLORE_PRODUCTS_SECTION.browseHref}
+        className="group inline-flex items-center gap-1.5 border-b-[1.5px] border-(--zova-primary-action) pb-0.5 text-[13px] font-bold text-(--zova-primary-action) transition-colors hover:border-(--zova-primary-action-hover) hover:text-(--zova-primary-action-hover)"
+      >
+        {EXPLORE_PRODUCTS_SECTION.browseLabel}
+        <FiArrowRight className="h-[13px] w-[13px] transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </div>
-  </div>
-);
+  );
+}
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+function ExploreProductsGrid({ products }) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-5">
+      {products.map((product, index) => (
+        <ProductImpressionTracker
+          key={product.id}
+          product={product}
+          surface={HOME_EXPLORE_TRACKING.surface}
+          position={index + 1}
+          metadata={HOME_EXPLORE_TRACKING.metadata}
+        >
+          <ProductCard product={product} />
+        </ProductImpressionTracker>
+      ))}
+    </div>
+  );
+}
+
+function ExploreSectionCta() {
+  return (
+    <div className="mt-11 text-center">
+      <Link
+        href={EXPLORE_PRODUCTS_SECTION.ctaHref}
+        className="inline-flex items-center gap-2 rounded-[10px] border-2 border-(--zova-primary-action) bg-white px-8 py-3 text-sm font-bold text-(--zova-primary-action) transition-[background,color,box-shadow] duration-200 hover:bg-(--zova-primary-action) hover:text-white hover:shadow-[0_4px_14px_rgba(46,100,23,0.2)]"
+      >
+        <FiGrid className="h-[15px] w-[15px]" />
+        {EXPLORE_PRODUCTS_SECTION.ctaLabel}
+      </Link>
+    </div>
+  );
+}
+
 const ExploreProducts = ({ initialProducts = null }) => {
-  const [products, setProducts]       = useState(() => (Array.isArray(initialProducts) ? initialProducts : []));
-  const [loading, setLoading]         = useState(() => !Array.isArray(initialProducts));
-  const [linkHovered, setLinkHovered] = useState(false);
-  const [ctaHovered,  setCtaHovered]  = useState(false);
+  const [products, setProducts] = useState(() => (Array.isArray(initialProducts) ? initialProducts : []));
+  const [loading, setLoading] = useState(() => !Array.isArray(initialProducts));
 
   useEffect(() => {
     if (Array.isArray(initialProducts)) return undefined;
@@ -46,7 +101,7 @@ const ExploreProducts = ({ initialProducts = null }) => {
 
     (async () => {
       try {
-        const json = await getExploreProducts(12);
+        const json = await getExploreProducts(EXPLORE_PRODUCTS_LIMIT);
         if (active && json.success) setProducts(json.data);
       } catch (err) {
         console.error('Failed to fetch explore products:', err);
@@ -59,112 +114,16 @@ const ExploreProducts = ({ initialProducts = null }) => {
     };
   }, [initialProducts]);
 
-  // ── Section header ────────────────────────────────────────────────────────
-  const SectionHeader = () => (
-    <div style={{ textAlign: 'center', marginBottom: 36 }}>
-      {/* Eyebrow */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 10 }}>
-        <div style={{ width: 24, height: 2, background: 'var(--zova-accent-emphasis)', borderRadius: 2 }} />
-        <span style={{
-          fontSize: 11, fontWeight: 700, letterSpacing: '0.1em',
-          textTransform: 'uppercase', color: 'var(--zova-primary-action)',
-        }}>
-          Zova Collection
-        </span>
-        <div style={{ width: 24, height: 2, background: 'var(--zova-accent-emphasis)', borderRadius: 2 }} />
-      </div>
-
-      <h2 style={{
-        fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800,
-        color: 'var(--zova-ink)', margin: '0 0 8px',
-        letterSpacing: '-0.025em', lineHeight: 1.15,
-      }}>
-        Explore Our Collection
-      </h2>
-      <p style={{ fontSize: 14, color: 'var(--zova-text-body)', margin: '0 auto 18px', maxWidth: 440, lineHeight: 1.6 }}>
-        Discover premium styles curated just for you.
-      </p>
-
-      <Link
-        href="/shop"
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          fontSize: 13, fontWeight: 700,
-          color: linkHovered ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
-          textDecoration: 'none',
-          borderBottom: `1.5px solid ${linkHovered ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)'}`,
-          paddingBottom: 2,
-          transition: 'color 0.2s, border-color 0.2s',
-        }}
-        onMouseEnter={() => setLinkHovered(true)}
-        onMouseLeave={() => setLinkHovered(false)}
-      >
-        Browse All Products
-        <FiArrowRight
-          size={13}
-          style={{ transform: linkHovered ? 'translateX(3px)' : 'translateX(0)', transition: 'transform 0.2s' }}
-        />
-      </Link>
-    </div>
-  );
-
-  // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <section style={{ background: 'var(--zova-linen)', padding: '0 0 56px 0' }}>
-        <div style={{ maxWidth: 1600, margin: '0 auto', padding: '0 16px' }} className="sm:px-6 lg:px-8">
-          <SectionHeader />
-          <div style={{ display: 'grid', gap: 12 }} className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {[...Array(10)].map((_, i) => <SkeletonCard key={i} delay={i * 50} />)}
-          </div>
-        </div>
-      </section>
-    );
+    return <ExploreSectionPlaceholder />;
   }
 
-  // ── Loaded ────────────────────────────────────────────────────────────────
   return (
-    <section style={{ background: 'var(--zova-linen)', padding: '0 0 56px 0' }}>
-      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '0 16px' }} className="sm:px-6 lg:px-8">
-        <SectionHeader />
-
-        <div style={{ display: 'grid', gap: 12 }} className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-5">
-          {products.map((product, index) => (
-            <ProductImpressionTracker
-              key={product.id}
-              product={product}
-              surface="home_explore"
-              position={index + 1}
-              metadata={{ sortStrategy: 'smart' }}
-            >
-              <ProductCard product={product} />
-            </ProductImpressionTracker>
-          ))}
-        </div>
-
-        {/* ── Bottom CTA ── */}
-        <div style={{ marginTop: 44, textAlign: 'center' }}>
-          <Link
-            href="/shop"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '12px 32px', borderRadius: 10,
-              fontSize: 14, fontWeight: 700, textDecoration: 'none',
-              color: ctaHovered ? '#FFFFFF' : 'var(--zova-primary-action)',
-              background: ctaHovered ? 'var(--zova-primary-action)' : '#FFFFFF',
-              border: `2px solid ${'var(--zova-primary-action)'}`,
-              transition: 'background 0.22s ease, color 0.22s ease',
-              boxShadow: ctaHovered ? '0 4px 14px rgba(46,100,23,0.2)' : 'none',
-            }}
-            onMouseEnter={() => setCtaHovered(true)}
-            onMouseLeave={() => setCtaHovered(false)}
-          >
-            <FiGrid size={15} />
-            Load More Products
-          </Link>
-        </div>
-      </div>
-    </section>
+    <ExploreSectionShell>
+      <ExploreSectionHeader />
+      <ExploreProductsGrid products={products} />
+      <ExploreSectionCta />
+    </ExploreSectionShell>
   );
 };
 
