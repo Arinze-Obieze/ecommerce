@@ -1,7 +1,7 @@
 'use client';
 
 import { FiCheck } from 'react-icons/fi';
-import { BsCartPlus } from 'react-icons/bs';
+import { TbShoppingCartPlus } from 'react-icons/tb';
 
 export default function QuickAddButton({
   cartState,
@@ -26,7 +26,7 @@ export default function QuickAddButton({
         </>
       ) : (
         <>
-          <BsCartPlus className={fullWidth ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+          <TbShoppingCartPlus className={fullWidth ? 'h-[18px] w-[18px]' : 'h-4 w-4'} strokeWidth={2} />
           <span className={fullWidth ? '' : 'hidden sm:inline'}>{idleLabel}</span>
         </>
       )}
