@@ -1,23 +1,29 @@
 'use client';
 
-function getOrCreateSessionId() {
-  const key = 'shophub_session_id';
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(key, id);
+import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/constants/storage-keys';
+
+function getOrCreateId(nextKey, legacyKey) {
+  let id = localStorage.getItem(nextKey);
+  if (id) return id;
+
+  id = localStorage.getItem(legacyKey);
+  if (id) {
+    localStorage.setItem(nextKey, id);
+    localStorage.removeItem(legacyKey);
+    return id;
   }
+
+  id = crypto.randomUUID();
+  localStorage.setItem(nextKey, id);
   return id;
 }
 
+function getOrCreateSessionId() {
+  return getOrCreateId(STORAGE_KEYS.SESSION_ID, LEGACY_STORAGE_KEYS.SESSION_ID);
+}
+
 function getOrCreateAnonId() {
-  const key = 'shophub_anon_id';
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(key, id);
-  }
-  return id;
+  return getOrCreateId(STORAGE_KEYS.ANON_ID, LEGACY_STORAGE_KEYS.ANON_ID);
 }
 
 function detectDeviceType() {

@@ -1,0 +1,399 @@
+# ZOVA E-Commerce — Full UX/UI Audit Report
+
+### Based on: Baymard Institute, Nielsen Norman Group, Google UX Research, WCAG 2.1, JTBD Framework
+
+> **Verdict: Multiple areas require a total overhaul. Be blunt, be honest — this is an industry-grade breakdown.**
+
+---
+
+## 🔴 CRITICAL ISSUES (Immediate Business Risk)
+
+---
+
+### CRIT-1: No Guest Checkout Exists
+
+**File:** `features/cart/checkout/useCartCheckout.js`
+
+The checkout hook unconditionally throws if the user is not authenticated:
+
+```js
+if (!user) {
+  throw new Error("Please log in before checking out");
+}
+```
+
+**Impact:** According to Baymard Institute (2024), **35% of cart abandonments** are directly caused by forcing account creation. This is the single most damaging UX decision in the entire codebase.
+
+**JTBD:** _"When I decide to pay, I want to do it immediately. I don't care about creating an account—I just want to buy."_
+
+**Fix:** Implement guest checkout with an email-only flow. Offer account creation **post-purchase** ("Save your details for next time?"), not pre-payment.
+
+---
+
+### CRIT-2: Account Page Is Completely Unstyled and Exposes User ID
+
+**File:** `app/(account)/account/page.js`
+
+- Uses raw `bg-gray-50`, `text-blue-600`, `rounded-md` — **zero branding alignment** with the ZOVA design system.
+- Displays the raw Supabase UUID (`user.id`) to the customer. This is a security red flag and a UX disaster — no user should ever see their database UUID.
+- Loading state shows a plain `"Loading..."` text string with no skeleton or spinner.
+- The page only shows email, UUID, and a date — **no navigation** to orders, addresses, wishlist, or saved stores.
+
+**Industry standard:** The account dashboard should be a hub with clear navigation. Amazon, ASOS, and Shopify all surface: recent orders, saved addresses, payment methods, and profile info from one page.
+
+**Fix:** Build a proper account dashboard with a sidebar nav, hub grid of sections (Orders, Profile, Addresses, Wishlist), and remove the user.id exposure entirely.
+
+---
+
+### CRIT-3: 404 Page Is Brand-Broken
+
+**File:** `app/not-found.js`
+
+- "Go back home" button uses `bg-orange-600` (hardcoded Tailwind, not a ZOVA token). On hover it switches to `bg-blue-700` — **two completely different colors from two different brands.**
+- Text is styled with `text-gray-600` and `text-gray-900` — no ZOVA tokens.
+- 404 number is rendered as `text-blue-100` — another non-brand color.
+
+**Impact:** Every time a user hits a broken link, they see a page that looks like a different product. This actively erodes trust.
+
+**Fix:** Redesign 404 page to use ZOVA design tokens. Include the brand header, a search bar, and category shortcuts to help users recover.
+
+---
+
+## 🟠 HIGH SEVERITY ISSUES (Significant UX Friction)
+
+---
+
+### HIGH-1: Password Strength Meter on the Login Page
+
+**File:** `app/(auth)/login/page.js`
+
+The login page includes a full live password strength meter (`passStrength`, `ReqRow` component, 5-bar indicator). This is a **Sign-Up job, not a Sign-In job.** On the login screen, the user already created their password — checking complexity is irrelevant and adds cognitive noise.
+
+**Baymard Principle:** _Only validate what is contextually relevant to the current task. Showing password rules on login implies the user made a mistake that doesn't exist._
+
+**Fix:** Remove the `postStrength`, `ReqRow`, and all requirements from `LoginPage`. Keep them exclusively in `SignupFormPanel`.
+
+---
+
+### HIGH-2: Inline `<style>` Injections in Every Auth Page
+
+**Files:** `app/(auth)/login/page.js`, `app/(auth)/forgot-password/page.js`
+
+Both pages inject raw `<style>` blocks with keyframe animations and class definitions directly into JSX. This:
+
+- Injects styles on every render
+- Cannot be tree-shaken or extracted by Next.js's CSS system
+- Creates duplicate class definitions if the component mounts multiple times
+- Bypasses the entire ZOVA CSS token system
+
+**Fix:** Move all animations to `globals.css` or a dedicated `auth.css` module. Leverage existing Tailwind utilities for the interactive states instead of JavaScript-driven inline `style` props.
+
+---
+
+### HIGH-3: Search Has No Auto-Suggest / Typeahead
+
+**File:** `components/layout/header/HeaderSearch.jsx`
+
+The search bar is a plain `<input>` that does nothing until the user presses Enter. There is no:
+
+- Live autocomplete dropdown
+- Product thumbnail previews
+- Category suggestions
+- Recent searches
+- Query corrections
+
+**Baymard Research:** Sites with live search previews see **2.4× higher search-to-purchase conversion** compared to those with no suggestions.
+
+**JTBD:** _"When I type a product name, I want to immediately see whether it exists — so I can decide in 2 seconds if I should keep looking or click."_
+
+**Fix:** Build a `SearchCombobox` component that fires a debounced API call on keystroke, rendering a dropdown with product thumbnails, names, prices, and top category matches.
+
+---
+
+### HIGH-4: Quick Add Button Ignores Variants
+
+**File:** `components/catalog/product-card/index.jsx`
+
+`handleAddToCart` calls `addToCart(product)` directly, **bypassing variant selection entirely.** If a product has sizes (S, M, L) or colors, adding from the card either adds the base/default variant or behaves unpredictably.
+
+**Baymard Principle:** _Adding a product without a required attribute is a critical error. Users who discover their cart has the wrong size are likely to abandon the purchase entirely._
+
+**Fix:** On Quick Add click:
+
+1. If the product has variants → open an inline slide-up selector (size, colour pills).
+2. If there's only one variant or no variants → add directly.
+
+---
+
+### HIGH-5: Cart Page Checkout Triggers a Paystack Popup Instead of a Checkout Page
+
+**File:** `features/cart/CartPage.jsx`, `useCartCheckout.js`
+
+Checkout is initiated with `window.PaystackPop.setup(...)` which opens a modal iframe. This means:
+
+- The back button doesn't work after payment initiation.
+- Browser autofill for billing info doesn't function.
+- Users lose their shopping context if they dismiss the popup.
+- Cart abandonment from accidental popup closing is extremely high.
+
+**Industry Standard (Shopify, ASOS, Jumia):** Checkout should be a **dedicated full-page route** (`/checkout`) with a progress stepper (Cart → Delivery → Payment → Confirmation). Distraction-free, no header/footer.
+
+**Fix:** Build a `/checkout` page with: step 1 (Cart review), step 2 (Delivery address), step 3 (Payment via Paystack redirect instead of popup), step 4 (Order confirmation).
+
+---
+
+### HIGH-6: FilterSidebar Mixes "Instant Apply" and "Batch Apply" Interactions
+
+**File:** `components/catalog/browse/FilterSidebar/index.jsx`
+
+- **Size** and **Color** filters apply instantly (live update).
+- **Category** and **Price** filters require clicking an "Apply Category" / "Apply Range" button.
+
+This mixed paradigm is deeply confusing. Users who change size (instant) then expect price to also update instantly — but it doesn't.
+
+**Baymard Finding:** Mixed filter interactions are flagged as a top-10 category listing usability issue. Users either click "Apply" prematurely (before filling all fields) or don't click it at all (expecting instant behaviour).
+
+**Fix (Option A — Recommended):** Make all filters instant. Remove "Apply" buttons. Use URL state + debounced API calls.  
+**Fix (Option B):** Make all filters batch. Add a single "Show Results (X)" button at the bottom of the sidebar that applies all pending changes at once.
+
+---
+
+## 🟡 MEDIUM SEVERITY ISSUES (Friction and Polish)
+
+---
+
+### MED-1: Product Card Typography Falls Below WCAG Minimum
+
+**File:** `components/catalog/product-card/index.jsx`
+
+Several elements use `text-[10px]` (10px font size):
+
+- Category labels: `text-[10px] uppercase tracking-widest`
+- Promo badge type dots: `rounded-sm ... text-[10px]`
+- "Sold by" store link: `sm:text-[10px]`
+
+**WCAG 2.1 / Google Standard:** Body text should be at minimum **12px**. Text below 12px is inaccessible to a significant portion of users, especially on mobile. Tracking-widest on 10px is especially illegible.
+
+**Fix:** Replace all `text-[10px]` with `text-[11px]` or `text-xs` (12px). Use `font-semibold` + `tracking-wide` instead of wide letter-spacing on tiny text to maintain hierarchy.
+
+---
+
+### MED-2: Product Card Hit Targets Too Small for Mobile
+
+**File:** `components/catalog/product-card/index.jsx`
+
+The Quick View button inside the card hover state uses `px-5 py-2` which renders approximately 36px tall. The Quick Add button (`QuickAddButton`) is similarly undersized.
+
+**Google Material Design / Apple HIG:** Minimum touch target: **48×48px.**  
+**WCAG 2.5.5 (AAA):** Touch targets should be ≥ 44×44px.
+
+**Fix:** Add `min-h-[44px] min-w-[44px]` to all interactive elements on the card. Ensure the Quick Add button has at minimum `py-3` to render ≥ 44px tall.
+
+---
+
+### MED-3: Product Card Shows Only One Image — No Hover Image Reveal
+
+**File:** `components/catalog/product-card/index.jsx`
+
+The product image shows `product.image_urls?.[0]`, a single image. On hover, the image scales slightly (`scale-[1.03]`) but never reveals a second image.
+
+**Industry Standard:** Zara, ASOS, and Amazon Fashion all reveal a second/alternate product image on hover — usually the back of a garment, a lifestyle shot, or a different angle. Baymard confirms this **significantly increases click-through rates** for fashion products.
+
+**Fix:** On hover, transition to `product.image_urls?.[1]` if it exists. Use an `opacity` crossfade between the two `<img>` tags via absolute positioning.
+
+---
+
+### MED-4: PDP Shipping & Returns Policy Is Hidden Behind Tabs
+
+**File:** `features/catalog/ProductDetailPage.jsx`
+
+The delivery and returns information is locked inside a tab (`policies`) on desktop or a collapsed accordion on mobile. Users must actively seek it out.
+
+**Baymard Research:** _Delivery information is the 2nd most-checked information on a PDP (after price). Users who cannot find it within 3 seconds abandon the page._
+
+**Fix:** Extract a concise `DeliverySnippet` component — showing estimated delivery days, free shipping threshold, and a return window — and render it **directly below the "Add to Cart" button** in `ProductDetailPurchasePanel`, always visible. The full policy can remain in the tab for detail.
+
+---
+
+### MED-5: Wishlist Has No "Add All to Cart" or "Move to Cart" Action
+
+**File:** `app/(account)/wishlist/page.js`
+
+The wishlist page renders product cards with no batch actions. Users must visit each product page individually to add wishlist items to cart.
+
+**Industry Standard (ASOS, Zalando):** Wishlists should have:
+
+1. "Add to Cart" directly on each card
+2. "Add All to Cart" in the header
+3. "Share Wishlist" via a link
+
+**Fix:** Add an `AddToCartFromWishlist` action to each card that handles variant prompting inline.
+
+---
+
+### MED-6: Cart Page Header Reads "Shopping Cart (X)" — Incorrect UX Copy
+
+**File:** `features/cart/CartPage.jsx` line 28
+
+```jsx
+<h1>Shopping Cart ({cartPage.cart.length})</h1>
+```
+
+The copy "Shopping Cart (3)" is overly technical. Users care about what they're doing next, not a label with an item count.
+
+**Best Practice Copy:** "Your Bag" or "Your Cart" (without the count — that count belongs in the header icon badge). Use a subtitle like "Review your items before checkout."
+
+---
+
+### MED-7: Root Layout Has Single SEO Metadata — No Per-Page SEO
+
+**File:** `app/layout.js`
+
+```js
+export const metadata = {
+  title: "ZOVA | Verified Fashion, Made Easy",
+  description: "Where trust meets the market...",
+};
+```
+
+**All pages in the app share this single title and description.** A product page for "Nike Air Max 90" will have the same `<title>` as the home page. This cripples:
+
+- SEO ranking for individual products and categories
+- Social media sharing (OG titles/images missing)
+- Browser tab identifiability
+
+**Fix:** Every dynamic route (`/products/[slug]`, `/shop/[category]`, `/store/[slug]`) must export its own `generateMetadata()` function that populates title, description, and `openGraph` fields from the fetched data.
+
+---
+
+### MED-8: Login Page Auth Redirect Uses a Polling Loop
+
+**File:** `app/(auth)/login/page.js`
+
+```js
+for (let attempt = 0; attempt < 4; attempt += 1) {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+}
+```
+
+The `resolveRedirectTarget` function polls the session up to 4 times with 200ms delays. This is a symptom of misconfigured Next.js middleware, not a solution.
+
+**Fix:** Use Next.js Middleware (`middleware.ts`) at the route level to handle redirect decisions server-side. The client should fire `router.replace(target)` once, without retries.
+
+---
+
+## 🟢 STRUCTURAL / TECHNICAL DEBT (Code Quality)
+
+---
+
+### TECH-1: Auth Pages Use JavaScript-Managed Hover States
+
+**Files:** `app/(auth)/login/page.js`, `app/(auth)/forgot-password/page.js`
+
+Every hover effect is implemented via React state:
+
+```js
+const [emailHov, setEmailHov] = useState(false);
+const [passHov, setPassHov] = useState(false);
+const [submitHov, setSubmitHov] = useState(false);
+const [googleHov, setGoogleHov] = useState(false);
+const [fbHov, setFbHov] = useState(false);
+const [remHov, setRemHov] = useState(false);
+```
+
+That is **6 separate state variables** just for hover. CSS handles this natively and with zero re-renders.
+
+**Fix:** Replace all `onMouseEnter`/`onMouseLeave` state management with Tailwind `hover:` utility classes or CSS class combinations. This alone will eliminate dozens of extraneous state variables.
+
+---
+
+### TECH-2: Facebook Login Button Is Broken / Non-Functional
+
+**File:** `app/(auth)/login/page.js`
+
+```js
+{ label: 'Facebook', icon: <FaFacebookF ... />, onClick: () => {} }
+```
+
+The Facebook login button has an empty `onClick: () => {}` — it does nothing. Presenting a non-functional button as an available sign-in option is a critical trust failure. Users click it expecting OAuth and get no response.
+
+**Fix:** Either implement Facebook OAuth (via Supabase) or remove the button entirely until it is ready. Never show fake interactivity.
+
+---
+
+### TECH-3: Product Card Image Uses `<img>` Instead of Next.js `<Image>`
+
+**File:** `components/catalog/product-card/index.jsx`
+
+```jsx
+<img src={product.image_urls?.[0]} className="h-full w-full object-cover ..." />
+```
+
+Using a raw `<img>` tag bypasses Next.js's automatic image optimisation (WebP conversion, lazy loading with native sizing hints, blurDataURL placeholders, and CDN optimization). With potentially dozens of cards on a listing page, this directly causes poor LCP scores.
+
+**Fix:** Replace with `<Image>` from `next/image`, passing `fill` and `sizes` attributes. Add `blurDataURL` placeholders to prevent layout shift on image load.
+
+---
+
+### TECH-4: No `sitemap.xml` Exists
+
+**Finding:** `find_by_name("*sitemap*")` returned zero results.
+
+Without a sitemap, search engines cannot discover dynamic product, category, or store pages. This is a fundamental SEO omission for an e-commerce platform with potentially thousands of products.
+
+**Fix:** Create `app/sitemap.js` using the Next.js Sitemap API. Dynamically generate entries for all products, categories, and store slugs from the database.
+
+---
+
+### TECH-5: `error.js` and `not-found.js` Use Different Design Systems
+
+**Files:** `app/error.js`, `app/not-found.js`
+
+- `app/error.js` — uses ZOVA tokens (checked from previous review).
+- `app/not-found.js` — uses raw Tailwind (`bg-gray-50`, `text-blue-100`, `bg-orange-600`).
+
+Any edge case that lands on the 404 page breaks the brand completely.
+
+---
+
+## 📊 SEVERITY SUMMARY
+
+| #      | Issue                                    | Severity     | Impact Area            |
+| ------ | ---------------------------------------- | ------------ | ---------------------- |
+| CRIT-1 | No Guest Checkout                        | 🔴 Critical  | Revenue / Conversion   |
+| CRIT-2 | Account page broken & exposes UUID       | 🔴 Critical  | Trust / Security       |
+| CRIT-3 | 404 page is brand-broken                 | 🔴 Critical  | Brand / Trust          |
+| HIGH-1 | Password strength meter on Login         | 🟠 High      | Auth UX                |
+| HIGH-2 | Inline `<style>` in auth pages           | 🟠 High      | Tech Debt              |
+| HIGH-3 | No search autocomplete                   | 🟠 High      | Discovery / Conversion |
+| HIGH-4 | Quick Add ignores product variants       | 🟠 High      | Cart / Revenue         |
+| HIGH-5 | Checkout is a popup, not a page          | 🟠 High      | Checkout Conversion    |
+| HIGH-6 | Mixed instant/batch filter UX            | 🟠 High      | Catalog Browsing       |
+| MED-1  | 10px typography below WCAG minimum       | 🟡 Medium    | Accessibility          |
+| MED-2  | Touch targets below 44px on mobile       | 🟡 Medium    | Mobile UX              |
+| MED-3  | No secondary hover image on product card | 🟡 Medium    | Fashion UX             |
+| MED-4  | Shipping/returns hidden in tabs          | 🟡 Medium    | PDP Conversion         |
+| MED-5  | Wishlist has no Move/Add-All-to-Cart     | 🟡 Medium    | Retention              |
+| MED-6  | Cart page copy is technical/generic      | 🟡 Medium    | UX Copy                |
+| MED-7  | No per-page SEO metadata                 | 🟡 Medium    | SEO / Discoverability  |
+| MED-8  | Login redirect uses polling loop         | 🟡 Medium    | Auth Performance       |
+| TECH-1 | JS manages hover state (not CSS)         | 🟢 Tech Debt | Performance            |
+| TECH-2 | Facebook login button is a no-op         | 🟢 Tech Debt | Trust                  |
+| TECH-3 | Raw `<img>` instead of `<Image>`         | 🟢 Tech Debt | Performance / SEO      |
+| TECH-4 | No sitemap.xml                           | 🟢 Tech Debt | SEO                    |
+| TECH-5 | Inconsistent error page design           | 🟢 Tech Debt | Brand                  |
+
+---
+
+## 🚀 RECOMMENDED EXECUTION ORDER
+
+**Sprint 1 — Fix Revenue Killers**
+
+1. Build guest checkout flow (CRIT-1)
+2. Redesign Account dashboard — remove UUID, add navigation hub (CRIT-2)
+3. Fix 404 page with brand tokens (CRIT-3)
+4. Fix Facebook button — remove or implement (TECH-2)
+
+**Sprint 2 — Conversion Optimisation** 5. Implement search autocomplete/typeahead (HIGH-3) 6. Smart Quick Add with variant selector (HIGH-4) 7. Build dedicated `/checkout` page with stepper (HIGH-5) 8. Surface shipping/returns on PDP (MED-4)
+
+**Sprint 3 — Polish and Platform Health** 9. Unify FilterSidebar to one apply paradigm (HIGH-6) 10. Remove JS hover states → CSS hover (TECH-1) 11. Replace `<img>` with `<Image>` on ProductCard (TECH-3) 12. Add `sitemap.js` (TECH-4) 13. Add `generateMetadata()` to all dynamic routes (MED-7) 14. Fix auth page `<style>` → CSS modules (HIGH-2) 15. Add hover image reveal to ProductCard (MED-3) 16. Add Wishlist "Add All to Cart" (MED-5)

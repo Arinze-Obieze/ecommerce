@@ -38,7 +38,7 @@ export default function StoreOrderDetailPage({ orderId = '' }) {
   } = useStoreOrderDetail(orderId);
 
   if (loading) {
-    return <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 text-sm text-gray-500">Loading order details...</div>;
+    return <div className="rounded-2xl border border-border bg-white p-6 text-sm text-gray-500">Loading order details...</div>;
   }
 
   if (!order) {

@@ -106,7 +106,7 @@ async function loadStoreOrderDetail(ctx, orderId) {
 
   const { data: shippingAddress, error: shippingError } = await ctx.adminClient
     .from('order_shipping_addresses')
-    .select('id, label, address_line1, address_line2, city, state, postal_code, country, phone')
+    .select('id, label, address_line1, address_line2, city, state, postal_code, country, phone, contact_email')
     .eq('order_id', orderId)
     .maybeSingle();
 
@@ -212,7 +212,7 @@ async function loadStoreOrderDetail(ctx, orderId) {
     order,
     items,
     shippingAddress: shippingAddress || null,
-    customer: customer || null,
+    customer: customer || (shippingAddress?.contact_email ? { full_name: 'Guest customer', email: shippingAddress.contact_email, phone: shippingAddress.phone } : null),
     fulfillmentUpdates,
     cancellationRequest,
     returnRequest,

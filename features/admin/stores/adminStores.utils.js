@@ -25,6 +25,6 @@ export function tierColor(tier) {
     case 'platinum':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     default:
-      return 'bg-primary-soft text-primary border-[#E8E4DC]';
+      return 'bg-primary-soft text-primary border-border';
   }
 }

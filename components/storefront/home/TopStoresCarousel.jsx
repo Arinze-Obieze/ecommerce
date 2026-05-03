@@ -22,7 +22,7 @@ function StoreCardSkeleton() {
       style={{ backgroundColor: '#FFFFFF', border: `1px solid ${'var(--zova-border)'}` }}
     >
       <div className="flex items-start gap-3 mb-4">
-        <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="w-14 h-14 rounded-xl shrink-0" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
         <div className="flex-1 space-y-2 pt-1">
           <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
           <div className="h-3 rounded w-full" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
@@ -59,7 +59,7 @@ function StoreCard({ store }) {
 
           {/* Logo */}
           <div
-            className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+            className="w-14 h-14 rounded-xl shrink-0 overflow-hidden flex items-center justify-center"
             style={{ backgroundColor: 'var(--zova-green-soft)', border: `1px solid ${'#B8D4A0'}` }}
           >
             {store.logo_url ? (
@@ -82,7 +82,7 @@ function StoreCard({ store }) {
               </h3>
               {store.kyc_status === 'verified' && (
                 <FiCheckCircle
-                  className="w-3.5 h-3.5 flex-shrink-0"
+                  className="w-3.5 h-3.5 shrink-0"
                   style={{ color: 'var(--zova-primary-action)' }}
                   title="Verified Store"
                 />

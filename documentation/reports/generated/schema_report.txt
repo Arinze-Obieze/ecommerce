@@ -28,12 +28,12 @@ Sample Row: {"id":"ad0b95a7-aec6-415a-9e10-9e0e7b7d62ef","created_at":"2026-01-0
 Error accessing 'profiles': Could not find the table 'public.profiles' in the schema cache (PGRST205)
 
 Table: [orders]
-Columns (13): id, user_id, total_amount, status, created_at, updated_at, payment_reference, fulfillment_status, escrow_status, buyer_confirmed_at, escrow_funded_at, escrow_released_at, release_approved_by
-Sample Row: {"id":"dec43f11-f890-4900-a5cf-0eef3cba2f5a","user_id":null,"total_amount":40500,"status":"pending","created_at":"2026-02-19T19:51:35.335086+00:00","updated_at":"2026-02-19T19:51:35.335086+00:00","payment_reference":null,"fulfillment_status":"processing","escrow_status":"not_funded","buyer_confirmed_at":null,"escrow_funded_at":null,"escrow_released_at":null,"release_approved_by":null}
+Columns (14): id, user_id, total_amount, status, created_at, updated_at, payment_reference, fulfillment_status, escrow_status, buyer_confirmed_at, escrow_funded_at, escrow_released_at, release_approved_by, delivered_at
+Sample Row: {"id":"dec43f11-f890-4900-a5cf-0eef3cba2f5a","user_id":null,"total_amount":40500,"status":"pending","created_at":"2026-02-19T19:51:35.335086+00:00","updated_at":"2026-02-19T19:51:35.335086+00:00","payment_reference":null,"fulfillment_status":"processing","escrow_status":"not_funded","buyer_confirmed_at":null,"escrow_funded_at":null,"escrow_released_at":null,"release_approved_by":null,"delivered_at":null}
 
 Table: [order_items]
-Columns (6): id, order_id, product_id, quantity, price, variant_id
-Sample Row: {"id":"68205796-3c71-4379-ab06-b9f75b58e15d","order_id":"dec43f11-f890-4900-a5cf-0eef3cba2f5a","product_id":null,"quantity":1,"price":38000,"variant_id":null}
+Columns (7): id, order_id, product_id, quantity, price, variant_id, store_id
+Sample Row: {"id":"68205796-3c71-4379-ab06-b9f75b58e15d","order_id":"dec43f11-f890-4900-a5cf-0eef3cba2f5a","product_id":null,"quantity":1,"price":38000,"variant_id":null,"store_id":null}
 
 Table: [cart]
 (Exists but empty, cannot infer columns from simple select)

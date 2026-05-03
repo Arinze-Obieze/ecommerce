@@ -7,7 +7,7 @@ import { compactDate, describeDraft, formatMoney, getStatusBadgeClasses } from "
 
 export function ProductsHeaderCard() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Products</h2>
@@ -88,7 +88,7 @@ export function ProductsSummaryCards({ counts, onSelectStatus }) {
           key={label}
           type="button"
           onClick={() => onSelectStatus(label)}
-          className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-3 text-center shadow-sm transition hover:border-[#b8d0c4]"
+          className="rounded-xl border border-border bg-white px-3 py-3 text-center shadow-sm transition hover:border-[#b8d0c4]"
         >
           <p className="text-xs uppercase text-gray-500">{label}</p>
           <p className="mt-1 text-xl font-bold text-primary">{value}</p>
@@ -111,7 +111,7 @@ export function ProductsDraftWorkbench({
   if (!(statusFilter === "all" && (draftRows.length > 0 || rejectedRows.length > 0))) return null;
 
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h3 className="text-base font-bold text-gray-900">
@@ -154,7 +154,7 @@ export function ProductsDraftWorkbench({
           .map((row) => (
             <div
               key={row.id}
-              className="rounded-2xl border border-[#E8E4DC] bg-[#fbfcfb] p-4"
+              className="rounded-2xl border border-border bg-[#fbfcfb] p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">

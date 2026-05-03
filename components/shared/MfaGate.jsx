@@ -43,7 +43,7 @@ function OtpInput({ value, onChange, disabled }) {
           onKeyDown={(e) => handleKeyDown(i, e)}
           disabled={disabled}
           className="w-11 h-13 text-center text-xl font-bold rounded-lg border-2 outline-none transition-all
-            border-[#E8E4DC] focus:border-[var(--color-primary)] bg-white text-gray-900
+            border-border focus:border-primary bg-white text-gray-900
             disabled:opacity-40"
           style={{ height: 52 }}
         />
@@ -239,11 +239,11 @@ function EnrollView({ confirmUrl }) {
 
       {qrCode && (
         <div className="flex justify-center">
-          <img src={qrCode} alt="TOTP QR code" className="w-44 h-44 rounded-xl border border-[#E8E4DC]" />
+          <img src={qrCode} alt="TOTP QR code" className="w-44 h-44 rounded-xl border border-border" />
         </div>
       )}
 
-      <div className="rounded-lg bg-gray-50 border border-[#E8E4DC] px-3 py-2 text-center">
+      <div className="rounded-lg bg-gray-50 border border-border px-3 py-2 text-center">
         <p className="text-[10px] uppercase tracking-widest text-gray-400 mb-1">Manual entry key</p>
         <p className="font-mono text-sm font-semibold text-gray-800 break-all select-all">{secret}</p>
       </div>
@@ -285,7 +285,7 @@ export default function MfaGate({ mode, confirmUrl, children }) {
       {/* Gate overlay */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
         style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}>
-        <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 border border-[#E8E4DC]">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 border border-border">
           {mode === 'challenge'
             ? <ChallengeView />
             : <EnrollView confirmUrl={confirmUrl} />

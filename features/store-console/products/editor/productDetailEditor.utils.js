@@ -190,8 +190,8 @@ export function ProductEditorStepIndicator({ currentStep }) {
             {step.id < currentStep ? <FiCheck size={16} /> : step.id}
           </div>
           <div className="hidden md:block">
-            <p className="text-xs font-semibold text-[var(--zova-text-strong)]">{step.label}</p>
-            <p className="text-[10px] text-[var(--zova-text-muted)]">{step.description}</p>
+            <p className="text-xs font-semibold text-(--zova-text-strong)">{step.label}</p>
+            <p className="text-[10px] text-(--zova-text-muted)">{step.description}</p>
           </div>
           {index < PRODUCT_EDITOR_STEPS.length - 1 ? (
             <div

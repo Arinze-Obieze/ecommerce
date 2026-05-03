@@ -113,7 +113,7 @@ const NewsletterSidebar = () => {
           </h2>
 
           <p className="text-sm flex items-center gap-1.5" style={{ color: 'var(--zova-text-body)' }}>
-            <FiCheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--zova-primary-action)' }} />
+            <FiCheckCircle className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--zova-primary-action)' }} />
             Join 10,000+ shoppers who trust ZOVA
           </p>
 
@@ -155,7 +155,7 @@ const NewsletterSidebar = () => {
             ].map((perk, i) => (
               <div key={i} className="flex items-center gap-2.5">
                 <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold"
+                  className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold"
                   style={{ backgroundColor: `${'var(--zova-primary-action)'}18`, color: 'var(--zova-primary-action)' }}
                 >
                   ✓

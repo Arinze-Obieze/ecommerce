@@ -7,7 +7,7 @@ import StatCard from '@/components/store-console/dashboard/StatCard';
 
 export function StoreDashboardCreateProductCard() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-gray-900">Create Product</h3>
@@ -29,7 +29,7 @@ export function StoreDashboardOverviewFeedback({ error, loading }) {
     <>
       <AlertBanner type="error" message={error} />
       {loading ? (
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 text-sm text-gray-500">Loading store overview...</div>
+        <div className="rounded-2xl border border-border bg-white p-6 text-sm text-gray-500">Loading store overview...</div>
       ) : null}
     </>
   );
@@ -70,7 +70,7 @@ export function StoreDashboardOverviewStats({ data, loading }) {
 
 export function StoreDashboardOverviewNextActions() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="text-base font-bold text-gray-900">Recommended Next Actions</h3>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-600">
         <li>Submit draft products for review so they can go live in the catalog.</li>

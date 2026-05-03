@@ -1,4 +1,7 @@
 import './globals.css'
+import './animations.css'
+import './components.css'
+import './auth.css'
 import AppProviders from '@/components/providers/AppProviders'
 import SiteChrome from '@/components/layout/SiteChrome'
 

@@ -17,8 +17,8 @@ export default function ProductMediaStep({
       <div className="zova-store-card p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-[var(--zova-text-strong)]">Media</h2>
-            <p className="mt-1 text-sm text-[var(--zova-text-muted)]">
+            <h2 className="text-lg font-bold text-(--zova-text-strong)">Media</h2>
+            <p className="mt-1 text-sm text-(--zova-text-muted)">
               Upload at least 1 image. Choose your cover image.
             </p>
           </div>
@@ -41,8 +41,8 @@ export default function ProductMediaStep({
               </div>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[var(--zova-text-strong)]">{item.public_url}</p>
-                <p className="text-xs uppercase text-[var(--zova-text-muted)]">{item.type}</p>
+                <p className="truncate text-sm font-semibold text-(--zova-text-strong)">{item.public_url}</p>
+                <p className="text-xs uppercase text-(--zova-text-muted)">{item.type}</p>
               </div>
 
               {item.type === "image" ? (
@@ -68,7 +68,7 @@ export default function ProductMediaStep({
           ))}
 
           {media.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[var(--zova-border)] px-4 py-8 text-center text-sm text-[var(--zova-text-muted)]">
+            <div className="rounded-xl border border-dashed border-[var(--zova-border)] px-4 py-8 text-center text-sm text-(--zova-text-muted)">
               Upload at least one image to proceed.
             </div>
           ) : null}

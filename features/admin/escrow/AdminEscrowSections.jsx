@@ -4,7 +4,7 @@ import { ADMIN_ESCROW_TABS, money, prettifyStatus, tone } from '@/features/admin
 
 export function AdminEscrowIntro() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900">Escrow Releases</h2>
       <p className="mt-1 text-sm text-gray-600">
         Review held funds, release only after delivery confirmation, and keep transfer status separate from escrow approval.
@@ -17,7 +17,7 @@ export function AdminEscrowCards({ cards }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+        <div key={card.label} className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <p className="text-xs uppercase text-gray-500">{card.label}</p>
           <p className="mt-1 text-2xl font-bold text-gray-900">{card.value}</p>
         </div>
@@ -28,7 +28,7 @@ export function AdminEscrowCards({ cards }) {
 
 export function AdminEscrowTabs({ tab, setTab }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-wrap gap-2">
         {ADMIN_ESCROW_TABS.map((item) => (
           <button
@@ -47,7 +47,7 @@ export function AdminEscrowTabs({ tab, setTab }) {
 
 export function AdminEscrowTable({ loading, error, rows, tab, busyKey, onRelease }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       {error ? <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
       {loading ? (

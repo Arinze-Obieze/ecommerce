@@ -7,7 +7,7 @@ export default function SettingsSection({ icon: Icon, title, children }) {
         <div className="zova-account-section-icon">
           <Icon size={16} />
         </div>
-        <h3 className="m-0 text-[15px] font-extrabold tracking-[-0.015em] text-[var(--zova-text-strong)]">
+        <h3 className="m-0 text-[15px] font-extrabold tracking-[-0.015em] text-(--zova-text-strong)">
           {title}
         </h3>
       </div>

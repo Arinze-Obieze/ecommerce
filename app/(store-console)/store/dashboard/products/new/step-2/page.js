@@ -4,6 +4,7 @@ import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
 import { buildSkuCode, buildVariantSku, COLORS_LIST, getColorSwatch, getSizeOptions, MATERIALS } from "@/features/product-wizard/lib/constants";
+import { parseWholeNairaAmount } from "@/utils/money/naira";
 import { useToast } from "@/contexts/toast/ToastContext";
 
 const ATTRIBUTE_OPTIONS = ["Color", "Size", "Material", "Style", "Pattern"];
@@ -162,6 +163,10 @@ function normalizeHex(value) {
   if (!raw) return "";
   const withHash = raw.startsWith("#") ? raw : `#${raw}`;
   return /^#[0-9A-Fa-f]{6}$/.test(withHash) ? withHash.toUpperCase() : "";
+}
+
+function sanitizeNairaDraftInput(value) {
+  return String(value || "").replace(/[^\d.,]/g, "");
 }
 
 function ColorSearchDropdown({ value, valueHex = "", onChange, idPrefix = "color-search" }) {
@@ -512,9 +517,10 @@ export default function Step2() {
     const missingValue = nonSizeAttrs.find((e) => !e.value);
     if (missingValue) { showError(`Enter a value for ${missingValue.name}.`); return; }
 
-    const price = Number.parseFloat(variantForm.price || "0") || 0;
+    const priceResult = parseWholeNairaAmount(variantForm.price);
     const quantity = Number.parseInt(variantForm.quantity || "0", 10) || 0;
-    if (!(price > 0)) { showError("Price must be greater than 0."); return; }
+    if (priceResult.error) { showError("Price must be a whole-Naira value greater than 0."); return; }
+    const price = priceResult.value;
     if (!(quantity >= 1)) { showError("Stock must be at least 1."); return; }
 
     if (formMode === "edit") {
@@ -592,7 +598,7 @@ export default function Step2() {
   const renderProductMediaCard = (extraClassName = "") => (
     <div className={`bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3.5 ${extraClassName}`}>
       <h4 className="text-sm font-bold text-gray-800">PRODUCT MEDIA</h4>
-      <div className="rounded-xl border border-[#E8E4DC] bg-[#f8fbf9] px-3 py-2.5">
+      <div className="rounded-xl border border-border bg-[#f8fbf9] px-3 py-2.5">
         <p className="text-xs text-gray-600">
           Upload product-level images here.{" "}
           <span className="font-semibold text-gray-800">Minimum 2 images required</span> before continuing.
@@ -743,11 +749,13 @@ export default function Step2() {
                 <div className="rounded-xl border border-gray-100 p-3">
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (₦)</label>
                   <input
-                    type="number" min="0.01" step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm"
                     value={variants[0]?.price || ""}
-                    onChange={(e) => { const next = Number.parseFloat(e.target.value); setSimpleVariant({ price: Number.isFinite(next) ? Math.max(0, next) : 0 }); }}
+                    onChange={(e) => setSimpleVariant({ price: sanitizeNairaDraftInput(e.target.value) })}
                   />
+                  <p className="mt-1 text-xs text-gray-500">Whole Naira only for now. Example: `5000`.</p>
                 </div>
                 <div className="rounded-xl border border-gray-100 p-3">
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stock quantity</label>
@@ -810,7 +818,7 @@ export default function Step2() {
               </button>
 
               {formOpen && (
-                <div className="rounded-xl border border-[#E8E4DC] bg-[#f8fbf9] p-3.5 space-y-3">
+                <div className="rounded-xl border border-border bg-[#f8fbf9] p-3.5 space-y-3">
                   <div className="space-y-2">
                     {variantForm.attributes.map((attribute, index) => {
                       const typeOptions = availableTypeOptionsForRow(index);
@@ -940,11 +948,14 @@ export default function Step2() {
                   </button>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input type="number" min="0.01" placeholder="Price (required)" className="px-3 py-2 rounded-lg border border-gray-200 text-sm" value={variantForm.price} onChange={(e) => setVariantForm((prev) => ({ ...prev, price: e.target.value }))} />
+                    <div>
+                      <input type="text" inputMode="decimal" placeholder="Price (required)" className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm" value={variantForm.price} onChange={(e) => setVariantForm((prev) => ({ ...prev, price: sanitizeNairaDraftInput(e.target.value) }))} />
+                      <p className="mt-1 text-[11px] text-gray-500">Whole Naira only. Example: `12500`.</p>
+                    </div>
                     <input type="number" min="1" placeholder="Stock (required)" className="px-3 py-2 rounded-lg border border-gray-200 text-sm" value={variantForm.quantity} onChange={(e) => setVariantForm((prev) => ({ ...prev, quantity: e.target.value }))} />
                   </div>
 
-                  <div className="rounded-lg border border-[#E8E4DC] bg-white px-3 py-2 text-xs text-gray-600">
+                  <div className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-gray-600">
                     Variant SKU preview:{" "}
                     <span className="font-mono font-semibold text-primary">
                       {(() => {

@@ -21,7 +21,7 @@ export function AssignOwnerModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-xl">
+      <div className="relative w-full max-w-lg rounded-2xl border border-border bg-white p-5 shadow-xl">
         <div className="mb-4">
           <h3 className="text-lg font-bold text-gray-900">Assign Owner</h3>
           <p className="text-sm text-gray-600">
@@ -74,12 +74,12 @@ export function AssignOwnerModal({
 
 export function CreateStorePanel({ isOpen, onToggle, onSuccess, onError }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between rounded-xl border border-[#E8E4DC] bg-[#f5faf7] px-4 py-3 text-left"
+        className="flex w-full items-center justify-between rounded-xl border border-border bg-[#f5faf7] px-4 py-3 text-left"
       >
         <div>
           <h2 className="text-lg font-bold text-gray-900">Create Store</h2>
@@ -115,7 +115,7 @@ export function StoreGovernancePanel({
   onPageChange,
 }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <h2 className="text-lg font-bold text-gray-900">Store Governance</h2>
         <div className="flex gap-2">

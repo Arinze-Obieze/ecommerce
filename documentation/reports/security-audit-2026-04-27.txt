@@ -1134,7 +1134,7 @@ Design:
   ─────────────────────────────────────────────────────────────────────────
   P1 SPRINT  001       CSP is Report-Only / unsafe-inline           High
   P1 SPRINT  003       Open redirect via X-Forwarded-Host           Low
-  P1 SPRINT  005       IP spoofing bypasses rate limit IP dim.      Low
+  P1 SPRINT  0ng05       IP spoofing bypasses rate limit IP dim.      Low
   P1 SPRINT  008       analytics_events has no RLS                  Low (SQL)
   P1 SPRINT  013       Middleware doesn't guard /store /admin       Low
   ─────────────────────────────────────────────────────────────────────────

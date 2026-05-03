@@ -42,7 +42,7 @@ export default function WizardStepper() {
 
       {/* DESKTOP */}
       <div className="hidden md:block mb-6">
-        <div className="relative rounded-2xl border border-[#E8E4DC] bg-white px-8 py-5 shadow-sm">
+        <div className="relative rounded-2xl border border-border bg-white px-8 py-5 shadow-sm">
           {/* Track */}
           <div className="absolute top-1/2 left-[6%] right-[6%] h-[2px] bg-[#E8E4DC] -translate-y-1" />
           <div
@@ -69,7 +69,7 @@ export default function WizardStepper() {
                       border-[3px] transition-all duration-300
                       ${active ? "bg-primary border-primary text-white scale-110 shadow-md shadow-primary/20"
                         : done ? "bg-primary border-primary text-white hover:bg-primary-hover hover:border-primary-hover cursor-pointer"
-                        : "bg-white border-[#E8E4DC] text-gray-400"
+                        : "bg-white border-border text-gray-400"
                       }
                       ${canGoToStep ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" : "cursor-default"}
                     `}

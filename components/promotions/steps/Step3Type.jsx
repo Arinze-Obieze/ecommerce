@@ -53,7 +53,7 @@ export default function Step3Type({ state, dispatch }) {
               type="button"
               onClick={() => selectType(t)}
               className={`text-left p-4 rounded-2xl border-2 transition-all ${
-                selected ? 'border-primary bg-primary/5' : 'border-[#E8E4DC] bg-white hover:border-primary/40'
+                selected ? 'border-primary bg-primary/5' : 'border-border bg-white hover:border-primary/40'
               }`}
             >
               <div className="flex items-start gap-3">

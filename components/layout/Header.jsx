@@ -27,8 +27,8 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  function handleSearchSubmit() {
-    const query = searchQuery.trim();
+  function handleSearchSubmit(nextQuery = searchQuery) {
+    const query = String(nextQuery || "").trim();
     trackAnalyticsEvent("search_submitted", { query });
     router.push(query ? `/shop?search=${encodeURIComponent(query)}` : "/shop");
   }

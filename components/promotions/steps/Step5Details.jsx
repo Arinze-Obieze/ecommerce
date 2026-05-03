@@ -67,7 +67,7 @@ export default function Step5Details({ state, dispatch }) {
 
       {/* Promo code */}
       {allowsCode && (
-        <div className="rounded-xl border border-[#E8E4DC] p-4 space-y-3">
+        <div className="rounded-xl border border-border p-4 space-y-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"

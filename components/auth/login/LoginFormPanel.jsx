@@ -11,8 +11,6 @@ import {
   FiMail,
 } from "react-icons/fi";
 import BrandMark from "@/components/brand/BrandMark";
-import PasswordRequirementRow from "@/components/auth/shared/PasswordRequirementRow";
-import { PASSWORD_REQUIREMENTS } from "@/components/auth/login/login.constants";
 
 function Spinner() {
   return (
@@ -102,10 +100,6 @@ function PasswordField({
   onBlur,
   onMouseEnter,
   onMouseLeave,
-  passStrength,
-  strengthLabel,
-  strengthColor,
-  requirements,
 }) {
   const border = hasError
     ? "var(--zova-error)"
@@ -161,38 +155,6 @@ function PasswordField({
           {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
         </button>
       </div>
-
-      {password.length > 0 ? (
-        <div className="zova-auth-strength">
-          <div className="zova-auth-strength-bars">
-            {[1, 2, 3, 4, 5].map((index) => (
-              <div
-                key={index}
-                className="zova-auth-strength-bar"
-                style={{
-                  "--auth-strength-fill": index <= passStrength ? strengthColor : "var(--zova-border)",
-                }}
-              />
-            ))}
-          </div>
-          {strengthLabel ? (
-            <p
-              className="zova-auth-strength-label"
-              style={{ "--auth-strength-color": strengthColor }}
-            >
-              {strengthLabel} password
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
-      {isFocused && password.length > 0 ? (
-        <div className="zova-auth-requirements">
-          {PASSWORD_REQUIREMENTS.map((item) => (
-            <PasswordRequirementRow key={item.key} met={requirements[item.key]} label={item.label} />
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -237,10 +199,6 @@ export default function LoginFormPanel(props) {
     loading,
     rememberMe,
     showPass,
-    passStrength,
-    strengthLabel,
-    strengthColor,
-    requirements,
     emailFocused,
     emailHovered,
     passFocused,
@@ -271,7 +229,7 @@ export default function LoginFormPanel(props) {
 
       <div className="zova-auth-panel-content">
         <div className="zova-auth-brand-row zova-auth-animate-1">
-          <BrandMark alt="ZOVA" priority className="h-[44px] w-[148px] sm:h-[46px] sm:w-[156px]" />
+          <BrandMark alt="ZOVA" priority className="h-11 w-[148px] sm:h-[46px] sm:w-[156px]" />
           <span className="zova-auth-brand-text">ZOVA</span>
         </div>
 
@@ -307,10 +265,6 @@ export default function LoginFormPanel(props) {
             onBlur={() => setTimeout(() => setPassFocused(false), 180)}
             onMouseEnter={() => setPassHovered(true)}
             onMouseLeave={() => setPassHovered(false)}
-            passStrength={passStrength}
-            strengthLabel={strengthLabel}
-            strengthColor={strengthColor}
-            requirements={requirements}
           />
 
           <RememberMe

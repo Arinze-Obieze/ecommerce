@@ -197,7 +197,7 @@ async function getStoreOrderDetailForReceipt(ctx, orderId) {
 
   const { data: shippingAddress, error: shippingError } = await ctx.adminClient
     .from('order_shipping_addresses')
-    .select('address_line1, address_line2, city, state, postal_code, country, phone')
+    .select('address_line1, address_line2, city, state, postal_code, country, phone, contact_email')
     .eq('order_id', orderId)
     .maybeSingle();
 
@@ -218,7 +218,7 @@ async function getStoreOrderDetailForReceipt(ctx, orderId) {
   return {
     order,
     items,
-    customer: customer || null,
+    customer: customer || (shippingAddress?.contact_email ? { full_name: 'Guest customer', email: shippingAddress.contact_email, phone: shippingAddress.phone } : null),
     shippingAddress: shippingAddress || null,
   };
 }

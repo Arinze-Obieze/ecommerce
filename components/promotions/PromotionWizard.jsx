@@ -45,7 +45,7 @@ export default function PromotionWizard({ storeId, userId, onDone }) {
 
       <PromotionWizardStepper visibleSteps={visibleSteps} step={step} />
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6">
+      <div className="rounded-2xl border border-border bg-white p-6">
         {step === 1 && <Step1Targeting state={state} dispatch={dispatch} />}
         {step === 2 && <Step2Products state={state} dispatch={dispatch} storeId={storeId} />}
         {step === 3 && <Step3Type state={state} dispatch={dispatch} />}

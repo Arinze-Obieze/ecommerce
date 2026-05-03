@@ -1,10 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiChevronDown, FiSearch, FiSliders } from "react-icons/fi";
 import { useFilters } from "@/contexts/filter/FilterContext";
-
-// Brand tokens — sourced from app/globals.css
-
 
 export default function BrowseHeader({
   productsLength,
@@ -14,191 +11,111 @@ export default function BrowseHeader({
   setSearchInput,
 }) {
   const { filters, setSortBy, activeFilterCount } = useFilters();
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [selectHov, setSelectHov]         = useState(false);
-  const [btnHov, setBtnHov]               = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [headerElevated, setHeaderElevated] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    function handleScroll() {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollY;
+      setHeaderElevated(currentScrollY > 96);
+      if (currentScrollY <= 96) setHeaderVisible(true);
+      else if (delta > 6) setHeaderVisible(false);
+      else if (delta < -3) setHeaderVisible(true);
+      lastScrollY = currentScrollY;
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <div>
+    <div
+      className="sticky top-[72px] z-30 mb-3 rounded-2xl bg-white/95 backdrop-blur-[14px]"
+      style={{
+        transform: headerVisible ? "translateY(0)" : "translateY(calc(-100% - 12px))",
+        opacity: headerVisible ? 1 : 0.98,
+        transition: "transform 0.24s ease, box-shadow 0.18s ease, opacity 0.18s ease",
+        boxShadow: headerElevated ? "0 14px 34px rgba(25,27,25,0.10)" : "none",
+        border: headerElevated ? "1px solid var(--zova-border)" : "1px solid transparent",
+      }}
+    >
+      <div className="px-3 pb-3.5 pt-3">
 
-      {/* ── Mobile filter button ── */}
-      <div className="lg:hidden mb-4">
-        <button
-          type="button"
-          onClick={onMobileFiltersOpen}
-          onMouseEnter={() => setBtnHov(true)}
-          onMouseLeave={() => setBtnHov(false)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            width: '100%',
-            padding: '11px 20px',
-            borderRadius: 12,
-            border: `1.5px solid ${btnHov ? '#B8D4A0' : 'var(--zova-border)'}`,
-            background: btnHov ? 'var(--zova-green-soft)' : '#FFFFFF',
-            color: btnHov ? 'var(--zova-primary-action)' : 'var(--zova-ink)',
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: 'pointer',
-            transition: 'all 0.18s',
-          }}
-        >
-          <FiSliders size={15} />
-          Filters & Sort
-          {activeFilterCount > 0 && (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: 20,
-                height: 20,
-                borderRadius: 100,
-                fontSize: 10,
-                fontWeight: 800,
-                background: 'var(--zova-primary-action)',
-                color: '#FFFFFF',
-                padding: '0 5px',
-              }}
-            >
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* ── Title row + sort ── */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 16,
-          marginBottom: 20,
-        }}
-      >
-        <div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
-            All Products
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '4px 0 0' }}>
-            Showing <span style={{ fontWeight: 600, color: 'var(--zova-ink)' }}>{productsLength}</span> of <span style={{ fontWeight: 600, color: 'var(--zova-ink)' }}>{totalItems}</span> items
-          </p>
-        </div>
-
-        {/* Sort dropdown */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <select
-            value={filters.sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            onMouseEnter={() => setSelectHov(true)}
-            onMouseLeave={() => setSelectHov(false)}
-            style={{
-              padding: '9px 36px 9px 14px',
-              borderRadius: 10,
-              border: `1.5px solid ${selectHov ? '#B8D4A0' : 'var(--zova-border)'}`,
-              background: '#FFFFFF',
-              color: 'var(--zova-ink)',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: 'pointer',
-              appearance: 'none',
-              outline: 'none',
-              transition: 'border-color 0.18s',
-              minWidth: 180,
-            }}
-          >
-            <option value="newest">Newest Arrivals</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="rating">Top Rated</option>
-            <option value="name">Name: A to Z</option>
-          </select>
-          <FiChevronDown
-            size={14}
-            style={{
-              position: 'absolute',
-              right: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none',
-              color: 'var(--zova-text-body)',
-            }}
-          />
-        </div>
-      </div>
-
-      {/* ── Search bar ── */}
-      <div
-        style={{
-          position: 'relative',
-          borderRadius: 12,
-          border: `1.5px solid ${searchFocused ? 'var(--zova-primary-action)' : 'var(--zova-border)'}`,
-          background: searchFocused ? '#FFFFFF' : 'var(--zova-surface-alt)',
-          transition: 'border-color 0.18s, background 0.18s',
-          overflow: 'hidden',
-        }}
-      >
-        <FiSearch
-          size={15}
-          style={{
-            position: 'absolute',
-            left: 14,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: searchFocused ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)',
-            transition: 'color 0.18s',
-            pointerEvents: 'none',
-          }}
-        />
-        <input
-          type="text"
-          value={searchInput}
-          onChange={e => setSearchInput?.(e.target.value)}
-          onFocus={() => setSearchFocused(true)}
-          onBlur={() => setSearchFocused(false)}
-          placeholder="Search for products..."
-          style={{
-            width: '100%',
-            padding: '12px 14px 12px 40px',
-            fontSize: 14,
-            color: 'var(--zova-ink)',
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            boxSizing: 'border-box',
-          }}
-        />
-        {searchInput && (
+        {/* Mobile filter button */}
+        <div className="mb-4 lg:hidden">
           <button
             type="button"
-            onClick={() => setSearchInput?.('')}
-            style={{
-              position: 'absolute',
-              right: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'var(--zova-border)',
-              color: 'var(--zova-text-body)',
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              lineHeight: 1,
-            }}
+            onClick={onMobileFiltersOpen}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border-[1.5px] border-(--zova-border) bg-white px-5 py-[11px] text-sm font-bold text-(--zova-ink) transition-all hover:border-[#B8D4A0] hover:bg-(--zova-green-soft) hover:text-(--zova-primary-action)"
           >
-            ✕
+            <FiSliders size={15} />
+            Filters &amp; Sort
+            {activeFilterCount > 0 && (
+              <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-(--zova-primary-action) px-[5px] text-[10px] font-extrabold text-white">
+                {activeFilterCount}
+              </span>
+            )}
           </button>
-        )}
+        </div>
+
+        {/* Title row + sort */}
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="m-0 text-2xl font-extrabold leading-[1.15] tracking-tight text-(--zova-ink)">
+              All Products
+            </h2>
+            <p className="mt-1 text-[13px] text-(--zova-text-muted)">
+              Showing{" "}
+              <span className="font-semibold text-(--zova-ink)">{productsLength}</span> of{" "}
+              <span className="font-semibold text-(--zova-ink)">{totalItems}</span> items
+            </p>
+          </div>
+
+          {/* Sort dropdown */}
+          <div className="relative shrink-0">
+            <select
+              value={filters.sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="min-w-[180px] appearance-none rounded-[10px] border-[1.5px] border-(--zova-border) bg-white py-[9px] pl-[14px] pr-9 text-[13px] font-semibold text-(--zova-ink) outline-none transition-colors hover:border-[#B8D4A0] focus:border-(--zova-primary-action)"
+            >
+              <option value="newest">Newest Arrivals</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating">Top Rated</option>
+              <option value="name">Name: A to Z</option>
+            </select>
+            <FiChevronDown
+              size={14}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-(--zova-text-body)"
+            />
+          </div>
+        </div>
+
+        {/* Search bar */}
+        <div className="group relative overflow-hidden rounded-xl border-[1.5px] border-(--zova-border) bg-(--zova-surface-alt) transition-[border-color,background-color] duration-[180ms] focus-within:border-(--zova-primary-action) focus-within:bg-white">
+          <FiSearch
+            size={15}
+            className="pointer-events-none absolute left-[14px] top-1/2 -translate-y-1/2 text-(--zova-text-muted) transition-colors duration-180 group-focus-within:text-(--zova-primary-action)"
+          />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput?.(e.target.value)}
+            placeholder="Search for products..."
+            className="w-full border-none bg-transparent py-3 pl-10 pr-10 text-sm text-(--zova-ink) outline-none"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput?.('')}
+              className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-(--zova-border) text-[11px] font-bold text-(--zova-text-body)"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
       </div>
     </div>
   );

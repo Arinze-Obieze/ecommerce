@@ -26,7 +26,7 @@ function MoodProductCard({ product }) {
 
   return (
     <Link href={`/products/${product.slug}`} className="group block">
-      <div className="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl bg-gray-100">
+      <div className="relative mb-3 aspect-3/4overflow-hidden rounded-2xl bg-gray-100">
         {image ? (
           <img src={image} alt={product.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
@@ -113,7 +113,7 @@ function MoodSidebar({ filters }) {
 
   const CheckRow = ({ active, label, onClick }) => (
     <button onClick={onClick} className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-all ${active ? 'bg-primary/6 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'}`}>
-      <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[5px] border transition-all ${active ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border transition-all ${active ? 'border-primary bg-primary' : 'border-gray-300'}`}>
         {active ? <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> : null}
       </span>
       {label}

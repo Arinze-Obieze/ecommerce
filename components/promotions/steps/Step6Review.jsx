@@ -4,7 +4,7 @@ import BadgePreview from '../BadgePreview';
 function Row({ label, value }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5 border-b border-gray-50 last:border-0">
-      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 flex-shrink-0">{label}</span>
+      <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 shrink-0">{label}</span>
       <span className="text-sm text-gray-800 font-medium text-right">{value}</span>
     </div>
   );
@@ -54,7 +54,7 @@ export default function Step6Review({ state, onSubmit, onDraft, saving }) {
       </div>
 
       {/* Summary card */}
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5">
+      <div className="rounded-2xl border border-border bg-white p-5">
         <Row label="Targeting" value={targetingSummary} />
         {promotionTypeLabel && (
           <Row label="Type" value={`${promotionTypeIcon || ''} ${promotionTypeLabel}`} />
@@ -85,7 +85,7 @@ export default function Step6Review({ state, onSubmit, onDraft, saving }) {
 
       {/* Approval notice */}
       <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex gap-3">
-        <span className="text-lg flex-shrink-0">⏳</span>
+        <span className="text-lg shrink-0">⏳</span>
         <div>
           <p className="text-sm font-semibold text-amber-900">Will go live after Zova reviews it</p>
           <p className="text-xs text-amber-700 mt-0.5">Usually within 2 hours. You'll be notified when it's approved.</p>
@@ -98,7 +98,7 @@ export default function Step6Review({ state, onSubmit, onDraft, saving }) {
           type="button"
           onClick={() => onDraft()}
           disabled={saving}
-          className="flex-1 py-3 rounded-xl border-2 border-[#E8E4DC] text-sm font-semibold text-gray-700 hover:border-gray-300 disabled:opacity-50 transition-all"
+          className="flex-1 py-3 rounded-xl border-2 border-border text-sm font-semibold text-gray-700 hover:border-gray-300 disabled:opacity-50 transition-all"
         >
           Save as Draft
         </button>

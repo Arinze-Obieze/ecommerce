@@ -25,7 +25,8 @@ export default function CartPage() {
         <div className="zova-section-header mb-8">
           <div>
             <span className="zova-eyebrow">Checkout ready</span>
-            <h1 className="zova-title mt-3 text-3xl font-black text-gray-900">Shopping Cart ({cartPage.cart.length})</h1>
+            <h1 className="zova-title mt-3 text-3xl font-black text-(--zova-ink)">Your Bag</h1>
+          <p className="mt-1 text-sm text-(--zova-text-muted)">Review your items before checkout</p>
           </div>
         </div>
         {cartPage.checkoutError && (

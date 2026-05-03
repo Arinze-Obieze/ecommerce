@@ -28,7 +28,7 @@ export function TeamInvitePanel({
   onSubmit,
 }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="text-base font-bold text-gray-900">Invite Team Member</h3>
       <p className="mt-1 text-sm text-gray-500">
         Existing users get immediate access. New users receive a secure account setup invitation automatically.
@@ -78,7 +78,7 @@ export function TeamInvitePanel({
 
 export function TeamInvitationsTable({ loading, invitations, canManageTeam, saving, onUpdateInvitation }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="mb-4 text-base font-bold text-gray-900">Pending Invitations</h3>
       {loading ? (
         <p className="text-sm text-gray-500">Loading invitations...</p>
@@ -146,7 +146,7 @@ export function TeamInvitationsTable({ loading, invitations, canManageTeam, savi
 
 export function TeamMembersTable({ loading, rows, canManageTeam, saving, onUpdateMember, onRemoveMember }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="mb-4 text-base font-bold text-gray-900">Current Team</h3>
       {loading ? (
         <p className="text-sm text-gray-500">Loading team...</p>

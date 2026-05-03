@@ -16,29 +16,29 @@ export default function ProductReviewStep({
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
         <div className="zova-store-card p-6">
-          <h2 className="text-lg font-bold text-[var(--zova-text-strong)]">Summary</h2>
+          <h2 className="text-lg font-bold text-(--zova-text-strong)">Summary</h2>
           <div className="mt-4 space-y-3 text-sm">
             <div>
-              <p className="text-[var(--zova-text-muted)]">Product name</p>
-              <p className="font-semibold text-[var(--zova-text-strong)]">{form.name}</p>
+              <p className="text-(--zova-text-muted)">Product name</p>
+              <p className="font-semibold text-(--zova-text-strong)">{form.name}</p>
             </div>
             <div>
-              <p className="text-[var(--zova-text-muted)]">Price</p>
-              <p className="font-semibold text-[var(--zova-text-strong)]">₦{Number(form.price).toLocaleString()}</p>
+              <p className="text-(--zova-text-muted)">Price</p>
+              <p className="font-semibold text-(--zova-text-strong)">₦{Number(form.price).toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[var(--zova-text-muted)]">Stock</p>
-              <p className="font-semibold text-[var(--zova-text-strong)]">{form.stock_quantity} units</p>
+              <p className="text-(--zova-text-muted)">Stock</p>
+              <p className="font-semibold text-(--zova-text-strong)">{form.stock_quantity} units</p>
             </div>
             <div>
-              <p className="text-[var(--zova-text-muted)]">Images</p>
-              <p className="font-semibold text-[var(--zova-text-strong)]">{images.length}</p>
+              <p className="text-(--zova-text-muted)">Images</p>
+              <p className="font-semibold text-(--zova-text-strong)">{images.length}</p>
             </div>
           </div>
         </div>
 
         <div className="zova-store-card p-6">
-          <h2 className="text-lg font-bold text-[var(--zova-text-strong)]">Actions</h2>
+          <h2 className="text-lg font-bold text-(--zova-text-strong)">Actions</h2>
           <div className="mt-4 space-y-3">
             <button
               type="button"

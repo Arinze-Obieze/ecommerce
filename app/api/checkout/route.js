@@ -3,6 +3,7 @@ import { createAdminClient, createClient as createServerClient } from '@/utils/s
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { writeActivityLog, writeAnalyticsEvent } from '@/utils/telemetry/server';
 import { calculateBulkPricing } from '@/utils/catalog/bulk-pricing';
+import { calculateShippingFee } from '@/constants/shipping';
 
 function toPositiveInt(value) {
   const parsed = Number.parseInt(value, 10);
@@ -15,12 +16,16 @@ function toNumber(value) {
 }
 
 function calculateShipping(subtotal) {
-  return subtotal > 50000 ? 0 : 2500;
+  return calculateShippingFee(subtotal);
 }
 
 function sanitizeText(value, maxLength = 255) {
   const normalized = String(value || '').trim();
   return normalized ? normalized.slice(0, maxLength) : '';
+}
+
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase().slice(0, 255);
 }
 
 function normalizeDeliveryAddress(value) {
@@ -46,10 +51,11 @@ function validateDeliveryAddress(address) {
   }
 }
 
-async function saveOrderShippingAddress(serviceClient, orderId, userId, address) {
+async function saveOrderShippingAddress(serviceClient, orderId, userId, address, contactEmail) {
   const payload = {
     order_id: orderId,
-    user_id: userId,
+    user_id: userId || null,
+    contact_email: normalizeEmail(contactEmail),
     source_address_id: address.id || null,
     label: address.type || 'Address',
     address_line1: address.address,
@@ -159,33 +165,22 @@ export async function POST(request) {
   const startedAt = Date.now();
   let currentUser = null;
   try {
-    const { items, deliveryAddress, addressMode, saveAddress } = await request.json();
+    const { items, customerEmail, deliveryAddress, addressMode, saveAddress } = await request.json();
 
     const authClient = await createServerClient();
     const {
       data: { user },
-      error: authError,
     } = await authClient.auth.getUser();
     currentUser = user;
-
-    if (authError || !user) {
-      await writeActivityLog({
-        request,
-        level: 'WARN',
-        service: 'checkout-service',
-        action: 'CHECKOUT_UNAUTHENTICATED',
-        status: 'failure',
-        statusCode: 401,
-        message: 'Authentication required for checkout',
-        durationMs: Date.now() - startedAt,
-      });
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    const resolvedEmail = normalizeEmail(user?.email || customerEmail);
+    if (!resolvedEmail || !resolvedEmail.includes('@')) {
+      return NextResponse.json({ error: 'A valid checkout email is required' }, { status: 400 });
     }
 
     const rateLimit = await enforceRateLimit({
       request,
       scope: 'checkout',
-      identifier: user.id,
+      identifier: user?.id || resolvedEmail || request.headers.get('x-forwarded-for') || 'guest',
       limit: 20,
       windowSeconds: 60,
     });
@@ -199,19 +194,19 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 429,
         message: 'Checkout rate limit exceeded',
-        userId: user.id,
+        userId: user?.id || null,
         durationMs: Date.now() - startedAt,
       });
       return NextResponse.json(rateLimitPayload('Too many checkout attempts. Please try again shortly.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
-    const authoritativeOrder = await buildAuthoritativeOrder(authClient, items);
+    const adminClient = await createAdminClient();
+    const authoritativeOrder = await buildAuthoritativeOrder(adminClient, items);
     const normalizedDeliveryAddress = normalizeDeliveryAddress(deliveryAddress);
     validateDeliveryAddress(normalizedDeliveryAddress);
-    const adminClient = await createAdminClient();
 
     const { data: orderId, error } = await adminClient.rpc('checkout_transaction', {
-      p_user_id: user.id,
+      p_user_id: user?.id || null,
       p_items: authoritativeOrder.items,
       p_total: authoritativeOrder.total,
     });
@@ -235,18 +230,18 @@ export async function POST(request) {
         status: 'failure',
         statusCode,
         message: error.message,
-        userId: user.id,
+        userId: user?.id || null,
         errorCode: error.code || null,
         durationMs: Date.now() - startedAt,
       });
       return NextResponse.json({ error: userMsg }, { status: statusCode });
     }
 
-    await saveOrderShippingAddress(authClient, orderId, user.id, normalizedDeliveryAddress);
+    await saveOrderShippingAddress(adminClient, orderId, user?.id || null, normalizedDeliveryAddress, resolvedEmail);
 
     await writeAnalyticsEvent({
       eventName: 'begin_checkout',
-      userId: user.id,
+      userId: user?.id || null,
       path: '/cart',
       properties: {
         order_id: orderId,
@@ -254,6 +249,8 @@ export async function POST(request) {
         subtotal: authoritativeOrder.subtotal,
         shipping: authoritativeOrder.shipping,
         total: authoritativeOrder.total,
+        checkout_type: user ? 'authenticated' : 'guest',
+        checkout_email: resolvedEmail,
         address_mode: sanitizeText(addressMode, 24) || 'saved',
         used_saved_address: Boolean(normalizedDeliveryAddress.id),
         saved_address_for_future: Boolean(saveAddress),
@@ -268,11 +265,12 @@ export async function POST(request) {
       status: 'success',
       statusCode: 200,
       message: 'Checkout reservation created',
-      userId: user.id,
+      userId: user?.id || null,
       metadata: {
         orderId,
         itemsCount: authoritativeOrder.items.length,
         total: authoritativeOrder.total,
+        checkoutType: user ? 'authenticated' : 'guest',
         addressMode: sanitizeText(addressMode, 24) || 'saved',
         saveAddress: Boolean(saveAddress),
         // F004: delivery address (phone, street) must not appear in logs.

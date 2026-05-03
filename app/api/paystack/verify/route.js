@@ -24,6 +24,25 @@ function extractOrderIdFromMetadata(metadata) {
   return null;
 }
 
+function extractCheckoutEmailFromMetadata(metadata) {
+  if (!metadata || typeof metadata !== 'object') return null;
+
+  if (metadata.checkout_email) {
+    return String(metadata.checkout_email).trim().toLowerCase();
+  }
+
+  if (Array.isArray(metadata.custom_fields)) {
+    const emailField = metadata.custom_fields.find(
+      (field) => field?.variable_name === 'checkout_email'
+    );
+    if (emailField?.value) {
+      return String(emailField.value).trim().toLowerCase();
+    }
+  }
+
+  return null;
+}
+
 async function releaseOrderStockAtomic(client, orderId) {
   const { error } = await client.rpc('release_order_stock', {
     p_order_id: orderId,
@@ -117,7 +136,7 @@ export async function POST(request) {
   let currentUser = null;
 
   try {
-    const { reference, orderId } = await request.json();
+    const { reference, orderId, customerEmail } = await request.json();
 
     if (!reference || !orderId) {
       return NextResponse.json({ error: 'Missing reference or orderId' }, { status: 400 });
@@ -126,28 +145,14 @@ export async function POST(request) {
     const authClient = await createServerClient();
     const {
       data: { user },
-      error: authError,
     } = await authClient.auth.getUser();
     currentUser = user;
-
-    if (authError || !user) {
-      await writeActivityLog({
-        request,
-        level: 'WARN',
-        service: 'payment-service',
-        action: 'PAYMENT_VERIFY_UNAUTHENTICATED',
-        status: 'failure',
-        statusCode: 401,
-        message: 'Authentication required for payment verification',
-        durationMs: Date.now() - startedAt,
-      });
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    const normalizedEmail = String(customerEmail || '').trim().toLowerCase();
 
     const rateLimit = await enforceRateLimit({
       request,
       scope: 'paystack-verify',
-      identifier: user.id,
+      identifier: user?.id || normalizedEmail || request.headers.get('x-forwarded-for') || 'guest',
       limit: 40,
       windowSeconds: 60,
     });
@@ -161,13 +166,15 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 429,
         message: 'Payment verify rate limit exceeded',
-        userId: user.id,
+        userId: user?.id || null,
         durationMs: Date.now() - startedAt,
       });
       return NextResponse.json(rateLimitPayload('Too many verification attempts. Please try again shortly.', rateLimit), { status: 429, headers: rateLimitHeaders(rateLimit) });
     }
 
-    const { data: order, error: orderError } = await authClient
+    const adminClient = await createAdminClient();
+
+    const { data: order, error: orderError } = await adminClient
       .from('orders')
       .select(`
         id,
@@ -188,14 +195,14 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 404,
         message: 'Order not found during payment verification',
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId, reference },
         durationMs: Date.now() - startedAt,
       });
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    if (order.user_id !== user.id) {
+    if (order.user_id && order.user_id !== user?.id) {
       await writeActivityLog({
         request,
         level: 'WARN',
@@ -204,7 +211,7 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 403,
         message: 'User attempted to verify payment for another user order',
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId, reference },
         durationMs: Date.now() - startedAt,
       });
@@ -260,14 +267,12 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 502,
         message: 'Unable to verify payment with gateway',
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId, reference },
         durationMs: Date.now() - startedAt,
       });
       return NextResponse.json({ error: 'Unable to verify payment with gateway' }, { status: 502 });
     }
-
-    const adminClient = await createAdminClient();
 
     if (paystackStatus !== 'success') {
       // Only cancel and release on definitive failure statuses.
@@ -276,7 +281,7 @@ export async function POST(request) {
         if (cancelResult.cancelled) {
           await writeAnalyticsEvent({
             eventName: 'payment_failed',
-            userId: user.id,
+            userId: user?.id || null,
             path: '/cart',
             properties: {
               order_id: order.id,
@@ -292,7 +297,7 @@ export async function POST(request) {
             status: 'failure',
             statusCode: 400,
             message: 'Payment failed and stock released',
-            userId: user.id,
+            userId: user?.id || null,
             metadata: { orderId: order.id, reference, paystackStatus },
             durationMs: Date.now() - startedAt,
           });
@@ -311,7 +316,7 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 400,
         message: `Payment is not successful (${paystackStatus || 'unknown'})`,
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId: order.id, reference, paystackStatus },
         durationMs: Date.now() - startedAt,
       });
@@ -332,11 +337,18 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 409,
         message: validation.error,
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId: order.id, reference },
         durationMs: Date.now() - startedAt,
       });
       return NextResponse.json({ error: validation.error }, { status: 409 });
+    }
+
+    if (!order.user_id) {
+      const paymentEmail = extractCheckoutEmailFromMetadata(verifyData?.data?.metadata);
+      if (!normalizedEmail || !paymentEmail || normalizedEmail !== paymentEmail) {
+        return NextResponse.json({ error: 'Guest checkout email could not be verified.' }, { status: 403 });
+      }
     }
 
     const { data: completedRows, error: updateError } = await adminClient
@@ -357,7 +369,7 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 500,
         message: updateError.message,
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId: order.id, reference },
         errorCode: updateError.code || null,
         durationMs: Date.now() - startedAt,
@@ -369,7 +381,7 @@ export async function POST(request) {
     }
 
     if (!completedRows || completedRows.length === 0) {
-      const { data: latestOrder } = await authClient
+      const { data: latestOrder } = await adminClient
         .from('orders')
         .select('status, payment_reference')
         .eq('id', orderId)
@@ -391,7 +403,7 @@ export async function POST(request) {
 
     await writeAnalyticsEvent({
       eventName: 'purchase',
-      userId: user.id,
+      userId: user?.id || null,
       path: '/cart',
       properties: {
         order_id: order.id,
@@ -407,7 +419,7 @@ export async function POST(request) {
       status: 'success',
       statusCode: 200,
       message: 'Payment verified and order completed',
-      userId: user.id,
+      userId: user?.id || null,
       metadata: { orderId: order.id, reference },
       durationMs: Date.now() - startedAt,
     });
@@ -426,7 +438,7 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 200,
         message: escrowResult.error || 'Escrow funding failed after successful payment',
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId: order.id, reference },
         durationMs: Date.now() - startedAt,
       });
@@ -446,7 +458,7 @@ export async function POST(request) {
         status: 'failure',
         statusCode: 200,
         message: 'Payment succeeded but one or more order emails failed',
-        userId: user.id,
+        userId: user?.id || null,
         metadata: { orderId: order.id, emailSummary },
         durationMs: Date.now() - startedAt,
       });

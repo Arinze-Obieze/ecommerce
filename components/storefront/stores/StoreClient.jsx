@@ -1,11 +1,15 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import {
   FiGrid, FiChevronRight, FiFilter, FiSliders, FiTag, FiX,
 } from "react-icons/fi";
 import ProductGrid from '@/components/catalog/browse/ProductGrid';
 import { getStoreProducts } from "@/features/catalog/api/client";
-import StoreEntranceOverlay from '@/components/storefront/stores/StoreEntranceOverlay';
+const StoreEntranceOverlay = dynamic(
+  () => import('@/components/storefront/stores/StoreEntranceOverlay'),
+  { ssr: false }
+);
 import { ActiveFilters, StoreHeader, STORE_TABS } from '@/components/storefront/stores/StoreChrome';
 
 // ═════════════════════════════════════════════════════════════

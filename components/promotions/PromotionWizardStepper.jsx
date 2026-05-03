@@ -4,7 +4,7 @@ export function PromotionWizardResumeBanner({ onDiscard, onResume }) {
   return (
     <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
       <p className="text-sm font-medium text-amber-800">You have an unfinished promotion draft.</p>
-      <div className="flex flex-shrink-0 gap-2">
+      <div className="flex shrink-0 gap-2">
         <button onClick={onDiscard} className="text-xs font-semibold text-gray-500 hover:text-gray-700">
           Discard
         </button>

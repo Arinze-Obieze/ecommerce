@@ -1,7 +1,9 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useToast } from '@/contexts/toast/ToastContext';
 import { trackAnalyticsEvent } from '@/utils/telemetry/analytics';
+import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from '@/constants/storage-keys';
+import { findCartItem, isSameCartItem, migrateStorageKey } from '@/contexts/cart/cart-utils';
 
 const CartContext = createContext();
 
@@ -18,13 +20,13 @@ export function CartProvider({ children }) {
     if (typeof window === 'undefined') return;
 
     if (!sessionIdRef.current) {
-      const existing = localStorage.getItem('cart_session_id');
+      const existing = migrateStorageKey(STORAGE_KEYS.CART_SESSION_ID, LEGACY_STORAGE_KEYS.CART_SESSION_ID);
       if (existing) {
         sessionIdRef.current = existing;
       } else {
         const generated = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
         sessionIdRef.current = generated;
-        localStorage.setItem('cart_session_id', generated);
+        localStorage.setItem(STORAGE_KEYS.CART_SESSION_ID, generated);
       }
     }
 
@@ -59,7 +61,7 @@ export function CartProvider({ children }) {
 
   // Load from local storage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('shophub_cart');
+    const savedCart = migrateStorageKey(STORAGE_KEYS.CART, LEGACY_STORAGE_KEYS.CART);
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
@@ -71,17 +73,14 @@ export function CartProvider({ children }) {
 
   // Save to local storage whenever cart changes
   useEffect(() => {
-    localStorage.setItem('shophub_cart', JSON.stringify(cart));
+    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
   }, [cart]);
 
   const addToCart = (product) => {
     const incomingQuantity = Math.max(1, Number(product.quantity) || 1);
     const maxStock = normalizeMaxStock(product);
     const incomingVariantId = product.variant_id === undefined ? null : product.variant_id;
-    const existingCartItem = cart.find((p) => {
-      const pVariantId = p.variant_id === undefined ? null : p.variant_id;
-      return p.id === product.id && pVariantId === incomingVariantId;
-    });
+    const existingCartItem = findCartItem(cart, product.id, incomingVariantId);
     const effectiveMaxStock = normalizeMaxStock(existingCartItem || product);
     const addedQuantity = existingCartItem
       ? Math.max(0, Math.min(effectiveMaxStock, existingCartItem.quantity + incomingQuantity) - existingCartItem.quantity)
@@ -94,16 +93,12 @@ export function CartProvider({ children }) {
 
     setCart((prevCart) => {
       // Find item with same Product ID AND same Variant ID
-      const existing = prevCart.find((p) => {
-         const pVariantId = p.variant_id === undefined ? null : p.variant_id;
-         return p.id === product.id && pVariantId === incomingVariantId;
-      });
+      const existing = findCartItem(prevCart, product.id, incomingVariantId);
 
       if (existing) {
         return prevCart.map((p) => {
-          const pVariantId = p.variant_id === undefined ? null : p.variant_id;
           const itemMaxStock = normalizeMaxStock(p);
-          return (p.id === product.id && pVariantId === incomingVariantId)
+          return isSameCartItem(p, product.id, incomingVariantId)
             ? { ...p, quantity: Math.min(itemMaxStock, p.quantity + incomingQuantity) } 
             : p;
         });
@@ -137,19 +132,12 @@ export function CartProvider({ children }) {
 
   const removeFromCart = (productId, variantId = null) => {
     const targetVariantId = variantId === undefined ? null : variantId;
-    const removedItem = cart.find((item) => {
-      const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
-      return item.id === productId && itemVariantId === targetVariantId;
-    });
+    const removedItem = findCartItem(cart, productId, targetVariantId);
 
     setCart((prevCart) => {
-        const newCart = prevCart.filter((p) => {
-            const pVariantId = p.variant_id === undefined ? null : p.variant_id;
-            // Remove if both ID and Variant ID match
-            return !(p.id === productId && pVariantId === targetVariantId);
-        });
+        const newCart = prevCart.filter((item) => !isSameCartItem(item, productId, targetVariantId));
         
-        localStorage.setItem('shophub_cart', JSON.stringify(newCart)); // Fixed key name `shophub_cart`
+        localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(newCart));
         return newCart;
     });
     if (removedItem) {
@@ -164,10 +152,7 @@ export function CartProvider({ children }) {
 
   const updateQuantity = (productId, amount, variantId = null) => {
     const targetVariantId = variantId === undefined ? null : variantId;
-    const targetItem = cart.find((item) => {
-      const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
-      return item.id === productId && itemVariantId === targetVariantId;
-    });
+    const targetItem = findCartItem(cart, productId, targetVariantId);
     if (targetItem) {
       const maxStock = normalizeMaxStock(targetItem);
       const newQuantity = Math.min(maxStock, Math.max(1, targetItem.quantity + amount));
@@ -184,8 +169,7 @@ export function CartProvider({ children }) {
 
     setCart((prevCart) => {
         return prevCart.map(item => {
-            const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
-            if (item.id === productId && itemVariantId === targetVariantId) {
+            if (isSameCartItem(item, productId, targetVariantId)) {
                 const maxStock = normalizeMaxStock(item);
                 const newQuantity = Math.min(maxStock, Math.max(1, item.quantity + amount));
                 return { ...item, quantity: newQuantity };
@@ -197,10 +181,7 @@ export function CartProvider({ children }) {
 
   const setItemQuantity = (productId, newQuantity, variantId = null) => {
     const targetVariantId = variantId === undefined ? null : variantId;
-    const targetItem = cart.find((item) => {
-      const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
-      return item.id === productId && itemVariantId === targetVariantId;
-    });
+    const targetItem = findCartItem(cart, productId, targetVariantId);
     if (targetItem) {
       const maxStock = normalizeMaxStock(targetItem);
       const boundedQuantity = Math.min(maxStock, Math.max(1, newQuantity));
@@ -217,8 +198,7 @@ export function CartProvider({ children }) {
 
     setCart((prevCart) => {
         return prevCart.map(item => {
-            const itemVariantId = item.variant_id === undefined ? null : item.variant_id;
-            if (item.id === productId && itemVariantId === targetVariantId) {
+            if (isSameCartItem(item, productId, targetVariantId)) {
                 const maxStock = normalizeMaxStock(item);
                 const boundedQuantity = Math.min(maxStock, Math.max(1, newQuantity));
                 return { ...item, quantity: boundedQuantity };
@@ -238,13 +218,17 @@ export function CartProvider({ children }) {
       });
     });
     setCart([]);
-    localStorage.removeItem('shophub_cart');
+    localStorage.removeItem(STORAGE_KEYS.CART);
   };
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const value = useMemo(
+    () => ({ cart, addToCart, removeFromCart, updateQuantity, setItemQuantity, clearCart, cartCount }),
+    [cart, cartCount]
+  );
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, setItemQuantity, clearCart, cartCount }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

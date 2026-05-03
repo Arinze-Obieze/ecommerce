@@ -39,7 +39,7 @@ export default function UserMenu({ user, signOut, adminRole }) {
           <FiUser className="h-4 w-4" />
         </span>
         <span className="hidden lg:flex flex-col items-start gap-0.5 leading-none">
-          <span className="text-xs font-bold text-[var(--zova-text-strong)]">
+          <span className="text-xs font-bold text-(--zova-text-strong)">
             {user ? displayName.split(" ")[0] : "Account"}
           </span>
           {isAdmin ? <span className="zova-header-user-badge">Admin</span> : null}
@@ -54,7 +54,7 @@ export default function UserMenu({ user, signOut, adminRole }) {
             {user ? (
               <>
                 <div className="zova-header-dropdown-section px-4 py-3.5">
-                  <p className="truncate text-sm font-bold text-[var(--zova-text-strong)]">
+                  <p className="truncate text-sm font-bold text-(--zova-text-strong)">
                     {displayName}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-[var(--zova-text-body)]">

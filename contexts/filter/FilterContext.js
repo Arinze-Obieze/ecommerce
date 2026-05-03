@@ -2,92 +2,12 @@
 
 import React, {
   createContext, useContext, useState,
-  useCallback, useEffect, useRef, Suspense,
+  useCallback, useEffect, useMemo, useRef, Suspense,
 } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { filterStateToUrl, getInitialFilters, urlToFilterState } from '@/contexts/filter/filter-codec';
 
 const FilterContext = createContext();
-
-const INITIAL_FILTERS = {
-  search:     '',
-  category:   '',
-  collection: '',
-  minPrice:   null,
-  maxPrice:   null,
-  sizes:      [],
-  colors:     [],
-  sortBy:     'newest',
-  page:       1,
-  inStock:    false,
-  onSale:     false,
-};
-
-function getShopPathCategory(pathname) {
-  const match = pathname?.match(/^\/shop\/([^/]+)\/?$/);
-  if (!match) return '';
-
-  try {
-    return decodeURIComponent(match[1]);
-  } catch {
-    return match[1];
-  }
-}
-
-function isShopPath(pathname) {
-  return pathname === '/shop' || pathname?.startsWith('/shop/');
-}
-
-// ─── Parse URL → filter state ────────────────────────────────────────────────
-function parseParams(searchParams, pathname = '') {
-  const categoryParam = searchParams.get('category');
-  const pathCategory = getShopPathCategory(pathname);
-  const resolvedCategory = categoryParam ?? pathCategory;
-
-  return {
-    search:     searchParams.get('search')     || '',
-    category:   resolvedCategory === 'all' ? '' : resolvedCategory || '',
-    collection: searchParams.get('collection') || '',
-    minPrice:   searchParams.get('minPrice')   ? parseFloat(searchParams.get('minPrice'))  : null,
-    maxPrice:   searchParams.get('maxPrice')   ? parseFloat(searchParams.get('maxPrice'))  : null,
-    sizes:      searchParams.get('sizes')      ? searchParams.get('sizes').split(',')      : [],
-    colors:     searchParams.get('colors')     ? searchParams.get('colors').split(',')     : [],
-    sortBy:     searchParams.get('sortBy')     || 'newest',
-    page:       parseInt(searchParams.get('page') || '1', 10),
-    inStock:    searchParams.get('inStock')    === 'true',
-    onSale:     searchParams.get('onSale')     === 'true',
-  };
-}
-
-// ─── Build URL params from filter state ──────────────────────────────────────
-function buildParams(f, { includeCategory = true } = {}) {
-  const p = new URLSearchParams();
-  if (f.search)           p.set('search',     f.search);
-  if (includeCategory && f.category) p.set('category', f.category);
-  if (f.collection)       p.set('collection', f.collection);
-  if (f.minPrice != null) p.set('minPrice',   String(f.minPrice));
-  if (f.maxPrice != null) p.set('maxPrice',   String(f.maxPrice));
-  if (f.sizes.length)     p.set('sizes',      f.sizes.join(','));
-  if (f.colors.length)    p.set('colors',     f.colors.join(','));
-  if (f.sortBy !== 'newest') p.set('sortBy',  f.sortBy);
-  if (f.page > 1)         p.set('page',       String(f.page));
-  if (f.inStock)          p.set('inStock',    'true');
-  if (f.onSale)           p.set('onSale',     'true');
-  return p.toString();
-}
-
-function buildFilterUrl(filters, pathname) {
-  if (!isShopPath(pathname)) {
-    return {
-      pathname,
-      queryString: buildParams(filters),
-    };
-  }
-
-  return {
-    pathname: filters.category ? `/shop/${encodeURIComponent(filters.category)}` : '/shop',
-    queryString: buildParams(filters, { includeCategory: false }),
-  };
-}
 
 // ────────────────────────────────────────────────────────────────────────────
 // Inner provider — uses useSearchParams (must be inside Suspense)
@@ -100,8 +20,9 @@ function FilterProviderContent({ children }) {
   const currentUrl   = `${pathname}${queryString ? `?${queryString}` : ''}`;
 
   // ── Filter state — initialised from URL immediately ──────────────────────
-  const [filters, setFilters]           = useState(() => parseParams(searchParams, pathname));
+  const [filters, setFilters]           = useState(() => urlToFilterState(searchParams, pathname));
   const [filtersReady, setFiltersReady] = useState(false);
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
 
   // ── Metadata ──────────────────────────────────────────────────────────────
   const [categories,            setCategories]            = useState([]);
@@ -109,7 +30,7 @@ function FilterProviderContent({ children }) {
   const [collections,           setCollections]           = useState([]);
   const [categoriesLoading,     setCategoriesLoading]     = useState(true);
   const [availableFilters,      setAvailableFilters]      = useState({
-    sizes: [], colors: [], brands: [], priceRange: { min: 0, max: 1000000 },
+    sizes: [], sizeCounts: {}, colors: [], colorCounts: {}, brands: [], priceRange: { min: 0, max: 1000000 },
   });
 
   // ── Refs ──────────────────────────────────────────────────────────────────
@@ -118,6 +39,7 @@ function FilterProviderContent({ children }) {
   const filtersRef      = useRef(filters);
   const currentUrlRef   = useRef(currentUrl);
   const prevUrl         = useRef(currentUrl);
+  const pendingUrlRef   = useRef(null);
 
   // Keep ref in sync — safe to set during render for refs
   filtersRef.current = filters;
@@ -125,10 +47,15 @@ function FilterProviderContent({ children }) {
 
   // ── URL → State (external navigation: back/forward, direct links) ────────
   useEffect(() => {
+    if (pendingUrlRef.current && currentUrl === pendingUrlRef.current) {
+      pendingUrlRef.current = null;
+      setIsApplyingFilters(false);
+    }
+
     if (currentUrl === prevUrl.current) return; // we pushed this ourselves
 
     prevUrl.current = currentUrl;
-    const parsed = parseParams(searchParams, pathname);
+    const parsed = urlToFilterState(searchParams, pathname);
     filtersRef.current = parsed;
     setFilters(parsed);
     setFiltersReady(true);
@@ -186,12 +113,17 @@ function FilterProviderContent({ children }) {
     filtersRef.current = next;
     setFilters(next);
 
-    const target = buildFilterUrl(next, pathname);
+    const target = filterStateToUrl(next, pathname);
     const targetUrl = `${target.pathname}${target.queryString ? `?${target.queryString}` : ''}`;
 
     if (targetUrl !== currentUrlRef.current) {
+      pendingUrlRef.current = targetUrl;
+      setIsApplyingFilters(true);
       prevUrl.current = targetUrl;
       router.replace(targetUrl, { scroll: false });
+    } else {
+      pendingUrlRef.current = null;
+      setIsApplyingFilters(false);
     }
   }, [pathname, router]);
 
@@ -254,7 +186,7 @@ function FilterProviderContent({ children }) {
   }, [commitFilters]);
 
   const clearAllFilters = useCallback(() => {
-    commitFilters({ ...INITIAL_FILTERS });
+    commitFilters(getInitialFilters());
   }, [commitFilters]);
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -295,7 +227,7 @@ function FilterProviderContent({ children }) {
     return s;
   })();
 
-  const value = {
+  const value = useMemo(() => ({
     // State
     filters, filtersReady,
     categories, hierarchicalCategories, collections,
@@ -310,7 +242,32 @@ function FilterProviderContent({ children }) {
     hasActiveFilters, activeFilterCount,
     filterSummary,
     isFiltered: hasActiveFilters,
-  };
+    isApplyingFilters,
+  }), [
+    activeFilterCount,
+    availableFilters,
+    categories,
+    categoriesLoading,
+    clearAllFilters,
+    collections,
+    filterSummary,
+    filters,
+    filtersReady,
+    hasActiveFilters,
+    hierarchicalCategories,
+    isApplyingFilters,
+    setCategory,
+    setCollection,
+    setPage,
+    setPriceRange,
+    setSearch,
+    setSortBy,
+    toggleColor,
+    toggleInStock,
+    toggleOnSale,
+    toggleSize,
+    updateFilters,
+  ]);
 
   return (
     <FilterContext.Provider value={value}>
@@ -339,7 +296,7 @@ function FilterLoadingFallback() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden animate-pulse">
-                  <div className="aspect-[3/4] bg-gray-100" />
+                  <div className="aspect-3/4 bg-gray-100" />
                   <div className="p-3 space-y-2">
                     <div className="h-3 bg-gray-100 rounded w-3/4" />
                     <div className="h-3 bg-gray-100 rounded w-1/2" />

@@ -34,7 +34,7 @@ function StoreCard({ store }) {
           <Link
             href={href}
             aria-label={`Open ${store.name}`}
-            className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden"
+            className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden"
           >
             {store.logo_url ? (
               <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />

@@ -364,7 +364,7 @@ export default function ProductsWorkspaceScreen({
         renderRowActions={renderRowActions}
       />
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-col gap-3">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
@@ -543,7 +543,7 @@ export default function ProductsWorkspaceScreen({
                       onClick={() =>
                         router.push(`/store/dashboard/products/${row.id}`)
                       }
-                      className={`w-full rounded-xl border p-3 text-left shadow-sm transition cursor-pointer ${selected ? "border-primary bg-[#f7fbf8]" : "border-[#E8E4DC] bg-white hover:border-[#b8d0c4]"}`}
+                      className={`w-full rounded-xl border p-3 text-left shadow-sm transition cursor-pointer ${selected ? "border-primary bg-[#f7fbf8]" : "border-border bg-white hover:border-[#b8d0c4]"}`}
                     >
                       <div className="flex items-center gap-3">
                         <button
@@ -606,7 +606,7 @@ export default function ProductsWorkspaceScreen({
                   return (
                     <div
                       key={row.id}
-                      className={`rounded-2xl border p-4 shadow-sm transition ${selected ? "border-primary bg-[#f7fbf8]" : "border-[#E8E4DC] bg-white"}`}
+                      className={`rounded-2xl border p-4 shadow-sm transition ${selected ? "border-primary bg-[#f7fbf8]" : "border-border bg-white"}`}
                     >
                       <div className="flex items-start gap-3">
                         <button

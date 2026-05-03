@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 import RecentlyViewedProducts from '@/components/catalog/RecentlyViewedProducts';
+import LazyExploreSection from '@/components/storefront/home/LazyExploreSection';
 import NewsletterSection from '@/components/storefront/home/NewsletterSection';
 import {
   getBestSellerProductsServer,
-  getExploreProductsServer,
   getHeroBannerServer,
   getNewArrivalProductsServer,
   getRecommendedProductsServer,
@@ -12,8 +12,6 @@ import {
 import {
   BestSellersSection,
   CarouselSectionFallback,
-  ExploreFallback,
-  ExploreSection,
   HeroFallback,
   HeroSection,
   NewArrivalsSection,
@@ -28,7 +26,6 @@ export default function HomePage() {
   const newArrivalsPromise = getNewArrivalProductsServer(8);
   const recommendedPromise = getRecommendedProductsServer(10);
   const topStoresPromise = getTopStoresServer(8);
-  const explorePromise = getExploreProductsServer(12);
 
   return (
     <main>
@@ -52,9 +49,7 @@ export default function HomePage() {
         <TopStoresSection promise={topStoresPromise} />
       </Suspense>
 
-      <Suspense fallback={<ExploreFallback />}>
-        <ExploreSection promise={explorePromise} />
-      </Suspense>
+      <LazyExploreSection />
 
       <RecentlyViewedProducts />
       <NewsletterSection />

@@ -19,10 +19,10 @@ export default function OrderHistoryRow({ order }) {
           <FiPackage size={17} />
         </div>
         <div>
-          <p className="m-0 text-[13px] font-extrabold tracking-[0.02em] text-[var(--zova-text-strong)]">
+          <p className="m-0 text-[13px] font-extrabold tracking-[0.02em] text-(--zova-text-strong)">
             #{String(order.id).slice(0, 8).toUpperCase()}
           </p>
-          <p className="m-0 mt-1 text-xs text-[var(--zova-text-muted)]">
+          <p className="m-0 mt-1 text-xs text-(--zova-text-muted)">
             {formatOrderDate(order.created_at)} · {itemCount} {itemCount === 1 ? "item" : "items"}
           </p>
         </div>
@@ -39,7 +39,7 @@ export default function OrderHistoryRow({ order }) {
         >
           {status.label}
         </span>
-        <p className="m-0 text-sm font-extrabold tracking-[-0.02em] text-[var(--zova-text-strong)]">
+        <p className="m-0 text-sm font-extrabold tracking-[-0.02em] text-(--zova-text-strong)">
           {formatOrderPrice(order.total_amount)}
         </p>
         <span className="zova-account-list-cta">

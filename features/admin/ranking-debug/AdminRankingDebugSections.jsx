@@ -7,7 +7,7 @@ import {
 
 export function AdminRankingDebugIntro() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h1 className="text-xl font-bold text-gray-900">Ranking Debug</h1>
       <p className="mt-1 text-sm text-gray-600">
         Inspect smart ranking results for a specific query, category, or store and review the score breakdowns that shape the final order.
@@ -26,7 +26,7 @@ export function AdminRankingDebugForm({
   onSubmit,
 }) {
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <form onSubmit={onSubmit} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <label className="text-sm">
           <span className="mb-1 block font-semibold text-gray-700">Query</span>
@@ -119,7 +119,7 @@ export function AdminRankingDebugMeta({ result }) {
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
       {cards.map((group, index) => (
-        <div key={index} className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+        <div key={index} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
           {group.map(([label, value]) => (
             <div key={label} className={label === group[0][0] ? '' : 'mt-3'}>
               <p className="text-xs uppercase text-gray-500">{label}</p>
@@ -136,7 +136,7 @@ export function AdminRankingDebugResults({ result }) {
   const rows = result?.data || [];
 
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-bold text-gray-900">Ranked Products</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">

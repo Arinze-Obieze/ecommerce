@@ -5,9 +5,7 @@ import { attachPromotionsToProducts } from '@/utils/catalog/promotions';
 import { errorJson, publicJson, toPositiveInt } from '@/utils/platform/api-response';
 import { paginationMeta } from '@/utils/platform/pagination';
 import { enforceRateLimit, rateLimitHeaders, rateLimitPayload } from '@/utils/platform/rate-limit';
-
-const DEFAULT_LIMIT = 24;
-const MAX_LIMIT = 100;
+import { DEFAULT_LIMIT, MAX_LIMIT } from '@/constants/pagination';
 const MAX_PAGE_SIZE = 10;
 const SMART_CANDIDATE_MIN = 72;
 const SMART_CANDIDATE_MAX = 180;

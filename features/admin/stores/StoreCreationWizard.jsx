@@ -257,7 +257,7 @@ export default function StoreCreationWizard({ onSuccess, onError }) {
           </div>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-[#E8E4DC] bg-primary-soft p-5">
+        <div className="space-y-3 rounded-xl border border-border bg-primary-soft p-5">
           <div className="flex items-center gap-2">
             <FiCheckCircle className="h-5 w-5 text-primary" />
             <p className="text-lg font-bold text-gray-900">{selectedSeller.business_name}</p>
@@ -306,7 +306,7 @@ export default function StoreCreationWizard({ onSuccess, onError }) {
           <FiArrowLeft className="h-4 w-4" /> Back to confirmation
         </button>
 
-        <div className="rounded-xl border border-[#E8E4DC] bg-primary-soft px-4 py-2.5 text-sm text-gray-700">
+        <div className="rounded-xl border border-border bg-primary-soft px-4 py-2.5 text-sm text-gray-700">
           Creating store for: <span className="font-bold text-primary">{selectedSeller.business_name}</span>{' '}
           <span className="font-mono text-gray-500">({selectedSeller.seller_id})</span>
         </div>

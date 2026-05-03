@@ -13,7 +13,7 @@ import {
 
 export function OrderDetailHeader({ order, receiptUrl, receiptDownloadUrl }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/store/dashboard/orders" className="text-sm font-semibold text-primary hover:underline">
@@ -37,7 +37,7 @@ export function OrderDetailHeader({ order, receiptUrl, receiptDownloadUrl }) {
             href={receiptDownloadUrl}
             target="_blank"
             rel="noreferrer"
-            className="rounded-xl border border-[#E8E4DC] px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
             Download receipt
           </a>
@@ -54,7 +54,7 @@ export function OrderSummaryCards({ cards }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+        <div key={card.label} className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
           <p className="mt-1 break-words text-sm font-semibold text-gray-900">{card.value}</p>
         </div>
@@ -65,7 +65,7 @@ export function OrderSummaryCards({ cards }) {
 
 export function OrderItemsSection({ items }) {
   return (
-    <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="mb-4">
         <h3 className="text-base font-bold text-gray-900">Items in this store order</h3>
         <p className="text-sm text-gray-500">Only products belonging to this store are shown here.</p>
@@ -95,7 +95,7 @@ export function OrderItemsSection({ items }) {
 
 export function FulfillmentTimelineSection({ updates }) {
   return (
-    <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="mb-4">
         <h3 className="text-base font-bold text-gray-900">Fulfillment timeline</h3>
         <p className="text-sm text-gray-500">Recent seller-side fulfillment updates appear here.</p>
@@ -125,7 +125,7 @@ export function FulfillmentTimelineSection({ updates }) {
 
 export function FulfillmentUpdateForm({ form, setForm, saving, onSubmit }) {
   return (
-    <section id="fulfillment-update" className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <section id="fulfillment-update" className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="text-base font-bold text-gray-900">Update fulfillment</h3>
       <p className="mt-1 text-sm text-gray-500">
         Move the order forward as operations progress. Shipping requires a tracking reference. Issue requires an internal note.
@@ -181,7 +181,7 @@ export function FulfillmentUpdateForm({ form, setForm, saving, onSubmit }) {
 
 export function ReceiptSection({ receiptUrl, receiptDownloadUrl }) {
   return (
-    <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="text-base font-bold text-gray-900">Zova receipt (PDF)</h3>
       <p className="mt-1 text-sm text-gray-500">
         Generate and share a branded order receipt PDF for operations, customer support, or dispatch records.
@@ -199,14 +199,14 @@ export function ReceiptSection({ receiptUrl, receiptDownloadUrl }) {
           href={receiptDownloadUrl}
           target="_blank"
           rel="noreferrer"
-          className="rounded-xl border border-[#E8E4DC] px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+          className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
         >
           Download receipt
         </a>
       </div>
       <div className="mt-4 md:hidden">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Mobile preview</p>
-        <object data={receiptUrl} type="application/pdf" className="h-[60vh] w-full rounded-xl border border-[#E8E4DC]">
+        <object data={receiptUrl} type="application/pdf" className="h-[60vh] w-full rounded-xl border border-border">
           <a
             href={receiptUrl}
             target="_blank"
@@ -225,7 +225,7 @@ export function ReturnRequestForm({ returnRequest, returnForm, setReturnForm, re
   if (!returnRequest) return null;
 
   return (
-    <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="text-base font-bold text-gray-900">Handle return request</h3>
       <p className="mt-1 text-sm text-gray-500">
         Approve or reject the return, then track refund visibility for the buyer.
@@ -307,7 +307,7 @@ export function ReturnRequestForm({ returnRequest, returnForm, setReturnForm, re
 export function OrderMetaSidebar({ cancellationRequest, returnRequest, customer, shippingAddress, order }) {
   return (
     <>
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="text-base font-bold text-gray-900">Cancellation request</h3>
         {cancellationRequest ? (
           <div className="mt-3 space-y-2 text-sm text-gray-600">
@@ -323,7 +323,7 @@ export function OrderMetaSidebar({ cancellationRequest, returnRequest, customer,
         )}
       </section>
 
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="text-base font-bold text-gray-900">Return & refund</h3>
         {returnRequest ? (
           <div className="mt-3 space-y-2 text-sm text-gray-600">
@@ -343,7 +343,7 @@ export function OrderMetaSidebar({ cancellationRequest, returnRequest, customer,
         )}
       </section>
 
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="text-base font-bold text-gray-900">Customer</h3>
         <div className="mt-3 space-y-2 text-sm text-gray-600">
           <p><span className="font-semibold text-gray-900">Name:</span> {customer?.full_name || 'Unknown customer'}</p>
@@ -354,7 +354,7 @@ export function OrderMetaSidebar({ cancellationRequest, returnRequest, customer,
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="text-base font-bold text-gray-900">Shipping address</h3>
         {shippingAddress ? (
           <div className="mt-3 space-y-1 text-sm text-gray-600">

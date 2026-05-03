@@ -18,7 +18,7 @@ import {
 
 function AdminOverviewStatCard({ label, value, hint }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</p>
       <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
       {hint ? <p className="mt-1 text-xs text-gray-500">{hint}</p> : null}
@@ -27,7 +27,7 @@ function AdminOverviewStatCard({ label, value, hint }) {
 }
 
 export function AdminOverviewLoading() {
-  return <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 text-gray-600">Loading overview...</div>;
+  return <div className="rounded-2xl border border-border bg-white p-6 text-gray-600">Loading overview...</div>;
 }
 
 export function AdminOverviewError({ error }) {
@@ -52,7 +52,7 @@ export function AdminOverviewTrends({ payload }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm xl:col-span-2">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm xl:col-span-2">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">14-Day Revenue Trend</h2>
           <span className="text-xs font-semibold text-gray-500">Completed orders only</span>
@@ -73,7 +73,7 @@ export function AdminOverviewTrends({ payload }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h2 className="mb-4 text-lg font-bold text-gray-900">Risk Signals</h2>
         <div className="space-y-3 text-sm">
           <div className="flex items-center justify-between rounded-xl bg-primary-soft px-3 py-2">
@@ -101,7 +101,7 @@ export function AdminOverviewHealth({ payload }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-base font-bold text-gray-900">Store Health</h3>
         <div className="space-y-2 text-sm">
           <p className="flex justify-between"><span>Active</span><strong>{stores.active || 0}</strong></p>
@@ -110,7 +110,7 @@ export function AdminOverviewHealth({ payload }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-base font-bold text-gray-900">Inventory Health</h3>
         <div className="space-y-2 text-sm">
           <p className="flex justify-between"><span>Out of stock</span><strong>{inventory.outOfStock || 0}</strong></p>
@@ -122,7 +122,7 @@ export function AdminOverviewHealth({ payload }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-base font-bold text-gray-900">Error Trend</h3>
         <div className="h-52">
           <ResponsiveContainer width="100%" height="100%">
@@ -144,7 +144,7 @@ export function AdminOverviewTopStores({ payload }) {
   const topStores = payload?.topStores || [];
 
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-bold text-gray-900">Top Stores (30d)</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">

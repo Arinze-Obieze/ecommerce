@@ -21,10 +21,6 @@ export default function LoginPage() {
         loading={login.loading}
         rememberMe={login.rememberMe}
         showPass={login.showPass}
-        passStrength={login.passStrength}
-        strengthLabel={login.strengthLabel}
-        strengthColor={login.strengthColor}
-        requirements={login.checks}
         emailFocused={login.emailFocused}
         emailHovered={login.emailHovered}
         passFocused={login.passFocused}

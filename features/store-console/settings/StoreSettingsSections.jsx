@@ -5,7 +5,7 @@ import { makeStoreUrl } from '@/features/store-console/settings/storeSettings.ut
 
 export function StoreSettingsIntro() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900">Store Settings</h2>
       <p className="text-sm text-gray-500">Manage your store identity and storefront profile details.</p>
     </div>
@@ -22,7 +22,7 @@ export function StoreSettingsMetaCards({ meta, snapshot }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+        <div key={card.label} className="rounded-xl border border-border bg-white p-4 shadow-sm">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
           <p className="mt-1 break-words text-sm font-semibold capitalize text-gray-900">{card.value}</p>
         </div>
@@ -45,7 +45,7 @@ export function StoreSettingsForm({
   onLogoFileChange,
 }) {
   return (
-    <form onSubmit={onSave} className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <form onSubmit={onSave} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <AlertBanner type="error" message={error} />
       <AlertBanner type="notice" message={notice} />
       {!meta.can_edit ? (

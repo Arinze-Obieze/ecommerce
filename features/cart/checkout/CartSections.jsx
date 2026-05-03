@@ -51,7 +51,7 @@ export function CartSuccessModal({ cartPage }) {
 }
 
 export function CartDeliveryModal({ cartPage }) {
-  if (!(cartPage.authUser && cartPage.deliveryStepOpen)) return null;
+  if (!cartPage.deliveryStepOpen) return null;
 
   return (
     <div
@@ -87,6 +87,21 @@ export function CartDeliveryModal({ cartPage }) {
         </div>
 
         <div className="max-h-[78vh] overflow-y-auto px-5 py-5 sm:px-7">
+          {!cartPage.authUser ? (
+            <div className="mb-5 rounded-2xl border border-[#B8D4A0] bg-primary-soft p-4">
+              <p className="text-sm font-semibold text-[#1f5f43]">Guest checkout</p>
+              <p className="mt-1 text-sm text-[#356a52]">
+                Enter the email for order updates and delivery coordination. You can create an account later.
+              </p>
+              <input
+                value={cartPage.checkoutEmail}
+                onChange={(event) => cartPage.setCheckoutEmail(event.target.value)}
+                placeholder="you@example.com"
+                className="mt-3 w-full rounded-xl border border-[#B8D4A0] bg-white px-4 py-3 text-sm outline-none focus:border-primary"
+              />
+            </div>
+          ) : null}
+
           {cartPage.savedAddresses.length > 0 ? (
             <div className="mb-5 flex flex-wrap gap-2">
               <button
@@ -198,9 +213,11 @@ export function CartDeliveryModal({ cartPage }) {
                 <input value="Nigeria" disabled className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 outline-none" />
               </div>
               <label className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white px-3 py-3">
-                <input type="checkbox" checked={cartPage.saveNewAddress} onChange={(event) => cartPage.setSaveNewAddress(event.target.checked)} className="mt-0.5" />
+                <input type="checkbox" checked={cartPage.saveNewAddress} onChange={(event) => cartPage.setSaveNewAddress(event.target.checked)} className="mt-0.5" disabled={!cartPage.authUser} />
                 <span className="text-sm text-gray-600">
-                  Save this address to my account for future orders. If unchecked, it will be used for this checkout only.
+                  {cartPage.authUser
+                    ? 'Save this address to my account for future orders. If unchecked, it will be used for this checkout only.'
+                    : 'This address will be used for this guest checkout only.'}
                 </span>
               </label>
             </div>
@@ -212,6 +229,10 @@ export function CartDeliveryModal({ cartPage }) {
             <button
               type="button"
               onClick={() => {
+                if (!cartPage.authUser && !cartPage.checkoutEmail.trim()) {
+                  cartPage.setCheckoutError('Add an email address to continue as a guest.');
+                  return;
+                }
                 if (!isAddressValid(cartPage.activeDeliveryAddress)) {
                   cartPage.setCheckoutError('Complete a valid delivery address to continue.');
                   return;
@@ -344,6 +365,15 @@ export function CartSummaryPanel({ cartPage }) {
         </div>
 
         <div className="mb-6 rounded-2xl border border-gray-100 bg-[#fcfcfc] p-4">
+          <div className="mb-3 rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-3">
+            <p className="text-sm font-bold text-gray-900">Contact email</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {cartPage.authUser
+                ? cartPage.authUser.email
+                : cartPage.checkoutEmail || 'Add your email in the delivery step before payment.'}
+            </p>
+          </div>
+
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-gray-900">Delivery address</h3>
@@ -372,10 +402,6 @@ export function CartSummaryPanel({ cartPage }) {
                 Change delivery address
               </button>
             </div>
-          ) : !cartPage.authUser ? (
-            <p className="text-sm text-gray-500">
-              You&apos;ll need to sign in before checkout so we can collect a delivery address.
-            </p>
           ) : (
             <button
               type="button"
@@ -399,7 +425,7 @@ export function CartSummaryPanel({ cartPage }) {
             }
             void cartPage.handleCheckout();
           }}
-          disabled={cartPage.isCheckingOut || cartPage.loadingAddresses || !cartPage.authUser}
+          disabled={cartPage.isCheckingOut || cartPage.loadingAddresses}
           className={`flex w-full items-center justify-center gap-2 rounded-full py-4 font-bold text-white shadow-lg transition-all ${cartPage.isCheckingOut ? 'cursor-not-allowed bg-gray-400' : 'bg-primary shadow-primary/20 hover:bg-primary-hover'}`}
         >
           {cartPage.isCheckingOut ? 'Processing...' : cartPage.loadingAddresses ? 'Loading address...' : !cartPage.deliverySummary ? 'Continue to Delivery' : 'Proceed to Payment'} <FiArrowRight />

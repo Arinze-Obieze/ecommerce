@@ -35,7 +35,7 @@ export default function WizardShell({ title, subtitle, children }) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-[3px] border-[#E8E4DC] border-t-primary rounded-full animate-spin" />
+          <div className="w-10 h-10 border-[3px] border-border border-t-primary rounded-full animate-spin" />
           <p className="text-sm text-gray-500">Loading store…</p>
         </div>
       </div>
@@ -43,8 +43,8 @@ export default function WizardShell({ title, subtitle, children }) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white shadow-sm overflow-hidden">
-      <div className="border-b border-[#E8E4DC]/60 px-4 py-3 sm:px-5 sm:py-4">
+    <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
+      <div className="border-b border-border/60 px-4 py-3 sm:px-5 sm:py-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-base font-bold text-gray-900 sm:text-lg">{title}</h2>

@@ -15,7 +15,7 @@ import {
 
 export function AdminAnalyticsStates({ loading, error }) {
   if (loading) {
-    return <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6">Loading analytics...</div>;
+    return <div className="rounded-2xl border border-border bg-white p-6">Loading analytics...</div>;
   }
 
   if (error) {
@@ -35,7 +35,7 @@ export function AnalyticsTopCards({ acquisition }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+        <div key={card.label} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
           <p className="text-xs uppercase text-gray-500">{card.label}</p>
           <p className="mt-2 text-2xl font-bold">{card.value}</p>
         </div>
@@ -48,7 +48,7 @@ export function AnalyticsCharts({ acquisition, funnel, behavior, commerce, curre
   return (
     <>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm xl:col-span-2">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm xl:col-span-2">
           <h2 className="mb-4 text-lg font-bold">Daily Active Users (30d)</h2>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
@@ -63,7 +63,7 @@ export function AnalyticsCharts({ acquisition, funnel, behavior, commerce, curre
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-bold">Commerce Funnel</h2>
           <div className="space-y-2 text-sm">
             <MetricRow label="Product impression" value={funnel.product_impression} />
@@ -76,7 +76,7 @@ export function AnalyticsCharts({ acquisition, funnel, behavior, commerce, curre
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-bold">Revenue Trend (30d)</h2>
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
@@ -98,7 +98,7 @@ export function AnalyticsCharts({ acquisition, funnel, behavior, commerce, curre
           </p>
         </div>
 
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-bold">Search Behavior</h2>
           <p className="mb-3 text-sm text-gray-600">
             Zero-result searches: <strong>{behavior.zeroResultSearches}</strong>
@@ -175,7 +175,7 @@ function MetricRow({ label, value }) {
 
 function SimplePanel({ title, children }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="mb-3 text-lg font-bold">{title}</h2>
       {children}
     </div>
@@ -184,7 +184,7 @@ function SimplePanel({ title, children }) {
 
 function SimpleListPanel({ title, rows, labelKey, valueKey, emptyText, capitalize = false }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="mb-3 text-lg font-bold">{title}</h2>
       <div className="space-y-2 text-sm">
         {rows.map((row) => (
@@ -201,7 +201,7 @@ function SimpleListPanel({ title, rows, labelKey, valueKey, emptyText, capitaliz
 
 function TablePanel({ title, columns, rows, emptyText }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="mb-4 text-lg font-bold">{title}</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">

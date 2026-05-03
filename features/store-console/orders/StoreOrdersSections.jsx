@@ -42,18 +42,18 @@ export function OrdersFilters({
   onReset,
 }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search order ID, payment ref, status"
-          className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 md:col-span-2 xl:col-span-2"
+          className="rounded-xl border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 md:col-span-2 xl:col-span-2"
         />
         <FilterSelect value={paymentFilter} onChange={setPaymentFilter} options={PAYMENT_FILTERS} allLabel="All payment" />
         <FilterSelect value={fulfillmentFilter} onChange={setFulfillmentFilter} options={FULFILLMENT_FILTERS} allLabel="All fulfillment" />
         <FilterSelect value={escrowFilter} onChange={setEscrowFilter} options={ESCROW_FILTERS} allLabel="All escrow" />
-        <button type="button" onClick={onReset} className="rounded-xl border border-[#E8E4DC] px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+        <button type="button" onClick={onReset} className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
           Reset
         </button>
       </div>
@@ -72,7 +72,7 @@ export function OrdersTableCard({
   onDownloadReceipt,
 }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
       {loading ? (
         <p className="text-sm text-gray-500">Loading orders...</p>
       ) : (
@@ -136,7 +136,7 @@ export function OrdersTableCard({
                 <div
                   key={row.id}
                   onClick={() => setSelectedOrderId(row.id)}
-                  className={`w-full cursor-pointer rounded-xl border p-3 text-left shadow-sm transition ${active ? 'border-primary bg-primary-soft' : 'border-[#E8E4DC] bg-white hover:bg-gray-50'}`}
+                  className={`w-full cursor-pointer rounded-xl border p-3 text-left shadow-sm transition ${active ? 'border-primary bg-primary-soft' : 'border-border bg-white hover:bg-gray-50'}`}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => {
@@ -187,7 +187,7 @@ export function OrderPreviewSidebar({
 }) {
   return (
     <aside className="hidden xl:block">
-      <div className="sticky top-24 rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+      <div className="sticky top-24 rounded-2xl border border-border bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-sm font-bold text-gray-900">Order Details</h3>
           {selectedOrderId ? (
@@ -217,7 +217,7 @@ export function OrderPreviewSidebar({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Link href={`/store/dashboard/orders/${selectedOrderId}#fulfillment-update`} className="rounded-lg border border-[#E8E4DC] px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
+              <Link href={`/store/dashboard/orders/${selectedOrderId}#fulfillment-update`} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
                 Update fulfillment
               </Link>
               <button
@@ -294,7 +294,7 @@ function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onD
           event.preventDefault();
           onToggle();
         }}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#E8E4DC] text-gray-600 transition hover:bg-gray-100"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-gray-600 transition hover:bg-gray-100"
         aria-label="Open quick actions"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -303,7 +303,7 @@ function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onD
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-[#E8E4DC] bg-white p-2 shadow-lg" role="menu">
+        <div className="absolute right-0 z-20 mt-2 w-52 rounded-xl border border-border bg-white p-2 shadow-lg" role="menu">
           <Link href={`/store/dashboard/orders/${orderId}`} className="block rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-primary-soft" onClick={onClose}>
             Open full order
           </Link>
@@ -324,7 +324,7 @@ function QuickActionsMenu({ orderId, open, onToggle, onClose, onOpenReceipt, onD
 
 function FilterSelect({ value, onChange, options, allLabel }) {
   return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+    <select value={value} onChange={(event) => onChange(event.target.value)} className="rounded-xl border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
       {options.map((option) => (
         <option key={option} value={option}>
           {option === 'all' ? allLabel : prettify(option)}

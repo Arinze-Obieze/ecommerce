@@ -3,7 +3,7 @@
 import { getStoreSummaryCards } from '@/features/admin/store-detail/adminStoreDetail.utils';
 
 export function AdminStoreDetailLoading() {
-  return <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6">Loading store...</div>;
+  return <div className="rounded-2xl border border-border bg-white p-6">Loading store...</div>;
 }
 
 export function AdminStoreDetailError({ error }) {
@@ -12,7 +12,7 @@ export function AdminStoreDetailError({ error }) {
 
 export function AdminStoreDetailHero({ store }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
       <h2 className="text-xl font-bold text-gray-900">{store.name}</h2>
       <p className="mt-1 text-sm text-gray-500">/{store.slug}</p>
       <p className="mt-3 text-sm text-gray-700">{store.description || 'No description yet.'}</p>
@@ -31,7 +31,7 @@ export function AdminStoreDetailStats({ productStats }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+        <div key={card.label} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
           <p className="text-xs uppercase tracking-wide text-gray-500">{card.label}</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">{card.value}</p>
         </div>
@@ -42,7 +42,7 @@ export function AdminStoreDetailStats({ productStats }) {
 
 export function AdminStoreAssignmentsTable({ assignments }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="mb-4 text-lg font-bold text-gray-900">Assigned users</h3>
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">

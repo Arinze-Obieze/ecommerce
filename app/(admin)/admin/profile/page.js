@@ -20,12 +20,12 @@ export default async function AdminProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900">Admin Profile</h2>
         <p className="text-sm text-gray-500">Identity and access details for your admin account.</p>
       </div>
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">Name</dt>

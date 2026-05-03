@@ -2,7 +2,7 @@
 
 export function AdminOrdersIntro() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900">Order Operations</h2>
       <p className="text-sm text-gray-500">Monitor payment states, pending backlog, and order flow quality.</p>
     </div>

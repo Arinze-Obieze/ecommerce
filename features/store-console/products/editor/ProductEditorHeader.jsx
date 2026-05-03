@@ -18,7 +18,7 @@ export default function ProductEditorHeader({
         <Link href="/store/dashboard/products" className="text-sm font-semibold text-primary hover:text-primary-hover">
           ← Back to products
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-[var(--zova-text-strong)]">{product.name}</h1>
+        <h1 className="mt-2 text-2xl font-bold text-(--zova-text-strong)">{product.name}</h1>
       </div>
 
       <div className="flex flex-wrap gap-2">

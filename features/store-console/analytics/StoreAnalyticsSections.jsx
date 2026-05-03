@@ -22,7 +22,7 @@ const MODERATION_COLORS = ['var(--color-primary)', '#0ea5e9', '#ef4444', '#f59e0
 
 export function StoreAnalyticsLoading({ loading }) {
   if (!loading) return null;
-  return <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 text-sm text-gray-500">Loading analytics...</div>;
+  return <div className="rounded-2xl border border-border bg-white p-6 text-sm text-gray-500">Loading analytics...</div>;
 }
 
 export function StoreAnalyticsHeader({ range, setRange, error }) {
@@ -60,7 +60,7 @@ export function StoreAnalyticsTopCards({ orders, cartDemand }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-2xl border border-[#E8E4DC] bg-white p-3 shadow-sm sm:p-4">
+        <div key={card.label} className="rounded-2xl border border-border bg-white p-3 shadow-sm sm:p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 sm:text-xs">{card.label}</p>
           <p className="mt-2 break-words text-xl font-bold sm:text-2xl">{card.value}</p>
         </div>
@@ -73,7 +73,7 @@ export function StoreAnalyticsCharts({ activeRangeLabel, dailyRevenue, dailyCart
   return (
     <>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm xl:col-span-2">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm xl:col-span-2">
           <h3 className="text-base font-bold text-gray-900">Revenue & Orders ({activeRangeLabel})</h3>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -90,7 +90,7 @@ export function StoreAnalyticsCharts({ activeRangeLabel, dailyRevenue, dailyCart
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
           <h3 className="text-base font-bold text-gray-900">Catalog Moderation Mix</h3>
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -116,7 +116,7 @@ export function StoreAnalyticsCharts({ activeRangeLabel, dailyRevenue, dailyCart
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm xl:col-span-2">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm xl:col-span-2">
           <h3 className="text-base font-bold text-gray-900">Net Cart Units Trend ({activeRangeLabel})</h3>
           <div className="mt-4 h-60">
             <ResponsiveContainer width="100%" height="100%">
@@ -131,7 +131,7 @@ export function StoreAnalyticsCharts({ activeRangeLabel, dailyRevenue, dailyCart
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
           <h3 className="text-base font-bold text-gray-900">Top Demand Products ({activeRangeLabel})</h3>
           <div className="mt-3 space-y-2">
             {topDemandProducts.slice(0, 6).map((row) => (

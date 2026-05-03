@@ -15,9 +15,9 @@ export function CarouselSectionFallback({ title }) {
         </div>
         <div className="flex gap-3 md:gap-6 overflow-hidden">
           {[...Array(4)].map((_, index) => (
-            <div key={index} className="w-[45%] md:w-[260px] lg:w-[280px] flex-shrink-0">
+            <div key={index} className="w-[45%] md:w-[260px] lg:w-[280px] shrink-0">
               <div className="bg-white rounded-xl overflow-hidden border border-gray-100 animate-pulse">
-                <div className="aspect-[3/4] bg-gray-100 w-full" />
+                <div className="aspect-3/4bg-gray-100 w-full" />
                 <div className="p-4 space-y-3">
                   <div className="h-3 bg-gray-100 rounded w-1/3" />
                   <div className="h-4 bg-gray-100 rounded w-5/6" />
@@ -70,22 +70,22 @@ export function TopStoresFallback() {
 
 export function ExploreFallback() {
   return (
-    <section style={{ background: 'var(--zova-linen)', padding: '56px 0' }}>
-      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '0 16px' }} className="sm:px-6 lg:px-8">
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+    <section className="bg-(--zova-linen) py-14">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div className="mb-9 text-center">
           <div className="mx-auto mb-3 h-4 w-32 rounded bg-gray-100 animate-pulse" />
           <div className="mx-auto mb-3 h-8 w-64 rounded bg-gray-100 animate-pulse" />
           <div className="mx-auto h-4 w-72 max-w-full rounded bg-gray-100 animate-pulse" />
         </div>
-        <div style={{ display: 'grid', gap: 12 }} className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {[...Array(10)].map((_, index) => (
             <div key={index} className="bg-white rounded-xl overflow-hidden border border-gray-100 animate-pulse">
-              <div style={{ background: 'var(--zova-surface-alt)', aspectRatio: '3/4', width: '100%' }} />
-              <div style={{ padding: '10px 12px 12px' }}>
-                <div style={{ height: 8, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 6, width: '60%' }} />
-                <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 8, width: '85%' }} />
-                <div style={{ height: 11, background: 'var(--zova-surface-alt)', borderRadius: 4, marginBottom: 10, width: '45%' }} />
-                <div style={{ height: 30, background: 'var(--zova-surface-alt)', borderRadius: 8, width: '100%' }} />
+              <div className="aspect-3/4w-full bg-(--zova-surface-alt)" />
+              <div className="px-3 py-[10px] pb-3">
+                <div className="mb-1.5 h-2 w-3/5 rounded bg-(--zova-surface-alt)" />
+                <div className="mb-2 h-[11px] w-[85%] rounded bg-(--zova-surface-alt)" />
+                <div className="mb-2.5 h-[11px] w-[45%] rounded bg-(--zova-surface-alt)" />
+                <div className="h-[30px] w-full rounded-lg bg-(--zova-surface-alt)" />
               </div>
             </div>
           ))}
@@ -123,7 +123,7 @@ export function HeroFallback() {
             ))}
           </div>
         </div>
-        <div className="hidden lg:grid gap-2" style={{ gridTemplateColumns: '1fr 1.9fr 1fr', height: 500 }}>
+        <div className="hidden gap-2 lg:grid lg:h-[500px] lg:grid-cols-[1fr_1.9fr_1fr]">
           <div className="rounded-[18px] bg-gray-100 animate-pulse" />
           <div className="rounded-2xl bg-linear-to-br from-primary-hover via-primary to-primary animate-pulse" />
           <div className="flex flex-col gap-2.5 h-full">

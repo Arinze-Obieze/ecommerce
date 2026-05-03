@@ -85,7 +85,7 @@ export default function FloatingDashboardCTA() {
         className={`pointer-events-auto flex items-center gap-2.5 rounded-xl bg-gradient-to-br ${destination.accent} px-3.5 py-2.5 text-white shadow-[0_12px_30px_rgba(46,100,23,0.25)] ring-1 ${destination.ring} backdrop-blur transition-transform duration-200 hover:-translate-y-1`}
       >
         {/* Icon bubble */}
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 flex-shrink-0">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/15 shrink-0">
           <Icon className="h-3.5 w-3.5" />
         </span>
 

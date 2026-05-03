@@ -42,7 +42,7 @@ export const ToastProvider = ({ children }) => {
       {children}
       
       {/* Toast Container - Fixed Top Center */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4">
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-9999 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4">
         {toasts.map((toast) => (
           <div 
             key={toast.id}
@@ -55,7 +55,7 @@ export const ToastProvider = ({ children }) => {
                 ${!['success', 'error', 'info'].includes(toast.type) ? 'bg-gray-800 text-white border-gray-700' : ''}
             `}
           >
-            <div className="flex-shrink-0 bg-white/20 p-1 rounded-full">
+            <div className="shrink-0 bg-white/20 p-1 rounded-full">
               {toast.type === 'success' && <FiCheck className="w-4 h-4" />}
               {toast.type === 'error' && <FiAlertTriangle className="w-4 h-4" />}
               {toast.type === 'info' && <FiInfo className="w-4 h-4" />}
