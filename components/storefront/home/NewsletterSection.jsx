@@ -22,103 +22,65 @@ export default function NewsletterSection() {
   };
 
   return (
-    <section className="w-full bg-(--zova-ink) text-(--zova-linen) py-16 sm:py-20">
+    <section className="w-full bg-(--zova-green-soft) text-(--zova-ink) py-8 md:py-10 border-y" style={{ borderColor: '#B8D4A0' }}>
       <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-widest text-(--zova-ink) bg-(--zova-gold) rounded-sm mb-6">
-              <FiShield className="w-3.5 h-3.5" />
-              ZOVA VIP Access
-            </span>
-            
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 leading-tight tracking-tight">
-              Get Verified. <br className="hidden sm:block" />
-              <span className="text-(--zova-gold)">Save 10% Instantly.</span>
+            <h2 className="text-xl sm:text-2xl font-black mb-1 tracking-tight">
+              Get Verified. <span className="text-(--zova-primary-action)">Save 10% Instantly.</span>
             </h2>
-            
-            <p className="text-lg text-(--zova-linen)/80 mb-8 max-w-xl">
-              Join 10,000+ fashion-forward shoppers who trust ZOVA. No hype, no overpromises — just verified apparel and early access to drops.
+            <p className="text-sm" style={{ color: 'var(--zova-text-body)' }}>
+              Join 10,000+ fashion-forward shoppers who trust ZOVA. No hype, just verified apparel.
             </p>
-
-            <div className="space-y-3">
-              {[
-                { text: 'Every seller is vetted & verified',  highlight: 'verified'    },
-                { text: 'Real reviews from real buyers',       highlight: 'Real'        },
-                { text: 'Authenticity guaranteed',             highlight: 'guaranteed'  },
-              ].map((perk, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <FiCheckCircle className="w-5 h-5 text-(--zova-gold) shrink-0" />
-                  <span className="text-sm font-medium">
-                    {perk.text}
-                  </span>
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="w-full max-w-md mx-auto lg:ml-auto lg:mr-0">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
-              {status === 'success' ? (
-                <div className="text-center py-6">
-                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-(--zova-gold) flex items-center justify-center">
-                    <FiCheckCircle className="w-7 h-7 text-(--zova-ink)" />
+          <div className="w-full max-w-md shrink-0">
+            {status === 'success' ? (
+              <div className="flex items-center gap-3 w-full bg-white px-4 py-3 rounded-[4px] border border-(--zova-success)">
+                <FiCheckCircle className="w-5 h-5 text-(--zova-success)" />
+                <span className="text-sm font-bold text-(--zova-success) flex-1">
+                  You're verified! Check your inbox.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setStatus('')}
+                  className="text-xs font-bold underline"
+                >
+                  Reset
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex w-full items-center gap-2">
+                <div className="relative flex-1">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiMail className="h-4 w-4" style={{ color: 'var(--zova-text-muted)' }} />
                   </div>
-                  <p className="text-xl font-bold text-white mb-2">
-                    You're verified!
-                  </p>
-                  <p className="text-sm text-(--zova-linen)/80 mb-6">
-                    Check your inbox — your 10% off code and VIP access are ready.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setStatus('')}
-                    className="text-sm font-bold text-(--zova-gold) hover:underline"
-                  >
-                    Use another email
-                  </button>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-[4px] text-sm bg-white border border-(--zova-border) focus:outline-none focus:ring-2 focus:ring-(--zova-primary-action) focus:border-transparent transition-all"
+                    required
+                  />
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <h3 className="text-xl font-bold text-white mb-2">Claim Your Welcome Offer</h3>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <FiMail className="h-5 w-5 text-white/40" />
-                    </div>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email address"
-                      className="w-full pl-12 pr-4 py-4 rounded-xl text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-(--zova-gold) focus:border-transparent transition-all"
-                      required
-                    />
-                  </div>
 
-                  <button
-                    type="submit"
-                    disabled={status === 'loading'}
-                    className="w-full py-4 rounded-[4px] text-sm font-bold flex items-center justify-center gap-2 bg-(--zova-gold) text-(--zova-ink) hover:bg-(--zova-gold)/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    {status === 'loading' ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Verifying...
-                      </>
-                    ) : (
-                      <>Get Verified & Save 10% <FiArrowRight className="w-4 h-4" /></>
-                    )}
-                  </button>
-
-                  <p className="text-xs text-center text-(--zova-linen)/60 pt-2">
-                    By subscribing, you agree to our Terms & Privacy Policy.
-                  </p>
-                </form>
-              )}
-            </div>
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="shrink-0 px-5 py-2.5 rounded-[4px] text-sm font-bold flex items-center justify-center gap-2 bg-(--zova-primary-action) transition-colors hover:bg-(--zova-primary-action-hover) disabled:opacity-70 disabled:cursor-not-allowed"
+                  style={{ color: '#ffffff' }}
+                >
+                  {status === 'loading' ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>Verify <FiArrowRight className="w-4 h-4" /></>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
-
         </div>
       </div>
     </section>

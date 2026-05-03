@@ -28,55 +28,51 @@ function StoreCard({ store }) {
   const href = buildStoreHref(store);
 
   return (
-    <article className="bg-white rounded-[4px] p-5 sm:p-6 border transition-all hover:-translate-y-1 hover:border-[#B8D4A0]" style={{ borderColor: 'var(--zova-border)', boxShadow: 'var(--zova-shadow-card)' }}>
-      <div className="flex h-full flex-col gap-4">
-        <div className="flex items-start gap-4">
+    <article className="bg-white rounded-xl p-5 border transition-all hover:-translate-y-1" style={{ borderColor: 'var(--zova-border)', boxShadow: 'var(--zova-shadow-card)' }}>
+      <div className="flex flex-col h-full">
+        <div className="flex items-start gap-4 flex-1">
+          {/* Left side: Avatar */}
           <Link
             href={href}
             aria-label={`Open ${store.name}`}
-            className="w-16 h-16 rounded-[4px] border flex items-center justify-center shrink-0 overflow-hidden" style={{ backgroundColor: 'var(--zova-surface-alt)', borderColor: 'var(--zova-border)' }}
+            className="w-[52px] h-[52px] rounded-xl border flex items-center justify-center shrink-0 overflow-hidden" 
+            style={{ backgroundColor: 'var(--zova-green-soft)', borderColor: 'var(--zova-border)' }}
           >
             {store.logo_url ? (
               <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl font-bold" style={{ color: 'var(--zova-text-muted)' }}>
-                {String(store.name || 'S').charAt(0).toUpperCase()}
+              <span className="text-xl font-bold" style={{ color: 'var(--zova-primary-action)' }}>
+                {String(store.name || 'Z').charAt(0).toUpperCase()}
               </span>
             )}
           </Link>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <Link href={href} className="min-w-0">
-                <h2 className="truncate text-lg font-bold transition-colors hover:text-(--zova-primary-action)" style={{ color: 'var(--zova-ink)' }}>
-                  {store.name}
-                </h2>
-              </Link>
-              {store.kyc_status === 'verified' && (
-                <FiCheckCircle className="h-4 w-4 shrink-0 text-(--zova-primary-action)" title="Verified Store" />
-              )}
-            </div>
-            <p className="mt-1 min-h-[40px] text-sm line-clamp-2" style={{ color: 'var(--zova-text-body)' }}>
-              {store.description || 'Welcome to our store. We offer high quality products.'}
+          {/* Right side: Details */}
+          <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+            <Link href={href} className="min-w-0">
+              <h2 className="truncate text-lg font-semibold transition-colors hover:text-(--zova-primary-action)" style={{ color: 'var(--zova-ink)' }}>
+                {store.name}
+              </h2>
+            </Link>
+            <p className="text-sm truncate" style={{ color: '#4a4a4a' }}>
+              {store.description || 'Premium quality products, trusted seller.'}
             </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-4" style={{ borderTop: `1px solid var(--zova-border)` }}>
-          <div className="flex items-center gap-1.5 text-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-[2px]" style={{ backgroundColor: 'var(--zova-accent-soft)' }}>
-              <FiStar className="h-3.5 w-3.5 fill-current text-(--zova-accent-emphasis)" />
+            
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-1.5 text-sm">
+                <FiStar className="h-4 w-4 fill-current text-(--zova-accent-emphasis)" />
+                <span className="font-semibold" style={{ color: 'var(--zova-ink)' }}>{store.rating || 'New'}</span>
+              </div>
             </div>
-            <span className="font-semibold text-(--zova-ink)">{store.rating || 'New'}</span>
-            {store.rating && <span className="text-(--zova-text-muted)">Rating</span>}
           </div>
         </div>
 
         <Link
           href={href}
-          className="mt-auto inline-flex items-center justify-center gap-2 rounded-[4px] bg-(--zova-primary-action) px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-(--zova-primary-action-hover)"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-(--zova-primary-action) px-4 py-3 text-sm font-bold transition-colors hover:bg-(--zova-primary-action-hover)"
+          style={{ color: '#ffffff' }}
         >
-          Open Store <FiArrowRight className="h-4 w-4" />
+          Open Store
         </Link>
       </div>
     </article>
@@ -183,12 +179,12 @@ export default function StoresDirectory() {
         <div className="rounded-[4px] bg-white p-8 text-center text-(--zova-text-muted)">No active stores found.</div>
       ) : (
         <>
-          <div className="mb-5 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between" style={{ color: 'var(--zova-text-muted)' }}>
-            <span>
-              Showing page <strong className="text-(--zova-ink)">{meta.page}</strong> of{' '}
-              <strong className="text-(--zova-ink)">{meta.totalPages}</strong>
-            </span>
-            <span>{meta.total.toLocaleString()} active stores</span>
+          <div className="mb-8 flex justify-center w-full">
+            <div className="inline-flex items-center gap-1.5 pb-1 border-b-[2px] text-sm font-medium" style={{ borderColor: 'var(--zova-gold)', color: '#4a4a4a' }}>
+              <span>Page {meta.page} of {meta.totalPages}</span>
+              <span className="font-black">&middot;</span>
+              <span>{meta.total.toLocaleString()} active stores</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

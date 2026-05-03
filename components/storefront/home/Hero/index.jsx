@@ -58,7 +58,7 @@ export default function Hero({ initialBanner = null, initialSellerCount = null }
 
       {isModalOpen ? <CategoriesModal onClose={() => setIsModalOpen(false)} /> : null}
 
-      <div className="w-full pb-3 pt-5">
+      <div className="w-full pt-5">
         <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
           <div className="relative h-[320px] w-full overflow-hidden rounded-[12px] sm:h-[400px] lg:h-[500px]">
             <HeroBanner banner={banner} sellerCount={sellerCount} />

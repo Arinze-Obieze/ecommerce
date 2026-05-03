@@ -111,7 +111,7 @@ const ExploreProducts = ({ initialProducts = null }) => {
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <section style={{ background: 'var(--zova-linen)', padding: '16px 0 56px 0' }}>
+      <section style={{ background: 'var(--zova-linen)', padding: '0 0 56px 0' }}>
         <div style={{ maxWidth: 1600, margin: '0 auto', padding: '0 16px' }} className="sm:px-6 lg:px-8">
           <SectionHeader />
           <div style={{ display: 'grid', gap: 12 }} className="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -124,7 +124,7 @@ const ExploreProducts = ({ initialProducts = null }) => {
 
   // ── Loaded ────────────────────────────────────────────────────────────────
   return (
-    <section style={{ background: 'var(--zova-linen)', padding: '16px 0 56px 0' }}>
+    <section style={{ background: 'var(--zova-linen)', padding: '0 0 56px 0' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto', padding: '0 16px' }} className="sm:px-6 lg:px-8">
         <SectionHeader />
 

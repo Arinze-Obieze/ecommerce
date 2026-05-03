@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { FiCheck, FiHeart, FiShare2, FiShoppingCart } from 'react-icons/fi';
 import PromotionBanner from '@/features/catalog/product-detail/PromotionBanner';
-import { OptionPills, QuantityStepper } from '@/features/catalog/product-detail/ProductDetailControls';
+import { OptionPills, QuantityStepper, ColorSwatchSelector } from '@/features/catalog/product-detail/ProductDetailControls';
 import { StarRow, TrustStrip } from '@/features/catalog/product-detail/ProductDetailSections';
 
 export function ProductDetailPurchasePanel({
@@ -38,14 +38,21 @@ export function ProductDetailPurchasePanel({
   setQuantity,
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} className="lg:sticky lg:top-8">
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--zova-primary-action)', background: 'var(--zova-green-soft)', border: '1px solid #B8D4A0', padding: '4px 12px', borderRadius: 100 }}>
-          {product.category?.name || 'Collection'}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }} className="lg:sticky lg:top-8 pdp-purchase-panel">
+      {/* HEADER WITH CATEGORY & RATING */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--zova-primary-action)', background: 'var(--zova-green-soft)', border: '1px solid #B8D4A0', padding: '4px 12px', borderRadius: 100 }}>
+            {product.category?.name || 'Collection'}
+          </span>
+          <StarRow rating={product.rating} count={product.reviews_count || 0} />
+        </div>
+        <span style={{ fontSize: 10, color: 'var(--zova-text-muted)', fontWeight: 600 }}>
+          Sold by <Link href={`/store/${product.stores?.slug || product.stores?.id}`} style={{ color: 'var(--zova-primary-action)', fontWeight: 700, textDecoration: 'none', cursor: 'pointer' }}>{storeName}</Link>
         </span>
-        <StarRow rating={product.rating} count={product.reviews_count || 0} />
       </div>
 
+      {/* PRODUCT TITLE */}
       <div>
         <h1 className="pdp-heading" style={{ fontSize: 'clamp(1.8rem, 4.5vw, 2.6rem)', fontWeight: 900, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.04em', lineHeight: 1.1 }}>
           {product.name}
@@ -53,41 +60,10 @@ export function ProductDetailPurchasePanel({
         {product.sku ? <p style={{ margin: 0, fontSize: 11, color: 'var(--zova-text-muted)', fontWeight: 500 }}>SKU: {product.sku}</p> : null}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button
-          type="button"
-          onClick={() => toggleWishlist(product.id)}
-          className={`pdp-wishlist-btn${inWishlist ? ' active' : ''}`}
-          style={{ width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${inWishlist ? '#FECACA' : 'var(--zova-border)'}`, background: inWishlist ? '#FEF2F2' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-        >
-          <FiHeart size={16} style={{ color: inWishlist ? '#C0392B' : 'var(--zova-text-body)', fill: inWishlist ? '#C0392B' : 'none' }} />
-        </button>
-
-        <button
-          type="button"
-          onClick={handleShare}
-          style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid var(--zova-border)', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}
-          onMouseEnter={(event) => { event.currentTarget.style.borderColor = 'var(--zova-ink)'; }}
-          onMouseLeave={(event) => { event.currentTarget.style.borderColor = 'var(--zova-border)'; }}
-        >
-          <FiShare2 size={15} style={{ color: 'var(--zova-text-body)' }} />
-        </button>
-
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--zova-text-muted)', fontWeight: 500 }}>
-          Sold by{' '}
-          <Link
-            href={`/store/${product.stores?.slug || product.stores?.id}`}
-            style={{ color: 'var(--zova-ink)', fontWeight: 700, textDecoration: 'none' }}
-            onMouseEnter={(event) => { event.currentTarget.style.color = 'var(--zova-primary-action)'; }}
-            onMouseLeave={(event) => { event.currentTarget.style.color = 'var(--zova-ink)'; }}
-          >
-            {storeName}
-          </Link>
-        </span>
-      </div>
-
+      {/* PROMOTIONS */}
       {promotions.length > 0 ? <PromotionBanner promotions={promotions} productPrice={Number(product.price)} /> : null}
 
+      {/* PRICING CARD */}
       <div style={{ padding: '20px', borderRadius: 18, background: 'var(--zova-linen)', border: '1px solid var(--zova-border)' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
           <span className="pdp-heading" style={{ fontSize: 36, fontWeight: 900, color: 'var(--zova-ink)', letterSpacing: '-0.04em', lineHeight: 1 }}>
@@ -120,23 +96,31 @@ export function ProductDetailPurchasePanel({
         </div>
       </div>
 
+      {/* VARIANTS */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <OptionPills
-          label="Size"
-          options={sizeOptions}
-          selected={selectedSize}
-          onSelect={setSelectedSize}
-          getAvailable={(size) => !variants.length || variants.some((variant) => variant.size === size && (!selectedColor || variant.color === selectedColor) && Number(variant.stock_quantity) > 0)}
-        />
-        <OptionPills
-          label="Color"
-          options={colorOptions}
-          selected={selectedColor}
-          onSelect={setSelectedColor}
-          getAvailable={(color) => !variants.length || variants.some((variant) => variant.color === color && (!selectedSize || variant.size === selectedSize) && Number(variant.stock_quantity) > 0)}
-        />
+        {sizeOptions.length > 0 && (
+          <OptionPills
+            label="Size"
+            options={sizeOptions}
+            selected={selectedSize}
+            onSelect={setSelectedSize}
+            getAvailable={(size) => !variants.length || variants.some((variant) => variant.size === size && (!selectedColor || variant.color === selectedColor) && Number(variant.stock_quantity) > 0)}
+          />
+        )}
+        {colorOptions.length > 0 && (
+          <ColorSwatchSelector
+            options={colorOptions}
+            selected={selectedColor}
+            onSelect={setSelectedColor}
+            getAvailable={(color) => !variants.length || variants.some((variant) => variant.color === color && (!selectedSize || variant.size === selectedSize) && Number(variant.stock_quantity) > 0)}
+            variantMap={Object.fromEntries(
+              variants.map((v) => [v.color, v])
+            )}
+          />
+        )}
       </div>
 
+      {/* STOCK INDICATOR */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: effectiveStock > 10 ? 'var(--zova-primary-action)' : effectiveStock > 0 ? 'var(--zova-accent-emphasis)' : '#C0392B' }} />
         <span style={{ fontSize: 12, fontWeight: 600, color: effectiveStock > 10 ? 'var(--zova-primary-action)' : effectiveStock > 0 ? '#b87800' : '#C0392B' }}>
@@ -151,6 +135,7 @@ export function ProductDetailPurchasePanel({
         </div>
       ) : null}
 
+      {/* CTA BUTTONS */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
         <QuantityStepper quantity={quantity} setQuantity={setQuantity} max={effectiveStock || 1} />
         <button
@@ -165,6 +150,7 @@ export function ProductDetailPurchasePanel({
         </button>
       </div>
 
+      {/* BULK PRICING TIERS */}
       {bulkTiers.length > 0 ? (
         <div style={{ border: '1px solid var(--zova-border)', borderRadius: 16, padding: 16, background: 'var(--zova-linen)' }}>
           <p style={{ margin: '0 0 10px', fontSize: 11, fontWeight: 800, color: 'var(--zova-ink)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Bulk pricing</p>
@@ -183,6 +169,7 @@ export function ProductDetailPurchasePanel({
         </div>
       ) : null}
 
+      {/* TRUST SIGNALS */}
       <TrustStrip />
     </div>
   );
@@ -201,7 +188,7 @@ export function ProductDetailStickyCta({
   if (isDesktop) return null;
 
   return (
-    <div style={{ position: 'fixed', left: 12, right: 12, bottom: 12, zIndex: 50, borderRadius: 20, background: 'rgba(255,255,255,0.96)', border: '1px solid var(--zova-border)', boxShadow: '0 24px 56px rgba(25,27,25,0.14)', backdropFilter: 'blur(16px)', padding: '12px 14px' }}>
+    <div style={{ position: 'fixed', left: 12, right: 12, bottom: 12, zIndex: 50, borderRadius: 20, background: 'rgba(255,255,255,0.96)', border: '1px solid var(--zova-border)', boxShadow: '0 24px 56px rgba(25,27,25,0.14)', backdropFilter: 'blur(16px)', padding: '12px 14px' }} className="pdp-sticky-cta">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ minWidth: 0 }}>
           {promotions.length > 0 ? (

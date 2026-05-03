@@ -1,6 +1,7 @@
 'use client';
 
 import { FiCheck, FiMinus, FiPlus } from 'react-icons/fi';
+export { ColorSwatchSelector } from '@/features/catalog/product-detail/ColorSwatchSelector';
 
 export function OptionPills({ label, options, selected, onSelect, getAvailable }) {
   if (!options.length) return null;
