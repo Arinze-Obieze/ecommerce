@@ -124,15 +124,6 @@ function StoreCard({ store }) {
             </span>
           </div>
 
-          {/* Followers */}
-          <div
-            className="flex items-center gap-1 px-2 py-1 rounded-[4px] text-[11px] font-semibold flex-1 justify-center"
-            style={{ backgroundColor: 'var(--zova-linen)' }}
-          >
-            <FiUsers className="w-3 h-3" style={{ color: 'var(--zova-text-muted)' }} />
-            <span style={{ color: 'var(--zova-ink)' }}>{formatCount(store.followers)}</span>
-          </div>
-
           {/* Product count */}
           {store.product_count != null && (
             <div
