@@ -10,12 +10,10 @@ import {
   getTopStoresServer,
 } from '@/features/storefront/home/api/server';
 import {
-  BestSellersSection,
   CarouselSectionFallback,
   HeroFallback,
   HeroSection,
-  NewArrivalsSection,
-  RecommendedSection,
+  TrendingProductsSection,
   TopStoresFallback,
   TopStoresSection,
 } from '@/features/storefront/home/HomePageSections';
@@ -33,23 +31,19 @@ export default function HomePage() {
         <HeroSection promise={heroPromise} />
       </Suspense>
 
-      <Suspense fallback={<CarouselSectionFallback title="Best Sellers" />}>
-        <BestSellersSection promise={bestSellersPromise} />
-      </Suspense>
+      <LazyExploreSection />
 
-      <Suspense fallback={<CarouselSectionFallback title="New Arrivals" />}>
-        <NewArrivalsSection promise={newArrivalsPromise} />
-      </Suspense>
-
-      <Suspense fallback={<CarouselSectionFallback title="Recommended For You" />}>
-        <RecommendedSection promise={recommendedPromise} />
+      <Suspense fallback={<CarouselSectionFallback title="Trending Now" />}>
+        <TrendingProductsSection 
+          bestSellersPromise={bestSellersPromise}
+          newArrivalsPromise={newArrivalsPromise}
+          recommendedPromise={recommendedPromise}
+        />
       </Suspense>
 
       <Suspense fallback={<TopStoresFallback />}>
         <TopStoresSection promise={topStoresPromise} />
       </Suspense>
-
-      <LazyExploreSection />
 
       <RecentlyViewedProducts />
       <NewsletterSection />

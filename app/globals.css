@@ -19,32 +19,33 @@ button {
   -webkit-appearance: none;
   margin: 0;
 }
-.hide-number-spinners[type=number] {
+.hide-number-spinners[type="number"] {
   -moz-appearance: textfield;
 }
 
 @theme {
   /* Typography */
-  --font-sans: "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --font-sans:
+    "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
   --font-display: "Panton", "Fraunces", "Playfair Display", Georgia, serif;
 
   /* Brand */
-  --color-primary: #2E6417;
+  --color-primary: #2e6417;
   --color-primary-hover: #245213;
-  --color-primary-soft: #EDF5E6;
-  --color-accent: #EC9C00;
+  --color-primary-soft: #edf5e6;
+  --color-accent: #ec9c00;
   --color-accent-hover: #d48c00;
 
   /* Surfaces */
   --color-background: #ffffff;
-  --color-background-alt: #F5F1EA;
+  --color-background-alt: #f5f1ea;
   --color-card: #ffffff;
-  --color-card-hover: #F5F1EA;
-  --color-border: #E8E4DC;
+  --color-card-hover: #f5f1ea;
+  --color-border: #e8e4dc;
 
   /* Text */
-  --color-text: #191B19;
-  --color-text-light: #6B6B6B;
+  --color-text: #191b19;
+  --color-text-light: #6b6b6b;
   --color-text-muted: #999999;
   --color-text-inverted: #ffffff;
 
@@ -60,16 +61,17 @@ button {
 }
 
 :root {
-  --zova-font-sans: "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --zova-font-sans:
+    "Panton", "Outfit", "Nunito", "Poppins", "Helvetica Neue", Arial, sans-serif;
   --zova-font-display: "Panton", "Fraunces", "Playfair Display", Georgia, serif;
-  --zova-green: #2E6417;
+  --zova-green: #2e6417;
   --zova-green-dark: #245213;
-  --zova-green-soft: #EDF5E6;
-  --zova-gold: #EC9C00;
-  --zova-ink: #191B19;
-  --zova-muted: #6B6B6B;
-  --zova-linen: #F5F1EA;
-  --zova-border: #E8E4DC;
+  --zova-green-soft: #edf5e6;
+  --zova-gold: #ec9c00;
+  --zova-ink: #191b19;
+  --zova-muted: #6b6b6b;
+  --zova-linen: #f5f1ea;
+  --zova-border: #e8e4dc;
   --zova-line-strong: #d9d1c4;
   --zova-surface-base: #ffffff;
   --zova-surface-alt: #f8f4ed;
@@ -78,27 +80,27 @@ button {
   --zova-text-strong: #191b19;
   --zova-text-body: #424641;
   --zova-text-muted: #73766f;
-  --zova-primary-action: #2E6417;
+  --zova-primary-action: #2e6417;
   --zova-primary-action-hover: #245213;
-  --zova-accent-emphasis: #EC9C00;
+  --zova-accent-emphasis: #ec9c00;
   --zova-accent-soft: #fff3cf;
   --zova-focus: rgba(46, 100, 23, 0.2);
   --zova-success: #1f7a4c;
   --zova-warning: #b87800;
   --zova-error: #c0392b;
   --zova-info: #2e63a5;
-  --zova-radius-sm: 8px;
-  --zova-radius-md: 12px;
-  --zova-radius-lg: 16px;
-  --zova-radius-xl: 24px;
+  --zova-radius-sm: 4px;
+  --zova-radius-md: 6px;
+  --zova-radius-lg: 8px;
+  --zova-radius-xl: 12px;
   --zova-shadow-card: 0 1px 4px rgba(46, 100, 23, 0.05);
-  --zova-shadow-card-hover: 0 8px 24px rgba(46, 100, 23, 0.10);
+  --zova-shadow-card-hover: 0 8px 24px rgba(46, 100, 23, 0.1);
   --zova-shadow-soft: 0 14px 40px rgba(25, 27, 25, 0.08);
   --zova-shadow-strong: 0 24px 60px rgba(25, 27, 25, 0.16);
   --zova-admin-sidebar-width: 248px;
   --zova-admin-sidebar-width-collapsed: 72px;
   --zova-admin-sidebar-mobile-width: 248px;
-  --zova-admin-shell-transition: 280ms cubic-bezier(.4, 0, .2, 1);
+  --zova-admin-shell-transition: 280ms cubic-bezier(0.4, 0, 0.2, 1);
   --zova-admin-sidebar-border: rgba(255, 255, 255, 0.08);
   --zova-admin-sidebar-line: rgba(255, 255, 255, 0.06);
   --zova-admin-sidebar-surface: rgba(255, 255, 255, 0.04);

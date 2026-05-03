@@ -5,9 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { FiArrowRight } from 'react-icons/fi';
 import { getHeroBanner } from '@/features/storefront/home/api/client';
-import { CHIP_MOODS, HERO_MOOD, SIDE_MOODS } from './hero.constants';
 import { normalizeBanner } from './hero.utils';
-import MoodCard from './MoodCard';
 import HeroNav from './HeroNav';
 import HeroBanner from './HeroBanner';
 import TrustMarquee from './TrustMarquee';
@@ -19,7 +17,6 @@ export default function Hero({ initialBanner = null, initialSellerCount = null }
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [banner, setBanner] = useState(normalizeBanner(initialBanner));
   const [sellerCount, setSellerCount] = useState(typeof initialSellerCount === 'number' ? initialSellerCount : 0);
-  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const hasInitialBanner = Boolean(initialBanner);
@@ -62,50 +59,10 @@ export default function Hero({ initialBanner = null, initialSellerCount = null }
       {isModalOpen ? <CategoriesModal onClose={() => setIsModalOpen(false)} /> : null}
 
       <div className="w-full pb-3 pt-5">
-      
-        <div className="hidden gap-2 lg:grid lg:h-[500px] lg:grid-cols-[1fr_1.9fr_1fr]">
-          <MoodCard mood={HERO_MOOD} variant="hero" />
-          <HeroBanner banner={banner} sellerCount={sellerCount} />
-          <div className="flex h-full flex-col gap-2.5">
-            {SIDE_MOODS.map((mood) => (
-              <MoodCard key={mood.link} mood={mood} variant="side" />
-            ))}
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className="relative h-[320px] w-full overflow-hidden rounded-[12px] sm:h-[400px] lg:h-[500px]">
+            <HeroBanner banner={banner} sellerCount={sellerCount} />
           </div>
-        </div>
-
-        <div className="lg:hidden">
-          <HeroBanner banner={banner} sellerCount={sellerCount} />
-
-          <div className="zova-hero-rail zova-scrollbar-hide mt-2.5 flex gap-2.5 overflow-x-auto pb-1">
-            {[HERO_MOOD, ...SIDE_MOODS, ...CHIP_MOODS].map((mood) => (
-              <MoodCard key={mood.link} mood={mood} variant="rail" />
-            ))}
-          </div>
-        </div>
-
-        <div
-          className={`zova-hero-rail zova-scrollbar-hide zova-shell mt-2 hidden gap-2.5 overflow-x-auto pb-1 transition-[max-height] duration-400 ease-in-out lg:flex ${
-            expanded ? 'max-h-[180px] overflow-auto' : 'max-h-0 overflow-hidden'
-          }`}
-        >
-          {CHIP_MOODS.map((mood) => (
-            <MoodCard key={mood.link} mood={mood} variant="chip" />
-          ))}
-        </div>
-
-        <div className="zova-shell mt-2 hidden px-4 lg:block">
-          <button
-            type="button"
-            onClick={() => setExpanded((previous) => !previous)}
-            className="flex w-full items-center justify-center gap-1.5 rounded-2xl border-[1.5px] border-dashed border-[#d0d0d0] bg-transparent px-4 py-2.5 text-[13px] font-medium text-[#666] transition-colors hover:border-(--zova-primary-action) hover:text-(--zova-primary-action)"
-          >
-            <span
-              className={`inline-block text-[11px] transition-transform duration-300 ${expanded ? 'rotate-180' : 'rotate-0'}`}
-            >
-              ▼
-            </span>
-            {expanded ? 'Show less' : `Show all moods (${CHIP_MOODS.length} more)`}
-          </button>
         </div>
       </div>
 

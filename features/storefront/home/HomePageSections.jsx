@@ -1,8 +1,6 @@
 import Hero from '@/components/storefront/home/Hero';
-import BestSellers from '@/components/storefront/home/BestSellers';
-import NewArrivals from '@/components/storefront/home/NewArrivals';
+import TrendingProductsGrid from '@/components/storefront/home/TrendingProductsGrid';
 import TopStoresCarousel from '@/components/storefront/home/TopStoresCarousel';
-import RecommendedForYou from '@/components/storefront/home/RecommendedForYou';
 import ExploreProducts from '@/components/storefront/home/ExploreProducts';
 
 export function CarouselSectionFallback({ title }) {
@@ -158,19 +156,20 @@ export async function HeroSection({ promise }) {
   );
 }
 
-export async function BestSellersSection({ promise }) {
-  const data = await promise;
-  return <BestSellers initialProducts={Array.isArray(data?.data) ? data.data : []} />;
-}
+export async function TrendingProductsSection({ bestSellersPromise, newArrivalsPromise, recommendedPromise }) {
+  const [bestSellers, newArrivals, recommended] = await Promise.all([
+    bestSellersPromise,
+    newArrivalsPromise,
+    recommendedPromise,
+  ]);
 
-export async function NewArrivalsSection({ promise }) {
-  const data = await promise;
-  return <NewArrivals initialProducts={Array.isArray(data?.data) ? data.data : []} />;
-}
-
-export async function RecommendedSection({ promise }) {
-  const data = await promise;
-  return <RecommendedForYou initialProducts={Array.isArray(data?.data) ? data.data : []} />;
+  return (
+    <TrendingProductsGrid 
+      bestSellers={Array.isArray(bestSellers?.data) ? bestSellers.data : []}
+      newArrivals={Array.isArray(newArrivals?.data) ? newArrivals.data : []}
+      recommended={Array.isArray(recommended?.data) ? recommended.data : []}
+    />
+  );
 }
 
 export async function TopStoresSection({ promise }) {
