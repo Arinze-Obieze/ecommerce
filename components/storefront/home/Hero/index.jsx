@@ -62,16 +62,7 @@ export default function Hero({ initialBanner = null, initialSellerCount = null }
       {isModalOpen ? <CategoriesModal onClose={() => setIsModalOpen(false)} /> : null}
 
       <div className="w-full pb-3 pt-5">
-        <div className="zova-shell mb-3 flex items-center justify-between">
-          <div>
-            <span className="zova-eyebrow">Curated discovery</span>
-            <h2 className="zova-title mt-3 text-[1.35rem] font-black">Shop by mood</h2>
-          </div>
-          <Link href="/mood" className="flex items-center gap-1 text-[12px] font-semibold text-(--zova-primary-action) transition-colors hover:text-(--zova-accent-emphasis)">
-            See all moods <FiArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-
+      
         <div className="hidden gap-2 lg:grid lg:h-[500px] lg:grid-cols-[1fr_1.9fr_1fr]">
           <MoodCard mood={HERO_MOOD} variant="hero" />
           <HeroBanner banner={banner} sellerCount={sellerCount} />

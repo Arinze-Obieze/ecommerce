@@ -6,9 +6,9 @@ export const HERO_NAV_ITEMS = [
 ];
 
 export const HERO_SLIDES = [
-  { id: 'banner-1', src: '/banner.jpeg', alt: 'ZOVA hero fashion campaign 1' },
-  { id: 'banner-2', src: '/banner2.jpeg', alt: 'ZOVA hero fashion campaign 2' },
-  { id: 'banner-3', src: '/banner3.jpeg', alt: 'ZOVA hero fashion campaign 3' },
+  { id: 'banner-1', src: '/banner.png', alt: 'ZOVA hero fashion campaign 1' },
+  { id: 'banner-2', src: '/banner2.png', alt: 'ZOVA hero fashion campaign 2' },
+  { id: 'banner-3', src: '/banner1.png', alt: 'ZOVA hero fashion campaign 3' },
 ];
 
 export const HERO_MOOD = {

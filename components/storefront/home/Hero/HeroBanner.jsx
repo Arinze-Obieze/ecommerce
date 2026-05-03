@@ -72,12 +72,7 @@ export default function HeroBanner({ banner, sellerCount }) {
       <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-transparent lg:from-black/72 lg:via-black/22 lg:to-black/5" />
       <div className="absolute inset-0 flex flex-col justify-end p-6 lg:p-8 xl:p-10">
         <BannerEyebrow mobile />
-        <h1 className="zova-title mb-2 text-2xl font-extrabold leading-tight text-white lg:mb-3 lg:max-w-md lg:text-[2rem] lg:leading-[1.04] lg:tracking-tight xl:text-[2.7rem]">
-          {banner?.title || 'Discover Your Style'}
-        </h1>
-        <p className="mb-5 max-w-xs text-xs text-white/65 lg:mb-6 lg:text-[13px] lg:leading-relaxed lg:text-white/70">
-          {banner?.subtitle || 'Shop the latest fashion from trusted African stores'}
-        </p>
+ 
         <div className="mb-0 flex items-center gap-2.5 lg:mb-6 lg:gap-3">
           {HERO_BANNER_ACTIONS.map((action) => {
             const Icon = action.icon;
