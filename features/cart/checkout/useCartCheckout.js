@@ -72,16 +72,6 @@ export default function useCartCheckout() {
 
   const activeDeliveryAddress = addressMode === 'saved' ? selectedSavedAddress : addressForm;
 
-  React.useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://js.paystack.co/v1/inline.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   const loadUserAndAddresses = React.useCallback(async () => {
     try {
       setLoadingAddresses(true);
@@ -243,6 +233,9 @@ export default function useCartCheckout() {
       const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || process.env.NEXT_PUBLIC_PAYSTACK_TEST_PUBLIC_KEY;
       if (!paystackKey) {
         throw new Error('Paystack configuration missing');
+      }
+      if (typeof window === 'undefined' || !window.PaystackPop?.setup) {
+        throw new Error('Payment service is still loading. Please wait a moment and try again.');
       }
 
       const handler = window.PaystackPop.setup({

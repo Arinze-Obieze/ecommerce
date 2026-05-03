@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import Script from 'next/script';
 import {
   CartDeliveryModal,
   CartEmptyState,
@@ -18,6 +19,11 @@ export default function CartPage() {
 
   return (
     <div className="zova-page py-8 md:py-16">
+      <Script
+        id="paystack-inline"
+        src="https://js.paystack.co/v1/inline.js"
+        strategy="lazyOnload"
+      />
       <CartSuccessModal cartPage={cartPage} />
       <CartDeliveryModal cartPage={cartPage} />
 
