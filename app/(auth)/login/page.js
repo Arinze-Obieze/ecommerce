@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,83 +8,95 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiCheck } from 'react-ic
 import { FaGoogle, FaFacebookF } from 'react-icons/fa';
 import { createClient } from '@/utils/supabase/client';
 
-// Brand tokens — sourced from app/globals.css CSS custom properties
-
-
-// ─── SLIDES ───────────────────────────────────────────────────
-const SLIDES = [
-  {
-    url:     'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=900&h=1200&fit=crop&auto=format',
-    caption: 'Discover Your\nStyle Today.',
-    sub:     "Shop 2M+ looks from Nigeria's top sellers",
-  },
-  {
-    url:     'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=900&h=1200&fit=crop&auto=format',
-    caption: 'Fashion That\nFeels Like You.',
-    sub:     'Curated pieces, delivered fast',
-  },
-  {
-    url:     'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=900&h=1200&fit=crop&auto=format',
-    caption: "Nigeria's Biggest\nMarketplace.",
-    sub:     '50,000+ sellers. Every style. One place.',
-  },
-  {
-    url:     'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&h=1200&fit=crop&auto=format',
-    caption: 'New Arrivals\nEvery Hour.',
-    sub:     "Be first to wear tomorrow's trends",
-  },
-];
-
-const FLOATERS = [
-  { src: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=120&h=120&fit=crop', size: 68, top: '7%',  right: '-22px', rot: 6  },
-  { src: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&h=90&fit=crop',  size: 62, top: '32%', right: '-18px', rot: -5 },
-  { src: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=120&h=120&fit=crop', size: 58, top: '58%', right: '-20px', rot: 4  },
-  { src: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=120&h=120&fit=crop', size: 64, top: '78%', right: '-16px', rot: -6 },
-];
-
-// ─── PASSWORD REQUIREMENT ROW ─────────────────────────────────
+/* ─── Password requirement row ─── */
 function ReqRow({ met, label }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <div style={{
         width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-        background: met ? 'var(--zova-primary-action)' : 'var(--zova-border)',
+        background: met ? '#2E6417' : '#E0DAD0',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'background 0.2s, transform 0.2s',
         transform: met ? 'scale(1.1)' : 'scale(1)',
       }}>
         {met && <FiCheck size={9} color="#fff" strokeWidth={3.5} />}
       </div>
-      <span style={{ fontSize: 12, color: met ? 'var(--zova-primary-action-hover)' : 'var(--zova-text-muted)', fontWeight: met ? 600 : 400, transition: 'color 0.2s' }}>
+      <span style={{
+        fontSize: 12,
+        color: met ? '#2E6417' : '#999',
+        fontWeight: met ? 600 : 400,
+        transition: 'color 0.2s',
+      }}>
         {label}
       </span>
     </div>
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────
+/* ─── Zova Cart Icon ─── */
+function ZovaIcon({ size = 26, primaryColor = '#2E6417', accentColor = '#EC9C00' }) {
+  return (
+    <svg width={size} height={Math.round(size * 0.85)} viewBox="0 0 26 22" fill="none">
+      <path d="M3 2H6L10 14H20" stroke={primaryColor} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M10 14L8 8H21L19 14" stroke={primaryColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="11" cy="19" r="2" fill={accentColor} />
+      <circle cx="17" cy="19" r="2" fill={accentColor} />
+    </svg>
+  );
+}
+
+/* ─── SVG Halftone dot pattern (brand signature) ─── */
+function DotPattern() {
+  return (
+    <svg
+      style={{ position: 'absolute', top: -40, right: -60, opacity: 0.15, pointerEvents: 'none' }}
+      width={340} height={340} viewBox="0 0 340 340"
+    >
+      <defs>
+        <pattern id="halftone" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+          <circle cx="4" cy="4" r="2.2" fill="#EC9C00" />
+        </pattern>
+        <radialGradient id="fade-mask" cx="60%" cy="40%" r="60%">
+          <stop offset="0%" stopColor="white" stopOpacity="1" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </radialGradient>
+        <mask id="dot-mask">
+          <rect width="340" height="340" fill="url(#fade-mask)" />
+        </mask>
+      </defs>
+      <rect width="340" height="340" fill="url(#halftone)" mask="url(#dot-mask)" />
+    </svg>
+  );
+}
+
+/* ─── Geometric star (brand motif) ─── */
+function StarDeco() {
+  return (
+    <svg
+      style={{ position: 'absolute', bottom: 130, right: 44, opacity: 0.1, pointerEvents: 'none' }}
+      width={110} height={110} viewBox="0 0 120 120"
+    >
+      <path d="M60 0 L63 57 L120 60 L63 63 L60 120 L57 63 L0 60 L57 57 Z" fill="#EC9C00" />
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Main Login Page
+───────────────────────────────────────── */
 export default function LoginPage() {
   const router   = useRouter();
   const supabase = createClient();
 
-  const [email, setEmail]                 = useState('');
-  const [password, setPassword]           = useState('');
-  const [showPass, setShowPass]           = useState(false);
-  const [rememberMe, setRememberMe]       = useState(false);
-  const [error, setError]                 = useState('');
-  const [loading, setLoading]             = useState(false);
-  const [success, setSuccess]             = useState(false);
-  const [passFocused, setPassFocused]     = useState(false);
-  const [emailFocused, setEmailFocused]   = useState(false);
-  const [mounted, setMounted]             = useState(false);
-  const [slide, setSlide]                 = useState(0);
-  const [emailHov, setEmailHov]           = useState(false);
-  const [passHov, setPassHov]             = useState(false);
-  const [submitHov, setSubmitHov]         = useState(false);
-  const [googleHov, setGoogleHov]         = useState(false);
-  const [fbHov, setFbHov]                 = useState(false);
-  const [remHov, setRemHov]               = useState(false);
-  const [logoError, setLogoError]         = useState(false);
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [showPass, setShowPass]       = useState(false);
+  const [rememberMe, setRememberMe]   = useState(false);
+  const [error, setError]             = useState('');
+  const [loading, setLoading]         = useState(false);
+  const [success, setSuccess]         = useState(false);
+  const [passFocused, setPassFocused] = useState(false);
+  const [logoError, setLogoError]     = useState(false);
 
   const reqs = {
     minLength:  password.length >= 8,
@@ -93,119 +105,108 @@ export default function LoginPage() {
     hasNumber:  /[0-9]/.test(password),
     hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password),
   };
-  const passStrength = Object.values(reqs).filter(Boolean).length;
+  const passStrength   = Object.values(reqs).filter(Boolean).length;
+  const strengthLabel  = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Perfect'][passStrength];
+  const strengthColor  = ['#E0DAD0', '#EF4444', '#F97316', '#EC9C00', '#2E6417', '#1a4010'][passStrength];
 
-  useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setSlide(s => (s + 1) % SLIDES.length);
-    }, 5500);
-    return () => clearInterval(id);
-  }, []);
-
+  /* ── Auth helpers ── */
   const resolveRedirectTarget = async () => {
-    const fallbackTarget = '/';
-
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        continue;
-      }
-
-      const redirectRes = await fetch('/api/auth/post-login-target', { cache: 'no-store' });
-      const redirectJson = await redirectRes.json().catch(() => ({}));
-      const target = typeof redirectJson?.target === 'string' ? redirectJson.target : null;
-
-      if (target && target !== '/login') {
-        return target;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
+    const fallback = '/';
+    for (let i = 0; i < 4; i++) {
+      const { data } = await supabase.auth.getSession();
+      if (!data?.session) { await delay(200); continue; }
+      const res  = await fetch('/api/auth/post-login-target', { cache: 'no-store' });
+      const json = await res.json().catch(() => ({}));
+      if (typeof json?.target === 'string' && json.target !== '/login') return json.target;
+      await delay(200);
     }
-
-    return fallbackTarget;
+    return fallback;
   };
+  const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInErr) { setError(signInErr.message); setLoading(false); return; }
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) { setError(err.message); setLoading(false); return; }
       const target = await resolveRedirectTarget();
       setSuccess(true);
       setTimeout(() => router.replace(target), 1800);
-    } catch { setError('An unexpected error occurred'); setLoading(false); }
+    } catch {
+      setError('An unexpected error occurred');
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}/auth/callback` } });
-      if (error) throw error;
-    } catch (err) { setError(err.message); setLoading(false); }
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${location.origin}/auth/callback` },
+      });
+      if (err) throw err;
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
-  // strength: 0 gray | 1 red | 2 orange | 3 gold | 4 forest | 5 deep forest
-  const strengthLabel = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Perfect'][passStrength];
-  const strengthColor = ['#E8E4DC', 'var(--zova-error)', '#F97316', 'var(--zova-accent-emphasis)', 'var(--zova-primary-action)', 'var(--zova-primary-action-hover)'][passStrength];
-
-  const inputStyle = (focused, hovered, hasError) => ({
+  /* ── Shared input style ── */
+  const inputStyle = (focused) => ({
     width: '100%',
-    padding: '13px 14px 13px 46px',
-    borderRadius: 12,
-    border: `1.5px solid ${hasError ? 'var(--zova-error)' : focused ? 'var(--zova-primary-action)' : hovered ? '#B8D4A0' : 'var(--zova-border)'}`,
-    background: hasError ? '#FEF2F2' : focused ? '#FFFFFF' : 'var(--zova-linen)',
-    fontSize: 14,
-    color: 'var(--zova-ink)',
+    padding: '16px 16px 16px 50px',
+    borderRadius: 14,
+    border: `1.5px solid ${focused ? '#2E6417' : '#E0DAD0'}`,
+    background: focused ? '#ffffff' : '#faf8f4',
+    fontSize: 16,
+    fontFamily: 'inherit',
+    color: '#191B19',
     outline: 'none',
     boxSizing: 'border-box',
-    transition: 'border 0.18s, background 0.18s, box-shadow 0.18s',
-    boxShadow: focused ? `0 0 0 3.5px rgba(46,100,23,0.12)` : 'none',
+    transition: 'border .18s, background .18s, box-shadow .18s',
+    boxShadow: focused ? '0 0 0 4px rgba(46,100,23,0.1)' : 'none',
   });
 
   return (
     <>
       <style>{`
-                * { box-sizing: border-box; }
-        .lp-root { font-family: var(--zova-font-sans); }
-        
-        @keyframes fadeUp   { from { opacity:0; transform:translateY(20px); }   to { opacity:1; transform:none; } }
-        @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); }  to { opacity:1; transform:none; } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
+        * { box-sizing: border-box; }
+        .zova-login { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .zova-serif { font-family: 'DM Serif Display', serif; }
+
+        @keyframes fadeUp   { from { opacity:0; transform:translateY(18px); }  to { opacity:1; transform:none; } }
+        @keyframes fadeDown { from { opacity:0; transform:translateY(-8px); }  to { opacity:1; transform:none; } }
         @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
-        @keyframes scaleIn  { from { opacity:0; transform:scale(0.82); }        to { opacity:1; transform:scale(1); } }
-        @keyframes spin     { to   { transform:rotate(360deg); } }
+        @keyframes scaleIn  { from { opacity:0; transform:scale(0.82); }       to { opacity:1; transform:scale(1); } }
+        @keyframes spin     { to { transform: rotate(360deg); } }
         @keyframes pulseRing {
           0%   { transform:scale(1);    opacity:0.5; }
-          100% { transform:scale(1.65); opacity:0;   }
+          100% { transform:scale(1.65); opacity:0; }
         }
         @keyframes checkDraw {
           from { stroke-dashoffset:36; }
-          to   { stroke-dashoffset:0;  }
-        }
-        @keyframes slideCaption {
-          from { opacity:0; transform:translateY(16px); }
-          to   { opacity:1; transform:none; }
-        }
-        @keyframes floatBob {
-          0%,100% { transform:translateY(0); }
-          50%     { transform:translateY(-8px); }
+          to   { stroke-dashoffset:0; }
         }
 
-        .fade-up-1 { animation: fadeUp 0.5s ease 0.05s both; }
-        .fade-up-2 { animation: fadeUp 0.5s ease 0.12s both; }
-        .fade-up-3 { animation: fadeUp 0.5s ease 0.19s both; }
-        .fade-up-4 { animation: fadeUp 0.5s ease 0.26s both; }
-        .fade-up-5 { animation: fadeUp 0.5s ease 0.33s both; }
-        .fade-up-6 { animation: fadeUp 0.5s ease 0.40s both; }
-        .fade-up-7 { animation: fadeUp 0.5s ease 0.47s both; }
-        .fade-up-8 { animation: fadeUp 0.5s ease 0.54s both; }
+        .f1 { animation: fadeUp .48s ease .05s both; }
+        .f2 { animation: fadeUp .48s ease .12s both; }
+        .f3 { animation: fadeUp .48s ease .19s both; }
+        .f4 { animation: fadeUp .48s ease .26s both; }
+        .f5 { animation: fadeUp .48s ease .33s both; }
+        .f6 { animation: fadeUp .48s ease .40s both; }
+        .f7 { animation: fadeUp .48s ease .47s both; }
+        .f8 { animation: fadeUp .48s ease .54s both; }
+
+        .social-btn:hover { background: #F5F1EA !important; border-color: #C8BFB0 !important; transform: translateY(-1px); }
+        .submit-btn:hover:not(:disabled) { background: #214A10 !important; transform: translateY(-1.5px); box-shadow: 0 10px 32px rgba(46,100,23,0.38) !important; }
+        .forgot-link:hover { text-decoration: underline; }
       `}</style>
 
-      <div className="lp-root" style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--zova-linen)' }}>
+      <div className="zova-login" style={{ display: 'flex', minHeight: '100vh', background: '#191B19' }}>
 
         {/* ── SUCCESS OVERLAY ── */}
         {success && (
@@ -213,150 +214,175 @@ export default function LoginPage() {
             position: 'fixed', inset: 0, zIndex: 9999,
             background: 'rgba(245,241,234,0.96)', backdropFilter: 'blur(16px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'fadeIn 0.25s ease',
+            animation: 'fadeIn .25s ease',
           }}>
-            <div style={{ textAlign: 'center', animation: 'scaleIn 0.45s cubic-bezier(0.34,1.56,0.64,1)' }}>
+            <div style={{ textAlign: 'center', animation: 'scaleIn .45s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
                 <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(46,100,23,0.15)', animation: 'pulseRing 1.1s ease-out infinite' }} />
-                <div style={{ width: 88, height: 88, borderRadius: '50%', background: `linear-gradient(135deg,${'var(--zova-primary-action)'},${'var(--zova-primary-action-hover)'})`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: `0 12px 40px rgba(46,100,23,0.4)` }}>
+                <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'linear-gradient(135deg,#2E6417,#1a4010)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', boxShadow: '0 12px 40px rgba(46,100,23,0.4)' }}>
                   <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
                     <path d="M9 19L16.5 26.5L29 12" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-                      style={{ strokeDasharray: 36, strokeDashoffset: 0, animation: 'checkDraw 0.45s ease 0.2s both' }} />
+                      style={{ strokeDasharray: 36, strokeDashoffset: 0, animation: 'checkDraw .45s ease .2s both' }} />
                   </svg>
                 </div>
               </div>
-              <p className="serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', lineHeight: 1.1 }}>You're in!</p>
-              <p style={{ fontSize: 14, color: 'var(--zova-text-muted)', margin: 0 }}>Taking you to the market…</p>
+              <p className="zova-serif" style={{ fontSize: 34, color: '#191B19', margin: '0 0 8px', lineHeight: 1.1 }}>You're in!</p>
+              <p style={{ fontSize: 14, color: '#888', margin: 0 }}>Taking you to the market…</p>
             </div>
           </div>
         )}
 
-        {/* ══ LEFT — form panel ══ */}
+        {/* ════════════════════════════
+            LEFT — BRAND PANEL
+        ════════════════════════════ */}
         <div style={{
-          flex: '0 0 min(468px, 100%)',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '0 52px', position: 'relative', overflowY: 'auto',
-          background: '#FFFFFF', zIndex: 2,
-          boxShadow: '2px 0 32px rgba(46,100,23,0.07)',
+          width: '42%', background: '#191B19',
+          position: 'relative', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+          padding: '44px 48px',
+          // Hide on small screens — add media query in global CSS if needed
         }}>
-          {/* Gold top stripe */}
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${'var(--zova-primary-action)'}, ${'var(--zova-accent-emphasis)'})` }} />
 
-          <div style={{ maxWidth: 360, width: '100%', margin: '0 auto', padding: '56px 0' }}>
+          <DotPattern />
+          <StarDeco />
 
-            {/* Brand */}
-            <div className="fade-up-1" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
-              <div style={{
-                width: 100, height: 100, borderRadius: 10,
-                background: 'var(--zova-green-soft)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: `0 4px 12px rgba(46,100,23,0.18)`,
-                overflow: 'hidden',
-              }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 2 }}>
+            <div style={{ width: 56, height: 56, background: 'rgba(46,100,23,0.85)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Image src="/brand/logo-white.svg" alt="ZOVA" width={36} height={30} />
+            </div>
+            <span style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>ZOVA</span>
+          </div>
+
+          {/* Brand copy */}
+          <div style={{ position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 0 24px' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#EC9C00', textTransform: 'uppercase', marginBottom: 16 }}>
+              Fashion Marketplace
+            </p>
+            <h2 className="zova-serif" style={{ fontSize: 44, lineHeight: 1.08, color: '#fff', marginBottom: 20 }}>
+              Nigeria's<br />
+              <em style={{ color: '#EC9C00' }}>Biggest</em><br />
+              Marketplace.
+            </h2>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.48)', lineHeight: 1.7, maxWidth: 280, marginBottom: 0 }}>
+              Shop the latest fashion and essentials from trusted, verified African sellers.
+            </p>
+          </div>
+
+          {/* Trust badges */}
+          <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {['Verified Stores', 'Fast Delivery', 'Buyer Protected'].map((t) => (
+              <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 99, padding: '6px 12px', fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#EC9C00' }} />
+                {t}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ════════════════════════════
+            RIGHT — FORM PANEL
+        ════════════════════════════ */}
+        <div style={{
+          width: '58%', background: '#F5F1EA',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '48px 56px', position: 'relative',
+        }}>
+          {/* Green top accent */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(to right, #2E6417, #EC9C00)' }} />
+
+          <div style={{ width: '100%', maxWidth: 480 }}>
+
+            {/* Form logo */}
+            <div className="f1" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36 }}>
+              <div style={{ width: 52, height: 52, borderRadius: 13, background: '#EAF3DE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {!logoError ? (
-                  <Image src="/brand/logo.svg" alt="ZOVA" width={100} height={100} className="object-contain" onError={() => setLogoError(true)} />
+                  <Image src="/brand/logo.svg" alt="ZOVA" width={34} height={28} onError={() => setLogoError(true)} />
                 ) : (
-                  <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--zova-primary-action)', fontFamily: "var(--zova-font-sans)" }}>Z</span>
+                  <ZovaIcon size={28} primaryColor="#2E6417" accentColor="#EC9C00" />
                 )}
               </div>
-              <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--zova-ink)', letterSpacing: '-0.04em', fontFamily: "var(--zova-font-sans)" }}>ZOVA</span>
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#191B19', letterSpacing: '-0.03em' }}>ZOVA</span>
             </div>
 
             {/* Headline */}
-            <div className="fade-up-2" style={{ marginBottom: 36 }}>
-              <h1 className="serif" style={{ fontSize: 40, fontWeight: 700, color: 'var(--zova-ink)', margin: '0 0 8px', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            <div className="f2" style={{ marginBottom: 32 }}>
+              <h1 className="zova-serif" style={{ fontSize: 42, fontWeight: 400, color: '#191B19', margin: '0 0 10px', lineHeight: 1.1 }}>
                 Welcome back.
               </h1>
-              <p style={{ fontSize: 14.5, color: 'var(--zova-text-muted)', margin: 0, fontWeight: 400 }}>
+              <p style={{ fontSize: 15, color: '#888', margin: 0, lineHeight: 1.5 }}>
                 Sign in to your ZOVA account to continue
               </p>
             </div>
 
             <form onSubmit={handleLogin}>
 
-              {/* Error banner */}
+              {/* Error */}
               {error && (
-                <div style={{ padding: '11px 16px', borderRadius: 11, background: '#FEF2F2', border: `1px solid #FECACA`, fontSize: 13, color: 'var(--zova-error)', fontWeight: 500, marginBottom: 18, animation: 'fadeDown 0.25s ease' }}>
+                <div style={{ padding: '13px 18px', borderRadius: 12, background: '#FEF2F2', border: '1px solid #FECACA', fontSize: 14, color: '#DC2626', fontWeight: 500, marginBottom: 20, animation: 'fadeDown .25s ease' }}>
                   {error}
                 </div>
               )}
 
               {/* Email */}
-              <div className="fade-up-3" style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#555', marginBottom: 7, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  Email address
+              <div className="f3" style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#555', marginBottom: 9 }}>
+                  Email Address
                 </label>
                 <div style={{ position: 'relative' }}>
-                  <FiMail size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: emailFocused ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)', transition: 'color 0.2s', pointerEvents: 'none' }} />
+                  <FiMail size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#aaa', pointerEvents: 'none' }} />
                   <input
                     type="email" value={email} required autoComplete="email"
-                    onChange={e => setEmail(e.target.value)}
-                    onFocus={() => setEmailFocused(true)}
-                    onBlur={() => setEmailFocused(false)}
-                    onMouseEnter={() => setEmailHov(true)}
-                    onMouseLeave={() => setEmailHov(false)}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    style={inputStyle(emailFocused, emailHov, !!error)}
+                    style={inputStyle(false)}
                   />
                 </div>
               </div>
 
               {/* Password */}
-              <div className="fade-up-4" style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
-                  <label style={{ fontSize: 11, fontWeight: 700, color: '#555', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <div className="f4" style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#555' }}>
                     Password
                   </label>
-                  <Link href="/forgot-password" style={{ fontSize: 12.5, color: 'var(--zova-primary-action)', fontWeight: 600, textDecoration: 'none' }}>
+                  <Link href="/forgot-password" className="forgot-link" style={{ fontSize: 14, color: '#2E6417', fontWeight: 600, textDecoration: 'none' }}>
                     Forgot password?
                   </Link>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <FiLock size={16} style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: passFocused ? 'var(--zova-primary-action)' : 'var(--zova-text-muted)', transition: 'color 0.2s', pointerEvents: 'none' }} />
+                  <FiLock size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: passFocused ? '#2E6417' : '#aaa', transition: 'color .2s', pointerEvents: 'none' }} />
                   <input
                     type={showPass ? 'text' : 'password'} value={password} required
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setPassFocused(true)}
                     onBlur={() => setTimeout(() => setPassFocused(false), 180)}
-                    onMouseEnter={() => setPassHov(true)}
-                    onMouseLeave={() => setPassHov(false)}
                     placeholder="Enter your password"
-                    style={{ ...inputStyle(passFocused, passHov, !!error), paddingRight: 46 }}
+                    style={{ ...inputStyle(passFocused), paddingRight: 52 }}
                   />
-                  <button type="button" onClick={() => setShowPass(v => !v)}
-                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--zova-text-muted)', padding: 2, display: 'flex', alignItems: 'center' }}>
-                    {showPass ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  <button type="button" onClick={() => setShowPass((v) => !v)}
+                    style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 2, display: 'flex', alignItems: 'center' }}>
+                    {showPass ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
 
-                {/* Strength bar */}
+                {/* Strength meter */}
                 {password.length > 0 && (
                   <div style={{ marginTop: 10 }}>
                     <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
-                      {[1,2,3,4,5].map(i => (
-                        <div key={i} style={{
-                          flex: 1, height: 3, borderRadius: 99,
-                          background: i <= passStrength ? strengthColor : 'var(--zova-border)',
-                          transition: 'background 0.3s',
-                        }} />
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <div key={i} style={{ flex: 1, height: 4, borderRadius: 99, background: i <= passStrength ? strengthColor : '#E0DAD0', transition: 'background .3s' }} />
                       ))}
                     </div>
                     {strengthLabel && (
-                      <p style={{ fontSize: 11, color: strengthColor, fontWeight: 700, margin: 0, transition: 'color 0.3s' }}>
-                        {strengthLabel} password
-                      </p>
+                      <p style={{ fontSize: 12, color: strengthColor, fontWeight: 700, margin: 0 }}>{strengthLabel} password</p>
                     )}
                   </div>
                 )}
 
                 {/* Requirements */}
                 {passFocused && password.length > 0 && (
-                  <div style={{
-                    marginTop: 10, padding: '12px 14px', borderRadius: 12,
-                    background: 'var(--zova-green-soft)', border: `1px solid ${'#B8D4A0'}`,
-                    display: 'flex', flexDirection: 'column', gap: 7,
-                    animation: 'fadeDown 0.2s ease',
-                  }}>
+                  <div style={{ marginTop: 12, padding: '14px 16px', borderRadius: 13, background: '#EAF3DE', border: '1px solid #B8D4A0', display: 'flex', flexDirection: 'column', gap: 8, animation: 'fadeDown .2s ease' }}>
                     <ReqRow met={reqs.minLength}  label="At least 8 characters" />
                     <ReqRow met={reqs.hasUpper}   label="One uppercase letter" />
                     <ReqRow met={reqs.hasLower}   label="One lowercase letter" />
@@ -367,84 +393,87 @@ export default function LoginPage() {
               </div>
 
               {/* Remember me */}
-              <div className="fade-up-5"
-                style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24, cursor: 'pointer' }}
-                onClick={() => setRememberMe(v => !v)}
-                onMouseEnter={() => setRemHov(true)} onMouseLeave={() => setRemHov(false)}
+              <div className="f5"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 26, cursor: 'pointer' }}
+                onClick={() => setRememberMe((v) => !v)}
               >
                 <div style={{
-                  width: 19, height: 19, borderRadius: 6, flexShrink: 0,
-                  border: `2px solid ${rememberMe ? 'var(--zova-primary-action)' : 'var(--zova-border)'}`,
-                  background: rememberMe ? 'var(--zova-primary-action)' : remHov ? 'var(--zova-surface-alt)' : '#FFFFFF',
+                  width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                  border: `2px solid ${rememberMe ? '#2E6417' : '#D0C9BF'}`,
+                  background: rememberMe ? '#2E6417' : '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.15s',
+                  transition: 'all .15s',
                 }}>
-                  {rememberMe && <FiCheck size={11} color="#fff" strokeWidth={3.5} />}
+                  {rememberMe && <FiCheck size={13} color="#fff" strokeWidth={3.5} />}
                 </div>
-                <span style={{ fontSize: 13.5, color: 'var(--zova-text-body)', userSelect: 'none', fontWeight: 400 }}>
-                  Keep me signed in
-                </span>
+                <span style={{ fontSize: 15, color: '#555', userSelect: 'none' }}>Keep me signed in</span>
               </div>
 
               {/* Submit */}
-              <div className="fade-up-6">
-                <button type="submit" disabled={loading}
-                  onMouseEnter={() => setSubmitHov(true)} onMouseLeave={() => setSubmitHov(false)}
+              <div className="f6">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="submit-btn"
                   style={{
-                    width: '100%', padding: '14px', border: 'none', borderRadius: 13,
-                    fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    background: loading ? 'var(--zova-border)' : submitHov ? 'var(--zova-primary-action-hover)' : 'var(--zova-primary-action)',
-                    color: loading ? 'var(--zova-text-muted)' : '#FFFFFF',
-                    boxShadow: !loading && submitHov ? `0 10px 30px rgba(46,100,23,0.35)` : !loading ? `0 5px 18px rgba(46,100,23,0.22)` : 'none',
-                    transform: !loading && submitHov ? 'translateY(-1px)' : 'none',
-                    transition: 'all 0.18s',
-                    letterSpacing: '-0.01em',
-                  }}>
-                  {loading
-                    ? <><svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width={17} height={17} viewBox="0 0 17 17" fill="none">
-                        <circle cx="8.5" cy="8.5" r="6" stroke="rgba(0,0,0,0.12)" strokeWidth="2.5" />
-                        <path d="M8.5 2.5a6 6 0 016 6" stroke={'var(--zova-text-body)'} strokeWidth="2.5" strokeLinecap="round" />
-                      </svg>Signing in…</>
-                    : <>Sign In &nbsp;<FiArrowRight size={15} /></>
-                  }
+                    width: '100%', padding: '17px 0', border: 'none', borderRadius: 14,
+                    fontSize: 16, fontWeight: 700, fontFamily: 'inherit',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                    background: loading ? '#C8BFB0' : '#2E6417',
+                    color: '#fff',
+                    boxShadow: loading ? 'none' : '0 5px 20px rgba(46,100,23,0.28)',
+                    transition: 'all .18s', letterSpacing: '-0.01em',
+                  }}
+                >
+                  {loading ? (
+                    <>
+                      <svg style={{ animation: 'spin .8s linear infinite', flexShrink: 0 }} width={18} height={18} viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,0.3)" strokeWidth="2.5" />
+                        <path d="M8 2a6 6 0 016 6" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                      Signing in…
+                    </>
+                  ) : (
+                    <>Sign In &nbsp;<FiArrowRight size={16} /></>
+                  )}
                 </button>
               </div>
 
               {/* Divider */}
-              <div className="fade-up-7" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '22px 0' }}>
-                <div style={{ flex: 1, height: 1, background: 'var(--zova-border)' }} />
-                <span style={{ fontSize: 11, color: '#CCC', fontWeight: 700, letterSpacing: '0.1em' }}>OR</span>
-                <div style={{ flex: 1, height: 1, background: 'var(--zova-border)' }} />
+              <div className="f7" style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '24px 0' }}>
+                <div style={{ flex: 1, height: 1, background: '#E0DAD0' }} />
+                <span style={{ fontSize: 12, color: '#C0B8AE', fontWeight: 700, letterSpacing: '0.1em' }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: '#E0DAD0' }} />
               </div>
 
               {/* Social buttons */}
-              <div className="fade-up-8" style={{ display: 'flex', gap: 10, marginBottom: 26 }}>
+              <div className="f7" style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
                 {[
-                  { label: 'Google',   icon: <FaGoogle size={14} color="#EA4335" />,  onClick: handleGoogleLogin, hov: googleHov, setHov: setGoogleHov },
-                  { label: 'Facebook', icon: <FaFacebookF size={14} color="#1877F2" />, onClick: () => {},         hov: fbHov,     setHov: setFbHov     },
-                ].map(btn => (
-                  <button key={btn.label} type="button" onClick={btn.onClick}
-                    onMouseEnter={() => btn.setHov(true)} onMouseLeave={() => btn.setHov(false)}
+                  { label: 'Google',   icon: <FaGoogle size={16} color="#EA4335" />,    onClick: handleGoogleLogin },
+                  { label: 'Facebook', icon: <FaFacebookF size={16} color="#1877F2" />, onClick: () => {} },
+                ].map((btn) => (
+                  <button
+                    key={btn.label}
+                    type="button"
+                    onClick={btn.onClick}
+                    className="social-btn"
                     style={{
-                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      padding: '11px 16px', borderRadius: 12, cursor: 'pointer',
-                      border: `1.5px solid ${'var(--zova-border)'}`,
-                      background: btn.hov ? 'var(--zova-surface-alt)' : '#FFFFFF',
-                      fontSize: 13.5, fontWeight: 600, color: 'var(--zova-ink)',
-                      transition: 'all 0.15s',
-                      boxShadow: btn.hov ? '0 3px 10px rgba(46,100,23,0.08)' : 'none',
-                      transform: btn.hov ? 'translateY(-1px)' : 'none',
-                    }}>
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+                      padding: '14px 16px', borderRadius: 13, cursor: 'pointer',
+                      border: '1.5px solid #E0DAD0', background: '#fff',
+                      fontSize: 15, fontWeight: 600, fontFamily: 'inherit', color: '#191B19',
+                      transition: 'all .15s',
+                    }}
+                  >
                     {btn.icon} {btn.label}
                   </button>
                 ))}
               </div>
 
-              {/* Sign up link */}
-              <p style={{ textAlign: 'center', fontSize: 13.5, color: 'var(--zova-text-muted)', margin: 0 }}>
+              <p className="f8" style={{ textAlign: 'center', fontSize: 15, color: '#888', margin: 0 }}>
                 New to ZOVA?{' '}
-                <Link href="/signup" style={{ color: 'var(--zova-primary-action)', fontWeight: 700, textDecoration: 'none' }}>
+                <Link href="/signup" style={{ color: '#2E6417', fontWeight: 700, textDecoration: 'none' }}>
                   Create an account →
                 </Link>
               </p>
@@ -452,94 +481,6 @@ export default function LoginPage() {
             </form>
           </div>
         </div>
-
-        {/* ══ RIGHT — fashion panel ══ */}
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex' }}>
-          {/* Slides */}
-          {SLIDES.map((s, i) => (
-            <img key={i} src={s.url} alt="" style={{
-              position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-              opacity: i === slide ? 1 : 0,
-              transform: i === slide ? 'scale(1.03)' : 'scale(1)',
-              transition: 'opacity 0.9s ease, transform 6s ease',
-            }} />
-          ))}
-
-          {/* Gradient overlays */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.12) 60%, transparent 100%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 55%)' }} />
-
-          {/* Floating product thumbnails */}
-          {mounted && FLOATERS.map((f, i) => (
-            <div key={i} style={{
-              position: 'absolute', right: 0, top: f.top, zIndex: 4,
-              width: f.size, height: f.size, borderRadius: 12,
-              overflow: 'hidden', border: '3px solid rgba(255,255,255,0.85)',
-              boxShadow: '0 8px 28px rgba(0,0,0,0.28)',
-              transform: `translateX(30%) rotate(${f.rot}deg)`,
-              animation: `floatBob ${3.8 + i * 0.6}s ease-in-out ${i * 0.5}s infinite`,
-            }}>
-              <img src={f.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
-          ))}
-
-          {/* Caption */}
-          <div style={{ position: 'absolute', bottom: 48, left: 44, right: 44, zIndex: 5 }}>
-            <div key={slide} style={{ animation: 'slideCaption 0.6s ease both' }}>
-              <h2 className="serif" style={{
-                fontSize: 44, fontWeight: 700, color: '#fff', margin: '0 0 10px',
-                lineHeight: 1.12, letterSpacing: '-0.02em',
-                textShadow: '0 2px 24px rgba(0,0,0,0.35)',
-                whiteSpace: 'pre-line',
-              }}>
-                {SLIDES[slide].caption}
-              </h2>
-              <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.72)', margin: '0 0 24px', fontWeight: 400 }}>
-                {SLIDES[slide].sub}
-              </p>
-            </div>
-
-            {/* Trust pills — gold dots */}
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {['50K+ Sellers', '2M+ Products', 'Fast Delivery', 'Buyer Protection'].map(tag => (
-                <div key={tag} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--zova-accent-emphasis)', boxShadow: `0 0 6px ${'var(--zova-accent-emphasis)'}` }} />
-                  <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{tag}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Slide dots */}
-            <div style={{ display: 'flex', gap: 7, marginTop: 28 }}>
-              {SLIDES.map((_, i) => (
-                <div key={i} onClick={() => setSlide(i)} style={{
-                  height: 3, borderRadius: 99, cursor: 'pointer',
-                  width: i === slide ? 28 : 7,
-                  background: i === slide ? 'var(--zova-accent-emphasis)' : 'rgba(255,255,255,0.35)',
-                  transition: 'all 0.4s',
-                }} />
-              ))}
-            </div>
-          </div>
-
-          {/* ZOVA brand — top right */}
-          <div style={{ position: 'absolute', top: 32, right: 36, zIndex: 5, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: 9,
-              background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '1px solid rgba(255,255,255,0.2)', overflow: 'hidden',
-            }}>
-              {!logoError ? (
-                <Image src="/brand/logo.svg" alt="ZOVA" width={50} height={50} className="object-contain" onError={() => setLogoError(true)} />
-              ) : (
-                <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Z</span>
-              )}
-            </div>
-            <span style={{ fontSize: 16, fontWeight: 800, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.03em' }}>ZOVA</span>
-          </div>
-        </div>
-
       </div>
     </>
   );

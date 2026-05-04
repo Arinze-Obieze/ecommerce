@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FiArrowRight, FiChevronRight, FiShield, FiTruck, FiCheck, FiStar } from 'react-icons/fi';
 import { getHeroBanner } from '@/features/storefront/home/api/client';
 
@@ -12,7 +13,7 @@ const HERO_MOOD = {
   subtitle: 'Dress loud, step out right',
   label: 'Party',
   link: '/mood/owambe',
-  image: 'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?w=700&auto=format&fit=crop&q=80',
+  image: '/images/mood/ankara_owambe.jpeg',
 };
 
 const SIDE_MOODS = [
@@ -21,28 +22,28 @@ const SIDE_MOODS = [
     subtitle: 'Easy everyday looks',
     label: 'Everyday',
     link: '/mood/casual_chill',
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=500&auto=format&fit=crop&q=80',
+    image: '/images/mood/casual_mood.jpeg',
   },
   {
     title: 'Office Ready',
     subtitle: 'Clean workday looks',
     label: 'Work',
     link: '/mood/office_ready',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80',
+    image: '/images/mood/office_wear.jpeg',
   },
 ];
 
 const CHIP_MOODS = [
-  { title: 'Date Night',       label: 'Night Out', link: '/mood/date_night',     image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&auto=format&fit=crop&q=75' },
+  { title: 'Date Night',       label: 'Night Out', link: '/mood/date_night',     image: '/images/mood/date_nghts.jpeg' },
   { title: 'Sunday Best',      label: 'Sunday',    link: '/mood/sunday_best',    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=75' },
-  { title: 'Street Style',     label: 'Trendy',    link: '/mood/street_trendy',  image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=300&auto=format&fit=crop&q=75' },
-  { title: 'Soft Luxury',      label: 'Elevated',  link: '/mood/soft_luxury',    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=300&auto=format&fit=crop&q=75' },
-  { title: 'Travel & Weekend', label: 'Outing',    link: '/mood/travel_weekend', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=300&auto=format&fit=crop&q=75' },
+  { title: 'Street Style',     label: 'Trendy',    link: '/mood/street_trendy',  image: '/images/mood/street_wear.jpeg' },
+  { title: 'Soft Luxury',      label: 'Elevated',  link: '/mood/soft_luxury',    image: '/images/mood/soft_luxary.jpeg' },
+  { title: 'Travel & Weekend', label: 'Outing',    link: '/mood/travel_weekend', image: '/images/mood/travel_weekend_mood.jpeg' },
 ];
 
 const MARQUEE_ITEMS = [
   { icon: '🛡️', text: 'Buyer Protection on Every Order' },
-  { icon: '🚚', text: 'Fast & Reliable Delivery' },
+  { icon: '✅', text: 'Assured Delivery' },
   { icon: '✓',  text: 'Verified African Stores' },
   { icon: '💳', text: 'Secure Payment Methods' },
   { icon: '🔄', text: 'Easy Returns & Refunds' },
@@ -64,13 +65,13 @@ const Pill = ({ label, small = false, accent = false }) => (
     borderRadius: 20,
     marginBottom: small ? 4 : 7,
     background: accent
-      ? 'linear-gradient(135deg, rgba(236,156,0,0.9), rgba(255,180,30,0.85))'
+      ? 'linear-gradient(135deg, rgba(46,100,23,0.92), rgba(56,120,28,0.88))'
       : 'rgba(255,255,255,0.18)',
     color: '#fff',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     border: '1px solid rgba(255,255,255,0.25)',
-    boxShadow: accent ? '0 2px 12px rgba(236,156,0,0.35)' : 'none',
+    boxShadow: accent ? '0 2px 12px rgba(46,100,23,0.4)' : 'none',
   }}>{label}</span>
 );
 
@@ -81,8 +82,9 @@ const HeroMoodCard = () => (
     borderRadius: 20, overflow: 'hidden', textDecoration: 'none',
     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
   }}>
-    <img src={HERO_MOOD.image} alt={HERO_MOOD.title} className="mood-img"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)' }} />
+    <Image src={HERO_MOOD.image} alt={HERO_MOOD.title} fill className="mood-img"
+      sizes="33vw" priority
+      style={{ objectFit: 'cover', transition: 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)' }} />
     <div style={{ position: 'absolute', inset: 0, background: overlayStrong }} />
     {/* Decorative top-right accent */}
     <div style={{
@@ -101,8 +103,8 @@ const HeroMoodCard = () => (
       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 16, lineHeight: 1.4 }}>{HERO_MOOD.subtitle}</div>
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        background: 'var(--zova-accent-emphasis, #EC9C00)',
-        boxShadow: '0 4px 16px rgba(236,156,0,0.45)',
+        background: 'linear-gradient(135deg, #2E6417, #3a7a1e)',
+        boxShadow: '0 4px 16px rgba(46,100,23,0.45)',
         color: '#fff', borderRadius: 28,
         padding: '9px 18px', fontSize: 12, fontWeight: 800,
         letterSpacing: '0.02em',
@@ -119,8 +121,9 @@ const SideMoodCard = ({ mood }) => (
     borderRadius: 18, overflow: 'hidden', textDecoration: 'none',
     boxShadow: '0 4px 20px rgba(0,0,0,0.14)',
   }}>
-    <img src={mood.image} alt={mood.title} className="mood-img"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)' }} />
+    <Image src={mood.image} alt={mood.title} fill className="mood-img"
+      sizes="33vw" priority
+      style={{ objectFit: 'cover', transition: 'transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)' }} />
     <div style={{ position: 'absolute', inset: 0, background: overlayStrong }} />
     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px 15px', zIndex: 1 }}>
       <Pill label={mood.label} />
@@ -150,8 +153,9 @@ const ChipMoodCard = ({ mood }) => (
     flexShrink: 0, scrollSnapAlign: 'start', textDecoration: 'none',
     boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
   }}>
-    <img src={mood.image} alt={mood.title} className="mood-img"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }} />
+    <Image src={mood.image} alt={mood.title} fill className="mood-img"
+      sizes="114px" loading="eager"
+      style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }} />
     <div style={{ position: 'absolute', inset: 0, background: overlay }} />
     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 11px', zIndex: 1 }}>
       <Pill label={mood.label} small />
@@ -163,43 +167,17 @@ const ChipMoodCard = ({ mood }) => (
 /* ══════════════════════════════════
    CENTER BANNER BACKGROUND
 ══════════════════════════════════ */
+const FALLBACK_BG = '/images/mood/discovery_style_card.jpeg';
+
 const CenterBannerBg = ({ banner }) => {
-  const hasBgImage = !!banner?.background_image;
+  const [src, setSrc] = useState(banner?.background_image || FALLBACK_BG);
   return (
     <>
-      {hasBgImage ? (
-        <>
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${banner.background_image})` }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%)' }} />
-        </>
-      ) : (
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)',
-        }}>
-          {/* Noise texture overlay */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'repeat',
-          }} />
-          {/* Dot grid */}
-          <div className="absolute inset-0 opacity-[0.06]" style={{
-            backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)`,
-            backgroundSize: '28px 28px',
-          }} />
-          {/* Glow orbs */}
-          <div style={{
-            position: 'absolute', top: -80, right: -80,
-            width: 340, height: 340, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(236,156,0,0.22) 0%, transparent 70%)',
-            filter: 'blur(1px)',
-          }} />
-          <div style={{
-            position: 'absolute', bottom: -60, left: -40,
-            width: 280, height: 280, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)',
-          }} />
-        </div>
-      )}
+      <Image src={src} alt="" fill priority
+        sizes="(max-width: 1024px) 100vw, 62vw"
+        onError={() => setSrc(FALLBACK_BG)}
+        style={{ objectFit: 'cover', objectPosition: 'center' }} />
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.72) 100%)' }} />
     </>
   );
 };
@@ -255,7 +233,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
         .mood-img-zoom { transition: box-shadow 0.35s ease; }
         .chips-row::-webkit-scrollbar  { display: none; }
         .chips-row { -ms-overflow-style: none; scrollbar-width: none; }
-        .hero-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(236,156,0,0.5) !important; }
+        .hero-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(46,100,23,0.5) !important; }
         .hero-cta-ghost:hover { background: rgba(255,255,255,0.22) !important; }
         @keyframes marquee  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.85); } }
@@ -310,10 +288,10 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                 {/* Eyebrow */}
                 <div style={{
                   fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-                  textTransform: 'uppercase', color: 'rgba(236,156,0,0.9)',
+                  textTransform: 'uppercase', color: 'rgba(100,200,80,0.95)',
                   marginBottom: 10,
                 }}>
-                  ✦ African Fashion Marketplace
+                  ✦ Fashion Marketplace
                 </div>
 
                 {/* Title — massive and bold */}
@@ -329,7 +307,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                   {banner?.title || (
                     <>Discover Your<br />
                     <span style={{
-                      background: 'linear-gradient(135deg, #EC9C00, #FFD060)',
+                      background: 'linear-gradient(135deg, #5db83a, #8be060)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
@@ -353,7 +331,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                   <Link href={banner?.cta_link || '/shop'}
                     className="hero-cta-primary group inline-flex items-center gap-2"
                     style={{
-                      background: 'linear-gradient(135deg, #EC9C00, #FFB830)',
+                      background: 'linear-gradient(135deg, #2E6417, #3a7a1e)',
                       color: '#fff',
                       borderRadius: 32,
                       padding: '11px 22px',
@@ -361,7 +339,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                       fontWeight: 800,
                       letterSpacing: '0.01em',
                       textDecoration: 'none',
-                      boxShadow: '0 4px 20px rgba(236,156,0,0.4)',
+                      boxShadow: '0 4px 20px rgba(46,100,23,0.4)',
                       transition: 'transform 0.2s, box-shadow 0.2s',
                     }}>
                     {banner?.cta_text || 'Shop Now'}
@@ -399,7 +377,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                 }}>
                   {[
                     { icon: <FiShield size={12} />, label: 'Buyer Protected' },
-                    { icon: <FiTruck size={12} />, label: 'Fast Delivery' },
+                    { icon: <FiTruck size={12} />, label: 'Assured' },
                     { icon: <FiCheck size={12} />, label: 'Verified Stores' },
                   ].map((item, i) => (
                     <div key={i} style={{
@@ -410,7 +388,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                       fontSize: 11,
                       fontWeight: 600,
                     }}>
-                      <span style={{ color: 'rgba(236,156,0,0.9)' }}>{item.icon}</span>
+                      <span style={{ color: 'rgba(100,200,80,0.95)' }}>{item.icon}</span>
                       {item.label}
                     </div>
                   ))}
@@ -476,7 +454,7 @@ const Hero = ({ initialBanner = null, initialSellerCount = null }) => {
                 scrollSnapAlign: 'start', textDecoration: 'none',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.14)',
               }}>
-                <img src={mood.image} alt={mood.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                <Image src={mood.image} alt={mood.title} fill sizes="102px" loading="eager" style={{ objectFit: 'cover' }} />
                 <div style={{ position: 'absolute', inset: 0, background: overlay }} />
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 10px', zIndex: 1 }}>
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>{mood.title}</div>

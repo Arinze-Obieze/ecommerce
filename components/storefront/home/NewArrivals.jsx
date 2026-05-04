@@ -54,7 +54,7 @@ const NewArrivals = ({ initialProducts = null }) => {
   }
 
   return (
-    <SectionCarousel title="New Arrivals" linkText="View All" linkHref="/shop?sortBy=newest">
+    <SectionCarousel title="New Arrivals" linkText="View All" linkHref="/shop?collection=new-arrivals&sortBy=reviewed_at">
       {products.map((product, index) => (
         <ProductImpressionTracker
           key={product.id}

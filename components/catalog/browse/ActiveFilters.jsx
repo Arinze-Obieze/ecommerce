@@ -11,6 +11,7 @@ export default function ActiveFilters() {
     filters,
     setSearch,
     setCategory,
+    setCollection,
     setPriceRange,
     toggleSize,
     toggleColor,
@@ -79,6 +80,36 @@ export default function ActiveFilters() {
           </div>
         )}
         
+        {/* Collection filter */}
+        {filters.collection && (
+          <div
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm"
+            style={{
+              backgroundColor: 'var(--color-primary-soft)',
+              borderColor: 'rgba(46,100,23,0.18)',
+              borderWidth: '1px',
+              color: 'var(--color-primary)'
+            }}
+          >
+            <span>
+              {filters.collection === 'new-arrivals' ? 'New Arrivals'
+                : filters.collection === 'on-sale' ? 'On Sale'
+                : filters.collection === 'best-sellers' ? 'Best Sellers'
+                : filters.collection}
+            </span>
+            <button
+              onClick={() => setCollection('')}
+              type="button"
+              className="ml-1"
+              style={{ color: 'var(--color-text-light)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-text-light)'}
+            >
+              <FiX className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Price range filter */}
         {(filters.minPrice || filters.maxPrice) && (
           <div 

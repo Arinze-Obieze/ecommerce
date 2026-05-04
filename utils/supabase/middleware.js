@@ -34,7 +34,7 @@ function buildEnforcedCsp(nonce) {
     ["object-src", "'none'"],
     ["frame-ancestors", "'none'"],
     ["form-action", "'self'"],
-    ["script-src", "'self'", `'nonce-${nonce}'`, "https://js.paystack.co", "https://checkout.paystack.com"],
+    ["script-src", "'self'", `'nonce-${nonce}'`, "https://js.paystack.co", "https://checkout.paystack.com", ...(process.env.NODE_ENV === 'development' ? ["'unsafe-eval'"] : [])],
     ["style-src", "'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
     ["font-src", "'self'", "data:", "https://fonts.gstatic.com"],
     [

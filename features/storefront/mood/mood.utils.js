@@ -33,14 +33,33 @@ export function sortMoodProducts(products, sort) {
   return list;
 }
 
+export function deriveGender(name) {
+  if (!name) return null;
+  const n = name.toLowerCase().trim();
+  if (/women|female|ladies|lady/.test(n)) return 'women';
+  if (/\bmen\b|^men'|^mens|menswear|^male/.test(n)) return 'men';
+  if (/kid|child|boy|girl|infant|baby|junior|toddler/.test(n)) return 'kids';
+  return null;
+}
+
 export function filterMoodProducts({
   products,
   pricePreset,
   selectedSizes,
   selectedColors,
   selectedCategories,
+  selectedGender,
+  inStock,
 }) {
   let list = [...products];
+
+  if (selectedGender) {
+    list = list.filter((p) => !p.gender || p.gender === selectedGender);
+  }
+
+  if (inStock) {
+    list = list.filter((p) => p.stock_quantity == null || p.stock_quantity > 0);
+  }
 
   if (pricePreset !== null) {
     const { min, max } = MOOD_PRICE_PRESETS[pricePreset];

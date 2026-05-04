@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import CancellationModal from '@/features/account/order-detail/CancellationModal';
 import CancellationPanel from '@/features/account/order-detail/CancellationPanel';
@@ -16,7 +17,8 @@ import useOrderDetail from '@/features/account/order-detail/useOrderDetail';
 
 export default function ProfileOrderDetailPage({ params }) {
   const { user, loading: authLoading } = useAuth();
-  const orderId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const { id } = use(params);
+  const orderId = Array.isArray(id) ? id[0] : id;
 
   const {
     order,

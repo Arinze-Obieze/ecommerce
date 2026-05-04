@@ -82,7 +82,7 @@ export default function BrowseHeader({
       >
         <div>
           <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--zova-ink)', margin: 0, letterSpacing: '-0.025em', lineHeight: 1.15 }}>
-            All Products
+            {filters.collection === 'new-arrivals' ? 'New Arrivals' : 'All Products'}
           </h2>
           <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '4px 0 0' }}>
             Showing <span style={{ fontWeight: 600, color: 'var(--zova-ink)' }}>{productsLength}</span> of <span style={{ fontWeight: 600, color: 'var(--zova-ink)' }}>{totalItems}</span> items
@@ -112,6 +112,7 @@ export default function BrowseHeader({
             }}
           >
             <option value="newest">Newest Arrivals</option>
+            <option value="reviewed_at">New Arrivals</option>
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>
             <option value="rating">Top Rated</option>

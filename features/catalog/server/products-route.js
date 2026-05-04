@@ -678,7 +678,24 @@ export async function GET(request) {
     let discountRankOrderedIds = null;
 
     if (collection) {
-      if (collection === 'on-sale') {
+      if (collection === 'new-arrivals') {
+        // Products reviewed/approved in the last 14 days — mirrors the homepage
+        // New Arrivals fetch strategy so "View All" shows the same pool.
+        const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentRows } = await db
+          .from('products')
+          .select('id')
+          .gte('reviewed_at', cutoff)
+          .eq('moderation_status', 'approved')
+          .order('reviewed_at', { ascending: false })
+          .limit(200);
+        const ids = (recentRows || []).map((r) => r.id).filter(Boolean);
+        if (ids.length > 0) {
+          query = query.in('id', ids);
+        }
+        // If no products were reviewed in the last 14 days, fall through with
+        // no extra filter — sortBy=reviewed_at below will still sort correctly.
+      } else if (collection === 'on-sale') {
         // Products with an active discount — same as hasDiscount=true
         query = query.not('discount_price', 'is', null);
       } else if (collection === 'best-sellers') {
