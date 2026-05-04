@@ -1,4 +1,8 @@
 import './globals.css'
+import './animations.css'
+import './components.css'
+import './auth.css'
+import { headers } from 'next/headers'
 import AppProviders from '@/components/providers/AppProviders'
 import SiteChrome from '@/components/layout/SiteChrome'
 
@@ -12,10 +16,15 @@ export const metadata = {
   },
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const nonce = (await headers()).get('x-nonce') || undefined
+
   return (
     <html lang="en">
-      <body className="font-sans antialiased bg-(--zova-linen) text-(--zova-ink)">
+      <body
+        nonce={nonce}
+        className="font-sans antialiased bg-(--zova-linen) text-(--zova-ink)"
+      >
         <AppProviders>
           <SiteChrome>{children}</SiteChrome>
         </AppProviders>

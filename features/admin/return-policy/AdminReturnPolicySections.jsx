@@ -2,7 +2,7 @@
 
 export function AdminReturnPolicyIntro() {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900">Generic Return Policy</h2>
       <p className="text-sm text-gray-500">
         This policy is shown on every product page. Admins can edit the summary text and the table rows below.
@@ -12,7 +12,7 @@ export function AdminReturnPolicyIntro() {
 }
 
 export function AdminReturnPolicyLoading() {
-  return <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 text-sm text-gray-500">Loading return policy...</div>;
+  return <div className="rounded-2xl border border-border bg-white p-6 text-sm text-gray-500">Loading return policy...</div>;
 }
 
 function AdminReturnPolicyRowEditor({ row, disableRemove, onUpdateRow, onRemoveRow }) {
@@ -63,7 +63,7 @@ export function AdminReturnPolicyForm({
   onSave,
 }) {
   return (
-    <form onSubmit={onSave} className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <form onSubmit={onSave} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       {error ? <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
       {notice ? <div className="mb-3 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</div> : null}
 

@@ -81,7 +81,7 @@ export default function Step4() {
       subtitle="Optional: reward larger orders with automatic quantity-based discounts."
     >
       <div className="space-y-5">
-        <div className="rounded-2xl border border-[#E8E4DC] bg-[#f8fbf9] p-4">
+        <div className="rounded-2xl border border-border bg-[#f8fbf9] p-4">
           <p className="text-sm font-bold text-gray-900">How this works</p>
           <p className="mt-1 text-sm text-gray-600">
             Buyers automatically get a lower unit price when quantity reaches a tier. Example: buy 10+, get 8% off.
@@ -161,7 +161,7 @@ export default function Step4() {
                     : 0;
 
                   return (
-                    <div key={`${tier.minimum_quantity}-${tier.discount_percent}`} className="rounded-xl border border-[#E8E4DC] px-3 py-2.5 flex items-center justify-between gap-3">
+                    <div key={`${tier.minimum_quantity}-${tier.discount_percent}`} className="rounded-xl border border-border px-3 py-2.5 flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-gray-800">Buy {tier.minimum_quantity}+ units</p>
                       <div className="text-right">
                         <p className="text-sm font-bold text-primary">{tier.discount_percent}% off</p>

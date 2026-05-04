@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { FiCheck, FiChevronLeft } from 'react-icons/fi';
+import { FiCheck, FiChevronLeft, FiHeart, FiShare2 } from 'react-icons/fi';
 import Link from 'next/link';
 import RecentlyViewedProducts from '@/components/catalog/RecentlyViewedProducts';
 import RelatedProducts from '@/components/catalog/RelatedProducts';
@@ -68,12 +68,13 @@ export default function ProductPage({ params }) {
 
       <div style={{ maxWidth:1200,margin:'0 auto',padding:'28px 16px 100px' }} className="lg:px-8 lg:pb-24 lg:pt-10">
 
-        {/* BACK */}
-        <div style={{ marginBottom:32 }}>
+        {/* MINIMAL HEADER WITH BACK + ACTIONS */}
+        <div style={{ marginBottom:28, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* BACK BUTTON */}
           <button onClick={() => pdp.router.back()} type="button"
             style={{
               display:'inline-flex',alignItems:'center',gap:6,padding:'8px 16px',borderRadius:100,
-              border:`1.5px solid ${'var(--zova-border)'}`,background:'#FFFFFF',color:'var(--zova-text-body)',
+              border:`1px solid var(--zova-border)`,background:'#FFFFFF',color:'var(--zova-text-body)',
               fontSize:12,fontWeight:700,cursor:'pointer',letterSpacing:'0.02em',transition:'all 0.15s',
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor='var(--zova-primary-action)'; e.currentTarget.style.color='var(--zova-primary-action)'; }}
@@ -81,6 +82,30 @@ export default function ProductPage({ params }) {
           >
             <FiChevronLeft size={14} /> Back
           </button>
+
+          {/* ACTIONS BUTTONS (WISHLIST + SHARE) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => pdp.toggleWishlist(pdp.product.id)}
+              className={`pdp-wishlist-btn${pdp.inWishlist ? ' active' : ''}`}
+              style={{ width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${pdp.inWishlist ? '#FECACA' : 'var(--zova-border)'}`, background: pdp.inWishlist ? '#FEF2F2' : '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+              title={pdp.inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <FiHeart size={16} style={{ color: pdp.inWishlist ? '#C0392B' : 'var(--zova-text-body)', fill: pdp.inWishlist ? '#C0392B' : 'none' }} />
+            </button>
+
+            <button
+              type="button"
+              onClick={pdp.handleShare}
+              style={{ width: 40, height: 40, borderRadius: '50%', border: '1.5px solid var(--zova-border)', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+              onMouseEnter={(event) => { event.currentTarget.style.borderColor = 'var(--zova-primary-action)'; }}
+              onMouseLeave={(event) => { event.currentTarget.style.borderColor = 'var(--zova-border)'; }}
+              title="Share product"
+            >
+              <FiShare2 size={15} style={{ color: 'var(--zova-text-body)' }} />
+            </button>
+          </div>
         </div>
 
         {/* MAIN GRID */}

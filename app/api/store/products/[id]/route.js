@@ -3,17 +3,13 @@ import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/catalog/product-catalog';
 import { normalizeBulkDiscountTiers } from '@/utils/catalog/bulk-pricing';
+import { parseWholeNairaAmount } from '@/utils/money/naira';
 import { invalidateProductCache } from '@/utils/platform/cache-invalidation';
 
 const PRODUCT_DETAIL_SELECT = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, bulk_discount_tiers, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
 const PRODUCT_DETAIL_SELECT_FALLBACK = 'id, store_id, moderation_status, is_active, name, slug, sku, description, price, discount_price, stock_quantity, image_urls, video_urls, specifications, submitted_at, reviewed_at, rejection_reason, published_at, created_at, updated_at';
 const PRODUCT_VARIANT_SELECT = 'id, product_id, color, size, stock_quantity, created_at';
 const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
-
-function toNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-}
 
 function isMissingBulkDiscountColumnError(error) {
   const message = String(error?.message || '').toLowerCase();
@@ -194,21 +190,21 @@ export async function PATCH(request, { params }) {
   }
   if (body?.description !== undefined) updates.description = String(body.description || '').trim();
   if (body?.price !== undefined) {
-    const price = toNumber(body.price);
-    if (price === null || price <= 0) {
-      return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
+    const priceResult = parseWholeNairaAmount(body.price);
+    if (priceResult.error) {
+      return NextResponse.json({ error: `Valid whole-Naira price is required. ${priceResult.error}` }, { status: 400 });
     }
-    updates.price = price;
+    updates.price = priceResult.value;
   }
   if (body?.discount_price !== undefined) {
     if (body.discount_price === null || body.discount_price === '') {
       updates.discount_price = null;
     } else {
-      const discountPrice = toNumber(body.discount_price);
-      if (discountPrice === null || discountPrice < 0) {
-        return NextResponse.json({ error: 'Invalid discount price' }, { status: 400 });
+      const discountPriceResult = parseWholeNairaAmount(body.discount_price, { allowZero: true });
+      if (discountPriceResult.error) {
+        return NextResponse.json({ error: `Sale price must be a whole-Naira value. ${discountPriceResult.error}` }, { status: 400 });
       }
-      updates.discount_price = discountPrice;
+      updates.discount_price = discountPriceResult.value;
     }
   }
   if (body?.stock_quantity !== undefined) {
@@ -244,6 +240,14 @@ export async function PATCH(request, { params }) {
 
   if (Object.keys(updates).length === 0 && !body?.submit_for_review && body?.archive === undefined) {
     return NextResponse.json({ error: 'No valid updates provided' }, { status: 400 });
+  }
+
+  const effectivePrice = Object.prototype.hasOwnProperty.call(updates, 'price') ? updates.price : product.price;
+  const effectiveDiscountPrice = Object.prototype.hasOwnProperty.call(updates, 'discount_price')
+    ? updates.discount_price
+    : product.discount_price;
+  if (effectiveDiscountPrice !== null && effectiveDiscountPrice !== undefined && effectiveDiscountPrice >= effectivePrice) {
+    return NextResponse.json({ error: 'Sale price must be lower than the main price.' }, { status: 400 });
   }
 
   const nowIso = new Date().toISOString();

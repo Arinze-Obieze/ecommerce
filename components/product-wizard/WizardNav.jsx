@@ -15,7 +15,7 @@ export default function WizardNav({
     : nextLabel;
 
   return (
-    <div className="flex items-center justify-between gap-3 mt-8 pt-5 border-t border-[#E8E4DC]/60">
+    <div className="flex items-center justify-between gap-3 mt-8 pt-5 border-t border-border/60">
       <div className="flex items-center gap-2">
         {showCancel && onCancel && (
           <button type="button" onClick={onCancel}

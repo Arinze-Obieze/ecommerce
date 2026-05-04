@@ -11,6 +11,15 @@ import {
   NIGERIA_LOCATIONS,
   isAddressValid,
 } from '@/features/cart/checkout/address.constants';
+import { calculateShippingFee } from '@/constants/shipping';
+
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
+}
 
 export default function useCartCheckout() {
   const router = useRouter();
@@ -19,6 +28,7 @@ export default function useCartCheckout() {
   const [isCheckingOut, setIsCheckingOut] = React.useState(false);
   const [checkoutError, setCheckoutError] = React.useState('');
   const [authUser, setAuthUser] = React.useState(null);
+  const [checkoutEmail, setCheckoutEmail] = React.useState('');
   const [addressMode, setAddressMode] = React.useState('saved');
   const [savedAddresses, setSavedAddresses] = React.useState([]);
   const [selectedAddressId, setSelectedAddressId] = React.useState('');
@@ -62,16 +72,6 @@ export default function useCartCheckout() {
 
   const activeDeliveryAddress = addressMode === 'saved' ? selectedSavedAddress : addressForm;
 
-  React.useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://js.paystack.co/v1/inline.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   const loadUserAndAddresses = React.useCallback(async () => {
     try {
       setLoadingAddresses(true);
@@ -80,6 +80,7 @@ export default function useCartCheckout() {
         data: { user },
       } = await supabase.auth.getUser();
       setAuthUser(user || null);
+      setCheckoutEmail(normalizeEmail(user?.email || ''));
 
       if (!user) {
         setSavedAddresses([]);
@@ -125,7 +126,7 @@ export default function useCartCheckout() {
     return total + pricing.lineTotal;
   }, 0);
 
-  const shipping = subtotal > 50000 ? 0 : 2500;
+  const shipping = calculateShippingFee(subtotal);
   const total = subtotal + shipping;
 
   const resetSuccessModal = React.useCallback(() => {
@@ -149,8 +150,9 @@ export default function useCartCheckout() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        throw new Error('Please log in before checking out');
+      const customerEmail = normalizeEmail(user?.email || checkoutEmail);
+      if (!isValidEmail(customerEmail)) {
+        throw new Error('Enter a valid email address before payment.');
       }
 
       let resolvedAddress = null;
@@ -171,7 +173,7 @@ export default function useCartCheckout() {
           isDefault: savedAddresses.length === 0,
         };
 
-        if (saveNewAddress) {
+        if (saveNewAddress && user) {
           const saveResponse = await fetch('/api/account/addresses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -201,6 +203,7 @@ export default function useCartCheckout() {
         subtotal,
         shipping,
         total,
+        checkout_type: user ? 'authenticated' : 'guest',
         address_mode: addressMode,
         saved_address_for_future: addressMode === 'new' ? saveNewAddress : null,
       });
@@ -214,9 +217,10 @@ export default function useCartCheckout() {
             variant_id: item.variant_id || null,
             quantity: item.quantity,
           })),
+          customerEmail,
           deliveryAddress: resolvedAddress,
           addressMode,
-          saveAddress: addressMode === 'new' ? saveNewAddress : false,
+          saveAddress: Boolean(user) && addressMode === 'new' ? saveNewAddress : false,
         }),
       });
 
@@ -230,10 +234,13 @@ export default function useCartCheckout() {
       if (!paystackKey) {
         throw new Error('Paystack configuration missing');
       }
+      if (typeof window === 'undefined' || !window.PaystackPop?.setup) {
+        throw new Error('Payment service is still loading. Please wait a moment and try again.');
+      }
 
       const handler = window.PaystackPop.setup({
         key: paystackKey,
-        email: user.email,
+        email: customerEmail,
         amount: Math.round(authoritativeTotal * 100),
         currency: 'NGN',
         ref: `${Math.floor(Math.random() * 1000000000) + 1}`,
@@ -243,6 +250,11 @@ export default function useCartCheckout() {
               display_name: 'Order ID',
               variable_name: 'order_id',
               value: orderId,
+            },
+            {
+              display_name: 'Checkout Email',
+              variable_name: 'checkout_email',
+              value: customerEmail,
             },
           ],
         },
@@ -258,6 +270,7 @@ export default function useCartCheckout() {
             body: JSON.stringify({
               reference: paymentReference,
               orderId: currentOrderId,
+              customerEmail,
             }),
           })
             .then((verifyResponse) => {
@@ -354,6 +367,8 @@ export default function useCartCheckout() {
     checkoutError,
     setCheckoutError,
     authUser,
+    checkoutEmail,
+    setCheckoutEmail,
     addressMode,
     setAddressMode,
     savedAddresses,

@@ -17,7 +17,7 @@ export default function ProductDetailsStep({
     <div className="space-y-6">
       <div className="zova-store-card p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-[var(--zova-text-strong)]">Specifications</h2>
+          <h2 className="text-lg font-bold text-(--zova-text-strong)">Specifications</h2>
           <button
             type="button"
             onClick={() =>
@@ -31,7 +31,7 @@ export default function ProductDetailsStep({
             Add spec
           </button>
         </div>
-        <p className="mt-1 text-sm text-[var(--zova-text-muted)]">Material, size, features, and care notes.</p>
+        <p className="mt-1 text-sm text-(--zova-text-muted)">Material, size, features, and care notes.</p>
 
         <div className="mt-6 space-y-3">
           {form.specifications.map((spec, index) => (
@@ -70,7 +70,7 @@ export default function ProductDetailsStep({
 
       <div className="zova-store-card p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-[var(--zova-text-strong)]">Bulk Pricing Tiers</h2>
+          <h2 className="text-lg font-bold text-(--zova-text-strong)">Bulk Pricing Tiers</h2>
           <button
             type="button"
             onClick={() =>
@@ -84,7 +84,7 @@ export default function ProductDetailsStep({
             Add tier
           </button>
         </div>
-        <p className="mt-1 text-sm text-[var(--zova-text-muted)]">Offer discounts for higher quantities.</p>
+        <p className="mt-1 text-sm text-(--zova-text-muted)">Offer discounts for higher quantities.</p>
 
         <div className="mt-6 space-y-3">
           {form.bulk_discount_tiers.map((tier, index) => (

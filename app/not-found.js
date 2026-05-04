@@ -2,23 +2,23 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-      <div className="text-center max-w-md">
-        <div className="text-9xl font-bold text-blue-100 mb-4">404</div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-3">Page Not Found</h1>
-        <p className="text-gray-600 mb-8">
-          The page you are looking for doesn't exist or has been moved.
+    <div className="flex min-h-screen flex-col items-center justify-center bg-(--zova-linen) px-4">
+      <div className="max-w-md text-center">
+        <div className="mb-4 text-9xl font-bold text-(--zova-border)">404</div>
+        <h1 className="mb-3 text-3xl font-bold text-(--zova-ink)">Page Not Found</h1>
+        <p className="mb-8 text-(--zova-text-muted)">
+          The page you are looking for doesn&apos;t exist or has been moved.
         </p>
         <div className="space-y-3">
           <Link
             href="/"
-            className="inline-block w-full px-6 py-3 bg-orange-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-block w-full rounded-lg bg-(--zova-primary-action) px-6 py-3 font-medium text-white transition-colors hover:bg-(--zova-primary-action-hover)"
           >
             Go back home
           </Link>
           <Link
-            href="/products"
-            className="inline-block w-full px-6 py-3 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            href="/shop"
+            className="inline-block w-full rounded-lg border-2 border-(--zova-border) px-6 py-3 font-medium text-(--zova-ink) transition-colors hover:bg-(--zova-surface-alt)"
           >
             Browse products
           </Link>

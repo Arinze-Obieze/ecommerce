@@ -107,7 +107,14 @@ export async function GET(request) {
         // Return empty stats immediately
          return publicJson({
             success: true,
-            data: { sizes: [], colors: [], brands: [], priceRange: { min: 0, max: 1000 } }
+            data: {
+              sizes: [],
+              sizeCounts: {},
+              colors: [],
+              colorCounts: {},
+              brands: [],
+              priceRange: { min: 0, max: 1000 },
+            }
          });
       }
       productsQuery = productsQuery.in('id', productIds);
@@ -123,17 +130,25 @@ export async function GET(request) {
     // Aggregate in JS
     const sizes = new Set()
     const colors = new Set()
+    const sizeCounts = {}
+    const colorCounts = {}
     let minPrice = Infinity
     let maxPrice = -Infinity
 
     products?.forEach(product => {
       // Sizes
       if (Array.isArray(product.sizes)) {
-        product.sizes.forEach(s => sizes.add(s))
+        product.sizes.forEach(s => {
+          sizes.add(s)
+          sizeCounts[s] = (sizeCounts[s] || 0) + 1
+        })
       }
       // Colors
       if (Array.isArray(product.colors)) {
-        product.colors.forEach(c => colors.add(c))
+        product.colors.forEach(c => {
+          colors.add(c)
+          colorCounts[c] = (colorCounts[c] || 0) + 1
+        })
       }
       // Prices
       const price = product.price
@@ -146,7 +161,9 @@ export async function GET(request) {
     // Prepare response
     const payload = {
       sizes: Array.from(sizes).sort(),
+      sizeCounts,
       colors: Array.from(colors).sort(),
+      colorCounts,
       brands: [], 
       priceRange: {
         min: minPrice === Infinity ? 0 : minPrice,

@@ -3,166 +3,23 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useWizard } from "@/components/product-wizard/WizardProvider";
 import WizardShell from "@/components/product-wizard/WizardShell";
 import WizardNav from "@/components/product-wizard/WizardNav";
-import { buildSkuCode, buildVariantSku, COLORS_LIST, getColorSwatch, getSizeOptions, MATERIALS } from "@/features/product-wizard/lib/constants";
+import { COLORS_LIST, getColorSwatch, getSizeOptions, MATERIALS } from "@/features/product-wizard/lib/constants";
+import {
+  buildAutoSku,
+  buildVariantSkuFromPattern,
+  deriveColorSizeFromAttributes,
+  makeVariantId,
+  normalizeExistingVariant,
+  normalizeHex,
+  normalizeToken,
+  uploadImageFiles,
+  variantDisplayLabel,
+  variantKey,
+} from "./lib/variant-utils";
 import { useToast } from "@/contexts/toast/ToastContext";
 
 const ATTRIBUTE_OPTIONS = ["Color", "Size", "Material", "Style", "Pattern"];
 const COLOR_OPTIONS = COLORS_LIST.filter((color) => color.family !== "Multi");
-
-function deriveSkuFromName(productName) {
-  if (!productName) return "";
-  return buildSkuCode(
-    productName
-      .replace(/[^a-zA-Z0-9\s]/g, "")
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => word[0])
-      .join("") || productName,
-    4
-  );
-}
-
-function buildAutoSku(storeSlug, productName) {
-  const storeCode = buildSkuCode(storeSlug || "STOR", 4);
-  const productCode = deriveSkuFromName(productName) || buildSkuCode(productName, 4);
-  return `ZVA-${storeCode}-${productCode}-0001`;
-}
-
-function normalizeToken(value) {
-  return String(value || "").trim();
-}
-
-function sanitizeSkuToken(value) {
-  return normalizeToken(value).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-}
-
-function makeVariantId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `v_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
-}
-
-function variantKey(color, size) {
-  return `${String(color || "").toLowerCase()}__${String(size || "").toLowerCase()}`;
-}
-
-function normalizeExistingVariant(variant = {}) {
-  const legacy = [
-    { name: normalizeToken(variant.attr1Name) || "Color", value: normalizeToken(variant.attr1Value) || normalizeToken(variant.color) || "" },
-    { name: normalizeToken(variant.attr2Name), value: normalizeToken(variant.attr2Value) || (normalizeToken(variant.size) !== "OS" ? normalizeToken(variant.size) : "") },
-  ].filter((entry) => entry.name && entry.value);
-
-  const fromVariant = Array.isArray(variant.attributes)
-    ? variant.attributes.map((entry) => ({ name: normalizeToken(entry?.name), value: normalizeToken(entry?.value) })).filter((entry) => entry.name && entry.value)
-    : [];
-
-  const deduped = [];
-  [...fromVariant, ...legacy].forEach((entry) => {
-    if (!entry.name || !entry.value) return;
-    if (!deduped.some((existing) => existing.name.toLowerCase() === entry.name.toLowerCase())) {
-      deduped.push(entry);
-    }
-  });
-
-  return {
-    id: variant.id || makeVariantId(),
-    color: normalizeToken(variant.color) || "Default",
-    colorHex: normalizeToken(variant.colorHex),
-    size: normalizeToken(variant.size) || "OS",
-    price: Number(variant.price || 0),
-    quantity: Number.parseInt(variant.quantity, 10) || 0,
-    attr1Name: deduped[0]?.name || "Color",
-    attr1Value: deduped[0]?.value || "",
-    attr2Name: deduped[1]?.name || "",
-    attr2Value: deduped[1]?.value || "",
-    attributes: deduped.length ? deduped : [{ name: "Color", value: "" }],
-    useVariantMedia: Boolean(variant.useVariantMedia),
-  };
-}
-
-function deriveColorSizeFromAttributes(entries = []) {
-  const validEntries = (entries || [])
-    .map((entry) => ({ name: normalizeToken(entry?.name), value: normalizeToken(entry?.value) }))
-    .filter((entry) => entry.name && entry.value);
-
-  let color = "";
-  let size = "";
-
-  validEntries.forEach((entry) => {
-    const lower = entry.name.toLowerCase();
-    if (lower === "color" && !color) color = entry.value;
-    if (lower === "size" && !size) size = entry.value;
-  });
-
-  if (!color && validEntries[0]) color = validEntries[0].value;
-  if (!size) {
-    const fallbackSize = validEntries.find((entry) => entry.name.toLowerCase() === "size")?.value || "";
-    size = fallbackSize || "OS";
-  }
-
-  return {
-    color: color || "Default",
-    size: size || "OS",
-  };
-}
-
-function variantDisplayLabel(variant) {
-  const attrs = Array.isArray(variant.attributes) ? variant.attributes : [
-    { name: variant.attr1Name, value: variant.attr1Value },
-    { name: variant.attr2Name, value: variant.attr2Value },
-  ];
-  const values = attrs.map((entry) => normalizeToken(entry?.value)).filter(Boolean);
-  if (values.length) return values.join(" / ");
-  const c = variant.color === "Default" ? null : variant.color;
-  const s = variant.size === "OS" ? null : variant.size;
-  return [c, s].filter(Boolean).join(" / ") || "Default";
-}
-
-function buildVariantSkuFromPattern(baseSku, pattern, variant) {
-  const fallback = buildVariantSku(baseSku, variant.color === "Default" ? "" : variant.color, variant.size === "OS" ? "" : variant.size);
-  const cleanPattern = normalizeToken(pattern);
-  if (!cleanPattern) return fallback;
-
-  const attrText = (Array.isArray(variant.attributes) ? variant.attributes : [
-    { name: variant.attr1Name, value: variant.attr1Value },
-    { name: variant.attr2Name, value: variant.attr2Value },
-  ])
-    .map((entry) => normalizeToken(entry?.value))
-    .filter(Boolean)
-    .join("-");
-
-  const mapped = cleanPattern
-    .replace(/BASE|\{base\}/gi, baseSku)
-    .replace(/\{color\}/gi, sanitizeSkuToken(variant.color === "Default" ? "" : variant.color))
-    .replace(/\{size\}/gi, sanitizeSkuToken(variant.size === "OS" ? "" : variant.size))
-    .replace(/\{attribute\}/gi, sanitizeSkuToken(attrText));
-
-  const normalized = mapped
-    .replace(/\s+/g, "-")
-    .replace(/-{2,}/g, "-")
-    .replace(/^-+|-+$/g, "");
-
-  return normalized || fallback;
-}
-
-function uploadImageFiles(files, makeKey, onUpload, showError) {
-  Array.from(files || []).forEach((file) => {
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) { showError("Images must be 10 MB or smaller."); return; }
-    const isImage = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
-    if (!isImage) { showError("Upload JPG, PNG, or WebP files only."); return; }
-    const key = makeKey();
-    onUpload(key, file, URL.createObjectURL(file));
-  });
-}
-
-function normalizeHex(value) {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  const withHash = raw.startsWith("#") ? raw : `#${raw}`;
-  return /^#[0-9A-Fa-f]{6}$/.test(withHash) ? withHash.toUpperCase() : "";
-}
 
 function ColorSearchDropdown({ value, valueHex = "", onChange, idPrefix = "color-search" }) {
   const [query, setQuery] = useState(value || "");
@@ -592,7 +449,7 @@ export default function Step2() {
   const renderProductMediaCard = (extraClassName = "") => (
     <div className={`bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3.5 ${extraClassName}`}>
       <h4 className="text-sm font-bold text-gray-800">PRODUCT MEDIA</h4>
-      <div className="rounded-xl border border-[#E8E4DC] bg-[#f8fbf9] px-3 py-2.5">
+      <div className="rounded-xl border border-border bg-[#f8fbf9] px-3 py-2.5">
         <p className="text-xs text-gray-600">
           Upload product-level images here.{" "}
           <span className="font-semibold text-gray-800">Minimum 2 images required</span> before continuing.
@@ -810,7 +667,7 @@ export default function Step2() {
               </button>
 
               {formOpen && (
-                <div className="rounded-xl border border-[#E8E4DC] bg-[#f8fbf9] p-3.5 space-y-3">
+                <div className="rounded-xl border border-border bg-[#f8fbf9] p-3.5 space-y-3">
                   <div className="space-y-2">
                     {variantForm.attributes.map((attribute, index) => {
                       const typeOptions = availableTypeOptionsForRow(index);
@@ -944,7 +801,7 @@ export default function Step2() {
                     <input type="number" min="1" placeholder="Stock (required)" className="px-3 py-2 rounded-lg border border-gray-200 text-sm" value={variantForm.quantity} onChange={(e) => setVariantForm((prev) => ({ ...prev, quantity: e.target.value }))} />
                   </div>
 
-                  <div className="rounded-lg border border-[#E8E4DC] bg-white px-3 py-2 text-xs text-gray-600">
+                  <div className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-gray-600">
                     Variant SKU preview:{" "}
                     <span className="font-mono font-semibold text-primary">
                       {(() => {

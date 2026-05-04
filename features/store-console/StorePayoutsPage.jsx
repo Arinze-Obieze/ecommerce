@@ -51,7 +51,7 @@ export default function StorePayoutsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-bold text-gray-900">Payouts & Escrow</h2>
         <p className="text-sm text-gray-500">
           Track held funds, monitor payout progress, and verify the bank account that receives admin-approved releases.

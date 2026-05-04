@@ -1,11 +1,11 @@
 "use client";
 
-import BackToTopButton from "@/components/layout/footer/BackToTopButton";
-import FooterBottomBar from "@/components/layout/footer/FooterBottomBar";
-import FooterBrandPanel from "@/components/layout/footer/FooterBrandPanel";
-import FooterNavColumn from "@/components/layout/footer/FooterNavColumn";
-import FooterPayments from "@/components/layout/footer/FooterPayments";
-import FooterTrustBar from "@/components/layout/footer/FooterTrustBar";
+import BackToTopButton from "@/components/layout/footer/BackToTopButton.js";
+import FooterBottomBar from "@/components/layout/footer/FooterBottomBar.js";
+import FooterBrandPanel from "@/components/layout/footer/FooterBrandPanel.js";
+import FooterNavColumn from "@/components/layout/footer/FooterNavColumn.js";
+import FooterPayments from "@/components/layout/footer/FooterPayments.js";
+import FooterTrustBar from "@/components/layout/footer/FooterTrustBar.js";
 import {
   APP_LINKS,
   BOTTOM_LINKS,
@@ -13,7 +13,7 @@ import {
   PAYMENT_ICONS,
   SOCIAL_LINKS,
   TRUST_BADGES,
-} from "@/components/layout/footer/footer.constants";
+} from "@/components/layout/footer/footer.constants.js";
 
 export default function Footer() {
   return (

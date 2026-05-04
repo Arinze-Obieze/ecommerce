@@ -1,8 +1,8 @@
 "use client";
-import ProductCard from "@/components/catalog/ProductCard";
-import ProductImpressionTracker from "@/components/catalog/ProductImpressionTracker";
 import { useFilters } from "@/contexts/filter/FilterContext";
 import { FiSearch, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
+import LazyProductTile from "./LazyProductTile";
+import EmptyState from "@/components/ui/EmptyState";
 
 // Brand tokens — sourced from app/globals.css
 
@@ -32,6 +32,7 @@ const SkeletonCard = ({ delay = 0 }) => (
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function ProductGrid({ products, loading, error, meta, surface = null, trackingMeta = null, gridClassName = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4" }) {
   const { clearAllFilters, hasActiveFilters } = useFilters();
+  const primaryActionButton = "inline-flex items-center gap-2 rounded-[10px] bg-(--zova-ink) px-[22px] py-[10px] text-[13px] font-bold text-white transition-colors hover:bg-[#333333]";
 
   // ── Loading ──
   if (loading && products.length === 0) {
@@ -48,122 +49,33 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
   // ── Error ──
   if (error) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '56px 24px',
-          textAlign: 'center',
-          background: '#FFFFFF',
-          border: `1.5px dashed ${'var(--zova-border)'}`,
-          borderRadius: 18,
-        }}
-      >
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: '50%',
-            background: '#FEF2F2',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 14,
-          }}
-        >
-          <FiAlertCircle size={22} style={{ color: '#DC2626' }} />
-        </div>
-        <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-          Something went wrong
-        </h3>
-        <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 22px', maxWidth: 280, lineHeight: 1.6 }}>
-          {error}
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 7,
-            padding: '10px 22px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'var(--zova-ink)',
-            color: '#FFFFFF',
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          <FiRefreshCw size={13} /> Try Again
-        </button>
-      </div>
+      <EmptyState
+        tone="error"
+        icon={<FiAlertCircle size={22} />}
+        title="Something went wrong"
+        description={error}
+        action={(
+          <button type="button" onClick={() => window.location.reload()} className={primaryActionButton}>
+            <FiRefreshCw size={13} /> Try Again
+          </button>
+        )}
+      />
     );
   }
 
   // ── Empty ──
   if (!loading && products.length === 0) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '64px 24px',
-          textAlign: 'center',
-          background: '#FFFFFF',
-          border: `1.5px dashed ${'var(--zova-border)'}`,
-          borderRadius: 18,
-        }}
-      >
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'var(--zova-green-soft)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 16,
-          }}
-        >
-          <FiSearch size={22} style={{ color: 'var(--zova-primary-action)' }} />
-        </div>
-        <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--zova-ink)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-          No products found
-        </h3>
-        <p style={{ fontSize: 13, color: 'var(--zova-text-muted)', margin: '0 0 24px', maxWidth: 300, lineHeight: 1.6 }}>
-          Try adjusting your filters or search terms to find what you're looking for.
-        </p>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 7,
-              padding: '10px 22px',
-              borderRadius: 10,
-              border: 'none',
-              background: 'var(--zova-ink)',
-              color: '#FFFFFF',
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#333333')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--zova-ink)')}
-          >
+      <EmptyState
+        icon={<FiSearch size={22} />}
+        title="No products found"
+        description="Try adjusting your filters or search terms to find what you're looking for."
+        action={hasActiveFilters ? (
+          <button type="button" onClick={clearAllFilters} className={primaryActionButton}>
             Clear All Filters
           </button>
-        )}
-      </div>
+        ) : null}
+      />
     );
   }
 
@@ -176,18 +88,17 @@ export default function ProductGrid({ products, loading, error, meta, surface = 
         className={gridClassName}
       >
         {products.map((product, index) => (
-          <ProductImpressionTracker
+          <LazyProductTile
             key={product.id}
             product={product}
+            index={index}
+            eager={index < 8}
             surface={surface || meta?.scoring?.surface || 'browse_grid'}
-            position={index + 1}
-            metadata={{
+            trackingMeta={{
               sortStrategy: trackingMeta?.sortStrategy || meta?.scoring?.strategy || null,
               persona: trackingMeta?.persona || meta?.scoring?.persona || null,
             }}
-          >
-            <ProductCard product={product} />
-          </ProductImpressionTracker>
+          />
         ))}
         {/* Append skeleton cards while loading next page */}
         {loading && [...Array(4)].map((_, i) => <SkeletonCard key={`sk-${i}`} delay={i * 50} />)}

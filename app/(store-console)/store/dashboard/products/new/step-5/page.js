@@ -308,7 +308,7 @@ export default function Step5() {
               <li>{prices.length > 0 ? "Pricing included" : "Missing variant pricing"}</li>
             </ul>
           </div>
-          <div className="mt-3 rounded-xl border border-[#E8E4DC] bg-white p-3">
+          <div className="mt-3 rounded-xl border border-border bg-white p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Inventory QR Preview</p>
             <p className="mt-1 text-xs text-gray-600">
               Encodes a URL resolver so scanner apps open a link instead of raw text.

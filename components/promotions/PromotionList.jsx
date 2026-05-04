@@ -168,8 +168,8 @@ export default function PromotionList({ storeId, onCreate }) {
         const pill = statusPill(promo);
         const type = promo.promotion_types;
         return (
-          <div key={promo.id} className="rounded-2xl border border-[#E8E4DC] bg-white p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 text-xl">
+          <div key={promo.id} className="rounded-2xl border border-border bg-white p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-xl">
               {type?.icon || '🏷️'}
             </div>
 
@@ -190,13 +190,13 @@ export default function PromotionList({ storeId, onCreate }) {
               </p>
               {promo.auto_activated && (
                 <div className="flex items-center gap-1.5 mt-1.5 text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 w-fit">
-                  <FiInfo className="w-3 h-3 flex-shrink-0" />
+                  <FiInfo className="w-3 h-3 shrink-0" />
                   Start time passed — this promotion was auto-activated
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               {promo.approved_by_zova && !promo.is_active && (
                 <button
                   onClick={() => handleActivate(promo.id)}

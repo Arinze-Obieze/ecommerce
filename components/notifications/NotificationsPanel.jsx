@@ -63,7 +63,7 @@ export default function NotificationsPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Notifications</h2>
@@ -82,7 +82,7 @@ export default function NotificationsPanel({
 
       {error ? <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         {loading ? (
           <p className="text-sm text-gray-500">Loading notifications...</p>
         ) : rows.length === 0 ? (

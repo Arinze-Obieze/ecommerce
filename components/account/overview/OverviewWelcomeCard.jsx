@@ -9,10 +9,10 @@ export default function OverviewWelcomeCard({ userName, email, initials }) {
       <div className="flex min-w-0 w-full items-center gap-[18px] sm:w-auto">
         <div className="zova-account-avatar">{initials}</div>
         <div className="min-w-0">
-          <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--zova-text-muted)]">
+          <p className="m-0 mb-1 text-xs font-semibold uppercase tracking-[0.06em] text-(--zova-text-muted)">
             Welcome back
           </p>
-          <h1 className="m-0 break-words text-[22px] font-extrabold tracking-[-0.025em] text-[var(--zova-text-strong)]">
+          <h1 className="m-0 break-words text-[22px] font-extrabold tracking-[-0.025em] text-(--zova-text-strong)">
             {userName}
           </h1>
           <p className="m-0 mt-1 break-words text-[13px] text-[var(--zova-text-body)]">{email}</p>

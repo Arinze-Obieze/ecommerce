@@ -2,7 +2,7 @@
 
 export function AdminLogsHeader({ level, setLevel, service, setService, limit, onApply, error, summary }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <h2 className="text-lg font-bold text-gray-900">System Logs Explorer</h2>
         <div className="flex gap-2">
@@ -35,7 +35,7 @@ export function AdminLogsHeader({ level, setLevel, service, setService, limit, o
 
 export function AdminLogsTable({ loading, rows }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       {loading ? (
         <p className="text-sm text-gray-500">Loading logs...</p>
       ) : (

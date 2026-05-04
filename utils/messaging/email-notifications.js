@@ -223,6 +223,12 @@ export async function notifyOrderCompletionEmails({ serviceClient, orderId }) {
     .select('product_id, quantity, price')
     .eq('order_id', orderId);
 
+  const { data: shippingAddress } = await serviceClient
+    .from('order_shipping_addresses')
+    .select('contact_email')
+    .eq('order_id', orderId)
+    .maybeSingle();
+
   if (orderItemsError) {
     return {
       ok: false,
@@ -256,6 +262,19 @@ export async function notifyOrderCompletionEmails({ serviceClient, orderId }) {
         error: buyerMail.ok ? null : buyerMail.error || 'Failed to send buyer email',
       };
     }
+  } else if (shippingAddress?.contact_email) {
+    const buyerMail = await sendBuyerOrderCompletedEmail({
+      to: shippingAddress.contact_email,
+      recipientName: null,
+      orderId: order.id,
+      totalAmount: order.total_amount,
+      itemCount,
+    });
+    buyerStatus = {
+      status: buyerMail.ok ? 'sent' : 'failed',
+      email: shippingAddress.contact_email,
+      error: buyerMail.ok ? null : buyerMail.error || 'Failed to send buyer email',
+    };
   }
 
   const productIds = [...new Set((orderItems || []).map((item) => item.product_id).filter(Boolean))];

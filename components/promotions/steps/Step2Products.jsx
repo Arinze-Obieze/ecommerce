@@ -98,7 +98,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
             {categories.map(cat => {
               const selected = selectedCategories.includes(cat.slug);
               return (
-                <label key={cat.slug} className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-primary bg-primary/5' : 'border-[#E8E4DC] bg-white hover:border-primary/30'}`}>
+                <label key={cat.slug} className={`flex items-center gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-primary bg-primary/5' : 'border-border bg-white hover:border-primary/30'}`}>
                   <input type="checkbox" checked={selected} onChange={() => toggleCategory(cat.slug)} className="w-4 h-4 accent-primary" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-900">{cat.name}</p>
@@ -110,7 +110,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
           </div>
         )}
 
-        <div className="rounded-xl border border-[#E8E4DC] p-4 space-y-3">
+        <div className="rounded-xl border border-border p-4 space-y-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -186,7 +186,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
             const selected = selectedProductIds.includes(p.id);
             const price = p.discount_price || p.price;
             return (
-              <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-primary bg-primary/5' : 'border-[#E8E4DC] bg-white hover:border-primary/30'}`}>
+              <label key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-primary bg-primary/5' : 'border-border bg-white hover:border-primary/30'}`}>
                 {targetingScope === 'single'
                   ? <input type="radio" checked={selected} onChange={() => toggleProduct(p.id)} className="w-4 h-4 accent-primary" />
                   : <input type="checkbox" checked={selected} onChange={() => toggleProduct(p.id)} className="w-4 h-4 accent-primary" />
@@ -194,7 +194,7 @@ export default function Step2Products({ state, dispatch, storeId }) {
                 <img
                   src={p.image_urls?.[0] || 'https://placehold.co/48x48?text=.'}
                   alt={p.name}
-                  className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                  className="w-10 h-10 rounded-lg object-cover shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>

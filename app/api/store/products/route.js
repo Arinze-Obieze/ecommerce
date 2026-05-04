@@ -3,6 +3,7 @@ import { requireStoreApi, STORE_ROLES } from '@/utils/store/auth';
 import { enforceRateLimit, rateLimitPayload, rateLimitHeaders } from '@/utils/platform/rate-limit';
 import { generateProductSku, normalizeSpecifications } from '@/utils/catalog/product-catalog';
 import { normalizeBulkDiscountTiers } from '@/utils/catalog/bulk-pricing';
+import { parseWholeNairaAmount } from '@/utils/money/naira';
 import { getPagination, paginationMeta } from '@/utils/platform/pagination';
 import { privateJson } from '@/utils/platform/api-response';
 import { invalidateProductCache, invalidateProductsCache } from '@/utils/platform/cache-invalidation';
@@ -10,11 +11,6 @@ import { invalidateProductCache, invalidateProductsCache } from '@/utils/platfor
 const PRODUCT_LIST_SELECT = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, bulk_discount_tiers, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
 const PRODUCT_LIST_SELECT_FALLBACK = 'id, store_id, name, slug, sku, description, price, discount_price, specifications, stock_quantity, image_urls, video_urls, is_active, moderation_status, submitted_at, reviewed_at, rejection_reason, created_at, updated_at';
 const BULK_DISCOUNT_MIGRATION_HINT = 'Database is missing products.bulk_discount_tiers. Apply documentation/migrations/2026-03-28_product_bulk_discounts.sql and retry.';
-
-function toNumber(value) {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-}
 
 function isMissingBulkDiscountColumnError(error) {
   const message = String(error?.message || '').toLowerCase();
@@ -414,10 +410,12 @@ export async function POST(request) {
   const name = String(body?.name || '').trim();
   const slugInput = String(body?.slug || name).trim();
   const description = String(body?.description || '').trim();
-  const price = toNumber(body?.price);
-  const discountPrice = body?.discount_price === '' || body?.discount_price === null || body?.discount_price === undefined
+  const parsedPrice = parseWholeNairaAmount(body?.price);
+  const parsedDiscountPrice = body?.discount_price === '' || body?.discount_price === null || body?.discount_price === undefined
     ? null
-    : toNumber(body?.discount_price);
+    : parseWholeNairaAmount(body?.discount_price, { allowZero: true });
+  const price = parsedPrice.value;
+  const discountPrice = parsedDiscountPrice?.value ?? null;
   const stockQuantity = Math.max(0, Number.parseInt(body?.stock_quantity || '0', 10) || 0);
   const rawImageUrls = Array.isArray(body?.image_urls) ? body.image_urls.map(normalizeUrl).filter(Boolean) : [];
   const rawVideoUrls = Array.isArray(body?.video_urls) ? body.video_urls.map(normalizeUrl).filter(Boolean) : [];
@@ -443,8 +441,16 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Description is required' }, { status: 400 });
   }
 
-  if (price === null || price <= 0) {
-    return NextResponse.json({ error: 'Valid price is required' }, { status: 400 });
+  if (parsedPrice.error) {
+    return NextResponse.json({ error: `Valid whole-Naira price is required. ${parsedPrice.error}` }, { status: 400 });
+  }
+
+  if (parsedDiscountPrice?.error) {
+    return NextResponse.json({ error: `Sale price must be a whole-Naira value. ${parsedDiscountPrice.error}` }, { status: 400 });
+  }
+
+  if (discountPrice !== null && discountPrice >= price) {
+    return NextResponse.json({ error: 'Sale price must be lower than the main price.' }, { status: 400 });
   }
 
   const slug = sanitizeSlug(slugInput);

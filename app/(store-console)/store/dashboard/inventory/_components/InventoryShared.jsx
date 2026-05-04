@@ -46,7 +46,7 @@ export function PaginationControls({ pagination, pageSize, setPage, setPageSize,
             setPageSize(Number(event.target.value));
             setPage(1);
           }}
-          className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none"
+          className="rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none"
         >
           {PAGE_SIZE_OPTIONS.map((option) => <option key={option} value={option}>{option} / page</option>)}
         </select>
@@ -54,7 +54,7 @@ export function PaginationControls({ pagination, pageSize, setPage, setPageSize,
           type="button"
           disabled={loading || page <= 1}
           onClick={() => setPage((current) => Math.max(1, current - 1))}
-          className="rounded-xl border border-[#E8E4DC] px-3 py-2 text-sm font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Previous
         </button>
@@ -103,7 +103,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             <select
               value={adjustment.variantId}
               onChange={(event) => setAdjustment((current) => ({ ...current, scope: 'variant', variantId: event.target.value }))}
-              className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+              className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
             >
               {(row.variants || []).map((variant) => (
                 <option key={variant.id} value={variant.id}>{variant.label} · {variant.stock_quantity} in stock</option>
@@ -117,7 +117,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
           <select
             value={adjustment.mode}
             onChange={(event) => setAdjustment((current) => ({ ...current, mode: event.target.value }))}
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           >
             <option value="add">Add units</option>
             <option value="subtract">Subtract units</option>
@@ -131,7 +131,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             value={adjustment.quantity}
             onChange={(event) => setAdjustment((current) => ({ ...current, quantity: event.target.value }))}
             inputMode="numeric"
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </label>
 
@@ -140,7 +140,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
           <select
             value={adjustment.reason}
             onChange={(event) => setAdjustment((current) => ({ ...current, reason: event.target.value }))}
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           >
             {REASON_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -152,7 +152,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             value={adjustment.note}
             onChange={(event) => setAdjustment((current) => ({ ...current, note: event.target.value }))}
             placeholder="Optional"
-            className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full rounded-xl border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </label>
       </div>
@@ -170,7 +170,7 @@ export function AdjustmentPanel({ row, adjustment, setAdjustment, onSubmit, subm
             key={variant.id}
             type="button"
             onClick={() => setAdjustment((current) => ({ ...current, scope: 'variant', variantId: String(variant.id), mode: 'add', quantity: '5', reason: 'restock' }))}
-            className="rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
+            className="rounded-xl border border-border bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
           >
             Queue +5 for {variant.label}
           </button>

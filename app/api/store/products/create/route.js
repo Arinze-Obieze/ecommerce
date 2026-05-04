@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { normalizeSpecifications } from "@/utils/catalog/product-catalog";
 import { normalizeBulkDiscountTiers } from "@/utils/catalog/bulk-pricing";
+import { parseWholeNairaAmount } from "@/utils/money/naira";
 import { getGenderValidationError, normalizeGenderForCategory } from "@/features/product-wizard/lib/category-gender-rules";
 import { invalidateProductCache } from "@/utils/platform/cache-invalidation";
 import { requireStoreApi, STORE_ROLES } from "@/utils/store/auth";
@@ -260,19 +261,23 @@ export async function POST(request) {
     const normalizedAgeGroup = category === "kids" ? normalizeText(wd.ageGroup) : "";
 
     const rawVariants = Array.isArray(wd.variants) ? wd.variants : [];
-    const normalizedVariants = rawVariants.map((variant) => ({
-      color: normalizeText(variant?.color),
-      size: normalizeText(variant?.size),
-      quantity: parseInt(variant?.quantity, 10) || 0,
-      price: parseFloat(variant?.price) || 0,
-    }));
+    const normalizedVariants = rawVariants.map((variant) => {
+      const parsedPrice = parseWholeNairaAmount(variant?.price);
+      return {
+        color: normalizeText(variant?.color),
+        size: normalizeText(variant?.size),
+        quantity: parseInt(variant?.quantity, 10) || 0,
+        price: parsedPrice.value || 0,
+        priceError: parsedPrice.error,
+      };
+    });
 
     if (normalizedVariants.length === 0) {
       return NextResponse.json({ success: false, error: "At least one variant is required" }, { status: 400 });
     }
 
-    if (normalizedVariants.some((variant) => !variant.color || !variant.size || variant.quantity <= 0 || variant.price <= 0)) {
-      return NextResponse.json({ success: false, error: "Every variant must include color, size, quantity > 0, and price > 0" }, { status: 400 });
+    if (normalizedVariants.some((variant) => !variant.color || !variant.size || variant.quantity <= 0 || variant.price <= 0 || variant.priceError)) {
+      return NextResponse.json({ success: false, error: "Every variant must include color, size, quantity > 0, and a whole-Naira price greater than 0" }, { status: 400 });
     }
 
     const bulkDiscountResult = normalizeBulkDiscountTiers(wd.bulkDiscountTiers || wd.bulk_discount_tiers);
@@ -378,7 +383,7 @@ export async function POST(request) {
       color: v.color,
       size: v.size,
       quantity: parseInt(v.quantity) || 0,
-      price: parseFloat(v.price) || 0,
+      price: v.price,
       sku: v.sku,
       status: "active",
     }));

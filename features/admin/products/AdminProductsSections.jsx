@@ -10,7 +10,7 @@ export function AdminProductsIntro({ rows }) {
   const metrics = buildAdminProductMetrics(rows);
 
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900">Catalog Health & Moderation</h2>
       <p className="text-sm text-gray-500">Approve/reject submissions and track inventory quality risks.</p>
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -35,7 +35,7 @@ export function AdminProductsTable({
   onReview,
 }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-2">
         <h3 className="text-base font-bold text-gray-900">Review Queue</h3>
         <select

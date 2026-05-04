@@ -31,7 +31,7 @@ export function PayoutReadinessCard({
   onManageAccount,
 }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -90,7 +90,7 @@ export function PayoutReadinessCard({
 
 export function PayoutViewTabs({ activeView, onViewChange }) {
   return (
-    <div className="flex gap-2 overflow-x-auto rounded-2xl border border-[#E8E4DC] bg-white p-2 shadow-sm">
+    <div className="flex gap-2 overflow-x-auto rounded-2xl border border-border bg-white p-2 shadow-sm">
       {PAYOUT_VIEW_OPTIONS.map((option) => (
         <button
           key={option.value}
@@ -109,7 +109,7 @@ export function PayoutViewTabs({ activeView, onViewChange }) {
 
 export function EscrowItemsTable({ loading, escrowItems, summary }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-gray-900">Escrow Items</h3>
@@ -163,7 +163,7 @@ export function EscrowItemsTable({ loading, escrowItems, summary }) {
 
 export function PayoutRecordsTable({ loading, payouts }) {
   return (
-    <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <h3 className="mb-3 text-base font-bold text-gray-900">Recent Payout Records</h3>
       {loading ? (
         <p className="text-sm text-gray-500">Loading payout records...</p>
@@ -218,7 +218,7 @@ export function PayoutOperationsPanels({
 }) {
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <div className="mb-4">
           <h3 className="text-base font-bold text-gray-900">Reconciliation Log</h3>
           <p className="text-sm text-gray-500">Capture mismatches between escrow expectations and payout records.</p>
@@ -267,7 +267,7 @@ export function PayoutOperationsPanels({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <div className="mb-4">
           <h3 className="text-base font-bold text-gray-900">Payout Exceptions</h3>
           <p className="text-sm text-gray-500">Track failures, delays, and payout exceptions without leaving the store console.</p>
@@ -340,7 +340,7 @@ export function PayoutAccountModal({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-[#E8E4DC] bg-white p-5 shadow-2xl sm:rounded-2xl">
+      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-border bg-white p-5 shadow-2xl sm:rounded-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-bold text-gray-900">

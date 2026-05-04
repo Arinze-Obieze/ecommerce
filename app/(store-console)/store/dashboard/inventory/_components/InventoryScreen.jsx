@@ -62,7 +62,7 @@ export default function InventoryScreen() {
         </button>
       </DashboardPageHeader>
 
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard label="All SKUs" value={summary.total} loading={loading} />
           <StatCard label="Low stock" value={summary.lowStock} tone="amber" loading={loading} />
@@ -74,7 +74,7 @@ export default function InventoryScreen() {
       <AlertBanner type="error" message={error} />
       <AlertBanner type="notice" message={notice} />
 
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5">
         <button
           type="button"
           onClick={() => setShowHistory((current) => !current)}
@@ -111,7 +111,7 @@ export default function InventoryScreen() {
             ))}
 
             {history.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#E8E4DC] bg-[#fbfdfb] p-5 text-sm text-gray-500">
+              <div className="rounded-2xl border border-dashed border-border bg-[#fbfdfb] p-5 text-sm text-gray-500">
                 Inventory adjustments will appear here once your team starts using the workflow.
               </div>
             ) : null}
@@ -119,7 +119,7 @@ export default function InventoryScreen() {
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Stock workspace</h3>
@@ -138,7 +138,7 @@ export default function InventoryScreen() {
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
               placeholder="Search product, slug, SKU, variant"
-              className="col-span-2 rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary sm:col-span-1"
+              className="col-span-2 rounded-xl border border-border bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary sm:col-span-1"
             />
             <select
               value={filter}
@@ -146,14 +146,14 @@ export default function InventoryScreen() {
                 setFilter(event.target.value);
                 setPage(1);
               }}
-              className="col-span-2 rounded-xl border border-[#E8E4DC] bg-white px-3 py-2 text-sm text-gray-900 outline-none sm:col-span-1"
+              className="col-span-2 rounded-xl border border-border bg-white px-3 py-2 text-sm text-gray-900 outline-none sm:col-span-1"
             >
               {FILTER_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
               Apply
             </button>
-            <button type="button" onClick={resetSearch} className="rounded-xl border border-[#E8E4DC] px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+            <button type="button" onClick={resetSearch} className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
               Clear
             </button>
           </form>
@@ -176,9 +176,9 @@ export default function InventoryScreen() {
         </div>
 
         {loading ? (
-          <div className="mt-5 rounded-2xl border border-dashed border-[#E8E4DC] p-8 text-center text-sm text-gray-500">Loading inventory...</div>
+          <div className="mt-5 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-gray-500">Loading inventory...</div>
         ) : rows.length === 0 ? (
-          <div className="mt-5 rounded-2xl border border-dashed border-[#E8E4DC] p-8 text-center text-sm text-gray-500">No products match the current filters.</div>
+          <div className="mt-5 rounded-2xl border border-dashed border-border p-8 text-center text-sm text-gray-500">No products match the current filters.</div>
         ) : (
           <>
             <div className="mt-5 hidden overflow-x-auto lg:block">
@@ -216,14 +216,14 @@ export default function InventoryScreen() {
                             <button
                               type="button"
                               onClick={() => openAdjustment(row)}
-                              className="rounded-full border border-[#E8E4DC] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
+                              className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
                             >
                               Adjust
                             </button>
                             <button
                               type="button"
                               onClick={() => window.open(`/store/dashboard/products/${row.id}`, '_blank')}
-                              className="rounded-full border border-[#E8E4DC] px-3 py-1 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
+                              className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-gray-700 hover:border-primary hover:text-primary"
                             >
                               View details
                             </button>
@@ -259,7 +259,7 @@ export default function InventoryScreen() {
 
             <div className="mt-5 space-y-3 lg:hidden">
               {rows.map((row) => (
-                <div key={row.id} className="rounded-2xl border border-[#E8E4DC] bg-white p-4 shadow-sm">
+                <div key={row.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <ProductMeta row={row} />
                     <StockBadge stock={row.effective_stock_quantity} lowStockThreshold={lowStockThreshold} />

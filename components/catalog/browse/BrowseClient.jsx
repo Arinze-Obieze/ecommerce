@@ -1,11 +1,13 @@
 "use client";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import FilterSidebar from "./FilterSidebar";
 import ActiveFilters from "./ActiveFilters";
 import BrowseHeader from "./BrowseHeader";
 import ProductGrid from "./ProductGrid";
-import MobileFilterDrawer from "./MobileFilterDrawer";
 import useBrowseCatalog from '@/components/catalog/browse/useBrowseCatalog';
+
+const MobileFilterDrawer = dynamic(() => import('./MobileFilterDrawer'), { ssr: false });
 
 // ============================================================
 // 🎨 THEME

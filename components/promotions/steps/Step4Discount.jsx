@@ -39,7 +39,7 @@ export default function Step4Discount({ state, dispatch }) {
             className={`py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
               discountType === opt.value
                 ? 'border-primary bg-primary text-white'
-                : 'border-[#E8E4DC] text-gray-700 hover:border-primary/40'
+                : 'border-border text-gray-700 hover:border-primary/40'
             }`}
           >
             {opt.label}
@@ -107,7 +107,7 @@ export default function Step4Discount({ state, dispatch }) {
 
       {/* Bundle fields */}
       {allowsBundle && (
-        <div className="rounded-xl border border-[#E8E4DC] p-4 space-y-3">
+        <div className="rounded-xl border border-border p-4 space-y-3">
           <p className="text-sm font-semibold text-gray-700">Bundle configuration</p>
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -92,13 +92,13 @@ export default function Step1Screen() {
 
       <div className="space-y-5">
         <div className="space-y-5">
-          <div className="space-y-3 rounded-2xl border border-[#E8E4DC] bg-white p-4 lg:p-5">
+          <div className="space-y-3 rounded-2xl border border-border bg-white p-4 lg:p-5">
             <label className="block text-sm font-semibold text-gray-700">Category <span className="text-red-400">*</span></label>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               {CATEGORIES.map((cat) => {
                 const sel = state.category === cat.value;
                 return (
-                  <button key={cat.value} type="button" onClick={() => setCategory(cat.value)} className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-3.5 transition-all duration-200 lg:p-3 ${sel ? "border-primary bg-primary/5" : "border-[#E8E4DC] bg-white hover:border-primary/40"} ${errors.category && !sel ? "border-red-300 bg-red-50" : ""}`}>
+                  <button key={cat.value} type="button" onClick={() => setCategory(cat.value)} className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 p-3.5 transition-all duration-200 lg:p-3 ${sel ? "border-primary bg-primary/5" : "border-border bg-white hover:border-primary/40"} ${errors.category && !sel ? "border-red-300 bg-red-50" : ""}`}>
                     <span className="text-2xl mb-1">{cat.icon}</span>
                     <span className={`text-xs font-bold text-center ${sel ? "text-primary" : "text-gray-900"}`}>{cat.label}</span>
                   </button>
@@ -107,7 +107,7 @@ export default function Step1Screen() {
             </div>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-[#E8E4DC] bg-white p-4 lg:p-5">
+          <div className="space-y-3 rounded-2xl border border-border bg-white p-4 lg:p-5">
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
               <div className="lg:col-span-6">
                 <label className="mb-1.5 block text-sm font-semibold text-gray-700">Product Name <span className="text-red-400">*</span></label>

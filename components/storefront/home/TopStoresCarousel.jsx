@@ -18,11 +18,11 @@ function formatCount(n) {
 function StoreCardSkeleton() {
   return (
     <div
-      className="rounded-2xl p-5 animate-pulse w-full"
+      className="rounded-[4px] p-5 animate-pulse w-full"
       style={{ backgroundColor: '#FFFFFF', border: `1px solid ${'var(--zova-border)'}` }}
     >
       <div className="flex items-start gap-3 mb-4">
-        <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="w-14 h-14 rounded-[4px] shrink-0" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
         <div className="flex-1 space-y-2 pt-1">
           <div className="h-4 rounded w-3/4" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
           <div className="h-3 rounded w-full" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
@@ -31,9 +31,9 @@ function StoreCardSkeleton() {
       </div>
       <div className="h-px mb-4" style={{ backgroundColor: 'var(--zova-border)' }} />
       <div className="flex gap-2">
-        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
-        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
-        <div className="h-7 rounded-full flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="h-7 rounded-[4px] flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="h-7 rounded-[4px] flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
+        <div className="h-7 rounded-[4px] flex-1" style={{ backgroundColor: 'var(--zova-surface-alt)' }} />
       </div>
     </div>
   );
@@ -47,7 +47,7 @@ function StoreCard({ store }) {
     <div className="h-full" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       <Link
         href={`/store/${store.slug}`}
-        className="flex flex-col h-full rounded-2xl p-5 transition-all duration-200"
+        className="flex flex-col h-full rounded-[4px] p-5 transition-all duration-200"
         style={{
           backgroundColor: '#FFFFFF',
           border: `1px solid ${hovered ? '#B8D4A0' : 'var(--zova-border)'}`,
@@ -59,7 +59,7 @@ function StoreCard({ store }) {
 
           {/* Logo */}
           <div
-            className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+            className="w-14 h-14 rounded-[4px] shrink-0 overflow-hidden flex items-center justify-center"
             style={{ backgroundColor: 'var(--zova-green-soft)', border: `1px solid ${'#B8D4A0'}` }}
           >
             {store.logo_url ? (
@@ -82,7 +82,7 @@ function StoreCard({ store }) {
               </h3>
               {store.kyc_status === 'verified' && (
                 <FiCheckCircle
-                  className="w-3.5 h-3.5 flex-shrink-0"
+                  className="w-3.5 h-3.5 shrink-0"
                   style={{ color: 'var(--zova-primary-action)' }}
                   title="Verified Store"
                 />
@@ -91,7 +91,7 @@ function StoreCard({ store }) {
 
             {store.is_trending && (
               <span
-                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full mb-1"
+                className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-[2px] mb-1"
                 style={{
                   backgroundColor: 'var(--zova-accent-soft)',
                   color: 'var(--zova-warning)',
@@ -115,7 +115,7 @@ function StoreCard({ store }) {
         >
           {/* Rating */}
           <div
-            className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
+            className="flex items-center gap-1 px-2 py-1 rounded-[4px] text-[11px] font-semibold flex-1 justify-center"
             style={{ backgroundColor: 'var(--zova-accent-soft)' }}
           >
             <FiStar className="w-3 h-3 fill-current" style={{ color: 'var(--zova-accent-emphasis)' }} />
@@ -124,19 +124,10 @@ function StoreCard({ store }) {
             </span>
           </div>
 
-          {/* Followers */}
-          <div
-            className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
-            style={{ backgroundColor: 'var(--zova-linen)' }}
-          >
-            <FiUsers className="w-3 h-3" style={{ color: 'var(--zova-text-muted)' }} />
-            <span style={{ color: 'var(--zova-ink)' }}>{formatCount(store.followers)}</span>
-          </div>
-
           {/* Product count */}
           {store.product_count != null && (
             <div
-              className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold flex-1 justify-center"
+              className="flex items-center gap-1 px-2 py-1 rounded-[4px] text-[11px] font-semibold flex-1 justify-center"
               style={{ backgroundColor: 'var(--zova-green-soft)' }}
             >
               <FiPackage className="w-3 h-3" style={{ color: 'var(--zova-primary-action)' }} />
@@ -154,7 +145,7 @@ function StoreCard({ store }) {
             {store.location || 'Nigeria'}
           </span>
           <span
-            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200"
+            className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-[4px] transition-all duration-200"
             style={{
               backgroundColor: hovered ? 'var(--zova-primary-action)' : 'transparent',
               color: hovered ? '#FFFFFF' : 'var(--zova-primary-action)',

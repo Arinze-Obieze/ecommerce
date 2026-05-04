@@ -51,7 +51,7 @@ export default function Step1Targeting({ state, dispatch }) {
               className={`w-full text-left rounded-2xl border-2 p-4 transition-all ${
                 isSelected
                   ? 'border-primary bg-primary/5'
-                  : 'border-[#E8E4DC] bg-white hover:border-primary/40'
+                  : 'border-border bg-white hover:border-primary/40'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -79,7 +79,7 @@ export default function Step1Targeting({ state, dispatch }) {
                     </label>
                   )}
                 </div>
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
                   isSelected ? 'border-primary bg-primary' : 'border-gray-300'
                 }`}>
                   {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}

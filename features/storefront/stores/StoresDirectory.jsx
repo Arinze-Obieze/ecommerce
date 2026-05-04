@@ -28,60 +28,51 @@ function StoreCard({ store }) {
   const href = buildStoreHref(store);
 
   return (
-    <article className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
-      <div className="flex h-full flex-col gap-4">
-        <div className="flex items-start gap-4">
+    <article className="bg-white rounded-xl p-5 border transition-all hover:-translate-y-1" style={{ borderColor: 'var(--zova-border)', boxShadow: 'var(--zova-shadow-card)' }}>
+      <div className="flex flex-col h-full">
+        <div className="flex items-start gap-4 flex-1">
+          {/* Left side: Avatar */}
           <Link
             href={href}
             aria-label={`Open ${store.name}`}
-            className="w-16 h-16 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden"
+            className="w-[52px] h-[52px] rounded-xl border flex items-center justify-center shrink-0 overflow-hidden" 
+            style={{ backgroundColor: 'var(--zova-green-soft)', borderColor: 'var(--zova-border)' }}
           >
             {store.logo_url ? (
               <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
             ) : (
-              <span className="text-2xl font-bold text-gray-400">
-                {String(store.name || 'S').charAt(0).toUpperCase()}
+              <span className="text-xl font-bold" style={{ color: 'var(--zova-primary-action)' }}>
+                {String(store.name || 'Z').charAt(0).toUpperCase()}
               </span>
             )}
           </Link>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <Link href={href} className="min-w-0">
-                <h2 className="truncate text-lg font-bold text-gray-900 transition-colors hover:text-primary">
-                  {store.name}
-                </h2>
-              </Link>
-              {store.kyc_status === 'verified' && (
-                <FiCheckCircle className="h-4 w-4 shrink-0 text-blue-500" title="Verified Store" />
-              )}
-            </div>
-            <p className="mt-1 min-h-[40px] text-sm text-gray-500 line-clamp-2">
-              {store.description || 'Welcome to our store. We offer high quality products.'}
+          {/* Right side: Details */}
+          <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+            <Link href={href} className="min-w-0">
+              <h2 className="truncate text-lg font-semibold transition-colors hover:text-(--zova-primary-action)" style={{ color: 'var(--zova-ink)' }}>
+                {store.name}
+              </h2>
+            </Link>
+            <p className="text-sm truncate" style={{ color: '#4a4a4a' }}>
+              {store.description || 'Premium quality products, trusted seller.'}
             </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between border-t border-gray-100 pt-4">
-          <div className="flex items-center gap-1.5 text-sm">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-100">
-              <FiStar className="h-3.5 w-3.5 fill-current text-yellow-600" />
+            
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-1.5 text-sm">
+                <FiStar className="h-4 w-4 fill-current text-(--zova-accent-emphasis)" />
+                <span className="font-semibold" style={{ color: 'var(--zova-ink)' }}>{store.rating || 'New'}</span>
+              </div>
             </div>
-            <span className="font-semibold text-gray-900">{store.rating || 'New'}</span>
-            {store.rating && <span className="text-gray-500">Rating</span>}
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-gray-600">
-            <FiUsers className="h-4 w-4 text-gray-400" />
-            <span className="font-medium text-gray-900">{store.followers || 0}</span>
-            <span>Followers</span>
           </div>
         </div>
 
         <Link
           href={href}
-          className="mt-auto inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+          className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-(--zova-primary-action) px-4 py-3 text-sm font-bold transition-colors hover:bg-(--zova-primary-action-hover)"
+          style={{ color: '#ffffff' }}
         >
-          Open Store <FiArrowRight className="h-4 w-4" />
+          Open Store
         </Link>
       </div>
     </article>
@@ -94,11 +85,12 @@ function PageButton({ page, active, onClick }) {
       type="button"
       onClick={() => onClick(page)}
       aria-current={active ? 'page' : undefined}
-      className={`h-9 min-w-9 rounded-lg border px-3 text-sm font-semibold transition-colors ${
+      className={`h-9 min-w-9 rounded-[4px] border px-3 text-sm font-semibold transition-colors ${
         active
-          ? 'border-primary bg-primary text-white'
-          : 'border-gray-200 bg-white text-gray-700 hover:border-primary hover:text-primary'
+          ? 'bg-(--zova-primary-action) text-white'
+          : 'bg-white text-(--zova-ink) hover:text-(--zova-primary-action)'
       }`}
+      style={{ borderColor: active ? 'var(--zova-primary-action)' : 'var(--zova-border)' }}
     >
       {page}
     </button>
@@ -174,25 +166,25 @@ export default function StoresDirectory() {
   return (
     <div>
       {error ? (
-        <div className="rounded-xl border border-red-100 bg-white p-8 text-center text-red-500">
+        <div className="rounded-[4px] border border-(--zova-error) bg-white p-8 text-center text-(--zova-error)">
           {error}
         </div>
       ) : loading ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-64 animate-pulse rounded-2xl border border-gray-100 bg-white" />
+            <div key={index} className="h-64 animate-pulse rounded-[4px] border bg-white" style={{ borderColor: 'var(--zova-border)' }} />
           ))}
         </div>
       ) : stores.length === 0 ? (
-        <div className="rounded-xl bg-white p-8 text-center text-gray-500">No active stores found.</div>
+        <div className="rounded-[4px] bg-white p-8 text-center text-(--zova-text-muted)">No active stores found.</div>
       ) : (
         <>
-          <div className="mb-5 flex flex-col gap-2 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Showing page <strong className="text-gray-900">{meta.page}</strong> of{' '}
-              <strong className="text-gray-900">{meta.totalPages}</strong>
-            </span>
-            <span>{meta.total.toLocaleString()} active stores</span>
+          <div className="mb-8 flex justify-center w-full">
+            <div className="inline-flex items-center gap-1.5 pb-1 border-b-[2px] text-sm font-medium" style={{ borderColor: 'var(--zova-gold)', color: '#4a4a4a' }}>
+              <span>Page {meta.page} of {meta.totalPages}</span>
+              <span className="font-black">&middot;</span>
+              <span>{meta.total.toLocaleString()} active stores</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -207,7 +199,8 @@ export default function StoresDirectory() {
                 type="button"
                 onClick={() => setPage(meta.page - 1)}
                 disabled={!meta.hasPreviousPage}
-                className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-9 items-center gap-1 rounded-[4px] border bg-white px-3 text-sm font-semibold text-(--zova-ink) transition-colors hover:border-[#B8D4A0] hover:text-(--zova-primary-action) disabled:cursor-not-allowed disabled:opacity-45"
+                style={{ borderColor: 'var(--zova-border)' }}
               >
                 <FiChevronLeft className="h-4 w-4" /> Previous
               </button>
@@ -226,7 +219,8 @@ export default function StoresDirectory() {
                 type="button"
                 onClick={() => setPage(meta.page + 1)}
                 disabled={!meta.hasNextPage}
-                className="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-9 items-center gap-1 rounded-[4px] border bg-white px-3 text-sm font-semibold text-(--zova-ink) transition-colors hover:border-[#B8D4A0] hover:text-(--zova-primary-action) disabled:cursor-not-allowed disabled:opacity-45"
+                style={{ borderColor: 'var(--zova-border)' }}
               >
                 Next <FiChevronRight className="h-4 w-4" />
               </button>

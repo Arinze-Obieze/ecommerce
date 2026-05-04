@@ -23,7 +23,7 @@ export default function AdminLogsPage() {
         summary={logs.summary}
       />
 
-      <div className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
         <AdminLogsTable loading={logs.loading} rows={logs.rows} />
         <AdminLogsPagination loading={logs.loading} meta={logs.meta} page={logs.page} setPage={logs.setPage} limit={logs.limit} setLimit={logs.setLimit} load={logs.load} />
       </div>

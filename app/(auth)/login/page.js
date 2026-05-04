@@ -1,4 +1,4 @@
-'use client';
+import LoginPage from '@/features/auth/LoginPage';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';

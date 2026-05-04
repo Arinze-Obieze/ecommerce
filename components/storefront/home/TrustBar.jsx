@@ -45,7 +45,7 @@ const TrustBar = () => {
               >
                 {/* Icon */}
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                   style={{ backgroundColor: 'var(--zova-green-soft)' }}
                 >
                   <Icon className="w-5 h-5" style={{ color: 'var(--zova-primary-action)' }} />

@@ -33,7 +33,7 @@ function RecentOrderRow({ order }) {
           <FiClock size={16} />
         </div>
         <div className="min-w-0">
-          <p className="m-0 text-[13px] font-extrabold text-[var(--zova-text-strong)]">
+          <p className="m-0 text-[13px] font-extrabold text-(--zova-text-strong)">
             Order #{String(order.id).slice(0, 8).toUpperCase()}
           </p>
           <p className="m-0 mt-1 text-xs text-[var(--zova-text-body)]">
@@ -53,7 +53,7 @@ function RecentOrderRow({ order }) {
         >
           {status.label}
         </span>
-        <span className="text-[13px] font-extrabold text-[var(--zova-text-strong)]">
+        <span className="text-[13px] font-extrabold text-(--zova-text-strong)">
           {formatOrderPrice(order.total_amount)}
         </span>
         <span className="zova-account-list-cta">
@@ -71,8 +71,8 @@ function EmptyRecentActivity() {
       <div className="zova-account-empty-icon zova-account-empty-icon-muted">
         <FiClock size={20} />
       </div>
-      <p className="m-0 mb-1 text-sm font-bold text-[var(--zova-text-strong)]">No recent activity yet</p>
-      <p className="m-0 text-[13px] text-[var(--zova-text-muted)]">
+      <p className="m-0 mb-1 text-sm font-bold text-(--zova-text-strong)">No recent activity yet</p>
+      <p className="m-0 text-[13px] text-(--zova-text-muted)">
         Your newest orders will appear here after checkout.
       </p>
     </div>
@@ -83,7 +83,7 @@ export default function RecentActivityCard({ loading, recentOrders }) {
   return (
     <section className="zova-account-card p-5 sm:p-7">
       <div className="mb-5 flex items-center justify-between gap-3 flex-wrap">
-        <h2 className="m-0 text-base font-extrabold tracking-[-0.02em] text-[var(--zova-text-strong)]">
+        <h2 className="m-0 text-base font-extrabold tracking-[-0.02em] text-(--zova-text-strong)">
           Recent Activity
         </h2>
         <Link

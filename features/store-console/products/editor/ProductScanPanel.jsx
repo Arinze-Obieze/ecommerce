@@ -7,8 +7,8 @@ function InfoCard({ label, value, helper }) {
   return (
     <div className="zova-store-subtle-card px-3 py-2">
       <p className="zova-store-label text-[11px] uppercase tracking-wide">{label}</p>
-      <p className="mt-1 text-sm font-bold text-[var(--zova-text-strong)]">{value}</p>
-      {helper ? <p className="text-[11px] text-[var(--zova-text-muted)]">{helper}</p> : null}
+      <p className="mt-1 text-sm font-bold text-(--zova-text-strong)">{value}</p>
+      {helper ? <p className="text-[11px] text-(--zova-text-muted)">{helper}</p> : null}
     </div>
   );
 }
@@ -37,10 +37,10 @@ export default function ProductScanPanel({
   return (
     <div className="zova-store-scan-card">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Scan Mode</p>
-      <h2 className={`mt-1 font-bold text-[var(--zova-text-strong)] ${isCompact ? "text-lg" : "text-xl"}`}>
+      <h2 className={`mt-1 font-bold text-(--zova-text-strong) ${isCompact ? "text-lg" : "text-xl"}`}>
         {isCompact ? "Quick POS Action" : product.name}
       </h2>
-      <p className="mt-1 text-xs text-[var(--zova-text-muted)]">
+      <p className="mt-1 text-xs text-(--zova-text-muted)">
         {isCompact ? "Keep checkout fast with a direct inventory action." : "Keep checkout fast. Scan, confirm quantity, sell."}
       </p>
 
@@ -56,7 +56,7 @@ export default function ProductScanPanel({
             {primaryProductImageUrl ? (
               <img src={primaryProductImageUrl} alt={product.name} className="h-40 w-full object-cover" />
             ) : (
-              <div className="flex h-40 items-center justify-center text-xs font-semibold text-[var(--zova-text-muted)]">
+              <div className="flex h-40 items-center justify-center text-xs font-semibold text-(--zova-text-muted)">
                 No image
               </div>
             )}
@@ -117,7 +117,7 @@ export default function ProductScanPanel({
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-[var(--zova-text-muted)]">
+                <p className="text-xs text-(--zova-text-muted)">
                   Selected stock: <span className="font-semibold text-[var(--zova-text-body)]">{selectedScanVariantStock}</span>
                 </p>
               </div>
@@ -172,7 +172,7 @@ function QuantitySection({
               </option>
             ))}
           </select>
-          <p className="mt-2 text-xs text-[var(--zova-text-muted)]">
+          <p className="mt-2 text-xs text-(--zova-text-muted)">
             Selected stock: <span className="font-semibold text-[var(--zova-text-body)]">{selectedScanVariantStock}</span>
           </p>
         </div>

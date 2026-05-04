@@ -1,0 +1,780 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   ZOVA Auth — all zova-auth-* classes and related keyframes
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Keyframes ───────────────────────────────────────────────────────────────── */
+
+@keyframes zovaSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes zovaFloatBob {
+  0%, 100% { transform: translateX(30%) translateY(0) rotate(var(--auth-float-rot, 0deg)); }
+  50%       { transform: translateX(30%) translateY(-12px) rotate(var(--auth-float-rot, 0deg)); }
+}
+
+@keyframes zova-auth-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes zova-auth-slide-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes zova-auth-ring-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes zova-auth-check-draw {
+  from { stroke-dashoffset: 60; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ── Page layout ─────────────────────────────────────────────────────────────── */
+
+.zova-auth-page {
+  display: flex;
+  min-height: 100vh;
+  background: var(--zova-linen);
+  font-family: var(--zova-font-sans);
+}
+
+/* ── Form panel ──────────────────────────────────────────────────────────────── */
+
+.zova-auth-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 480px;
+  max-width: 480px;
+  background: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.zova-auth-panel-stripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--zova-primary-action), #4a9e28, var(--zova-accent-emphasis));
+}
+
+.zova-auth-panel-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Brand row ───────────────────────────────────────────────────────────────── */
+
+.zova-auth-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+
+.zova-auth-brand-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* ── Headings & copy ─────────────────────────────────────────────────────────── */
+
+.zova-auth-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--zova-green-soft);
+  color: var(--zova-primary-action);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.zova-auth-heading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--zova-text-strong);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 6px;
+}
+
+.zova-auth-subcopy {
+  font-size: 0.9rem;
+  color: var(--zova-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Form fields ─────────────────────────────────────────────────────────────── */
+
+.zova-auth-field {
+  margin-bottom: 16px;
+}
+
+.zova-auth-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--zova-text-body);
+  margin-bottom: 6px;
+}
+
+.zova-auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.zova-auth-input-wrap {
+  position: relative;
+}
+
+.zova-auth-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--auth-icon-color, var(--zova-text-muted));
+  pointer-events: none;
+  transition: color 180ms ease;
+}
+
+.zova-auth-input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border-radius: 14px;
+  border: 1.5px solid var(--auth-input-border, var(--zova-border));
+  background: var(--auth-input-bg, var(--zova-surface-alt));
+  box-shadow: var(--auth-input-shadow, none);
+  color: var(--zova-text-strong);
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+  box-sizing: border-box;
+}
+
+.zova-auth-input.has-trailing {
+  padding-right: 46px;
+}
+
+.zova-auth-input::placeholder {
+  color: var(--zova-text-muted);
+}
+
+.zova-auth-input-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--zova-text-muted);
+  cursor: pointer;
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.zova-auth-input-toggle:hover {
+  color: var(--zova-primary-action);
+  background: var(--zova-green-soft);
+}
+
+/* ── Error message ───────────────────────────────────────────────────────────── */
+
+.zova-auth-error {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  background: #fef2f2;
+  color: var(--zova-error);
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+/* ── Remember me / checkbox ──────────────────────────────────────────────────── */
+
+.zova-auth-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  user-select: none;
+}
+
+.zova-auth-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid var(--auth-check-border, var(--zova-border));
+  background: var(--auth-check-bg, white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.zova-auth-check-label {
+  font-size: 0.82rem;
+  color: var(--zova-text-body);
+  font-weight: 500;
+}
+
+/* ── Submit button ───────────────────────────────────────────────────────────── */
+
+.zova-auth-submit {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--auth-submit-bg, var(--zova-primary-action));
+  color: var(--auth-submit-color, white);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  box-shadow: var(--auth-submit-shadow, 0 5px 18px rgba(46, 100, 23, 0.22));
+  transform: var(--auth-submit-transform, none);
+  cursor: pointer;
+  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, color 180ms ease;
+}
+
+.zova-auth-submit:disabled {
+  cursor: not-allowed;
+}
+
+/* ── OR divider ──────────────────────────────────────────────────────────────── */
+
+.zova-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.zova-auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--zova-border);
+}
+
+.zova-auth-divider-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--zova-text-muted);
+  letter-spacing: 0.1em;
+}
+
+/* ── Social buttons ──────────────────────────────────────────────────────────── */
+
+.zova-auth-social-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.zova-auth-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--zova-border);
+  background: var(--auth-social-bg, white);
+  box-shadow: var(--auth-social-shadow, none);
+  transform: var(--auth-social-transform, none);
+  color: var(--zova-text-strong);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+/* ── Helper text & links ─────────────────────────────────────────────────────── */
+
+.zova-auth-helper {
+  font-size: 0.82rem;
+  color: var(--zova-text-muted);
+  text-align: center;
+  margin: 0;
+}
+
+.zova-auth-link {
+  color: var(--zova-primary-action);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.zova-auth-link:hover {
+  text-decoration: underline;
+}
+
+.zova-auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--zova-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 28px;
+  transition: color 180ms ease;
+}
+
+.zova-auth-back-link:hover {
+  color: var(--zova-primary-action);
+}
+
+.zova-auth-note {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 100, 23, 0.18);
+  background: var(--zova-green-soft);
+  color: var(--zova-text-body);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* ── Password strength ───────────────────────────────────────────────────────── */
+
+.zova-auth-strength {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zova-auth-strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.zova-auth-strength-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--auth-strength-fill, var(--zova-border));
+  transition: background-color 250ms ease;
+}
+
+.zova-auth-strength-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--auth-strength-color, var(--zova-text-muted));
+  white-space: nowrap;
+  margin: 0;
+}
+
+/* ── Password requirements ───────────────────────────────────────────────────── */
+
+.zova-auth-requirements {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.zova-auth-requirement {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.zova-auth-requirement-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid var(--zova-border);
+  background: white;
+  color: transparent;
+  transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+.zova-auth-requirement.is-met .zova-auth-requirement-icon {
+  border-color: var(--zova-primary-action);
+  background: var(--zova-primary-action);
+  color: white;
+}
+
+.zova-auth-requirement-label {
+  font-size: 0.75rem;
+  color: var(--zova-text-muted);
+  transition: color 200ms ease;
+}
+
+.zova-auth-requirement.is-met .zova-auth-requirement-label {
+  color: var(--zova-primary-action);
+}
+
+/* ── Status card ─────────────────────────────────────────────────────────────── */
+
+.zova-auth-status-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--zova-border);
+  background: var(--zova-surface-alt);
+  margin-bottom: 16px;
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.zova-auth-status-card.is-error {
+  border-color: rgba(192, 57, 43, 0.22);
+  background: #fef2f2;
+  color: var(--zova-error);
+}
+
+.zova-auth-status-card.is-success {
+  border-color: rgba(31, 122, 76, 0.22);
+  background: var(--zova-green-soft);
+  color: var(--zova-success);
+}
+
+.zova-auth-status-card.is-warning {
+  border-color: rgba(184, 120, 0, 0.22);
+  background: #fffbeb;
+  color: var(--zova-warning);
+}
+
+.zova-auth-status-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+/* ── Multi-step stepper ──────────────────────────────────────────────────────── */
+
+.zova-auth-stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 32px;
+}
+
+.zova-auth-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.zova-auth-step-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--zova-border);
+  background: white;
+  color: var(--zova-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  transition: border-color 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+.zova-auth-step.is-active .zova-auth-step-index {
+  border-color: var(--zova-primary-action);
+  color: var(--zova-primary-action);
+}
+
+.zova-auth-step.is-complete .zova-auth-step-index {
+  border-color: var(--zova-primary-action);
+  background: var(--zova-primary-action);
+  color: white;
+}
+
+.zova-auth-step-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--zova-text-muted);
+  margin-top: 5px;
+  text-align: center;
+}
+
+.zova-auth-step.is-active .zova-auth-step-label {
+  color: var(--zova-primary-action);
+}
+
+.zova-auth-step-line {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--zova-border);
+}
+
+.zova-auth-step.is-complete .zova-auth-step-line {
+  background: var(--zova-primary-action);
+}
+
+/* ── Success overlay ─────────────────────────────────────────────────────────── */
+
+.zova-auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.zova-auth-overlay-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+}
+
+.zova-auth-overlay-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--zova-green-soft);
+  border-top-color: var(--zova-primary-action);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: zova-auth-ring-spin 1.2s linear infinite;
+}
+
+.zova-auth-overlay-core {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--zova-primary-action);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zova-auth-overlay-check {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 0;
+  animation: zova-auth-check-draw 0.5s 1s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Showcase panel ──────────────────────────────────────────────────────────── */
+
+.zova-auth-showcase {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: var(--zova-surface-strong);
+}
+
+.zova-auth-showcase-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: var(--auth-slide-opacity, 0);
+  transform: var(--auth-slide-transform, scale(1));
+  transition: opacity 0.7s ease, transform 4s ease;
+}
+
+.zova-auth-showcase-overlay-primary {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 20, 14, 0.28) 0%, rgba(15, 20, 14, 0.72) 100%);
+  z-index: 1;
+}
+
+.zova-auth-showcase-overlay-secondary {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(46, 100, 23, 0.18) 0%, transparent 60%);
+  z-index: 2;
+}
+
+.zova-auth-showcase-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px;
+  z-index: 10;
+}
+
+.zova-auth-showcase-caption {
+  margin-bottom: 20px;
+  animation: zova-auth-slide-in 0.5s ease both;
+}
+
+.zova-auth-showcase-heading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
+}
+
+.zova-auth-showcase-copy {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.zova-auth-showcase-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.zova-auth-showcase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.zova-auth-showcase-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--zova-accent-emphasis);
+  flex-shrink: 0;
+}
+
+.zova-auth-showcase-pill-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.04em;
+}
+
+.zova-auth-slide-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.zova-auth-slide-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.38);
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 200ms ease, transform 200ms ease;
+}
+
+.zova-auth-slide-dot.is-active {
+  background: white;
+  transform: scale(1.3);
+}
+
+.zova-auth-showcase-brand {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  z-index: 10;
+}
+
+.zova-auth-showcase-brand-mark {
+  height: 36px;
+  width: 120px;
+  filter: brightness(0) invert(1);
+}
+
+.zova-auth-floater {
+  position: absolute;
+  right: 0;
+  z-index: 5;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
+}
+
+.zova-auth-floater img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Entrance animations ─────────────────────────────────────────────────────── */
+
+.zova-auth-animate-1 { animation: zova-auth-fade-up 0.5s 0.05s ease both; }
+.zova-auth-animate-2 { animation: zova-auth-fade-up 0.5s 0.10s ease both; }
+.zova-auth-animate-3 { animation: zova-auth-fade-up 0.5s 0.15s ease both; }
+.zova-auth-animate-4 { animation: zova-auth-fade-up 0.5s 0.20s ease both; }
+.zova-auth-animate-5 { animation: zova-auth-fade-up 0.5s 0.25s ease both; }
+.zova-auth-animate-6 { animation: zova-auth-fade-up 0.5s 0.30s ease both; }
+.zova-auth-animate-7 { animation: zova-auth-fade-up 0.5s 0.35s ease both; }
+.zova-auth-animate-8 { animation: zova-auth-fade-up 0.5s 0.40s ease both; }
+
+/* ── Mobile adjustments ──────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .zova-auth-panel {
+    flex: 1 1 100%;
+    max-width: 100%;
+    padding: 40px 24px;
+  }
+
+  .zova-auth-panel-content {
+    padding: 0;
+  }
+
+  .zova-auth-heading {
+    font-size: 1.7rem;
+  }
+}

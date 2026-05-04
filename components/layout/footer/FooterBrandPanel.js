@@ -6,7 +6,7 @@ import BrandMark from "@/components/brand/BrandMark";
 function SocialLinks({ links }) {
   return (
     <div>
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--zova-text-strong)]">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-(--zova-text-strong)">
         Follow Us
       </p>
       <div className="zova-footer-social-row flex flex-wrap gap-2">
@@ -23,7 +23,7 @@ function SocialLinks({ links }) {
 function AppLinks({ links }) {
   return (
     <div>
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--zova-text-strong)]">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[0.18em] text-(--zova-text-strong)">
         Get The App
       </p>
       <div className="zova-footer-app-row flex flex-wrap gap-2">

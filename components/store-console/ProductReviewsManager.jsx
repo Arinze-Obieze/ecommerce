@@ -74,7 +74,7 @@ export default function ProductReviewsManager({ productId }) {
   };
 
   return (
-    <section className="rounded-2xl border border-[#E8E4DC] bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="mb-4">
         <h2 className="text-lg font-bold text-gray-900">Buyer Reviews</h2>
         <p className="mt-1 text-sm text-gray-500">Reply publicly to buyers and hide reviews that need moderation follow-up.</p>
